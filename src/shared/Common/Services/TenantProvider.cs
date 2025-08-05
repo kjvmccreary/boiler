@@ -4,6 +4,8 @@ using Microsoft.Extensions.Logging;
 using Common.Configuration;
 using Contracts.Services;
 using System.Security.Claims;
+using DTOs.Entities;
+
 
 namespace Common.Services;
 

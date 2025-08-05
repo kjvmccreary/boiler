@@ -1,5 +1,5 @@
-// FILE: src/shared/Common/Entities/BaseEntity.cs
-namespace Common.Entities;
+// FILE: src/shared/DTOs/Entities/BaseEntity.cs
+namespace DTOs.Entities;
 
 public abstract class BaseEntity
 {

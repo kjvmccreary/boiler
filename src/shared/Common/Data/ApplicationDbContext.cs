@@ -1,7 +1,7 @@
 // FILE: src/shared/Common/Data/ApplicationDbContext.cs
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
-using Common.Entities;
+using DTOs.Entities;
 using Common.Services;
 
 namespace Common.Data;

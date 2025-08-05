@@ -1,5 +1,4 @@
-// FILE: src/shared/Contracts/Repositories/ITenantRepository.cs
-using Common.Entities;
+using DTOs.Entities;
 
 namespace Contracts.Repositories;
 

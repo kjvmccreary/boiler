@@ -2,11 +2,108 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Common.Data;
-using Common.Entities;
+using DTOs.Entities;
 using Contracts.Repositories;
 using Contracts.Services;
 
 namespace Common.Repositories;
+
+public abstract class TenantRepository<T> : IRepository<T> where T : class, DTOs.Entities.BaseEntity
+{
+    protected readonly ApplicationDbContext _context;
+    protected readonly DbSet<T> _dbSet;
+    protected readonly Guid _tenantId;
+    protected readonly ILogger _logger;
+
+    protected TenantRepository(
+        ApplicationDbContext context,
+        ITenantProvider tenantProvider,
+        ILogger logger)
+    {
+        _context = context;
+        _dbSet = context.Set<T>();
+        _tenantId = tenantProvider.GetCurrentTenantId();
+        _logger = logger;
+    }
+
+    public virtual IQueryable<T> Query()
+    {
+        // Check if entity is tenant-aware (has TenantId property)
+        if (typeof(DTOs.Entities.TenantEntity).IsAssignableFrom(typeof(T)))
+        {
+            // All queries automatically filtered by tenant for tenant entities
+            return _dbSet.Where(e => EF.Property<Guid>(e, "TenantId") == _tenantId);
+        }
+        else
+        {
+            // For non-tenant entities (like base User), return all
+            return _dbSet;
+        }
+    }
+
+    public virtual async Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await Query().FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+    }
+
+    public virtual async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await Query().ToListAsync(cancellationToken);
+    }
+
+    public virtual async Task<T> AddAsync(T entity, CancellationToken cancellationToken = default)
+    {
+        // Set TenantId for tenant entities
+        if (entity is DTOs.Entities.TenantEntity tenantEntity)
+        {
+            tenantEntity.TenantId = _tenantId;
+        }
+
+        entity.CreatedAt = DateTime.UtcNow;
+        entity.UpdatedAt = DateTime.UtcNow;
+
+        _dbSet.Add(entity);
+        await _context.SaveChangesAsync(cancellationToken);
+        return entity;
+    }
+
+    public virtual async Task<T> UpdateAsync(T entity, CancellationToken cancellationToken = default)
+    {
+        entity.UpdatedAt = DateTime.UtcNow;
+
+        _dbSet.Update(entity);
+        await _context.SaveChangesAsync(cancellationToken);
+        return entity;
+    }
+
+    public virtual async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var entity = await GetByIdAsync(id, cancellationToken);
+        if (entity != null)
+        {
+            _dbSet.Remove(entity);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    public virtual async Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await Query().AnyAsync(e => e.Id == id, cancellationToken);
+    }
+
+    public virtual async Task<int> CountAsync(CancellationToken cancellationToken = default)
+    {
+        return await Query().CountAsync(cancellationToken);
+    }
+
+    public virtual async Task<IEnumerable<T>> GetPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+    {
+        return await Query()
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+    }
+}
 
 // This repository is for tenant-scoped operations (not typically used since tenants don't belong to other tenants)
 public class TenantScopedRepository : TenantRepository<Tenant>, ITenantRepository

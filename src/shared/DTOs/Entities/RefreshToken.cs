@@ -1,6 +1,5 @@
 // FILE: src/shared/Common/Entities/RefreshToken.cs
-namespace Common.Entities;
-
+namespace DTOs.Entities;
 public class RefreshToken : TenantEntity
 {
     public int UserId { get; set; }

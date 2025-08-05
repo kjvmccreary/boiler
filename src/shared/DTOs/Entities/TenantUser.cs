@@ -1,6 +1,5 @@
 // FILE: src/shared/Common/Entities/TenantUser.cs
-namespace Common.Entities;
-
+namespace DTOs.Entities;
 public class TenantUser : BaseEntity
 {
     public Guid TenantId { get; set; }

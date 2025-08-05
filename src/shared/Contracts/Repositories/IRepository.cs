@@ -1,5 +1,5 @@
 // FILE: src/shared/Contracts/Repositories/IRepository.cs
-using Common.Entities;
+using DTOs.Entities;
 
 namespace Contracts.Repositories;
 

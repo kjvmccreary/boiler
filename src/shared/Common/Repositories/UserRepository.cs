@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Common.Data;
-using Common.Entities;
+using DTOs.Entities;
 using Contracts.Repositories;
 using Contracts.Services;
 

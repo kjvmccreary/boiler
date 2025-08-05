@@ -1,5 +1,5 @@
 // FILE: src/shared/Common/Entities/Tenant.cs
-namespace Common.Entities;
+namespace DTOs.Entities;
 
 public class Tenant : BaseEntity
 {

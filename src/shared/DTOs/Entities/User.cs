@@ -1,6 +1,5 @@
 // FILE: src/shared/Common/Entities/User.cs
-namespace Common.Entities;
-
+namespace DTOs.Entities;
 public class User : TenantEntity
 {
     public string Email { get; set; } = string.Empty;
