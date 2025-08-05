@@ -110,7 +110,7 @@ public static class DatabaseExtensions
             return;
 
         // Create default tenant
-        var defaultTenant = new Common.Entities.Tenant
+        var defaultTenant = new Tenant
         {
             Name = "Default Tenant",
             Domain = "localhost",
@@ -118,6 +118,16 @@ public static class DatabaseExtensions
             IsActive = true,
             Settings = "{\"theme\":\"default\",\"features\":[\"users\",\"auth\"]}"
         };
+
+        //// Create default tenant
+        //var defaultTenant = new Common.Entities.Tenant
+        //{
+        //    Name = "Default Tenant",
+        //    Domain = "localhost",
+        //    SubscriptionPlan = "Basic",
+        //    IsActive = true,
+        //    Settings = "{\"theme\":\"default\",\"features\":[\"users\",\"auth\"]}"
+        //};
 
         context.Tenants.Add(defaultTenant);
         await context.SaveChangesAsync();
