@@ -1,0 +1,59 @@
+﻿services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: boiler-postgres
+    environment:
+      POSTGRES_DB: boiler_dev
+      POSTGRES_USER: boiler_app
+      POSTGRES_PASSWORD: dev_password123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U boiler_app -d boiler_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - boiler-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: boiler-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - boiler-network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: boiler-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - boiler-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  pgadmin_data:
+
+networks:
+  boiler-network:
+    driver: bridge
