@@ -3,7 +3,7 @@ namespace DTOs.Tenant;
 
 public class TenantDto
 {
-    public Guid Id { get; set; }
+    public int Id { get; set; } // Changed from Guid to int to match Tenant entity
     public string Name { get; set; } = string.Empty;
     public string? Domain { get; set; }
     public string SubscriptionPlan { get; set; } = "Basic";

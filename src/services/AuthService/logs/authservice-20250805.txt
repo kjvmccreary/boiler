@@ -1,0 +1,1 @@
+[2025-08-05 17:15:34.457 -05:00 INF] Starting AuthService {}

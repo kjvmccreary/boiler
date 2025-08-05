@@ -65,26 +65,14 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.PasswordResetToken).HasMaxLength(255);
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();
-            // LockedOutUntil doesn't need explicit configuration - nullable DateTime is handled automatically
+
+            // Primary tenant relationship (optional - user can exist without a primary tenant)
+            entity.HasOne(e => e.PrimaryTenant)
+                  .WithMany(t => t.Users)
+                  .HasForeignKey(e => e.TenantId)
+                  .OnDelete(DeleteBehavior.SetNull); // If tenant is deleted, set TenantId to null
         });
     }
-
-    //private void ConfigureUser(ModelBuilder modelBuilder)
-    //{
-    //    modelBuilder.Entity<User>(entity =>
-    //    {
-    //        entity.HasKey(e => e.Id);
-    //        entity.HasIndex(e => e.Email).IsUnique();
-    //        entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
-    //        entity.Property(e => e.PasswordHash).IsRequired().HasMaxLength(255);
-    //        entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
-    //        entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
-    //        entity.Property(e => e.EmailConfirmationToken).HasMaxLength(255);
-    //        entity.Property(e => e.PasswordResetToken).HasMaxLength(255);
-    //        entity.Property(e => e.CreatedAt).IsRequired();
-    //        entity.Property(e => e.UpdatedAt).IsRequired();
-    //    });
-    //}
 
     private void ConfigureTenantUser(ModelBuilder modelBuilder)
     {

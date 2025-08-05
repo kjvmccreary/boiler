@@ -1,41 +1,99 @@
+using Microsoft.EntityFrameworkCore;
+using Common.Data;
+using Common.Extensions;
+using Common.Services;
+using Common.Repositories;
+using Contracts.Services;
+using Contracts.Repositories;
+using Contracts.Auth;
+using AuthService.Services;
+using AuthService.Mappings;
+using DTOs.Entities; // ADDED: Missing using directive for Tenant
+using Serilog;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+// Add Serilog
+builder.Host.UseSerilog((context, configuration) =>
+    configuration.ReadFrom.Configuration(context.Configuration));
+
+// Add services to the container
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Add common services (JWT, configuration, etc.)
+builder.Services.AddCommonServices(builder.Configuration);
+builder.Services.AddJwtAuthentication(builder.Configuration);
+
+// Add Entity Framework
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// FIXED: AutoMapper configuration
+builder.Services.AddAutoMapper(config =>
+{
+    config.AddProfile<MappingProfile>();
+});
+
+// FIXED: Repository registrations - Simplified approach
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITenantManagementRepository, TenantManagementRepository>(); // Use the specific interface
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+
+// Add services
+builder.Services.AddScoped<ITenantProvider, TenantProvider>();
+builder.Services.AddScoped<IPasswordService, PasswordService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IAuthService, AuthServiceImplementation>();
+
+// Add FluentValidation
+builder.Services.AddFluentValidation();
+
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
+
+app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.UseCors("AllowAll");
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.Run();
+app.MapControllers();
 
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+// Add health check endpoint
+app.MapGet("/health", () => Results.Ok(new { Status = "Healthy", Timestamp = DateTime.UtcNow }));
+
+try
 {
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    Log.Information("Starting AuthService");
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "AuthService terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
 }

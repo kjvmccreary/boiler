@@ -1,4 +1,4 @@
-// FILE: src shared/Common/Repositories/TenantRepository.cs
+// FILE: src/shared/Common/Repositories/TenantRepository.cs
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Common.Data;
@@ -186,8 +186,9 @@ public class TenantScopedRepository : TenantRepository<Tenant>, ITenantRepositor
     }
 }
 
-// This repository is for global tenant management operations (not tenant-scoped)
-public class TenantManagementRepository : ITenantManagementRepository
+// UPDATED: This repository is for global tenant management operations (not tenant-scoped)
+// Now implements both ITenantManagementRepository AND IRepository<Tenant>
+public class TenantManagementRepository : ITenantManagementRepository, IRepository<Tenant>
 {
     private readonly ApplicationDbContext _context;
     private readonly DbSet<Tenant> _dbSet;
@@ -202,9 +203,72 @@ public class TenantManagementRepository : ITenantManagementRepository
         _logger = logger;
     }
 
+    // IRepository<Tenant> methods
+    public IQueryable<Tenant> Query()
+    {
+        return _dbSet.AsQueryable();
+    }
+
+    public async Task<Tenant?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
+    }
+
+    public async Task<IEnumerable<Tenant>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbSet.ToListAsync(cancellationToken);
+    }
+
+    public async Task<Tenant> AddAsync(Tenant entity, CancellationToken cancellationToken = default)
+    {
+        entity.CreatedAt = DateTime.UtcNow;
+        entity.UpdatedAt = DateTime.UtcNow;
+
+        _dbSet.Add(entity);
+        await _context.SaveChangesAsync(cancellationToken);
+        return entity;
+    }
+
+    public async Task<Tenant> UpdateAsync(Tenant entity, CancellationToken cancellationToken = default)
+    {
+        entity.UpdatedAt = DateTime.UtcNow;
+        _dbSet.Update(entity);
+        await _context.SaveChangesAsync(cancellationToken);
+        return entity;
+    }
+
+    public async Task DeleteAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var tenant = await GetByIdAsync(id, cancellationToken);
+        if (tenant != null)
+        {
+            _dbSet.Remove(tenant);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    public async Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet.AnyAsync(t => t.Id == id, cancellationToken);
+    }
+
+    public async Task<int> CountAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbSet.CountAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<Tenant>> GetPagedAsync(int pageNumber, int pageSize, CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+    }
+
+    // ITenantManagementRepository methods (some delegate to IRepository methods)
     public async Task<Tenant?> GetTenantByIdAsync(int tenantId, CancellationToken cancellationToken = default)
     {
-        return await _dbSet.FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
+        return await GetByIdAsync(tenantId, cancellationToken);
     }
 
     public async Task<Tenant?> GetTenantByDomainAsync(string domain, CancellationToken cancellationToken = default)
@@ -219,34 +283,21 @@ public class TenantManagementRepository : ITenantManagementRepository
 
     public async Task<IEnumerable<Tenant>> GetAllTenantsAsync(CancellationToken cancellationToken = default)
     {
-        return await _dbSet.ToListAsync(cancellationToken);
+        return await GetAllAsync(cancellationToken);
     }
 
     public async Task<Tenant> CreateTenantAsync(Tenant tenant, CancellationToken cancellationToken = default)
     {
-        tenant.CreatedAt = DateTime.UtcNow;
-        tenant.UpdatedAt = DateTime.UtcNow;
-
-        _dbSet.Add(tenant);
-        await _context.SaveChangesAsync(cancellationToken);
-        return tenant;
+        return await AddAsync(tenant, cancellationToken);
     }
 
     public async Task<Tenant> UpdateTenantAsync(Tenant tenant, CancellationToken cancellationToken = default)
     {
-        tenant.UpdatedAt = DateTime.UtcNow;
-        _dbSet.Update(tenant);
-        await _context.SaveChangesAsync(cancellationToken);
-        return tenant;
+        return await UpdateAsync(tenant, cancellationToken);
     }
 
     public async Task DeleteTenantAsync(int tenantId, CancellationToken cancellationToken = default)
     {
-        var tenant = await GetTenantByIdAsync(tenantId, cancellationToken);
-        if (tenant != null)
-        {
-            _dbSet.Remove(tenant);
-            await _context.SaveChangesAsync(cancellationToken);
-        }
+        await DeleteAsync(tenantId, cancellationToken);
     }
 }
