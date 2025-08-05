@@ -1016,3 +1016,755 @@ stages:
 - Code review process
 - Knowledge sharing sessions
 - Technical debt management
+
+
+# Microservices Starter App - Implementation Phases
+
+## Overview
+This document breaks down the microservices starter application into manageable implementation phases. Each phase builds upon the previous ones and can be completed in separate development sessions.
+
+## Phase 1: Foundation & Project Structure
+**Duration**: 1-2 sessions  
+**Complexity**: Low
+
+### Objectives
+- Set up the basic project structure
+- Initialize solution and core projects
+- Configure basic development environment
+
+### Deliverables
+1. **Solution Structure**
+   ```
+   starter-app/
+   ├── src/
+   │   ├── services/
+   │   │   ├── AuthService/
+   │   │   ├── UserService/
+   │   │   └── ApiGateway/
+   │   ├── shared/
+   │   │   ├── DTOs/
+   │   │   ├── Common/
+   │   │   └── Contracts/
+   │   └── frontend/
+   │       └── react-app/
+   ├── tests/
+   ├── docker/
+   └── docs/
+   ```
+
+2. **Core Projects Setup**
+   - Create ASP.NET Core Web API projects for each service
+   - Set up shared class libraries for DTOs and common utilities
+   - Initialize Vite + React frontend project
+   - Configure solution file (.sln)
+
+3. **Development Environment**
+   - Basic README.md with setup instructions
+   - .gitignore files
+   - EditorConfig for consistent coding standards
+   - Basic project dependencies (without implementation)
+
+### Dependencies
+- .NET 8.0 SDK
+- Node.js 18+
+- Code editor (VS Code/Visual Studio)
+
+### Next Phase Prerequisites
+- All projects compile successfully
+- Solution structure is established
+- Development environment is configured
+
+---
+
+## Phase 2: Shared Libraries & Common Infrastructure
+**Duration**: 1-2 sessions  
+**Complexity**: Low-Medium
+
+### Objectives
+- Implement shared DTOs and common utilities
+- Set up logging, configuration, and middleware foundations
+- Create base classes and interfaces
+
+### Deliverables
+1. **Shared DTOs Project**
+   ```csharp
+   // User-related DTOs
+   public class UserDto { }
+   public class LoginRequestDto { }
+   public class RegisterRequestDto { }
+   public class TokenResponseDto { }
+   
+   // Common DTOs
+   public class ApiResponseDto<T> { }
+   public class ErrorDto { }
+   public class PagedResultDto<T> { }
+   ```
+
+2. **Common Utilities Project**
+   ```csharp
+   // Base entity classes
+   public abstract class BaseEntity { }
+   
+   // Configuration helpers
+   public static class ConfigurationExtensions { }
+   
+   // Logging helpers
+   public static class LoggingExtensions { }
+   
+   // Validation helpers
+   public static class ValidationExtensions { }
+   ```
+
+3. **Service Contracts**
+   ```csharp
+   // Service interfaces
+   public interface IAuthService { }
+   public interface IUserService { }
+   public interface ITenantService { }
+   ```
+
+4. **Configuration Setup**
+   - appsettings.json templates for each environment
+   - Configuration models for each service
+   - Logging configuration with Serilog
+
+### Dependencies
+- Phase 1 completion
+- NuGet packages: Serilog, FluentValidation, AutoMapper
+
+### Next Phase Prerequisites
+- Shared libraries compile and are referenced by service projects
+- Basic configuration and logging framework is in place
+- Common patterns are established
+
+---
+
+## Phase 3: Database Foundation & Entity Framework
+**Duration**: 2-3 sessions  
+**Complexity**: Medium
+
+### Objectives
+- Set up PostgreSQL database with Entity Framework Core
+- Implement core entities with multi-tenant support
+- Create repository pattern and DbContext
+
+### Deliverables
+1. **Core Entities**
+   ```csharp
+   public class Tenant : BaseEntity
+   public class User : BaseEntity
+   public class TenantUser : BaseEntity
+   public class RefreshToken : BaseEntity
+   ```
+
+2. **DbContext Implementation**
+   ```csharp
+   public class ApplicationDbContext : DbContext
+   {
+       // DbSets
+       // OnModelCreating with fluent API
+       // Tenant context management
+       // Row-level security setup
+   }
+   ```
+
+3. **Repository Pattern**
+   ```csharp
+   public interface IRepository<T> where T : BaseEntity
+   public class TenantRepository<T> : IRepository<T>
+   public interface IUserRepository : IRepository<User>
+   public class UserRepository : TenantRepository<User>, IUserRepository
+   ```
+
+4. **Database Migrations**
+   - Initial migration with core tables
+   - Row-level security migration
+   - Seed data migration
+
+5. **Tenant Provider**
+   ```csharp
+   public interface ITenantProvider
+   public class TenantProvider : ITenantProvider
+   ```
+
+### Dependencies
+- Phase 2 completion
+- PostgreSQL (local or Docker)
+- NuGet packages: Npgsql.EntityFrameworkCore.PostgreSQL, Microsoft.EntityFrameworkCore.Tools
+
+### Next Phase Prerequisites
+- Database successfully created and migrated
+- Repository pattern working with basic CRUD operations
+- Tenant context properly isolated data
+
+---
+
+## Phase 4: Authentication Service
+**Duration**: 2-3 sessions  
+**Complexity**: Medium-High
+
+### Objectives
+- Implement JWT-based authentication
+- Create user registration and login endpoints
+- Set up password hashing and validation
+
+### Deliverables
+1. **Authentication Controller**
+   ```csharp
+   [ApiController]
+   [Route("api/[controller]")]
+   public class AuthController : ControllerBase
+   {
+       // POST /api/auth/register
+       // POST /api/auth/login
+       // POST /api/auth/refresh
+       // POST /api/auth/logout
+   }
+   ```
+
+2. **Authentication Services**
+   ```csharp
+   public interface IAuthService
+   public class AuthService : IAuthService
+   public interface ITokenService
+   public class TokenService : ITokenService
+   public interface IPasswordService
+   public class PasswordService : IPasswordService
+   ```
+
+3. **JWT Configuration**
+   - JWT middleware setup
+   - Token generation and validation
+   - Refresh token functionality
+   - Tenant claims in JWT
+
+4. **Validation & Error Handling**
+   - FluentValidation for DTOs
+   - Global exception handler
+   - Standardized API responses
+
+5. **Unit Tests**
+   - Authentication service tests
+   - Token service tests
+   - Controller tests
+
+### Dependencies
+- Phase 3 completion
+- NuGet packages: Microsoft.AspNetCore.Authentication.JwtBearer, BCrypt.Net-Next
+
+### Next Phase Prerequisites
+- User registration and login working
+- JWT tokens generated and validated correctly
+- Tenant context preserved in authentication
+
+---
+
+## Phase 5: User Service
+**Duration**: 1-2 sessions  
+**Complexity**: Medium
+
+### Objectives
+- Implement user management functionality
+- Create user profile endpoints
+- Set up user-tenant relationship management
+
+### Deliverables
+1. **User Controller**
+   ```csharp
+   [ApiController]
+   [Route("api/[controller]")]
+   [Authorize]
+   public class UsersController : ControllerBase
+   {
+       // GET /api/users/profile
+       // PUT /api/users/profile
+       // GET /api/users
+       // GET /api/users/{id}
+       // DELETE /api/users/{id}
+   }
+   ```
+
+2. **User Services**
+   ```csharp
+   public interface IUserService
+   public class UserService : IUserService
+   public interface IUserProfileService
+   public class UserProfileService : IUserProfileService
+   ```
+
+3. **Authorization Setup**
+   - Role-based authorization
+   - Tenant-scoped user access
+   - Permission-based actions
+
+4. **Integration Tests**
+   - User CRUD operations
+   - Authorization scenarios
+   - Tenant isolation verification
+
+### Dependencies
+- Phase 4 completion
+- Authentication working properly
+
+### Next Phase Prerequisites
+- User management endpoints functional
+- Proper authorization and tenant isolation
+- Integration tests passing
+
+---
+
+## Phase 6: API Gateway
+**Duration**: 2-3 sessions  
+**Complexity**: Medium-High
+
+### Objectives
+- Implement API Gateway with Ocelot or YARP
+- Set up request routing and load balancing
+- Implement rate limiting and middleware
+
+### Deliverables
+1. **API Gateway Project**
+   ```csharp
+   public class Program
+   {
+       // API Gateway startup
+       // Service registration
+       // Middleware pipeline
+   }
+   ```
+
+2. **Gateway Configuration**
+   ```json
+   {
+     "Routes": [
+       {
+         "DownstreamPathTemplate": "/api/auth/{everything}",
+         "DownstreamScheme": "http",
+         "DownstreamHostAndPorts": [...],
+         "UpstreamPathTemplate": "/api/auth/{everything}",
+         "UpstreamHttpMethod": ["GET", "POST"]
+       }
+     ]
+   }
+   ```
+
+3. **Middleware Components**
+   ```csharp
+   public class TenantResolutionMiddleware
+   public class RequestLoggingMiddleware
+   public class RateLimitingMiddleware
+   public class AuthenticationMiddleware
+   ```
+
+4. **Service Discovery**
+   - Basic service registration
+   - Health check endpoints
+   - Automatic failover setup
+
+### Dependencies
+- Phase 5 completion
+- Ocelot or YARP NuGet package
+
+### Next Phase Prerequisites
+- API Gateway successfully routing requests
+- All services accessible through gateway
+- Rate limiting and logging working
+
+---
+
+## Phase 7: React Frontend Foundation
+**Duration**: 2-3 sessions  
+**Complexity**: Medium
+
+### Objectives
+- Set up React application with Material UI Pro and Tailwind
+- Implement authentication flows
+- Create basic layout and routing
+
+### Deliverables
+1. **Project Setup**
+   ```bash
+   # Vite + React + TypeScript
+   # Material UI Pro configuration
+   # Tailwind CSS integration
+   # ESLint and Prettier setup
+   ```
+
+2. **Authentication Components**
+   ```tsx
+   // LoginForm component
+   // RegisterForm component
+   // AuthProvider context
+   // ProtectedRoute component
+   ```
+
+3. **Layout Components**
+   ```tsx
+   // AppLayout with navigation
+   // Header with user menu
+   // Sidebar navigation
+   // Footer component
+   ```
+
+4. **Routing Setup**
+   ```tsx
+   // React Router configuration
+   // Public and protected routes
+   // Route guards
+   ```
+
+5. **API Client**
+   ```tsx
+   // Axios configuration
+   // API service classes
+   // Error handling
+   // Loading states
+   ```
+
+### Dependencies
+- Phase 6 completion
+- Node.js and npm/yarn
+- Material UI Pro license (or fallback to free version)
+
+### Next Phase Prerequisites
+- Frontend application loads and displays correctly
+- Authentication flow working end-to-end
+- API integration successful
+
+---
+
+## Phase 8: Docker Configuration
+**Duration**: 2-3 sessions  
+**Complexity**: Medium
+
+### Objectives
+- Containerize all services
+- Set up Docker Compose for local development
+- Configure networking and service communication
+
+### Deliverables
+1. **Dockerfiles**
+   ```dockerfile
+   # Dockerfile for each service
+   # Multi-stage builds for optimization
+   # Non-root user configuration
+   ```
+
+2. **Docker Compose**
+   ```yaml
+   # docker-compose.yml
+   # docker-compose.override.yml for development
+   # Services: postgres, redis, rabbitmq, nginx
+   # Application services configuration
+   ```
+
+3. **Database Setup**
+   ```bash
+   # PostgreSQL container configuration
+   # Database initialization scripts
+   # Migration execution on startup
+   ```
+
+4. **nginx Configuration**
+   ```nginx
+   # Reverse proxy setup
+   # Load balancing configuration
+   # SSL termination
+   ```
+
+5. **Development Scripts**
+   ```bash
+   # start-dev.sh
+   # stop-dev.sh
+   # rebuild.sh
+   # logs.sh
+   ```
+
+### Dependencies
+- Phase 7 completion
+- Docker Desktop installed
+- All services working individually
+
+### Next Phase Prerequisites
+- All services running in Docker containers
+- Services can communicate with each other
+- Development workflow streamlined
+
+---
+
+## Phase 9: Multi-Tenant Implementation
+**Duration**: 3-4 sessions  
+**Complexity**: High
+
+### Objectives
+- Implement shared database, shared schema multi-tenancy
+- Set up tenant resolution strategies
+- Ensure complete data isolation
+
+### Deliverables
+1. **Tenant Resolution**
+   ```csharp
+   public enum TenantResolutionStrategy
+   {
+       Domain,
+       Path,
+       Header
+   }
+   
+   public class TenantResolver
+   public class TenantMiddleware
+   ```
+
+2. **Enhanced Repository Pattern**
+   ```csharp
+   // Automatic tenant filtering
+   // Tenant-scoped queries
+   // Cross-tenant prevention
+   ```
+
+3. **Tenant Management**
+   ```csharp
+   [ApiController]
+   [Route("api/[controller]")]
+   public class TenantsController : ControllerBase
+   {
+       // Tenant CRUD operations
+       // Tenant settings management
+       // User-tenant associations
+   }
+   ```
+
+4. **Row-Level Security**
+   ```sql
+   -- PostgreSQL RLS policies
+   -- Tenant context functions
+   -- Security testing
+   ```
+
+5. **Frontend Multi-Tenancy**
+   ```tsx
+   // Tenant context provider
+   // Dynamic branding
+   // Tenant-specific routing
+   ```
+
+### Dependencies
+- Phase 8 completion
+- PostgreSQL RLS understanding
+- Multi-tenant testing strategy
+
+### Next Phase Prerequisites
+- Complete tenant isolation verified
+- Multiple tenants can operate independently
+- No cross-tenant data leakage
+
+---
+
+## Phase 10: Enhanced Security & Monitoring
+**Duration**: 2-3 sessions  
+**Complexity**: Medium-High
+
+### Objectives
+- Implement comprehensive security measures
+- Set up monitoring and health checks
+- Add audit logging and compliance features
+
+### Deliverables
+1. **Security Enhancements**
+   ```csharp
+   // Input validation middleware
+   // XSS protection
+   // CORS configuration
+   // Security headers
+   // Rate limiting per tenant
+   ```
+
+2. **Monitoring Setup**
+   ```csharp
+   // Health check endpoints
+   // Performance counters
+   // Custom metrics
+   // Alerting thresholds
+   ```
+
+3. **Audit Logging**
+   ```csharp
+   public class AuditEntry
+   public class AuditService
+   // User action tracking
+   // Data change logging
+   // Compliance reporting
+   ```
+
+4. **Configuration Management**
+   ```csharp
+   // Environment-specific settings
+   // Feature flags
+   // Tenant-specific configurations
+   ```
+
+### Dependencies
+- Phase 9 completion
+- Monitoring tools selected
+- Security requirements defined
+
+### Next Phase Prerequisites
+- Security measures tested and verified
+- Monitoring dashboards operational
+- Audit logging capturing all required events
+
+---
+
+## Phase 11: Testing & Quality Assurance
+**Duration**: 2-3 sessions  
+**Complexity**: Medium
+
+### Objectives
+- Implement comprehensive testing strategy
+- Set up automated testing pipeline
+- Ensure code quality and coverage
+
+### Deliverables
+1. **Unit Tests**
+   ```csharp
+   // Service layer tests
+   // Repository tests
+   // Utility function tests
+   // 80%+ code coverage
+   ```
+
+2. **Integration Tests**
+   ```csharp
+   // Database integration tests
+   // API endpoint tests
+   // Multi-tenant isolation tests
+   // Authentication flow tests
+   ```
+
+3. **End-to-End Tests**
+   ```typescript
+   // Frontend E2E tests with Playwright
+   // Critical user journey tests
+   // Cross-browser testing
+   ```
+
+4. **Performance Tests**
+   ```csharp
+   // Load testing scenarios
+   // Database performance tests
+   // API response time validation
+   ```
+
+5. **Quality Gates**
+   ```yaml
+   # CI/CD pipeline configuration
+   # Code quality checks
+   # Security scanning
+   # Automated deployment gates
+   ```
+
+### Dependencies
+- Phase 10 completion
+- Testing frameworks selected
+- CI/CD pipeline tools available
+
+### Next Phase Prerequisites
+- All tests passing consistently
+- Quality gates met
+- Performance benchmarks established
+
+---
+
+## Phase 12: Deployment Preparation
+**Duration**: 2-3 sessions  
+**Complexity**: Medium-High
+
+### Objectives
+- Prepare for multiple deployment scenarios
+- Create deployment scripts and documentation
+- Set up environment-specific configurations
+
+### Deliverables
+1. **Cloud Deployment (SaaS)**
+   ```yaml
+   # Kubernetes manifests
+   # Helm charts
+   # Auto-scaling configuration
+   # Load balancer setup
+   ```
+
+2. **On-Premise Deployment**
+   ```bash
+   # Installation scripts
+   # Configuration templates
+   # Backup procedures
+   # Upgrade scripts
+   ```
+
+3. **Government Cloud Setup**
+   ```yaml
+   # Enhanced security configurations
+   # Compliance settings
+   # Audit requirements
+   # Access controls
+   ```
+
+4. **Documentation**
+   ```markdown
+   # Installation guides
+   # Administrator manual
+   # Troubleshooting guide
+   # API documentation
+   ```
+
+5. **Deployment Automation**
+   ```yaml
+   # CI/CD pipelines for each environment
+   # Infrastructure as Code (Terraform)
+   # Automated testing in deployment pipeline
+   ```
+
+### Dependencies
+- Phase 11 completion
+- Deployment target environments identified
+- Infrastructure requirements defined
+
+### Next Phase Prerequisites
+- Successful deployment to all target environments
+- Documentation complete and tested
+- Deployment automation working reliably
+
+---
+
+## Implementation Notes
+
+### Session Management
+- Each phase is designed to fit within 1-4 development sessions
+- Phases build upon each other sequentially
+- Clear entry and exit criteria for each phase
+- Checkpoint documentation at each phase completion
+
+### Development Approach
+- Start with minimal viable implementation in each phase
+- Enhance and iterate within phases as needed
+- Maintain working state at end of each phase
+- Document decisions and trade-offs made
+
+### Resource Planning
+- Estimated total development time: 25-35 sessions
+- Each session: 2-4 hours of focused development
+- Buffer time built in for learning and debugging
+- Parallel development possible after Phase 6
+
+### Quality Checkpoints
+- Code review after every 2-3 phases
+- Integration testing at major milestones
+- Performance validation after Phase 10
+- Security review after Phase 10
+- Final acceptance testing after Phase 12
+
+## Getting Started
+
+To begin implementation, start with Phase 1 and work through each phase sequentially. Each phase document should be created as you begin that phase, detailing the specific implementation steps, code samples, and acceptance criteria.
+
+Remember to commit your work frequently and tag releases at the end of major phases for easy rollback if needed.
