@@ -1,3 +1,4 @@
+// FILE: src/shared/Contracts/Repositories/ITenantRepository.cs
 using DTOs.Entities;
 
 namespace Contracts.Repositories;
