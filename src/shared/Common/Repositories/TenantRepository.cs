@@ -8,12 +8,13 @@ using Contracts.Services;
 
 namespace Common.Repositories;
 
-public abstract class TenantRepository<T> : IRepository<T> where T : class, DTOs.Entities.BaseEntity
+public abstract class TenantRepository<T> : IRepository<T> where T : BaseEntity
 {
     protected readonly ApplicationDbContext _context;
     protected readonly DbSet<T> _dbSet;
     protected readonly Guid _tenantId;
     protected readonly ILogger _logger;
+    private readonly ITenantProvider _tenantProvider;
 
     protected TenantRepository(
         ApplicationDbContext context,
@@ -22,24 +23,63 @@ public abstract class TenantRepository<T> : IRepository<T> where T : class, DTOs
     {
         _context = context;
         _dbSet = context.Set<T>();
-        _tenantId = tenantProvider.GetCurrentTenantId();
+        _tenantProvider = tenantProvider;
         _logger = logger;
     }
+    //protected TenantRepository(
+    //    ApplicationDbContext context,
+    //    ITenantProvider tenantProvider,
+    //    ILogger logger)
+    //{
+    //    _context = context;
+    //    _dbSet = context.Set<T>();
+    //    _tenantId = tenantProvider.GetCurrentTenantId();
+    //    _logger = logger;
+    //}
 
     public virtual IQueryable<T> Query()
     {
         // Check if entity is tenant-aware (has TenantId property)
-        if (typeof(DTOs.Entities.TenantEntity).IsAssignableFrom(typeof(T)))
+        if (typeof(TenantEntity).IsAssignableFrom(typeof(T)))
         {
-            // All queries automatically filtered by tenant for tenant entities
-            return _dbSet.Where(e => EF.Property<Guid>(e, "TenantId") == _tenantId);
+            // For tenant entities, we need to get tenant ID synchronously for LINQ queries
+            var tenantId = GetCurrentTenantIdSync();
+            if (tenantId.HasValue)
+            {
+                return _dbSet.Where(e => EF.Property<Guid>(e, "TenantId") == tenantId.Value);
+            }
         }
-        else
+
+        // For non-tenant entities or when no tenant context, return all
+        return _dbSet;
+    }
+
+    private Guid? GetCurrentTenantIdSync()
+    {
+        try
         {
-            // For non-tenant entities (like base User), return all
-            return _dbSet;
+            return _tenantProvider.GetCurrentTenantIdAsync().GetAwaiter().GetResult();
+        }
+        catch
+        {
+            return null;
         }
     }
+
+    //public virtual IQueryable<T> Query()
+    //{
+    //    // Check if entity is tenant-aware (has TenantId property)
+    //    if (typeof(DTOs.Entities.TenantEntity).IsAssignableFrom(typeof(T)))
+    //    {
+    //        // All queries automatically filtered by tenant for tenant entities
+    //        return _dbSet.Where(e => EF.Property<Guid>(e, "TenantId") == _tenantId);
+    //    }
+    //    else
+    //    {
+    //        // For non-tenant entities (like base User), return all
+    //        return _dbSet;
+    //    }
+    //}
 
     public virtual async Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
@@ -54,9 +94,13 @@ public abstract class TenantRepository<T> : IRepository<T> where T : class, DTOs
     public virtual async Task<T> AddAsync(T entity, CancellationToken cancellationToken = default)
     {
         // Set TenantId for tenant entities
-        if (entity is DTOs.Entities.TenantEntity tenantEntity)
+        if (entity is TenantEntity tenantEntity)
         {
-            tenantEntity.TenantId = _tenantId;
+            var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (tenantId.HasValue)
+            {
+                tenantEntity.TenantId = tenantId.Value;
+            }
         }
 
         entity.CreatedAt = DateTime.UtcNow;
@@ -66,6 +110,22 @@ public abstract class TenantRepository<T> : IRepository<T> where T : class, DTOs
         await _context.SaveChangesAsync(cancellationToken);
         return entity;
     }
+
+    //public virtual async Task<T> AddAsync(T entity, CancellationToken cancellationToken = default)
+    //{
+    //    // Set TenantId for tenant entities
+    //    if (entity is DTOs.Entities.TenantEntity tenantEntity)
+    //    {
+    //        tenantEntity.TenantId = _tenantId;
+    //    }
+
+    //    entity.CreatedAt = DateTime.UtcNow;
+    //    entity.UpdatedAt = DateTime.UtcNow;
+
+    //    _dbSet.Add(entity);
+    //    await _context.SaveChangesAsync(cancellationToken);
+    //    return entity;
+    //}
 
     public virtual async Task<T> UpdateAsync(T entity, CancellationToken cancellationToken = default)
     {
