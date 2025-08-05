@@ -3,9 +3,9 @@ namespace Contracts.Services;
 
 public interface ITenantProvider
 {
-    Task<Guid?> GetCurrentTenantIdAsync();
+    Task<int?> GetCurrentTenantIdAsync();
     Task<string?> GetCurrentTenantIdentifierAsync();
-    Task SetCurrentTenantAsync(Guid tenantId);
+    Task SetCurrentTenantAsync(int tenantId);
     Task SetCurrentTenantAsync(string tenantIdentifier);
     Task ClearCurrentTenantAsync();
     bool HasTenantContext { get; }

@@ -3,5 +3,5 @@ namespace DTOs.Entities;
 
 public abstract class TenantEntity : BaseEntity
 {
-    public Guid TenantId { get; set; }
+    public int TenantId { get; set; } // Changed from Guid to int
 }

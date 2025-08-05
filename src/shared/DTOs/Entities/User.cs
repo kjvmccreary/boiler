@@ -14,7 +14,7 @@ public class User : BaseEntity
     public string? PasswordResetToken { get; set; }
     public DateTime? PasswordResetTokenExpiry { get; set; }
     public int FailedLoginAttempts { get; set; } = 0;
-    public DateTime? LockoutEnd { get; set; }
+    public DateTime? LockedOutUntil { get; set; } // FIXED: Changed from LockoutEnd to LockedOutUntil
     public DateTime? LastLoginAt { get; set; }
 
     public string FullName => $"{FirstName} {LastName}".Trim();

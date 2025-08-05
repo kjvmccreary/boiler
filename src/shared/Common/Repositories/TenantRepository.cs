@@ -1,4 +1,4 @@
-// FILE: src/shared/Common/Repositories/TenantRepository.cs
+// FILE: src shared/Common/Repositories/TenantRepository.cs
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Common.Data;
@@ -12,7 +12,7 @@ public abstract class TenantRepository<T> : IRepository<T> where T : BaseEntity
 {
     protected readonly ApplicationDbContext _context;
     protected readonly DbSet<T> _dbSet;
-    protected readonly Guid _tenantId;
+    protected readonly int _tenantId; // Changed from Guid to int
     protected readonly ILogger _logger;
     private readonly ITenantProvider _tenantProvider;
 
@@ -26,16 +26,6 @@ public abstract class TenantRepository<T> : IRepository<T> where T : BaseEntity
         _tenantProvider = tenantProvider;
         _logger = logger;
     }
-    //protected TenantRepository(
-    //    ApplicationDbContext context,
-    //    ITenantProvider tenantProvider,
-    //    ILogger logger)
-    //{
-    //    _context = context;
-    //    _dbSet = context.Set<T>();
-    //    _tenantId = tenantProvider.GetCurrentTenantId();
-    //    _logger = logger;
-    //}
 
     public virtual IQueryable<T> Query()
     {
@@ -46,7 +36,7 @@ public abstract class TenantRepository<T> : IRepository<T> where T : BaseEntity
             var tenantId = GetCurrentTenantIdSync();
             if (tenantId.HasValue)
             {
-                return _dbSet.Where(e => EF.Property<Guid>(e, "TenantId") == tenantId.Value);
+                return _dbSet.Where(e => EF.Property<int>(e, "TenantId") == tenantId.Value); // Changed from Guid to int
             }
         }
 
@@ -54,7 +44,7 @@ public abstract class TenantRepository<T> : IRepository<T> where T : BaseEntity
         return _dbSet;
     }
 
-    private Guid? GetCurrentTenantIdSync()
+    private int? GetCurrentTenantIdSync() // Changed return type from Guid? to int?
     {
         try
         {
@@ -65,21 +55,6 @@ public abstract class TenantRepository<T> : IRepository<T> where T : BaseEntity
             return null;
         }
     }
-
-    //public virtual IQueryable<T> Query()
-    //{
-    //    // Check if entity is tenant-aware (has TenantId property)
-    //    if (typeof(DTOs.Entities.TenantEntity).IsAssignableFrom(typeof(T)))
-    //    {
-    //        // All queries automatically filtered by tenant for tenant entities
-    //        return _dbSet.Where(e => EF.Property<Guid>(e, "TenantId") == _tenantId);
-    //    }
-    //    else
-    //    {
-    //        // For non-tenant entities (like base User), return all
-    //        return _dbSet;
-    //    }
-    //}
 
     public virtual async Task<T?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
@@ -99,7 +74,7 @@ public abstract class TenantRepository<T> : IRepository<T> where T : BaseEntity
             var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (tenantId.HasValue)
             {
-                tenantEntity.TenantId = tenantId.Value;
+                tenantEntity.TenantId = tenantId.Value; // Now int = int, no conversion needed
             }
         }
 
@@ -110,22 +85,6 @@ public abstract class TenantRepository<T> : IRepository<T> where T : BaseEntity
         await _context.SaveChangesAsync(cancellationToken);
         return entity;
     }
-
-    //public virtual async Task<T> AddAsync(T entity, CancellationToken cancellationToken = default)
-    //{
-    //    // Set TenantId for tenant entities
-    //    if (entity is DTOs.Entities.TenantEntity tenantEntity)
-    //    {
-    //        tenantEntity.TenantId = _tenantId;
-    //    }
-
-    //    entity.CreatedAt = DateTime.UtcNow;
-    //    entity.UpdatedAt = DateTime.UtcNow;
-
-    //    _dbSet.Add(entity);
-    //    await _context.SaveChangesAsync(cancellationToken);
-    //    return entity;
-    //}
 
     public virtual async Task<T> UpdateAsync(T entity, CancellationToken cancellationToken = default)
     {
@@ -243,9 +202,9 @@ public class TenantManagementRepository : ITenantManagementRepository
         _logger = logger;
     }
 
-    public async Task<Tenant?> GetTenantByIdAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    public async Task<Tenant?> GetTenantByIdAsync(int tenantId, CancellationToken cancellationToken = default)
     {
-        return await _dbSet.FirstOrDefaultAsync(t => t.Id == (int)(object)tenantId, cancellationToken);
+        return await _dbSet.FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
     }
 
     public async Task<Tenant?> GetTenantByDomainAsync(string domain, CancellationToken cancellationToken = default)
@@ -281,7 +240,7 @@ public class TenantManagementRepository : ITenantManagementRepository
         return tenant;
     }
 
-    public async Task DeleteTenantAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    public async Task DeleteTenantAsync(int tenantId, CancellationToken cancellationToken = default)
     {
         var tenant = await GetTenantByIdAsync(tenantId, cancellationToken);
         if (tenant != null)

@@ -2,7 +2,7 @@
 namespace DTOs.Entities;
 public class TenantUser : BaseEntity
 {
-    public Guid TenantId { get; set; }
+    public int TenantId { get; set; } // Changed from Guid to int
     public int UserId { get; set; }
     public string Role { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;

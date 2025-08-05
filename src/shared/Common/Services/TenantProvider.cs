@@ -6,7 +6,6 @@ using Contracts.Services;
 using System.Security.Claims;
 using DTOs.Entities;
 
-
 namespace Common.Services;
 
 public class TenantProvider : ITenantProvider
@@ -14,7 +13,7 @@ public class TenantProvider : ITenantProvider
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly TenantSettings _tenantSettings;
     private readonly ILogger<TenantProvider> _logger;
-    private readonly AsyncLocal<Guid?> _currentTenantId = new();
+    private readonly AsyncLocal<int?> _currentTenantId = new(); // Changed from Guid? to int?
     private readonly AsyncLocal<string?> _currentTenantIdentifier = new();
 
     public TenantProvider(
@@ -29,7 +28,7 @@ public class TenantProvider : ITenantProvider
 
     public bool HasTenantContext => _currentTenantId.Value.HasValue || !string.IsNullOrEmpty(_currentTenantIdentifier.Value);
 
-    public async Task<Guid?> GetCurrentTenantIdAsync()
+    public async Task<int?> GetCurrentTenantIdAsync() // Changed return type from Guid? to int?
     {
         // First check if tenant ID is already set in the async local
         if (_currentTenantId.Value.HasValue)
@@ -40,7 +39,7 @@ public class TenantProvider : ITenantProvider
         {
             // If no HTTP context, check for default tenant
             if (!string.IsNullOrEmpty(_tenantSettings.DefaultTenantId) &&
-                Guid.TryParse(_tenantSettings.DefaultTenantId, out var defaultTenantId))
+                int.TryParse(_tenantSettings.DefaultTenantId, out var defaultTenantId)) // Changed from Guid.TryParse to int.TryParse
             {
                 return defaultTenantId;
             }
@@ -89,7 +88,7 @@ public class TenantProvider : ITenantProvider
         }
     }
 
-    public async Task SetCurrentTenantAsync(Guid tenantId)
+    public async Task SetCurrentTenantAsync(int tenantId) // Changed parameter type from Guid to int
     {
         _currentTenantId.Value = tenantId;
         _currentTenantIdentifier.Value = tenantId.ToString();
@@ -107,7 +106,7 @@ public class TenantProvider : ITenantProvider
     {
         _currentTenantIdentifier.Value = tenantIdentifier;
 
-        if (Guid.TryParse(tenantIdentifier, out var tenantId))
+        if (int.TryParse(tenantIdentifier, out var tenantId)) // Changed from Guid.TryParse to int.TryParse
         {
             _currentTenantId.Value = tenantId;
         }
@@ -136,18 +135,18 @@ public class TenantProvider : ITenantProvider
         await Task.CompletedTask;
     }
 
-    private async Task<Guid?> ResolveTenantIdAsync(HttpContext context)
+    private async Task<int?> ResolveTenantIdAsync(HttpContext context) // Changed return type from Guid? to int?
     {
         var identifier = await ResolveTenantIdentifierAsync(context);
         if (string.IsNullOrEmpty(identifier))
             return null;
 
-        // Try to parse as GUID first
-        if (Guid.TryParse(identifier, out var tenantId))
+        // Try to parse as int first
+        if (int.TryParse(identifier, out var tenantId)) // Changed from Guid.TryParse to int.TryParse
             return tenantId;
 
         // TODO: In a real implementation, you would look up the tenant ID by identifier (domain, etc.)
-        // For now, we'll return null if it's not a valid GUID
+        // For now, we'll return null if it's not a valid int
         return null;
     }
 

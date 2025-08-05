@@ -17,11 +17,11 @@ public interface ITenantRepository : IRepository<TenantEntity>
 // Note: This is a non-tenant-scoped repository since we need to access all tenants
 public interface ITenantManagementRepository
 {
-    Task<TenantEntity?> GetTenantByIdAsync(Guid tenantId, CancellationToken cancellationToken = default);
+    Task<TenantEntity?> GetTenantByIdAsync(int tenantId, CancellationToken cancellationToken = default);
     Task<TenantEntity?> GetTenantByDomainAsync(string domain, CancellationToken cancellationToken = default);
     Task<TenantEntity?> GetTenantByNameAsync(string name, CancellationToken cancellationToken = default);
     Task<IEnumerable<TenantEntity>> GetAllTenantsAsync(CancellationToken cancellationToken = default);
     Task<TenantEntity> CreateTenantAsync(TenantEntity tenant, CancellationToken cancellationToken = default);
     Task<TenantEntity> UpdateTenantAsync(TenantEntity tenant, CancellationToken cancellationToken = default);
-    Task DeleteTenantAsync(Guid tenantId, CancellationToken cancellationToken = default);
+    Task DeleteTenantAsync(int tenantId, CancellationToken cancellationToken = default);
 }
