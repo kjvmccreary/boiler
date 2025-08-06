@@ -1,0 +1,10 @@
+[2025-08-06 15:41:30.301 -05:00 INF] Starting UserService {}
+[2025-08-06 15:48:48.094 -05:00 WRN] Failed to determine the https port for redirect. {"EventId":{"Id":3,"Name":"FailedToDeterminePort"},"SourceContext":"Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware","RequestId":"0HNEL58127372:00000001","RequestPath":"/health","ConnectionId":"0HNEL58127372"}
+[2025-08-06 15:48:48.190 -05:00 INF] HTTP GET /health responded 200 in 105.2271 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-06 15:48:48.256 -05:00 INF] HTTP GET /favicon.ico responded 404 in 1.2764 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-06 15:51:30.985 -05:00 INF] Starting UserService {}
+[2025-08-06 15:55:08.056 -05:00 INF] Starting UserService {}
+[2025-08-06 15:56:02.575 -05:00 INF] HTTP GET / responded 404 in 23.0349 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-06 15:59:02.778 -05:00 INF] HTTP GET /health responded 200 in 14.7891 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-06 15:59:02.820 -05:00 INF] HTTP GET /favicon.ico responded 404 in 1.5044 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-06 16:02:35.217 -05:00 INF] Starting UserService {}

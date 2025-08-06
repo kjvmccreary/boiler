@@ -1,6 +1,6 @@
 // src/shared/Contracts/User/IUserService.cs
 using DTOs.Common;
-using DTOs.User; // Explicitly import DTOs.User namespace
+using DTOs.User;
 
 namespace Contracts.User;
 
@@ -13,4 +13,6 @@ public interface IUserService
     Task<ApiResponseDto<UserDto>> UpdateUserAsync(int userId, UserUpdateDto request, CancellationToken cancellationToken = default);
     Task<ApiResponseDto<bool>> DeleteUserAsync(int userId, CancellationToken cancellationToken = default);
     Task<ApiResponseDto<bool>> ExistsAsync(int userId, CancellationToken cancellationToken = default);
+    Task<ApiResponseDto<PagedResultDto<UserSummaryDto>>> GetUsersSummaryAsync(int tenantId, PaginationRequestDto request, CancellationToken cancellationToken = default);
+    Task<ApiResponseDto<UserDetailDto>> GetUserDetailAsync(int userId, int tenantId, CancellationToken cancellationToken = default);
 }

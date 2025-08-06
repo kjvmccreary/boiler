@@ -1,4 +1,4 @@
-// FILE: src/shared/Common/Data/ApplicationDbContext.cs
+// FILE: src shared/Common/Data/ApplicationDbContext.cs
 using Contracts.Services; // ADDED: Import for ITenantProvider
 using DTOs.Entities;
 using Microsoft.AspNetCore.Http;
@@ -61,6 +61,13 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.PasswordHash).IsRequired().HasMaxLength(255);
             entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
+            
+            // ➕ ADD THESE NEW PROPERTY CONFIGURATIONS:
+            entity.Property(e => e.PhoneNumber).HasMaxLength(20);
+            entity.Property(e => e.TimeZone).HasMaxLength(100);
+            entity.Property(e => e.Language).HasMaxLength(10);
+            entity.Property(e => e.Preferences).HasColumnType("jsonb"); // Store as JSONB in PostgreSQL
+            
             entity.Property(e => e.EmailConfirmationToken).HasMaxLength(255);
             entity.Property(e => e.PasswordResetToken).HasMaxLength(255);
             entity.Property(e => e.CreatedAt).IsRequired();
