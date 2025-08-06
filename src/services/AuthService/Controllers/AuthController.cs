@@ -1,10 +1,10 @@
 // FILE: src/services/AuthService/Controllers/AuthController.cs
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Contracts.Auth;
 using DTOs.Auth;
 using DTOs.Common;
-using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AuthService.Controllers;
 
@@ -29,7 +29,7 @@ public class AuthController : ControllerBase
         try
         {
             var result = await _authService.RegisterAsync(request, cancellationToken);
-            
+
             if (result.Success)
             {
                 return Ok(result);
@@ -52,7 +52,7 @@ public class AuthController : ControllerBase
         try
         {
             var result = await _authService.LoginAsync(request, cancellationToken);
-            
+
             if (result.Success)
             {
                 return Ok(result);
@@ -75,7 +75,7 @@ public class AuthController : ControllerBase
         try
         {
             var result = await _authService.RefreshTokenAsync(request, cancellationToken);
-            
+
             if (result.Success)
             {
                 return Ok(result);
@@ -99,7 +99,7 @@ public class AuthController : ControllerBase
         try
         {
             var result = await _authService.LogoutAsync(request.RefreshToken, cancellationToken);
-            
+
             if (result.Success)
             {
                 return Ok(result);
@@ -129,7 +129,7 @@ public class AuthController : ControllerBase
             }
 
             var result = await _authService.ChangePasswordAsync(userId, request, cancellationToken);
-            
+
             if (result.Success)
             {
                 return Ok(result);
@@ -169,7 +169,7 @@ public class AuthController : ControllerBase
         try
         {
             var result = await _authService.ConfirmEmailAsync(request.Email, request.Token, cancellationToken);
-            
+
             if (result.Success)
             {
                 return Ok(result);

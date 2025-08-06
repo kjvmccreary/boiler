@@ -1,10 +1,10 @@
 // FILE: src/shared/Common/Repositories/UserRepository.cs
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Common.Data;
-using DTOs.Entities;
 using Contracts.Repositories;
 using Contracts.Services;
+using DTOs.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Common.Repositories;
 

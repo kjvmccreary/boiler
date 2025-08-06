@@ -1,8 +1,8 @@
 // FILE: src/shared/Common/Data/ApplicationDbContext.cs
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Http;
-using DTOs.Entities;
 using Contracts.Services; // ADDED: Import for ITenantProvider
+using DTOs.Entities;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace Common.Data;
 

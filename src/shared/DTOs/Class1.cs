@@ -1,4 +1,4 @@
-﻿namespace DTOs;
+namespace DTOs;
 
 public class Class1
 {

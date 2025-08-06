@@ -1,6 +1,6 @@
 // FILE: src/shared/DTOs/Auth/TokenResponseDto.cs
-using DTOs.User;
 using DTOs.Tenant;
+using DTOs.User;
 
 namespace DTOs.Auth;
 

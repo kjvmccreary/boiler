@@ -1,6 +1,6 @@
 // src/shared/Contracts/User/IUserService.cs
-using DTOs.User; // Explicitly import DTOs.User namespace
 using DTOs.Common;
+using DTOs.User; // Explicitly import DTOs.User namespace
 
 namespace Contracts.User;
 

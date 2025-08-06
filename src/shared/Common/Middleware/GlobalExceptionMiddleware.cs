@@ -1,10 +1,10 @@
 // FILE: src/shared/Common/Middleware/GlobalExceptionMiddleware.cs
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text.Json;
-using DTOs.Common;
 using Common.Exceptions;
+using DTOs.Common;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Common.Middleware;
 

@@ -1,10 +1,10 @@
 // FILE: src/shared/Common/Services/TenantProvider.cs
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
+using System.Security.Claims;
 using Common.Configuration;
 using Contracts.Services;
-using System.Security.Claims;
 using DTOs.Entities;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Common.Services;
 

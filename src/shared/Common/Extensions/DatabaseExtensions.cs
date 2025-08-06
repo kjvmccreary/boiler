@@ -1,13 +1,13 @@
 // FILE: src/shared/Common/Extensions/DatabaseExtensions.cs
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
-using Microsoft.EntityFrameworkCore;
-using Common.Data;
 using Common.Configuration;
-using Common.Services;
+using Common.Data;
 using Common.Repositories;
-using Contracts.Services;
+using Common.Services;
 using Contracts.Repositories;
+using Contracts.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Common.Extensions;
 

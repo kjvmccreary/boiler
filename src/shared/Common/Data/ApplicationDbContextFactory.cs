@@ -1,11 +1,11 @@
 // FILE: src/shared/Common/Data/ApplicationDbContextFactory.cs
+using Common.Configuration;
+using Common.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.AspNetCore.Http;
-using Common.Services;
-using Common.Configuration;
 
 namespace Common.Data;
 

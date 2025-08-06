@@ -1,13 +1,13 @@
 // FILE: src/services/AuthService/Services/AuthService.cs
-using Microsoft.EntityFrameworkCore;
-using Common.Data;
+using AutoMapper;
 using Common.Configuration;
-using DTOs.Entities;
+using Common.Data;
 using Contracts.Auth;
 using Contracts.Repositories; // ADDED: For ITenantManagementRepository
 using DTOs.Auth;
 using DTOs.Common;
-using AutoMapper;
+using DTOs.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace AuthService.Services;
 
@@ -281,7 +281,7 @@ public class AuthServiceImplementation : IAuthService
                 token.IsRevoked = true;
                 token.RevokedAt = DateTime.UtcNow;
                 token.RevokedByIp = GetClientIpAddress();
-                
+
                 await _context.SaveChangesAsync(cancellationToken);
             }
 
@@ -373,7 +373,7 @@ public class AuthServiceImplementation : IAuthService
         try
         {
             var user = await _context.Users.FirstOrDefaultAsync(
-                u => u.Email == email && u.EmailConfirmationToken == token, 
+                u => u.Email == email && u.EmailConfirmationToken == token,
                 cancellationToken);
 
             if (user == null || user.EmailConfirmationTokenExpiry < DateTime.UtcNow)
@@ -418,7 +418,7 @@ public class AuthServiceImplementation : IAuthService
     }
 
     // Helper methods
-    #pragma warning disable CS1998
+#pragma warning disable CS1998
     private async Task<Tenant> GetTenantForRegistrationAsync(RegisterRequestDto request, CancellationToken cancellationToken)
     {
         if (!string.IsNullOrEmpty(request.TenantName))
@@ -445,7 +445,7 @@ public class AuthServiceImplementation : IAuthService
         // Get existing tenant or create default
         var allTenants = await _tenantRepository.GetAllTenantsAsync(cancellationToken);
         var firstTenant = allTenants.FirstOrDefault();
-        
+
         if (firstTenant != null)
         {
             return firstTenant;
@@ -462,7 +462,7 @@ public class AuthServiceImplementation : IAuthService
 
         return await _tenantRepository.CreateTenantAsync(defaultTenant, cancellationToken);
     }
-    #pragma warning restore CS1998
+#pragma warning restore CS1998
 
     private string GetClientIpAddress()
     {

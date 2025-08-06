@@ -1,14 +1,14 @@
-using Microsoft.EntityFrameworkCore;
+using AuthService.Mappings;
+using AuthService.Services;
 using Common.Data;
 using Common.Extensions;
-using Common.Services;
 using Common.Repositories;
-using Contracts.Services;
-using Contracts.Repositories;
+using Common.Services;
 using Contracts.Auth;
-using AuthService.Services;
-using AuthService.Mappings;
+using Contracts.Repositories;
+using Contracts.Services;
 using DTOs.Entities; // ADDED: Missing using directive for Tenant
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
