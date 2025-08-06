@@ -14,7 +14,7 @@ public abstract class TestBase : IDisposable
     protected readonly ApplicationDbContext Context;
     protected readonly IMapper Mapper;
     protected readonly Mock<ITenantProvider> MockTenantProvider;
-    
+
     protected Mock<ILogger<T>> MockLogger<T>() => new();
 
     protected TestBase()
@@ -30,20 +30,33 @@ public abstract class TestBase : IDisposable
             .Options;
 
         Context = new ApplicationDbContext(
-            options, 
+            options,
             Mock.Of<Microsoft.AspNetCore.Http.IHttpContextAccessor>(),
             MockTenantProvider.Object
         );
 
-        // FIXED: AutoMapper configuration for .NET 9
+        // FIXED: Add logging services before AutoMapper configuration
         var services = new ServiceCollection();
+
+        // Add logging services that AutoMapper needs
+        services.AddLogging(builder => builder.AddConsole());
+
+        // FIXED: Add AutoMapper configuration with proper mappings
         services.AddAutoMapper(cfg =>
         {
-            // Configure mappings if needed
-            cfg.CreateMap<User, DTOs.User.UserDto>();
-            cfg.CreateMap<Tenant, DTOs.Tenant.TenantDto>();
+            // User mappings
+            cfg.CreateMap<User, DTOs.User.UserDto>()
+                .ForMember(dest => dest.TenantId, opt => opt.MapFrom(src => src.TenantId ?? 0))
+                .ForMember(dest => dest.Roles, opt => opt.MapFrom(src =>
+                    src.TenantUsers.Where(tu => tu.IsActive).Select(tu => tu.Role).ToList()));
+
+            // Tenant mappings  
+            cfg.CreateMap<Tenant, DTOs.Tenant.TenantDto>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.Settings, opt => opt.MapFrom(src =>
+                    ParseJsonSettings(src.Settings)));
         });
-        
+
         var serviceProvider = services.BuildServiceProvider();
         Mapper = serviceProvider.GetRequiredService<IMapper>();
 
@@ -59,6 +72,8 @@ public abstract class TestBase : IDisposable
             Name = "Test Tenant",
             Domain = "test.com",
             IsActive = true,
+            SubscriptionPlan = "Basic", // ADDED: Missing required property
+            Settings = "{}", // ADDED: Missing required property
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -91,6 +106,23 @@ public abstract class TestBase : IDisposable
     protected Tenant GetTestTenant()
     {
         return Context.Tenants.First();
+    }
+
+    // ADDED: Helper method for parsing JSON settings (same as in MappingProfile)
+    private static Dictionary<string, object> ParseJsonSettings(string settingsJson)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(settingsJson) || settingsJson == "{}")
+                return new Dictionary<string, object>();
+
+            return System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(settingsJson)
+                   ?? new Dictionary<string, object>();
+        }
+        catch
+        {
+            return new Dictionary<string, object>();
+        }
     }
 
     public void Dispose()

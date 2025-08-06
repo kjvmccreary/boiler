@@ -38,15 +38,14 @@ public class AuthServiceImplementationTests : TestBase
             RefreshTokenExpiryDays = 7
         };
 
-        // FIXED: Match actual constructor signature (7 parameters)
         _authService = new AuthServiceImplementation(
-            Context,                    // ApplicationDbContext
-            _mockPasswordService.Object, // IPasswordService
-            _mockTokenService.Object,   // ITokenService
-            Mapper,                     // IMapper
-            _mockLogger.Object,         // ILogger
-            _jwtSettings,              // JwtSettings
-            _mockTenantRepository.Object // ITenantManagementRepository
+            Context,
+            _mockPasswordService.Object,
+            _mockTokenService.Object,
+            Mapper,
+            _mockLogger.Object,
+            _jwtSettings,
+            _mockTenantRepository.Object
         );
     }
 
@@ -66,8 +65,20 @@ public class AuthServiceImplementationTests : TestBase
         var refreshTokenEntity = new RefreshToken
         {
             Token = "refresh_token",
-            ExpiryDate = DateTime.UtcNow.AddDays(7)
+            ExpiryDate = DateTime.UtcNow.AddDays(7),
+            TenantId = tenant.Id,
+            UserId = user.Id,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            CreatedByIp = "127.0.0.1",
+            IsRevoked = false // ADDED: Explicit setting
         };
+
+        // FIXED: Set up the user's primary tenant relationship properly
+        user.PrimaryTenant = tenant;
+        // Update the context to reflect this change
+        Context.Users.Update(user);
+        Context.SaveChanges();
 
         _mockPasswordService
             .Setup(x => x.VerifyPassword(request.Password, user.PasswordHash))
@@ -81,7 +92,6 @@ public class AuthServiceImplementationTests : TestBase
             .Setup(x => x.CreateRefreshTokenAsync(user))
             .ReturnsAsync(refreshTokenEntity);
 
-        // FIXED: Use correct method name
         _mockTenantRepository
             .Setup(x => x.GetTenantByIdAsync(user.TenantId!.Value, It.IsAny<CancellationToken>()))
             .ReturnsAsync(tenant);
@@ -91,7 +101,25 @@ public class AuthServiceImplementationTests : TestBase
 
         // Assert
         result.Should().NotBeNull();
-        result.Success.Should().BeTrue();
+        
+        // IMPROVED: More detailed debugging
+        if (!result.Success)
+        {
+            Console.WriteLine($"Login failed with message: '{result.Message}'");
+            if (result.Errors?.Any() == true)
+            {
+                Console.WriteLine($"Error details:");
+                foreach (var error in result.Errors)
+                {
+                    Console.WriteLine($"  Code: {error.Code}, Message: {error.Message}, Field: {error.Field}");
+                }
+            }
+            
+            // Check if any mocks were called as expected
+            _mockPasswordService.Verify(x => x.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()), Times.AtLeastOnce, "Password verification should have been called");
+        }
+        
+        result.Success.Should().BeTrue($"Login should succeed but failed with: {result.Message}");
         result.Data.Should().NotBeNull();
         result.Data!.AccessToken.Should().Be(accessToken);
         result.Data.RefreshToken.Should().Be(refreshTokenEntity.Token);
@@ -116,9 +144,24 @@ public class AuthServiceImplementationTests : TestBase
         var refreshTokenEntity = new RefreshToken
         {
             Token = "refresh_token",
-            ExpiryDate = DateTime.UtcNow.AddDays(7)
+            ExpiryDate = DateTime.UtcNow.AddDays(7),
+            TenantId = 2,
+            UserId = 0, // Will be set after user creation
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            CreatedByIp = "127.0.0.1",
+            IsRevoked = false // ADDED: Explicit setting
         };
-        var newTenant = new Tenant { Id = 2, Name = "New Tenant" };
+        var newTenant = new Tenant 
+        { 
+            Id = 2, 
+            Name = "New Tenant",
+            IsActive = true,
+            SubscriptionPlan = "Basic", // ADDED: Required property
+            Settings = "{}", // ADDED: Required property
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
 
         _mockPasswordService
             .Setup(x => x.HashPassword(request.Password))
@@ -132,7 +175,6 @@ public class AuthServiceImplementationTests : TestBase
             .Setup(x => x.CreateRefreshTokenAsync(It.IsAny<User>()))
             .ReturnsAsync(refreshTokenEntity);
 
-        // FIXED: Use correct method names
         _mockTenantRepository
             .Setup(x => x.GetTenantByNameAsync(request.TenantName, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Tenant?)null);
@@ -146,7 +188,26 @@ public class AuthServiceImplementationTests : TestBase
 
         // Assert
         result.Should().NotBeNull();
-        result.Success.Should().BeTrue();
+        
+        // IMPROVED: More detailed debugging
+        if (!result.Success)
+        {
+            Console.WriteLine($"Registration failed with message: '{result.Message}'");
+            if (result.Errors?.Any() == true)
+            {
+                Console.WriteLine($"Error details:");
+                foreach (var error in result.Errors)
+                {
+                    Console.WriteLine($"  Code: {error.Code}, Message: {error.Message}, Field: {error.Field}");
+                }
+            }
+            
+            // Check if any mocks were called as expected
+            _mockPasswordService.Verify(x => x.HashPassword(It.IsAny<string>()), Times.AtLeastOnce, "Password hashing should have been called");
+            _mockTenantRepository.Verify(x => x.GetTenantByNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce, "Tenant lookup should have been called");
+        }
+        
+        result.Success.Should().BeTrue($"Registration should succeed but failed with: {result.Message}");
         result.Data.Should().NotBeNull();
         result.Data!.AccessToken.Should().Be(accessToken);
         result.Data.RefreshToken.Should().Be(refreshTokenEntity.Token);
@@ -180,7 +241,21 @@ public class AuthServiceImplementationTests : TestBase
 
         // Assert
         result.Should().NotBeNull();
-        result.Success.Should().BeTrue();
+        
+        if (!result.Success)
+        {
+            Console.WriteLine($"Change password failed with message: '{result.Message}'");
+            if (result.Errors?.Any() == true)
+            {
+                Console.WriteLine($"Error details:");
+                foreach (var error in result.Errors)
+                {
+                    Console.WriteLine($"  Code: {error.Code}, Message: {error.Message}, Field: {error.Field}");
+                }
+            }
+        }
+        
+        result.Success.Should().BeTrue($"Change password should succeed but failed with: {result.Message}");
         result.Data.Should().BeTrue();
         result.Message.Should().Be("Password changed successfully");
     }

@@ -21,6 +21,10 @@ public class PasswordService : IPasswordService
 
     public string HashPassword(string password)
     {
+        // Add input validation to match test expectations
+        if (string.IsNullOrWhiteSpace(password))
+            throw new ArgumentException("Password cannot be null or empty.", nameof(password));
+
         try
         {
             // Correct BCrypt API usage
@@ -37,6 +41,10 @@ public class PasswordService : IPasswordService
     {
         try
         {
+            // Handle invalid inputs gracefully - return false instead of throwing
+            if (string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(hash))
+                return false;
+
             // Correct BCrypt API usage
             return BCrypt.Net.BCrypt.Verify(password, hash);
         }

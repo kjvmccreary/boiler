@@ -417,8 +417,7 @@ public class AuthServiceImplementation : IAuthService
         }
     }
 
-    // Helper methods
-#pragma warning disable CS1998
+    // Helper methods - FIXED: Properly implemented async method
     private async Task<Tenant> GetTenantForRegistrationAsync(RegisterRequestDto request, CancellationToken cancellationToken)
     {
         if (!string.IsNullOrEmpty(request.TenantName))
@@ -462,7 +461,6 @@ public class AuthServiceImplementation : IAuthService
 
         return await _tenantRepository.CreateTenantAsync(defaultTenant, cancellationToken);
     }
-#pragma warning restore CS1998
 
     private string GetClientIpAddress()
     {

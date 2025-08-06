@@ -2,17 +2,27 @@ using AuthService.Mappings;
 using AuthService.Services;
 using Common.Data;
 using Common.Extensions;
+using Common.Middleware;
 using Common.Repositories;
 using Common.Services;
-using Common.Middleware;
 using Contracts.Auth;
 using Contracts.Repositories;
 using Contracts.Services;
-using DTOs.Entities; // ADDED: Missing using directive for Tenant
+using DTOs.Entities;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure AutoMapper license early if provided
+var licenseKey = builder.Configuration["AutoMapperSettings:LicenseKey"] ??
+                 Environment.GetEnvironmentVariable("AUTOMAPPER_LICENSE_KEY");
+
+if (!string.IsNullOrEmpty(licenseKey))
+{
+    // Set license key before any AutoMapper operations
+    Environment.SetEnvironmentVariable("AUTOMAPPER_LICENSE_KEY", licenseKey);
+}
 
 // Add Serilog
 builder.Host.UseSerilog((context, configuration) =>
@@ -31,7 +41,7 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// FIXED: AutoMapper configuration
+// FIXED: AutoMapper configuration - Correct method signature for AutoMapper 15.0.1
 builder.Services.AddAutoMapper(config =>
 {
     config.AddProfile<MappingProfile>();
@@ -39,7 +49,7 @@ builder.Services.AddAutoMapper(config =>
 
 // FIXED: Repository registrations - Simplified approach
 builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<ITenantManagementRepository, TenantManagementRepository>(); // Use the specific interface
+builder.Services.AddScoped<ITenantManagementRepository, TenantManagementRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
 // Add services
