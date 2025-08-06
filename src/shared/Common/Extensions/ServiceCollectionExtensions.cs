@@ -1,4 +1,4 @@
-// FILE: src/shared/Common/Extensions/ServiceCollectionExtensions.cs
+// FILE: src shared/Common/Extensions/ServiceCollectionExtensions.cs
 using System.Text;
 using Common.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using FluentValidation;
+using DTOs.Validators;
 
 namespace Common.Extensions;
 
@@ -22,9 +24,6 @@ public static class ServiceCollectionExtensions
 
         // AutoMapper - will be added in Phase 4 when we create mapping profiles
         // services.AddAutoMapper(typeof(ServiceCollectionExtensions).Assembly);
-
-        // FluentValidation - will be added in Phase 4 when we create validators
-        // services.AddValidatorsFromAssemblyContaining<Common.Entities.BaseEntity>(ServiceLifetime.Transient);
 
         return services;
     }
@@ -90,11 +89,18 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    // Extension method to add FluentValidation when we need it (Phase 4)
+    // Extension method to add FluentValidation - IMPLEMENTED
     public static IServiceCollection AddFluentValidation(this IServiceCollection services)
     {
-        // Will be implemented in Phase 4 when we create actual validators
-        // services.AddValidatorsFromAssemblyContaining<LoginRequestDtoValidator>(ServiceLifetime.Transient);
+        services.AddValidatorsFromAssemblyContaining<LoginRequestDtoValidator>(ServiceLifetime.Transient);
+        services.AddScoped<IValidator<DTOs.Auth.LoginRequestDto>, LoginRequestDtoValidator>();
+        services.AddScoped<IValidator<DTOs.Auth.RegisterRequestDto>, RegisterRequestDtoValidator>();
+        services.AddScoped<IValidator<DTOs.Auth.RefreshTokenRequestDto>, RefreshTokenRequestDtoValidator>();
+        services.AddScoped<IValidator<DTOs.Auth.ChangePasswordDto>, ChangePasswordDtoValidator>();
+        services.AddScoped<IValidator<DTOs.Auth.LogoutRequestDto>, LogoutRequestDtoValidator>();
+        services.AddScoped<IValidator<DTOs.Auth.ResetPasswordRequestDto>, ResetPasswordRequestDtoValidator>();
+        services.AddScoped<IValidator<DTOs.Auth.ConfirmEmailRequestDto>, ConfirmEmailRequestDtoValidator>();
+        
         return services;
     }
 }

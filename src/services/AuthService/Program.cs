@@ -4,6 +4,7 @@ using Common.Data;
 using Common.Extensions;
 using Common.Repositories;
 using Common.Services;
+using Common.Middleware;
 using Contracts.Auth;
 using Contracts.Repositories;
 using Contracts.Services;
@@ -71,6 +72,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseSerilogRequestLogging();
+
+// Add validation middleware
+app.UseMiddleware<ValidationMiddleware>();
 
 app.UseHttpsRedirection();
 
