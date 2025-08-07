@@ -1,10 +1,10 @@
 // FILE: src/shared/Common/Extensions/DatabaseExtensions.cs
-using Common.Configuration;
 using Common.Data;
 using Common.Repositories;
 using Common.Services;
 using Contracts.Repositories;
 using Contracts.Services;
+using DTOs.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,23 +16,18 @@ public static class DatabaseExtensions
     public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
     {
         // Database configuration
-        var databaseSettings = configuration.GetRequiredSection<DatabaseSettings>(DatabaseSettings.SectionName);
-
         services.AddDbContext<ApplicationDbContext>(options =>
         {
-            options.UseNpgsql(databaseSettings.ConnectionString, npgsqlOptions =>
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), npgsqlOptions =>
             {
                 npgsqlOptions.MigrationsAssembly("Common"); // Specify where migrations are stored
-                npgsqlOptions.CommandTimeout(databaseSettings.CommandTimeout);
+                npgsqlOptions.CommandTimeout(30);
             });
 
-            if (databaseSettings.EnableSensitiveDataLogging)
+            // Enable in development only
+            if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             {
                 options.EnableSensitiveDataLogging();
-            }
-
-            if (databaseSettings.EnableDetailedErrors)
-            {
                 options.EnableDetailedErrors();
             }
         });
@@ -48,25 +43,21 @@ public static class DatabaseExtensions
 
     public static IServiceCollection AddRepositories(this IServiceCollection services)
     {
-        // Base repositories
-        services.AddScoped(typeof(IRepository<>), typeof(TenantRepository<>));
-
-        // Specific repositories
+        // Only register repositories that actually exist and work
         services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<ITenantRepository, TenantScopedRepository>();
-        services.AddScoped<ITenantManagementRepository, TenantManagementRepository>();
-        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        
+        // Add other specific repositories as they are implemented:
+        // services.AddScoped<ITenantManagementRepository, TenantManagementRepository>();
+        // services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
         return services;
     }
 
     public static IServiceCollection AddDatabaseHealthChecks(this IServiceCollection services, IConfiguration configuration)
     {
-        var databaseSettings = configuration.GetRequiredSection<DatabaseSettings>(DatabaseSettings.SectionName);
-
         services.AddHealthChecks()
             .AddNpgSql(
-                databaseSettings.ConnectionString,
+                configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string not found"),
                 name: "database",
                 tags: new[] { "db", "postgresql" });
 
@@ -118,16 +109,6 @@ public static class DatabaseExtensions
             IsActive = true,
             Settings = "{\"theme\":\"default\",\"features\":[\"users\",\"auth\"]}"
         };
-
-        //// Create default tenant
-        //var defaultTenant = new Common.Entities.Tenant
-        //{
-        //    Name = "Default Tenant",
-        //    Domain = "localhost",
-        //    SubscriptionPlan = "Basic",
-        //    IsActive = true,
-        //    Settings = "{\"theme\":\"default\",\"features\":[\"users\",\"auth\"]}"
-        //};
 
         context.Tenants.Add(defaultTenant);
         await context.SaveChangesAsync();

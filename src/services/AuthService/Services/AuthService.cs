@@ -118,9 +118,17 @@ public class AuthServiceImplementation : IAuthService
     {
         try
         {
+            // ➕ ADD: Debug logging
+            _logger.LogWarning("🔍 LOGIN DEBUG: Starting login for {Email}", request.Email);
+            
             var user = await _context.Users
                 .Include(u => u.PrimaryTenant)
+                .Include(u => u.TenantUsers)  // ➕ ADD: Load role information
                 .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
+
+            // ➕ ADD: Debug user lookup
+            _logger.LogWarning("🔍 LOGIN DEBUG: User found: {UserExists}, IsActive: {IsActive}, TenantId: {TenantId}", 
+                user != null, user?.IsActive, user?.TenantId);
 
             if (user == null)
             {
@@ -140,7 +148,15 @@ public class AuthServiceImplementation : IAuthService
                 return ApiResponseDto<TokenResponseDto>.ErrorResult($"Account is locked until {user.LockedOutUntil}.");
             }
 
-            if (!_passwordService.VerifyPassword(request.Password, user.PasswordHash))
+            // ➕ ADD: Debug password verification
+            _logger.LogWarning("🔍 LOGIN DEBUG: Attempting password verification for {Email}", request.Email);
+            _logger.LogWarning("🔍 LOGIN DEBUG: Password length: {PasswordLength}, Hash starts with: {HashStart}", 
+                request.Password?.Length, user.PasswordHash?.Substring(0, Math.Min(10, user.PasswordHash?.Length ?? 0)));
+            
+            var passwordVerified = _passwordService.VerifyPassword(request.Password, user.PasswordHash);
+            _logger.LogWarning("🔍 LOGIN DEBUG: Password verification result: {PasswordVerified}", passwordVerified);
+
+            if (!passwordVerified)
             {
                 // Increment failed login attempts
                 user.FailedLoginAttempts++;
@@ -153,6 +169,10 @@ public class AuthServiceImplementation : IAuthService
                 await _context.SaveChangesAsync(cancellationToken);
                 return ApiResponseDto<TokenResponseDto>.ErrorResult("Invalid email or password.");
             }
+
+            // ➕ ADD: Debug tenant lookup
+            _logger.LogWarning("🔍 LOGIN DEBUG: Checking tenant relationship. PrimaryTenant: {HasPrimaryTenant}, TenantId: {TenantId}", 
+                user.PrimaryTenant != null, user.TenantId);
 
             // Ensure user has a tenant
             if (user.PrimaryTenant == null && user.TenantId.HasValue)

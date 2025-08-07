@@ -10,6 +10,13 @@ public class User : BaseEntity
     public string PasswordHash { get; set; } = string.Empty;
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
+
+    // ➕ ADD THESE MISSING PROPERTIES:
+    public string? PhoneNumber { get; set; }
+    public string? TimeZone { get; set; }
+    public string? Language { get; set; }
+    public string? Preferences { get; set; } // JSON string for UserPreferencesDto
+
     public bool IsActive { get; set; } = true;
     public bool EmailConfirmed { get; set; } = false;
     public string? EmailConfirmationToken { get; set; }

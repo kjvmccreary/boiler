@@ -22,9 +22,6 @@ public static class ServiceCollectionExtensions
         // HTTP Context Accessor
         services.AddHttpContextAccessor();
 
-        // AutoMapper - will be added in Phase 4 when we create mapping profiles
-        // services.AddAutoMapper(typeof(ServiceCollectionExtensions).Assembly);
-
         return services;
     }
 
@@ -81,11 +78,10 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    // Extension method to add AutoMapper when we need it (Phase 4)
-    public static IServiceCollection AddAutoMapperProfiles(this IServiceCollection services)
+    // IMPROVED: Proper AutoMapper extension method
+    public static IServiceCollection AddAutoMapperProfiles(this IServiceCollection services, params Type[] profileTypes)
     {
-        // Will be implemented in Phase 4 when we create actual mapping profiles
-        // services.AddAutoMapper(typeof(UserProfile), typeof(TenantProfile));
+        services.AddAutoMapper(profileTypes);
         return services;
     }
 

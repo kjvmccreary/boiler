@@ -47,6 +47,15 @@ public class TokenService : ITokenService
                 ClaimValueTypes.Integer64)
         };
 
+        // ➕ ADD: Include user roles from TenantUsers relationship
+        if (user.TenantUsers != null && user.TenantUsers.Any())
+        {
+            foreach (var tenantUser in user.TenantUsers.Where(tu => tu.IsActive))
+            {
+                claims.Add(new Claim(ClaimTypes.Role, tenantUser.Role));
+            }
+        }
+
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
