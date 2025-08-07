@@ -41,11 +41,8 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// FIXED: AutoMapper configuration - Correct method signature for AutoMapper 15.0.1
-builder.Services.AddAutoMapper(config =>
-{
-    config.AddProfile<MappingProfile>();
-});
+// FIXED: Use Common extension for AutoMapper
+builder.Services.AddAutoMapperProfiles(typeof(MappingProfile));
 
 // FIXED: Repository registrations - Simplified approach
 builder.Services.AddScoped<IUserRepository, UserRepository>();

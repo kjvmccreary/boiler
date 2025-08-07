@@ -78,10 +78,10 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Get list of users (Admin only, tenant-scoped)
+    /// Get list of users (Admin and SuperAdmin only, tenant-scoped)
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")] // FIXED: Accept both Admin and SuperAdmin
     public async Task<ActionResult<ApiResponseDto<PagedResultDto<UserDto>>>> GetUsers([FromQuery] PaginationRequestDto request)
     {
         try
@@ -105,7 +105,8 @@ public class UsersController : ControllerBase
         try
         {
             var currentUserId = GetCurrentUserId();
-            var isAdmin = User.IsInRole("Admin");
+            // FIXED: Check for both Admin and SuperAdmin roles
+            var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
 
             // Users can view their own profile, admins can view any user in their tenant
             if (id != currentUserId && !isAdmin)
@@ -130,10 +131,10 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Delete user (Admin only, cannot delete self)
+    /// Delete user (Admin and SuperAdmin only, cannot delete self)
     /// </summary>
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,SuperAdmin")] // FIXED: Accept both Admin and SuperAdmin
     public async Task<ActionResult<ApiResponseDto<bool>>> DeleteUser(int id)
     {
         try

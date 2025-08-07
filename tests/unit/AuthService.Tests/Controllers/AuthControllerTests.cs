@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using System.Security.Claims;
 using AuthService.Controllers;
+using AuthService.Services; // ➕ ADD: For IPasswordService
 using Contracts.Auth;
 using DTOs.Auth;
 using DTOs.Common;
@@ -16,12 +17,18 @@ public class AuthControllerTests
     private readonly AuthController _controller;
     private readonly Mock<IAuthService> _mockAuthService;
     private readonly Mock<ILogger<AuthController>> _mockLogger;
+    private readonly Mock<IPasswordService> _mockPasswordService; // ➕ ADD: Mock password service
 
     public AuthControllerTests()
     {
         _mockAuthService = new Mock<IAuthService>();
         _mockLogger = new Mock<ILogger<AuthController>>();
-        _controller = new AuthController(_mockAuthService.Object, _mockLogger.Object);
+        _mockPasswordService = new Mock<IPasswordService>(); // ➕ ADD: Initialize mock
+        
+        _controller = new AuthController(
+            _mockAuthService.Object, 
+            _mockLogger.Object,
+            _mockPasswordService.Object); // ➕ ADD: Pass password service mock
     }
 
     [Fact]
@@ -220,5 +227,49 @@ public class AuthControllerTests
         response!.Success.Should().BeTrue();
         response.Data.Should().BeTrue();
         response.Message.Should().Be("Token is valid");
+    }
+
+    // ➕ ADD: Test for the debug hash generation endpoint
+    [Fact]
+    public void GenerateHash_WithValidPassword_ShouldReturnHashedPassword()
+    {
+        // Arrange
+        const string password = "testpassword";
+        const string expectedHash = "$2a$12$hashedpasswordexample";
+
+        _mockPasswordService
+            .Setup(x => x.HashPassword(password))
+            .Returns(expectedHash);
+
+        // Act
+        var result = _controller.GenerateHash(password);
+
+        // Assert
+        result.Result.Should().BeOfType<OkObjectResult>();
+        var okResult = result.Result as OkObjectResult;
+        var response = okResult!.Value;
+        
+        // Verify the response contains the expected structure
+        response.Should().NotBeNull();
+        
+        // Verify the mock was called
+        _mockPasswordService.Verify(x => x.HashPassword(password), Times.Once);
+    }
+
+    [Fact]
+    public void GenerateHash_WithPasswordServiceException_ShouldReturnBadRequest()
+    {
+        // Arrange
+        const string password = "testpassword";
+
+        _mockPasswordService
+            .Setup(x => x.HashPassword(password))
+            .Throws(new Exception("Hash generation failed"));
+
+        // Act
+        var result = _controller.GenerateHash(password);
+
+        // Assert
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 }

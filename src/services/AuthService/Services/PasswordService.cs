@@ -66,4 +66,18 @@ public class PasswordService : IPasswordService
         // Add additional password complexity rules as needed
         return true;
     }
+
+    // Quick test method - add this temporarily
+    public void TestBCryptHash()
+    {
+        var testPassword = "password";
+        var seedHash = "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LeKMVTcOoqc8WITq2";
+
+        bool result = BCrypt.Net.BCrypt.Verify(testPassword, seedHash);
+        Console.WriteLine($"BCrypt verification result for 'password': {result}");
+
+        // Test what the actual hash should be
+        var newHash = BCrypt.Net.BCrypt.HashPassword("password", 12);
+        Console.WriteLine($"New hash for 'password': {newHash}");
+    }
 }

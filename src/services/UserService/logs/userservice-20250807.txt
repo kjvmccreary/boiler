@@ -1,0 +1,155 @@
+[2025-08-07 08:33:43.798 -05:00 INF] HTTP GET /api/Users/profile responded 401 in 0.6485 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-07 08:39:44.045 -05:00 INF] HTTP GET /api/Users/profile responded 401 in 36.3328 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-07 08:54:36.265 -05:00 INF] Starting UserService {}
+[2025-08-07 08:56:02.019 -05:00 WRN] Failed to determine the https port for redirect. {"EventId":{"Id":3,"Name":"FailedToDeterminePort"},"SourceContext":"Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware","RequestId":"0HNELN8CHQT3P:00000003","RequestPath":"/api/Users/profile","ConnectionId":"0HNELN8CHQT3P"}
+[2025-08-07 08:56:02.099 -05:00 INF] HTTP GET /api/Users/profile responded 401 in 82.6518 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-07 08:59:35.201 -05:00 INF] HTTP GET /favicon.ico responded 404 in 3.0923 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-07 09:00:11.607 -05:00 INF] HTTP GET /api/Users responded 401 in 4.8411 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-07 09:05:27.745 -05:00 INF] Starting UserService {}
+[2025-08-07 09:08:13.017 -05:00 INF] Starting UserService - MINIMAL VERSION {}
+[2025-08-07 09:20:06.878 -05:00 INF] Starting UserService {}
+[2025-08-07 09:20:19.238 -05:00 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId":{"Id":9,"Name":"AuthenticationSchemeNotAuthenticated"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELNM4CCG6L:00000003","RequestPath":"/health","ConnectionId":"0HNELNM4CCG6L"}
+[2025-08-07 09:20:19.263 -05:00 INF] HTTP GET /health responded 200 in 40.5070 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-07 09:23:39.648 -05:00 INF] Starting UserService {}
+[2025-08-07 09:23:39.730 -05:00 INF] Now listening on: https://localhost:7091 {}
+[2025-08-07 09:23:39.732 -05:00 INF] Now listening on: http://localhost:5292 {}
+[2025-08-07 09:26:10.624 -05:00 INF] Starting UserService {}
+[2025-08-07 09:26:10.698 -05:00 INF] Now listening on: https://localhost:7091 {}
+[2025-08-07 09:26:10.700 -05:00 INF] Now listening on: http://localhost:5292 {}
+[2025-08-07 09:46:22.028 -05:00 INF] Failed to validate the token. {"EventId":{"Id":1,"Name":"TokenValidationFailed"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELO4MHN213:00000003","RequestPath":"/api/Users/profile","ConnectionId":"0HNELO4MHN213"}
+System.MissingMethodException: Method not found: 'Void Microsoft.IdentityModel.Tokens.TokenValidationResult..ctor(Microsoft.IdentityModel.Tokens.SecurityToken, Microsoft.IdentityModel.Tokens.TokenHandler, Microsoft.IdentityModel.Tokens.TokenValidationParameters, System.String)'.
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateTokenPayloadAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.Start[TStateMachine](TStateMachine& stateMachine)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateTokenPayloadAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateJWSAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+[2025-08-07 09:46:22.042 -05:00 INF] Bearer was not authenticated. Failure message: Method not found: 'Void Microsoft.IdentityModel.Tokens.TokenValidationResult..ctor(Microsoft.IdentityModel.Tokens.SecurityToken, Microsoft.IdentityModel.Tokens.TokenHandler, Microsoft.IdentityModel.Tokens.TokenValidationParameters, System.String)'. {"EventId":{"Id":7,"Name":"AuthenticationSchemeNotAuthenticatedWithFailure"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELO4MHN213:00000003","RequestPath":"/api/Users/profile","ConnectionId":"0HNELO4MHN213"}
+[2025-08-07 09:46:22.048 -05:00 DBG] Policy authentication schemes  did not succeed {"SourceContext":"Microsoft.AspNetCore.Authorization.AuthorizationMiddleware","RequestId":"0HNELO4MHN213:00000003","RequestPath":"/api/Users/profile","ConnectionId":"0HNELO4MHN213"}
+[2025-08-07 09:46:22.055 -05:00 INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user. {"EventId":{"Id":2,"Name":"UserAuthorizationFailed"},"SourceContext":"Microsoft.AspNetCore.Authorization.DefaultAuthorizationService","RequestId":"0HNELO4MHN213:00000003","RequestPath":"/api/Users/profile","ConnectionId":"0HNELO4MHN213"}
+[2025-08-07 09:46:22.061 -05:00 INF] AuthenticationScheme: Bearer was challenged. {"EventId":{"Id":12,"Name":"AuthenticationSchemeChallenged"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELO4MHN213:00000003","RequestPath":"/api/Users/profile","ConnectionId":"0HNELO4MHN213"}
+[2025-08-07 09:46:22.066 -05:00 INF] HTTP GET /api/Users/profile responded 401 in 123.0930 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-07 09:55:41.983 -05:00 INF] Failed to validate the token. {"EventId":{"Id":1,"Name":"TokenValidationFailed"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELO4MHN214:00000003","RequestPath":"/api/Users/profile","ConnectionId":"0HNELO4MHN214"}
+System.MissingMethodException: Method not found: 'Void Microsoft.IdentityModel.Tokens.TokenValidationResult..ctor(Microsoft.IdentityModel.Tokens.SecurityToken, Microsoft.IdentityModel.Tokens.TokenHandler, Microsoft.IdentityModel.Tokens.TokenValidationParameters, System.String)'.
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateTokenPayloadAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+   at System.Runtime.CompilerServices.AsyncMethodBuilderCore.Start[TStateMachine](TStateMachine& stateMachine)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateTokenPayloadAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateJWSAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+[2025-08-07 09:55:41.989 -05:00 INF] Bearer was not authenticated. Failure message: Method not found: 'Void Microsoft.IdentityModel.Tokens.TokenValidationResult..ctor(Microsoft.IdentityModel.Tokens.SecurityToken, Microsoft.IdentityModel.Tokens.TokenHandler, Microsoft.IdentityModel.Tokens.TokenValidationParameters, System.String)'. {"EventId":{"Id":7,"Name":"AuthenticationSchemeNotAuthenticatedWithFailure"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELO4MHN214:00000003","RequestPath":"/api/Users/profile","ConnectionId":"0HNELO4MHN214"}
+[2025-08-07 09:55:41.995 -05:00 DBG] Policy authentication schemes  did not succeed {"SourceContext":"Microsoft.AspNetCore.Authorization.AuthorizationMiddleware","RequestId":"0HNELO4MHN214:00000003","RequestPath":"/api/Users/profile","ConnectionId":"0HNELO4MHN214"}
+[2025-08-07 09:55:41.999 -05:00 INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user. {"EventId":{"Id":2,"Name":"UserAuthorizationFailed"},"SourceContext":"Microsoft.AspNetCore.Authorization.DefaultAuthorizationService","RequestId":"0HNELO4MHN214:00000003","RequestPath":"/api/Users/profile","ConnectionId":"0HNELO4MHN214"}
+[2025-08-07 09:55:42.003 -05:00 INF] AuthenticationScheme: Bearer was challenged. {"EventId":{"Id":12,"Name":"AuthenticationSchemeChallenged"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELO4MHN214:00000003","RequestPath":"/api/Users/profile","ConnectionId":"0HNELO4MHN214"}
+[2025-08-07 09:55:42.006 -05:00 INF] HTTP GET /api/Users/profile responded 401 in 29.8693 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-07 09:55:56.320 -05:00 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId":{"Id":9,"Name":"AuthenticationSchemeNotAuthenticated"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELO4MHN214:00000009","RequestPath":"/api/Users/profile","ConnectionId":"0HNELO4MHN214"}
+[2025-08-07 09:55:56.325 -05:00 DBG] Policy authentication schemes  did not succeed {"SourceContext":"Microsoft.AspNetCore.Authorization.AuthorizationMiddleware","RequestId":"0HNELO4MHN214:00000009","RequestPath":"/api/Users/profile","ConnectionId":"0HNELO4MHN214"}
+[2025-08-07 09:55:56.326 -05:00 INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user. {"EventId":{"Id":2,"Name":"UserAuthorizationFailed"},"SourceContext":"Microsoft.AspNetCore.Authorization.DefaultAuthorizationService","RequestId":"0HNELO4MHN214:00000009","RequestPath":"/api/Users/profile","ConnectionId":"0HNELO4MHN214"}
+[2025-08-07 09:55:56.328 -05:00 INF] AuthenticationScheme: Bearer was challenged. {"EventId":{"Id":12,"Name":"AuthenticationSchemeChallenged"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELO4MHN214:00000009","RequestPath":"/api/Users/profile","ConnectionId":"0HNELO4MHN214"}
+[2025-08-07 09:55:56.333 -05:00 INF] HTTP GET /api/Users/profile responded 401 in 13.7995 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-07 09:56:17.447 -05:00 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId":{"Id":9,"Name":"AuthenticationSchemeNotAuthenticated"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELO4MHN214:0000000F","RequestPath":"/api/Users","ConnectionId":"0HNELO4MHN214"}
+[2025-08-07 09:56:17.454 -05:00 DBG] Policy authentication schemes  did not succeed {"SourceContext":"Microsoft.AspNetCore.Authorization.AuthorizationMiddleware","RequestId":"0HNELO4MHN214:0000000F","RequestPath":"/api/Users","ConnectionId":"0HNELO4MHN214"}
+[2025-08-07 09:56:17.458 -05:00 INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+RolesAuthorizationRequirement:User.IsInRole must be true for one of the following roles: (Admin) {"EventId":{"Id":2,"Name":"UserAuthorizationFailed"},"SourceContext":"Microsoft.AspNetCore.Authorization.DefaultAuthorizationService","RequestId":"0HNELO4MHN214:0000000F","RequestPath":"/api/Users","ConnectionId":"0HNELO4MHN214"}
+[2025-08-07 09:56:17.460 -05:00 INF] AuthenticationScheme: Bearer was challenged. {"EventId":{"Id":12,"Name":"AuthenticationSchemeChallenged"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELO4MHN214:0000000F","RequestPath":"/api/Users","ConnectionId":"0HNELO4MHN214"}
+[2025-08-07 09:56:17.462 -05:00 INF] HTTP GET /api/Users responded 401 in 15.2517 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-07 10:04:03.906 -05:00 INF] Starting UserService {}
+[2025-08-07 10:04:03.990 -05:00 INF] Now listening on: https://localhost:7091 {}
+[2025-08-07 10:04:03.993 -05:00 INF] Now listening on: http://localhost:5292 {}
+[2025-08-07 10:05:33.312 -05:00 DBG] Successfully validated the token. {"EventId":{"Id":2,"Name":"TokenValidationSucceeded"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELOEMH818A:0000000B","RequestPath":"/api/Users/profile","ConnectionId":"0HNELOEMH818A"}
+[2025-08-07 10:05:33.323 -05:00 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId":{"Id":8,"Name":"AuthenticationSchemeAuthenticated"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELOEMH818A:0000000B","RequestPath":"/api/Users/profile","ConnectionId":"0HNELOEMH818A"}
+[2025-08-07 10:05:33.332 -05:00 DBG] Authorization was successful. {"EventId":{"Id":1,"Name":"UserAuthorizationSucceeded"},"SourceContext":"Microsoft.AspNetCore.Authorization.DefaultAuthorizationService","RequestId":"0HNELOEMH818A:0000000B","RequestPath":"/api/Users/profile","ConnectionId":"0HNELOEMH818A"}
+[2025-08-07 10:05:34.238 -05:00 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId":{"Id":10400,"Name":"Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"},"SourceContext":"Microsoft.EntityFrameworkCore.Model.Validation","ActionId":"239e53a7-582e-4d7e-b738-3d61cfbdc9a0","ActionName":"UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)","RequestId":"0HNELOEMH818A:0000000B","RequestPath":"/api/Users/profile","ConnectionId":"0HNELOEMH818A"}
+[2025-08-07 10:05:34.362 -05:00 ERR] HTTP GET /api/Users/profile responded 500 in 1161.2984 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+System.MissingMethodException: Method not found: 'Void AutoMapper.MapperConfiguration..ctor(AutoMapper.MapperConfigurationExpression)'.
+   at Microsoft.Extensions.DependencyInjection.ServiceCollectionExtensions.<>c.<AddAutoMapperClasses>b__12_2(IServiceProvider sp)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSiteMain(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitRootCache(ServiceCallSite callSite, RuntimeResolverContext context)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSite(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.Resolve(ServiceCallSite callSite, ServiceProviderEngineScope scope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.CreateServiceAccessor(ServiceIdentifier serviceIdentifier)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetService(Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
+   at Microsoft.Extensions.DependencyInjection.ServiceCollectionExtensions.<>c.<AddAutoMapperClasses>b__12_3(IServiceProvider sp)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSiteMain(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSite(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSiteMain(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitCache(ServiceCallSite callSite, RuntimeResolverContext context, ServiceProviderEngineScope serviceProviderEngine, RuntimeResolverLock lockType)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitScopeCache(ServiceCallSite callSite, RuntimeResolverContext context)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSite(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.Resolve(ServiceCallSite callSite, ServiceProviderEngineScope scope)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.DynamicServiceProviderEngine.<>c__DisplayClass2_0.<RealizeService>b__0(ServiceProviderEngineScope scope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetService(Type serviceType)
+   at lambda_method12(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Common.Middleware.ValidationMiddleware.InvokeAsync(HttpContext context) in C:\Users\mccre\dev\boiler\src\shared\Common\Middleware\ValidationMiddleware.cs:line 27
+   at Serilog.AspNetCore.RequestLoggingMiddleware.Invoke(HttpContext httpContext)
+[2025-08-07 10:05:34.391 -05:00 ERR] An unhandled exception has occurred while executing the request. {"EventId":{"Id":1,"Name":"UnhandledException"},"SourceContext":"Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddleware","RequestId":"0HNELOEMH818A:0000000B","RequestPath":"/api/Users/profile","ConnectionId":"0HNELOEMH818A"}
+System.MissingMethodException: Method not found: 'Void AutoMapper.MapperConfiguration..ctor(AutoMapper.MapperConfigurationExpression)'.
+   at Microsoft.Extensions.DependencyInjection.ServiceCollectionExtensions.<>c.<AddAutoMapperClasses>b__12_2(IServiceProvider sp)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSiteMain(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitRootCache(ServiceCallSite callSite, RuntimeResolverContext context)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSite(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.Resolve(ServiceCallSite callSite, ServiceProviderEngineScope scope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.CreateServiceAccessor(ServiceIdentifier serviceIdentifier)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetService(Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService[T](IServiceProvider provider)
+   at Microsoft.Extensions.DependencyInjection.ServiceCollectionExtensions.<>c.<AddAutoMapperClasses>b__12_3(IServiceProvider sp)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSiteMain(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSite(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSiteMain(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitCache(ServiceCallSite callSite, RuntimeResolverContext context, ServiceProviderEngineScope serviceProviderEngine, RuntimeResolverLock lockType)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.VisitScopeCache(ServiceCallSite callSite, RuntimeResolverContext context)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteVisitor`2.VisitCallSite(ServiceCallSite callSite, TArgument argument)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteRuntimeResolver.Resolve(ServiceCallSite callSite, ServiceProviderEngineScope scope)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.DynamicServiceProviderEngine.<>c__DisplayClass2_0.<RealizeService>b__0(ServiceProviderEngineScope scope)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.GetService(ServiceIdentifier serviceIdentifier, ServiceProviderEngineScope serviceProviderEngineScope)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.ServiceProviderEngineScope.GetService(Type serviceType)
+   at lambda_method12(Closure, IServiceProvider, Object[])
+   at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Common.Middleware.ValidationMiddleware.InvokeAsync(HttpContext context) in C:\Users\mccre\dev\boiler\src\shared\Common\Middleware\ValidationMiddleware.cs:line 27
+   at Serilog.AspNetCore.RequestLoggingMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddlewareImpl.Invoke(HttpContext context)
+[2025-08-07 10:24:41.486 -05:00 INF] Starting UserService {}
+[2025-08-07 10:24:41.569 -05:00 INF] Now listening on: https://localhost:7091 {}
+[2025-08-07 10:24:41.571 -05:00 INF] Now listening on: http://localhost:5292 {}
+[2025-08-07 10:26:12.317 -05:00 DBG] Successfully validated the token. {"EventId":{"Id":2,"Name":"TokenValidationSucceeded"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELOQQDULF1:00000007","RequestPath":"/api/Users/profile","ConnectionId":"0HNELOQQDULF1"}
+[2025-08-07 10:26:12.324 -05:00 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId":{"Id":8,"Name":"AuthenticationSchemeAuthenticated"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELOQQDULF1:00000007","RequestPath":"/api/Users/profile","ConnectionId":"0HNELOQQDULF1"}
+[2025-08-07 10:26:12.330 -05:00 DBG] Authorization was successful. {"EventId":{"Id":1,"Name":"UserAuthorizationSucceeded"},"SourceContext":"Microsoft.AspNetCore.Authorization.DefaultAuthorizationService","RequestId":"0HNELOQQDULF1:00000007","RequestPath":"/api/Users/profile","ConnectionId":"0HNELOQQDULF1"}
+[2025-08-07 10:26:13.141 -05:00 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId":{"Id":10400,"Name":"Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"},"SourceContext":"Microsoft.EntityFrameworkCore.Model.Validation","ActionId":"47d63bc7-5fac-4860-93a5-2dfa5fcfeed1","ActionName":"UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)","RequestId":"0HNELOQQDULF1:00000007","RequestPath":"/api/Users/profile","ConnectionId":"0HNELOQQDULF1"}
+[2025-08-07 10:26:13.974 -05:00 INF] HTTP GET /api/Users/profile responded 200 in 1737.6458 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-07 10:27:53.130 -05:00 DBG] Successfully validated the token. {"EventId":{"Id":2,"Name":"TokenValidationSucceeded"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELOQQDULF1:00000009","RequestPath":"/api/Users","ConnectionId":"0HNELOQQDULF1"}
+[2025-08-07 10:27:53.134 -05:00 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId":{"Id":8,"Name":"AuthenticationSchemeAuthenticated"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELOQQDULF1:00000009","RequestPath":"/api/Users","ConnectionId":"0HNELOQQDULF1"}
+[2025-08-07 10:27:53.139 -05:00 INF] Authorization failed. These requirements were not met:
+RolesAuthorizationRequirement:User.IsInRole must be true for one of the following roles: (Admin) {"EventId":{"Id":2,"Name":"UserAuthorizationFailed"},"SourceContext":"Microsoft.AspNetCore.Authorization.DefaultAuthorizationService","RequestId":"0HNELOQQDULF1:00000009","RequestPath":"/api/Users","ConnectionId":"0HNELOQQDULF1"}
+[2025-08-07 10:27:53.148 -05:00 INF] AuthenticationScheme: Bearer was forbidden. {"EventId":{"Id":13,"Name":"AuthenticationSchemeForbidden"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELOQQDULF1:00000009","RequestPath":"/api/Users","ConnectionId":"0HNELOQQDULF1"}
+[2025-08-07 10:27:53.152 -05:00 INF] HTTP GET /api/Users responded 403 in 23.6168 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-07 10:40:13.180 -05:00 INF] Starting UserService {}
+[2025-08-07 10:40:13.266 -05:00 INF] Now listening on: https://localhost:7091 {}
+[2025-08-07 10:40:13.268 -05:00 INF] Now listening on: http://localhost:5292 {}
+[2025-08-07 10:40:26.143 -05:00 DBG] Successfully validated the token. {"EventId":{"Id":2,"Name":"TokenValidationSucceeded"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELP2TC6894:00000003","RequestPath":"/api/Users","ConnectionId":"0HNELP2TC6894"}
+[2025-08-07 10:40:26.159 -05:00 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId":{"Id":8,"Name":"AuthenticationSchemeAuthenticated"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNELP2TC6894:00000003","RequestPath":"/api/Users","ConnectionId":"0HNELP2TC6894"}
+[2025-08-07 10:40:26.167 -05:00 DBG] Authorization was successful. {"EventId":{"Id":1,"Name":"UserAuthorizationSucceeded"},"SourceContext":"Microsoft.AspNetCore.Authorization.DefaultAuthorizationService","RequestId":"0HNELP2TC6894:00000003","RequestPath":"/api/Users","ConnectionId":"0HNELP2TC6894"}
+[2025-08-07 10:40:26.655 -05:00 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId":{"Id":10400,"Name":"Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"},"SourceContext":"Microsoft.EntityFrameworkCore.Model.Validation","ActionId":"657fd419-de21-4457-899d-2db13d4dcc6b","ActionName":"UserService.Controllers.UsersController.GetUsers (UserService)","RequestId":"0HNELP2TC6894:00000003","RequestPath":"/api/Users","ConnectionId":"0HNELP2TC6894"}
+[2025-08-07 10:40:27.422 -05:00 INF] HTTP GET /api/Users responded 200 in 1350.6834 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}

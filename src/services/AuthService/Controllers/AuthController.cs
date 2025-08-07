@@ -5,6 +5,7 @@ using DTOs.Auth;
 using DTOs.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using AuthService.Services; // ➕ ADD: For IPasswordService
 
 namespace AuthService.Controllers;
 
@@ -14,11 +15,16 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly ILogger<AuthController> _logger;
+    private readonly IPasswordService _passwordService; // ➕ ADD: Password service
 
-    public AuthController(IAuthService authService, ILogger<AuthController> logger)
+    public AuthController(
+        IAuthService authService, 
+        ILogger<AuthController> logger,
+        IPasswordService passwordService) // ➕ ADD: Inject password service
     {
         _authService = authService;
         _logger = logger;
+        _passwordService = passwordService; // ➕ ADD: Assign password service
     }
 
     [HttpPost("register")]
@@ -186,7 +192,7 @@ public class AuthController : ControllerBase
 
     [HttpGet("validate-token")]
     [Authorize]
-    public ActionResult<ApiResponseDto<bool>> ValidateToken() // FIXED: Removed async since no await
+    public ActionResult<ApiResponseDto<bool>> ValidateToken()
     {
         try
         {
@@ -202,7 +208,7 @@ public class AuthController : ControllerBase
 
     [HttpGet("me")]
     [Authorize]
-    public ActionResult<ApiResponseDto<object>> GetCurrentUser() // FIXED: Removed async since no await
+    public ActionResult<ApiResponseDto<object>> GetCurrentUser()
     {
         try
         {
@@ -222,6 +228,21 @@ public class AuthController : ControllerBase
         {
             _logger.LogError(ex, "Error in GetCurrentUser endpoint");
             return StatusCode(500, ApiResponseDto<object>.ErrorResult("Internal server error"));
+        }
+    }
+
+    // ➕ ADD: Temporary hash generation endpoint (REMOVE after testing)
+    [HttpGet("debug/generate-hash/{password}")]
+    public ActionResult<string> GenerateHash(string password)
+    {
+        try
+        {
+            var hash = _passwordService.HashPassword(password); // ✅ NOW WORKS!
+            return Ok(new { Password = password, Hash = hash, Message = "Hash generated successfully" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { Error = ex.Message });
         }
     }
 }
