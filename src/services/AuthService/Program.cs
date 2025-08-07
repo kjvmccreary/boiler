@@ -10,6 +10,7 @@ using Contracts.Repositories;
 using Contracts.Services;
 using DTOs.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models; // ADD: For Swagger JWT configuration
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,11 +32,47 @@ builder.Host.UseSerilog((context, configuration) =>
 // Add services to the container
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+// ENHANCED: Configure Swagger with JWT authentication support
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "AuthService API",
+        Version = "v1",
+        Description = "Authentication Service with RBAC"
+    });
+
+    // JWT Authentication configuration for Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
 
 // Add common services (JWT, configuration, etc.)
 builder.Services.AddCommonServices(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
+builder.Services.AddDynamicAuthorization();
 
 // Add Entity Framework
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -75,7 +112,12 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "AuthService API V1");
+        c.RoutePrefix = "swagger"; // Sets Swagger UI at /swagger
+        c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
+    });
 }
 
 app.UseSerilogRequestLogging();

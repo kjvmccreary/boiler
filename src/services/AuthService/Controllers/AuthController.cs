@@ -50,6 +50,52 @@ public class AuthController : ControllerBase
         }
     }
 
+    // Add these endpoints to the existing AuthController
+
+    [HttpGet("permissions")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponseDto<List<string>>>> GetMyPermissions()
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                return BadRequest(ApiResponseDto<List<string>>.ErrorResult("Invalid user"));
+            }
+
+            var permissions = await _authService.GetUserPermissionsAsync(userId);
+            return Ok(ApiResponseDto<List<string>>.SuccessResult(permissions, "Permissions retrieved successfully"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user permissions");
+            return StatusCode(500, ApiResponseDto<List<string>>.ErrorResult("Internal server error"));
+        }
+    }
+
+    [HttpGet("roles")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponseDto<List<string>>>> GetMyRoles()
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                return BadRequest(ApiResponseDto<List<string>>.ErrorResult("Invalid user"));
+            }
+
+            var roles = await _authService.GetUserRolesAsync(userId);
+            return Ok(ApiResponseDto<List<string>>.SuccessResult(roles, "Roles retrieved successfully"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user roles");
+            return StatusCode(500, ApiResponseDto<List<string>>.ErrorResult("Internal server error"));
+        }
+    }
+
     [HttpPost("login")]
     public async Task<ActionResult<ApiResponseDto<TokenResponseDto>>> Login(
         [FromBody] LoginRequestDto request,

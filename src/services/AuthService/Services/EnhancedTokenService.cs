@@ -1,4 +1,3 @@
-// FILE: src/services/AuthService/Services/TokenService.cs
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -10,34 +9,24 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace AuthService.Services;
 
-public interface ITokenService
-{
-    Task<string> GenerateAccessTokenAsync(User user, Tenant tenant);
-    string GenerateRefreshToken();
-    ClaimsPrincipal? GetPrincipalFromExpiredToken(string token);
-    Task<RefreshToken> CreateRefreshTokenAsync(User user);
-}
-
-public class TokenService : ITokenService
+public class EnhancedTokenService : ITokenService
 {
     private readonly JwtSettings _jwtSettings;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<TokenService> _logger;
+    private readonly IPermissionService _permissionService;
+    private readonly ILogger<EnhancedTokenService> _logger;
 
-    public TokenService(
+    public EnhancedTokenService(
         JwtSettings jwtSettings, 
-        IServiceProvider serviceProvider,
-        ILogger<TokenService> logger)
+        IPermissionService permissionService,
+        ILogger<EnhancedTokenService> logger)
     {
         _jwtSettings = jwtSettings;
-        _serviceProvider = serviceProvider;
+        _permissionService = permissionService;
         _logger = logger;
     }
 
     public async Task<string> GenerateAccessTokenAsync(User user, Tenant tenant)
     {
-        _logger.LogInformation("🔍 TOKEN DEBUG: Starting token generation for user {UserId} in tenant {TenantId}", user.Id, tenant.Id);
-        
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -55,58 +44,32 @@ public class TokenService : ITokenService
                 ClaimValueTypes.Integer64)
         };
 
-        // Include user roles from TenantUsers relationship
+        // NEW: Include user roles from TenantUsers relationship
         if (user.TenantUsers != null && user.TenantUsers.Any())
         {
             foreach (var tenantUser in user.TenantUsers.Where(tu => tu.IsActive))
             {
                 claims.Add(new Claim(ClaimTypes.Role, tenantUser.Role));
-                _logger.LogInformation("🔍 TOKEN DEBUG: Added role {Role} for user {UserId}", tenantUser.Role, user.Id);
             }
-        }
-        else
-        {
-            _logger.LogWarning("🔍 TOKEN DEBUG: No TenantUsers found for user {UserId}", user.Id);
         }
 
-        // NEW: Include user permissions in JWT claims for Enhanced Phase 4
+        // NEW: Include user permissions in JWT claims for better performance
         try
         {
-            _logger.LogInformation("🔍 TOKEN DEBUG: Attempting to resolve IPermissionService for user {UserId}", user.Id);
+            var userPermissions = await _permissionService.GetUserPermissionsAsync(user.Id);
+            foreach (var permission in userPermissions)
+            {
+                claims.Add(new Claim("permission", permission));
+            }
             
-            var permissionService = _serviceProvider.GetService<IPermissionService>();
-            if (permissionService != null)
-            {
-                _logger.LogInformation("🔍 TOKEN DEBUG: IPermissionService resolved successfully, getting permissions for user {UserId} in tenant {TenantId}", user.Id, tenant.Id);
-                
-                // FIXED: Use the tenant-specific method instead of the tenant-provider dependent method
-                var userPermissions = await permissionService.GetUserPermissionsForTenantAsync(user.Id, tenant.Id);
-                _logger.LogInformation("🔍 TOKEN DEBUG: Retrieved {PermissionCount} permissions for user {UserId}: {Permissions}", 
-                    userPermissions.Count(), user.Id, string.Join(", ", userPermissions.Take(10))); // Show first 10 permissions
-                
-                foreach (var permission in userPermissions)
-                {
-                    claims.Add(new Claim("permission", permission));
-                }
-                
-                _logger.LogInformation("🔍 TOKEN DEBUG: Successfully added {PermissionCount} permission claims to JWT for user {UserId}", userPermissions.Count(), user.Id);
-            }
-            else
-            {
-                _logger.LogWarning("🔍 TOKEN DEBUG: IPermissionService is NULL - service not available during token generation for user {UserId}", user.Id);
-            }
+            _logger.LogDebug("Added {PermissionCount} permissions to JWT for user {UserId}", userPermissions.Count(), user.Id);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "🔍 TOKEN DEBUG: FAILED to load permissions for user {UserId} during token generation", user.Id);
+            _logger.LogWarning(ex, "Failed to load permissions for user {UserId} during token generation", user.Id);
+            // Continue without permissions - they can be loaded dynamically if needed
         }
 
-        // Add a test permission to verify the mechanism works
-        claims.Add(new Claim("permission", "test.permission"));
-        _logger.LogInformation("🔍 TOKEN DEBUG: Added test permission claim");
-
-        _logger.LogInformation("🔍 TOKEN DEBUG: Total claims count before token generation: {ClaimCount}", claims.Count);
-        
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -118,12 +81,10 @@ public class TokenService : ITokenService
             signingCredentials: credentials
         );
 
-        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-        _logger.LogInformation("🔍 TOKEN DEBUG: Token generation completed for user {UserId}", user.Id);
-        
-        return tokenString;
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
+    // Keep existing methods unchanged
     public string GenerateRefreshToken()
     {
         var randomNumber = new byte[64];

@@ -20,6 +20,9 @@ public class AuthServiceImplementationTests : TestBase
     private readonly Mock<IPasswordService> _mockPasswordService;
     private readonly Mock<ITokenService> _mockTokenService;
     private readonly Mock<ITenantManagementRepository> _mockTenantRepository;
+    // NEW: Add missing mocks for Enhanced Phase 4
+    private readonly Mock<IPermissionService> _mockPermissionService;
+    private readonly Mock<ITenantProvider> _mockTenantProvider;
     private readonly JwtSettings _jwtSettings;
 
     public AuthServiceImplementationTests()
@@ -28,6 +31,9 @@ public class AuthServiceImplementationTests : TestBase
         _mockPasswordService = new Mock<IPasswordService>();
         _mockTokenService = new Mock<ITokenService>();
         _mockTenantRepository = new Mock<ITenantManagementRepository>();
+        // NEW: Initialize missing mocks
+        _mockPermissionService = new Mock<IPermissionService>();
+        _mockTenantProvider = new Mock<ITenantProvider>();
         
         _jwtSettings = new JwtSettings
         {
@@ -38,6 +44,7 @@ public class AuthServiceImplementationTests : TestBase
             RefreshTokenExpiryDays = 7
         };
 
+        // FIXED: Add missing constructor parameters
         _authService = new AuthServiceImplementation(
             Context,
             _mockPasswordService.Object,
@@ -45,7 +52,9 @@ public class AuthServiceImplementationTests : TestBase
             Mapper,
             _mockLogger.Object,
             _jwtSettings,
-            _mockTenantRepository.Object
+            _mockTenantRepository.Object,
+            _mockPermissionService.Object, // NEW: Add this parameter
+            _mockTenantProvider.Object     // NEW: Add this parameter
         );
     }
 
@@ -71,7 +80,7 @@ public class AuthServiceImplementationTests : TestBase
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             CreatedByIp = "127.0.0.1",
-            IsRevoked = false // ADDED: Explicit setting
+            IsRevoked = false
         };
 
         // FIXED: Set up the user's primary tenant relationship properly
@@ -150,15 +159,15 @@ public class AuthServiceImplementationTests : TestBase
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             CreatedByIp = "127.0.0.1",
-            IsRevoked = false // ADDED: Explicit setting
+            IsRevoked = false
         };
         var newTenant = new Tenant 
         { 
             Id = 2, 
             Name = "New Tenant",
             IsActive = true,
-            SubscriptionPlan = "Basic", // ADDED: Required property
-            Settings = "{}", // ADDED: Required property
+            SubscriptionPlan = "Basic",
+            Settings = "{}",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -258,5 +267,64 @@ public class AuthServiceImplementationTests : TestBase
         result.Success.Should().BeTrue($"Change password should succeed but failed with: {result.Message}");
         result.Data.Should().BeTrue();
         result.Message.Should().Be("Password changed successfully");
+    }
+
+    // NEW: Add tests for Enhanced Phase 4 RBAC methods
+    [Fact]
+    public async Task GetUserPermissionsAsync_ShouldReturnUserPermissions()
+    {
+        // Arrange
+        const int userId = 1;
+        var expectedPermissions = new List<string> { "users.view", "users.edit" };
+        
+        _mockPermissionService
+            .Setup(x => x.GetUserPermissionsAsync(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedPermissions);
+
+        // Act
+        var result = await _authService.GetUserPermissionsAsync(userId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeEquivalentTo(expectedPermissions);
+        _mockPermissionService.Verify(x => x.GetUserPermissionsAsync(userId, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetUserRolesAsync_ShouldReturnUserRoles()
+    {
+        // Arrange
+        const int userId = 1;
+        const int tenantId = 1;
+        var expectedRoles = new List<string> { "Admin", "User" };
+
+        _mockTenantProvider
+            .Setup(x => x.GetCurrentTenantIdAsync())
+            .ReturnsAsync(tenantId);
+
+        // Setup the database context with test data
+        var userRoles = new List<UserRole>
+        {
+            new() { UserId = userId, RoleId = 1, TenantId = tenantId },
+            new() { UserId = userId, RoleId = 2, TenantId = tenantId }
+        };
+
+        var roles = new List<Role>
+        {
+            new() { Id = 1, Name = "Admin", TenantId = tenantId },
+            new() { Id = 2, Name = "User", TenantId = tenantId }
+        };
+
+        Context.UserRoles.AddRange(userRoles);
+        Context.Roles.AddRange(roles);
+        Context.SaveChanges();
+
+        // Act
+        var result = await _authService.GetUserRolesAsync(userId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeEquivalentTo(expectedRoles);
+        _mockTenantProvider.Verify(x => x.GetCurrentTenantIdAsync(), Times.Once);
     }
 }

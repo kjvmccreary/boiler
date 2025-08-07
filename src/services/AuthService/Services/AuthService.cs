@@ -3,7 +3,8 @@ using AutoMapper;
 using Common.Configuration;
 using Common.Data;
 using Contracts.Auth;
-using Contracts.Repositories; // ADDED: For ITenantManagementRepository
+using Contracts.Repositories; 
+using Contracts.Services; // NEW: Add for IPermissionService and ITenantProvider
 using DTOs.Auth;
 using DTOs.Common;
 using DTOs.Entities;
@@ -19,7 +20,10 @@ public class AuthServiceImplementation : IAuthService
     private readonly IMapper _mapper;
     private readonly ILogger<AuthServiceImplementation> _logger;
     private readonly JwtSettings _jwtSettings;
-    private readonly ITenantManagementRepository _tenantRepository; // ADDED: For tenant operations
+    private readonly ITenantManagementRepository _tenantRepository;
+    // NEW: Add missing dependencies for Enhanced Phase 4
+    private readonly IPermissionService _permissionService;
+    private readonly ITenantProvider _tenantProvider;
 
     public AuthServiceImplementation(
         ApplicationDbContext context,
@@ -28,7 +32,10 @@ public class AuthServiceImplementation : IAuthService
         IMapper mapper,
         ILogger<AuthServiceImplementation> logger,
         JwtSettings jwtSettings,
-        ITenantManagementRepository tenantRepository) // ADDED: Inject tenant repository
+        ITenantManagementRepository tenantRepository,
+        // NEW: Add missing constructor parameters
+        IPermissionService permissionService,
+        ITenantProvider tenantProvider)
     {
         _context = context;
         _passwordService = passwordService;
@@ -37,6 +44,9 @@ public class AuthServiceImplementation : IAuthService
         _logger = logger;
         _jwtSettings = jwtSettings;
         _tenantRepository = tenantRepository;
+        // NEW: Initialize missing dependencies
+        _permissionService = permissionService;
+        _tenantProvider = tenantProvider;
     }
 
     public async Task<ApiResponseDto<TokenResponseDto>> RegisterAsync(RegisterRequestDto request, CancellationToken cancellationToken = default)
@@ -434,6 +444,48 @@ public class AuthServiceImplementation : IAuthService
         {
             _logger.LogError(ex, "Error validating token");
             return ApiResponseDto<bool>.ErrorResult("Token validation failed");
+        }
+    }
+
+    // NEW: Enhanced Phase 4 RBAC methods
+    public async Task<List<string>> GetUserPermissionsAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var permissions = await _permissionService.GetUserPermissionsAsync(userId, cancellationToken);
+            return permissions.ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting permissions for user {UserId}", userId);
+            return new List<string>();
+        }
+    }
+
+    public async Task<List<string>> GetUserRolesAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!tenantId.HasValue)
+            {
+                return new List<string>();
+            }
+
+            var roles = await _context.UserRoles
+                .Where(ur => ur.UserId == userId && ur.TenantId == tenantId.Value)
+                .Join(_context.Roles,
+                    ur => ur.RoleId,
+                    r => r.Id,
+                    (ur, r) => r.Name)
+                .ToListAsync(cancellationToken);
+
+            return roles;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting roles for user {UserId}", userId);
+            return new List<string>();
         }
     }
 

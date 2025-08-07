@@ -30,7 +30,8 @@ public class RoleRepository : TenantRepository<Role>, IRoleRepository
         return _dbSet;
     }
 
-    private int? GetCurrentTenantIdSync()
+    // FIX: Add 'new' keyword to hide inherited member intentionally
+    private new int? GetCurrentTenantIdSync()
     {
         try
         {
