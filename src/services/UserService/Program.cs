@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using UserService.Mappings;
 using UserService.Services;
+using UserService.Middleware; // 🔧 FIX: Add missing using directive
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -124,6 +125,13 @@ app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
+
+// Add DevelopmentTenantMiddleware in Development environment
+if (app.Environment.IsDevelopment())
+{
+    app.UseMiddleware<DevelopmentTenantMiddleware>();
+}
+
 app.UseAuthorization();
 
 app.MapControllers();
