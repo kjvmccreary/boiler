@@ -14,7 +14,7 @@ public abstract class TenantRepository<T> : IRepository<T> where T : BaseEntity
     protected readonly DbSet<T> _dbSet;
     protected readonly int _tenantId; // Changed from Guid to int
     protected readonly ILogger _logger;
-    private readonly ITenantProvider _tenantProvider;
+    protected readonly ITenantProvider _tenantProvider; // CHANGED: Made protected instead of private
 
     protected TenantRepository(
         ApplicationDbContext context,
@@ -44,7 +44,7 @@ public abstract class TenantRepository<T> : IRepository<T> where T : BaseEntity
         return _dbSet;
     }
 
-    private int? GetCurrentTenantIdSync() // Changed return type from Guid? to int?
+    protected int? GetCurrentTenantIdSync() // CHANGED: Made protected so derived classes can use it
     {
         try
         {

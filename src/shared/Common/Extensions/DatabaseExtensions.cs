@@ -20,7 +20,7 @@ public static class DatabaseExtensions
         {
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), npgsqlOptions =>
             {
-                npgsqlOptions.MigrationsAssembly("Common"); // Specify where migrations are stored
+                npgsqlOptions.MigrationsAssembly("Common");
                 npgsqlOptions.CommandTimeout(30);
             });
 
@@ -43,10 +43,15 @@ public static class DatabaseExtensions
 
     public static IServiceCollection AddRepositories(this IServiceCollection services)
     {
-        // Only register repositories that actually exist and work
+        // Existing repositories
         services.AddScoped<IUserRepository, UserRepository>();
         
-        // Add other specific repositories as they are implemented:
+        // NEW: RBAC repositories
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IPermissionRepository, PermissionRepository>();
+        services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+
+        // Note: Add these as you implement them:
         // services.AddScoped<ITenantManagementRepository, TenantManagementRepository>();
         // services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
@@ -113,6 +118,153 @@ public static class DatabaseExtensions
         context.Tenants.Add(defaultTenant);
         await context.SaveChangesAsync();
 
-        // You can add more seed data here as needed
+        // Seed permissions and default roles
+        await SeedPermissionsAsync(context);
+        await SeedDefaultRolesAsync(context, defaultTenant.Id);
+    }
+
+    private static async Task SeedPermissionsAsync(ApplicationDbContext context)
+    {
+        // Check if permissions already exist
+        if (await context.Permissions.AnyAsync())
+            return;
+
+        var permissions = Common.Constants.Permissions.GetAllPermissions()
+            .Select(permissionName =>
+            {
+                var parts = permissionName.Split('.');
+                var category = parts.Length > 1 ? parts[0] : "General";
+                
+                return new Permission
+                {
+                    Name = permissionName,
+                    Category = char.ToUpper(category[0]) + category.Substring(1), // Capitalize
+                    Description = $"Permission to {permissionName.Replace('.', ' ')}",
+                    IsActive = true
+                };
+            })
+            .ToList();
+
+        context.Permissions.AddRange(permissions);
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedDefaultRolesAsync(ApplicationDbContext context, int tenantId)
+    {
+        // Check if roles already exist
+        if (await context.Roles.AnyAsync())
+            return;
+
+        // Create system roles (null tenant)
+        var systemRoles = new[]
+        {
+            new Role
+            {
+                TenantId = null,
+                Name = "SuperAdmin",
+                Description = "System super administrator with all permissions",
+                IsSystemRole = true,
+                IsDefault = false,
+                IsActive = true
+            },
+            new Role
+            {
+                TenantId = null,
+                Name = "SystemAdmin",
+                Description = "System administrator with system management permissions",
+                IsSystemRole = true,
+                IsDefault = false,
+                IsActive = true
+            }
+        };
+
+        // Create default tenant roles
+        var tenantRoles = new[]
+        {
+            new Role
+            {
+                TenantId = tenantId,
+                Name = "Admin",
+                Description = "Tenant administrator with full tenant permissions",
+                IsSystemRole = false,
+                IsDefault = false,
+                IsActive = true
+            },
+            new Role
+            {
+                TenantId = tenantId,
+                Name = "User",
+                Description = "Standard user with basic permissions",
+                IsSystemRole = false,
+                IsDefault = true,
+                IsActive = true
+            }
+        };
+
+        context.Roles.AddRange(systemRoles);
+        context.Roles.AddRange(tenantRoles);
+        await context.SaveChangesAsync();
+
+        // Assign permissions to roles
+        await AssignDefaultPermissionsAsync(context);
+    }
+
+    private static async Task AssignDefaultPermissionsAsync(ApplicationDbContext context)
+    {
+        var permissions = await context.Permissions.ToListAsync();
+        var roles = await context.Roles.ToListAsync();
+
+        var rolePermissions = new List<RolePermission>();
+
+        // SuperAdmin gets all permissions
+        var superAdminRole = roles.First(r => r.Name == "SuperAdmin");
+        rolePermissions.AddRange(permissions.Select(p => new RolePermission
+        {
+            RoleId = superAdminRole.Id,
+            PermissionId = p.Id,
+            GrantedAt = DateTime.UtcNow,
+            GrantedBy = "System"
+        }));
+
+        // SystemAdmin gets system permissions
+        var systemAdminRole = roles.First(r => r.Name == "SystemAdmin");
+        var systemPermissions = permissions.Where(p => p.Category == "System" || p.Category == "Tenants").ToList();
+        rolePermissions.AddRange(systemPermissions.Select(p => new RolePermission
+        {
+            RoleId = systemAdminRole.Id,
+            PermissionId = p.Id,
+            GrantedAt = DateTime.UtcNow,
+            GrantedBy = "System"
+        }));
+
+        // Tenant Admin gets user and role management permissions
+        var adminRole = roles.First(r => r.Name == "Admin" && r.TenantId != null);
+        var adminPermissions = permissions.Where(p => 
+            p.Category == "Users" || 
+            p.Category == "Roles" || 
+            p.Category == "Reports").ToList();
+        rolePermissions.AddRange(adminPermissions.Select(p => new RolePermission
+        {
+            RoleId = adminRole.Id,
+            PermissionId = p.Id,
+            GrantedAt = DateTime.UtcNow,
+            GrantedBy = "System"
+        }));
+
+        // User gets basic permissions
+        var userRole = roles.First(r => r.Name == "User" && r.TenantId != null);
+        var userPermissions = permissions.Where(p => 
+            p.Name == "users.view" || 
+            p.Name == "reports.view").ToList();
+        rolePermissions.AddRange(userPermissions.Select(p => new RolePermission
+        {
+            RoleId = userRole.Id,
+            PermissionId = p.Id,
+            GrantedAt = DateTime.UtcNow,
+            GrantedBy = "System"
+        }));
+
+        context.RolePermissions.AddRange(rolePermissions);
+        await context.SaveChangesAsync();
     }
 }

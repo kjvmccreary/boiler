@@ -1,5 +1,5 @@
 // FILE: src shared/Common/Data/ApplicationDbContext.cs
-using Contracts.Services; // ADDED: Import for ITenantProvider
+using Contracts.Services;
 using DTOs.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -20,22 +20,36 @@ public class ApplicationDbContext : DbContext
         _tenantProvider = tenantProvider;
     }
 
+    // Existing entities
     public DbSet<Tenant> Tenants { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<TenantUser> TenantUsers { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 
+    // NEW: RBAC entities
+    public DbSet<Role> Roles { get; set; }
+    public DbSet<Permission> Permissions { get; set; }
+    public DbSet<RolePermission> RolePermissions { get; set; }
+    public DbSet<UserRole> UserRoles { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Existing configurations
         ConfigureTenant(modelBuilder);
         ConfigureUser(modelBuilder);
         ConfigureTenantUser(modelBuilder);
         ConfigureRefreshToken(modelBuilder);
 
+        // NEW: RBAC configurations
+        ConfigureRole(modelBuilder);
+        ConfigurePermission(modelBuilder);
+        ConfigureRolePermission(modelBuilder);
+        ConfigureUserRole(modelBuilder);
+
         base.OnModelCreating(modelBuilder);
     }
 
-    // Configuration methods follow...
+    // Existing configuration methods...
     private void ConfigureTenant(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Tenant>(entity =>
@@ -62,22 +76,21 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
             
-            // ➕ ADD THESE NEW PROPERTY CONFIGURATIONS:
             entity.Property(e => e.PhoneNumber).HasMaxLength(20);
             entity.Property(e => e.TimeZone).HasMaxLength(100);
             entity.Property(e => e.Language).HasMaxLength(10);
-            entity.Property(e => e.Preferences).HasColumnType("jsonb"); // Store as JSONB in PostgreSQL
+            entity.Property(e => e.Preferences).HasColumnType("jsonb");
             
             entity.Property(e => e.EmailConfirmationToken).HasMaxLength(255);
             entity.Property(e => e.PasswordResetToken).HasMaxLength(255);
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();
 
-            // Primary tenant relationship (optional - user can exist without a primary tenant)
+            // Primary tenant relationship (optional)
             entity.HasOne(e => e.PrimaryTenant)
                   .WithMany(t => t.Users)
                   .HasForeignKey(e => e.TenantId)
-                  .OnDelete(DeleteBehavior.SetNull); // If tenant is deleted, set TenantId to null
+                  .OnDelete(DeleteBehavior.SetNull);
         });
     }
 
@@ -138,184 +151,106 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
         });
     }
+
+    // NEW: RBAC entity configurations
+    private void ConfigureRole(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            // Composite unique index: tenant + name (system roles have null tenant)
+            entity.HasIndex(e => new { e.TenantId, e.Name }).IsUnique();
+            
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+
+            // Tenant relationship (nullable for system roles)
+            entity.HasOne(e => e.Tenant)
+                  .WithMany()
+                  .HasForeignKey(e => e.TenantId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private void ConfigurePermission(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Permission>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.Name).IsUnique();
+            
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Category).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Description).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+        });
+    }
+
+    private void ConfigureRolePermission(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<RolePermission>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            // Unique constraint: one permission per role
+            entity.HasIndex(e => new { e.RoleId, e.PermissionId }).IsUnique();
+            
+            entity.Property(e => e.RoleId).IsRequired();
+            entity.Property(e => e.PermissionId).IsRequired();
+            entity.Property(e => e.GrantedAt).IsRequired();
+            entity.Property(e => e.GrantedBy).HasMaxLength(255);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+
+            // Relationships
+            entity.HasOne(e => e.Role)
+                  .WithMany(r => r.RolePermissions)
+                  .HasForeignKey(e => e.RoleId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Permission)
+                  .WithMany(p => p.RolePermissions)
+                  .HasForeignKey(e => e.PermissionId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private void ConfigureUserRole(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<UserRole>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            // Unique constraint: one role per user per tenant
+            entity.HasIndex(e => new { e.UserId, e.RoleId, e.TenantId }).IsUnique();
+            
+            entity.Property(e => e.UserId).IsRequired();
+            entity.Property(e => e.RoleId).IsRequired();
+            entity.Property(e => e.TenantId).IsRequired();
+            entity.Property(e => e.AssignedAt).IsRequired();
+            entity.Property(e => e.AssignedBy).HasMaxLength(255);
+            entity.Property(e => e.CreatedAt).IsRequired();
+            entity.Property(e => e.UpdatedAt).IsRequired();
+
+            // Relationships
+            entity.HasOne(e => e.User)
+                  .WithMany()
+                  .HasForeignKey(e => e.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Role)
+                  .WithMany(r => r.UserRoles)
+                  .HasForeignKey(e => e.RoleId)
+                  .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.Tenant)
+                  .WithMany()
+                  .HasForeignKey(e => e.TenantId)
+                  .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
 }
-
-
-
-
-
-//// FILE: src/shared/Common/Data/ApplicationDbContext.cs
-//using Microsoft.EntityFrameworkCore;
-//using Microsoft.AspNetCore.Http;
-//using DTOs.Entities;
-//using Common.Services;
-
-//namespace Common.Data;
-
-//public class ApplicationDbContext : DbContext
-//{
-//    private readonly IHttpContextAccessor _httpContextAccessor;
-//    private readonly ITenantProvider _tenantProvider;
-
-//    public ApplicationDbContext(
-//        DbContextOptions<ApplicationDbContext> options,
-//        IHttpContextAccessor httpContextAccessor,
-//        ITenantProvider tenantProvider) : base(options)
-//    {
-//        _httpContextAccessor = httpContextAccessor;
-//        _tenantProvider = tenantProvider;
-//    }
-
-//    public DbSet<Tenant> Tenants { get; set; }
-//    public DbSet<User> Users { get; set; }
-//    public DbSet<TenantUser> TenantUsers { get; set; }
-//    public DbSet<RefreshToken> RefreshTokens { get; set; }
-
-//    protected override void OnModelCreating(ModelBuilder modelBuilder)
-//    {
-//        ConfigureTenant(modelBuilder);
-//        ConfigureUser(modelBuilder);
-//        ConfigureTenantUser(modelBuilder);
-//        ConfigureRefreshToken(modelBuilder);
-
-//        base.OnModelCreating(modelBuilder);
-//    }
-
-//    private void ConfigureTenant(ModelBuilder modelBuilder)
-//    {
-//        modelBuilder.Entity<Tenant>(entity =>
-//        {
-//            entity.HasKey(e => e.Id);
-//            entity.HasIndex(e => e.Domain).IsUnique();
-//            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
-//            entity.Property(e => e.Domain).HasMaxLength(255);
-//            entity.Property(e => e.SubscriptionPlan).IsRequired().HasMaxLength(50);
-//            entity.Property(e => e.Settings).HasColumnType("jsonb");
-//            entity.Property(e => e.CreatedAt).IsRequired();
-//            entity.Property(e => e.UpdatedAt).IsRequired();
-//        });
-//    }
-
-//    private void ConfigureUser(ModelBuilder modelBuilder)
-//    {
-//        modelBuilder.Entity<User>(entity =>
-//        {
-//            entity.HasKey(e => e.Id);
-//            entity.HasIndex(e => new { e.TenantId, e.Email }).IsUnique();
-//            entity.Property(e => e.TenantId).IsRequired();
-//            entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
-//            entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
-//            entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
-//            entity.Property(e => e.PasswordHash).IsRequired().HasMaxLength(255);
-//            entity.Property(e => e.EmailConfirmationToken).HasMaxLength(255);
-//            entity.Property(e => e.CreatedAt).IsRequired();
-//            entity.Property(e => e.UpdatedAt).IsRequired();
-
-//            // Tenant relationship
-//            entity.HasOne(e => e.Tenant)
-//                  .WithMany(t => t.Users)
-//                  .HasForeignKey(e => e.TenantId)
-//                  .OnDelete(DeleteBehavior.Restrict);
-
-//            // Row-level security via check constraint (will be added in migration)
-//            entity.HasCheckConstraint("CK_User_TenantId",
-//                "\"TenantId\"::text = current_setting('app.current_tenant', true)");
-//        });
-//    }
-
-//    private void ConfigureTenantUser(ModelBuilder modelBuilder)
-//    {
-//        modelBuilder.Entity<TenantUser>(entity =>
-//        {
-//            entity.HasKey(e => e.Id);
-//            entity.HasIndex(e => new { e.TenantId, e.UserId }).IsUnique();
-//            entity.Property(e => e.TenantId).IsRequired();
-//            entity.Property(e => e.UserId).IsRequired();
-//            entity.Property(e => e.Role).IsRequired().HasMaxLength(50);
-//            entity.Property(e => e.Permissions).HasColumnType("jsonb");
-//            entity.Property(e => e.InvitedBy).HasMaxLength(255);
-//            entity.Property(e => e.CreatedAt).IsRequired();
-//            entity.Property(e => e.UpdatedAt).IsRequired();
-
-//            // Relationships
-//            entity.HasOne(e => e.Tenant)
-//                  .WithMany(t => t.TenantUsers)
-//                  .HasForeignKey(e => e.TenantId)
-//                  .OnDelete(DeleteBehavior.Cascade);
-
-//            entity.HasOne(e => e.User)
-//                  .WithMany(u => u.TenantUsers)
-//                  .HasForeignKey(e => e.UserId)
-//                  .OnDelete(DeleteBehavior.Cascade);
-//        });
-//    }
-
-//    private void ConfigureRefreshToken(ModelBuilder modelBuilder)
-//    {
-//        modelBuilder.Entity<RefreshToken>(entity =>
-//        {
-//            entity.HasKey(e => e.Id);
-//            entity.HasIndex(e => e.Token).IsUnique();
-//            entity.HasIndex(e => new { e.TenantId, e.UserId });
-//            entity.Property(e => e.TenantId).IsRequired();
-//            entity.Property(e => e.UserId).IsRequired();
-//            entity.Property(e => e.Token).IsRequired().HasMaxLength(255);
-//            entity.Property(e => e.ExpiryDate).IsRequired();
-//            entity.Property(e => e.CreatedByIp).IsRequired().HasMaxLength(50);
-//            entity.Property(e => e.RevokedByIp).HasMaxLength(50);
-//            entity.Property(e => e.ReplacedByToken).HasMaxLength(255);
-//            entity.Property(e => e.DeviceInfo).HasMaxLength(500);
-//            entity.Property(e => e.CreatedAt).IsRequired();
-//            entity.Property(e => e.UpdatedAt).IsRequired();
-
-//            // Relationships
-//            entity.HasOne(e => e.User)
-//                  .WithMany(u => u.RefreshTokens)
-//                  .HasForeignKey(e => e.UserId)
-//                  .OnDelete(DeleteBehavior.Cascade);
-
-//            entity.HasOne(e => e.Tenant)
-//                  .WithMany()
-//                  .HasForeignKey(e => e.TenantId)
-//                  .OnDelete(DeleteBehavior.Restrict);
-
-//            // Row-level security
-//            entity.HasCheckConstraint("CK_RefreshToken_TenantId",
-//                "\"TenantId\"::text = current_setting('app.current_tenant', true)");
-//        });
-//    }
-
-//    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-//    {
-//        var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
-//        if (tenantId.HasValue)
-//        {
-//            await Database.ExecuteSqlRawAsync(
-//                "SELECT set_config('app.current_tenant', {0}, false)",
-//                tenantId.ToString());
-//        }
-
-//        // Update timestamps
-//        var entries = ChangeTracker.Entries<BaseEntity>();
-//        foreach (var entry in entries)
-//        {
-//            switch (entry.State)
-//            {
-//                case EntityState.Added:
-//                    entry.Entity.CreatedAt = DateTime.UtcNow;
-//                    entry.Entity.UpdatedAt = DateTime.UtcNow;
-//                    break;
-//                case EntityState.Modified:
-//                    entry.Entity.UpdatedAt = DateTime.UtcNow;
-//                    break;
-//            }
-//        }
-
-//        return await base.SaveChangesAsync(cancellationToken);
-//    }
-
-//    public override int SaveChanges()
-//    {
-//        return SaveChangesAsync().GetAwaiter().GetResult();
-//    }
-//}
