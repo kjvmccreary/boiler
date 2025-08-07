@@ -78,13 +78,13 @@ builder.Services.AddFluentValidation();
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy =>
-        policy.RequireRole("Admin"));
+        policy.RequireRole("Admin,SuperAdmin"));
 
     options.AddPolicy("OwnerOrAdmin", policy =>
         policy.RequireAssertion(context =>
         {
             var userId = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            var isAdmin = context.User.IsInRole("Admin");
+            var isAdmin = context.User.IsInRole("Admin") || context.User.IsInRole("SuperAdmin");
             return isAdmin || (userId != null);
         }));
 });
@@ -160,3 +160,6 @@ finally
 {
     Log.CloseAndFlush();
 }
+
+// ADDED: Make Program class accessible for testing
+public partial class Program { }

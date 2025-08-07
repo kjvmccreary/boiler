@@ -81,12 +81,44 @@ public class UsersController : ControllerBase
     /// Get list of users (Admin and SuperAdmin only, tenant-scoped)
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin,SuperAdmin")] // FIXED: Accept both Admin and SuperAdmin
-    public async Task<ActionResult<ApiResponseDto<PagedResultDto<UserDto>>>> GetUsers([FromQuery] PaginationRequestDto request)
+    [Authorize(Roles = "Admin,SuperAdmin")]
+    public async Task<ActionResult<ApiResponseDto<PagedResultDto<UserDto>>>> GetUsers(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? searchTerm = null,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] string sortDirection = "asc")
     {
         try
         {
+            // ✅ FIXED: Validate parameters and map to DTO
+            if (page <= 0)
+            {
+                return BadRequest(ApiResponseDto<PagedResultDto<UserDto>>.ErrorResult("Page number must be greater than 0"));
+            }
+            
+            if (pageSize <= 0 || pageSize > 100)
+            {
+                return BadRequest(ApiResponseDto<PagedResultDto<UserDto>>.ErrorResult("Page size must be between 1 and 100"));
+            }
+
+            // Map query parameters to DTO
+            var request = new PaginationRequestDto
+            {
+                PageNumber = page,
+                PageSize = pageSize,
+                SearchTerm = searchTerm,
+                SortBy = sortBy,
+                SortDirection = sortDirection
+            };
+
             var result = await _userService.GetUsersAsync(request);
+            
+            if (!result.Success)
+            {
+                return BadRequest(result);
+            }
+            
             return Ok(result);
         }
         catch (Exception ex)
@@ -134,7 +166,7 @@ public class UsersController : ControllerBase
     /// Delete user (Admin and SuperAdmin only, cannot delete self)
     /// </summary>
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Admin,SuperAdmin")] // FIXED: Accept both Admin and SuperAdmin
+    [Authorize(Roles = "Admin,SuperAdmin")]
     public async Task<ActionResult<ApiResponseDto<bool>>> DeleteUser(int id)
     {
         try
@@ -148,6 +180,17 @@ public class UsersController : ControllerBase
             }
 
             var result = await _userService.DeleteUserAsync(id);
+            
+            // ✅ FIXED: Check if user was found and return appropriate status
+            if (!result.Success)
+            {
+                if (result.Message?.Contains("not found") == true)
+                {
+                    return NotFound(result);
+                }
+                return BadRequest(result);
+            }
+            
             return Ok(result);
         }
         catch (Exception ex)

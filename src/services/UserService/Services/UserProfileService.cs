@@ -1,6 +1,7 @@
 // FILE: src/services/UserService/Services/UserProfileService.cs
 using AutoMapper;
 using Contracts.Repositories;
+using Contracts.Services;
 using Contracts.User;
 using DTOs.Common;
 using DTOs.Entities;
@@ -12,15 +13,18 @@ namespace UserService.Services;
 public class UserProfileService : IUserProfileService
 {
     private readonly IUserRepository _userRepository;
+    private readonly ITenantProvider _tenantProvider;
     private readonly IMapper _mapper;
     private readonly ILogger<UserProfileService> _logger;
 
     public UserProfileService(
         IUserRepository userRepository,
+        ITenantProvider tenantProvider,
         IMapper mapper,
         ILogger<UserProfileService> logger)
     {
         _userRepository = userRepository;
+        _tenantProvider = tenantProvider;
         _mapper = mapper;
         _logger = logger;
     }
@@ -29,8 +33,15 @@ public class UserProfileService : IUserProfileService
     {
         try
         {
+            // ✅ FIXED: Apply tenant filtering
+            var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return ApiResponseDto<UserDto>.ErrorResult("Tenant context not found");
+            }
+
             var user = await _userRepository.Query()
-                .Where(u => u.Id == userId && u.IsActive)
+                .Where(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value)
                 .Include(u => u.TenantUsers)
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -53,8 +64,15 @@ public class UserProfileService : IUserProfileService
     {
         try
         {
+            // ✅ FIXED: Apply tenant filtering
+            var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return ApiResponseDto<UserDto>.ErrorResult("Tenant context not found");
+            }
+
             var user = await _userRepository.Query()
-                .Where(u => u.Id == userId && u.IsActive)
+                .Where(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)
@@ -88,8 +106,15 @@ public class UserProfileService : IUserProfileService
     {
         try
         {
+            // ✅ FIXED: Apply tenant filtering
+            var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return ApiResponseDto<bool>.ErrorResult("Tenant context not found");
+            }
+
             var user = await _userRepository.Query()
-                .Where(u => u.Id == userId && u.IsActive)
+                .Where(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)
@@ -116,8 +141,15 @@ public class UserProfileService : IUserProfileService
     {
         try
         {
+            // ✅ FIXED: Apply tenant filtering
+            var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return ApiResponseDto<UserPreferencesDto>.ErrorResult("Tenant context not found");
+            }
+
             var user = await _userRepository.Query()
-                .Where(u => u.Id == userId && u.IsActive)
+                .Where(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)

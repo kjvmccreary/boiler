@@ -33,8 +33,15 @@ public class UserServiceImplementation : Contracts.User.IUserService
     {
         try
         {
+            // FIXED: Apply tenant filtering explicitly
+            var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return ApiResponseDto<UserDto>.ErrorResult("Tenant context not found");
+            }
+
             var user = await _userRepository.Query()
-                .Where(u => u.Id == userId && u.IsActive)
+                .Where(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value)
                 .Include(u => u.TenantUsers)
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -57,8 +64,15 @@ public class UserServiceImplementation : Contracts.User.IUserService
     {
         try
         {
+            // FIXED: Apply tenant filtering explicitly
+            var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return ApiResponseDto<UserDto>.ErrorResult("Tenant context not found");
+            }
+
             var user = await _userRepository.Query()
-                .Where(u => u.Email.ToLower() == email.ToLower() && u.IsActive)
+                .Where(u => u.Email.ToLower() == email.ToLower() && u.IsActive && u.TenantId == currentTenantId.Value)
                 .Include(u => u.TenantUsers)
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -81,8 +95,15 @@ public class UserServiceImplementation : Contracts.User.IUserService
     {
         try
         {
+            // FIXED: Apply tenant filtering explicitly
+            var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return ApiResponseDto<PagedResultDto<UserDto>>.ErrorResult("Tenant context not found");
+            }
+
             var query = _userRepository.Query()
-                .Where(u => u.IsActive);
+                .Where(u => u.IsActive && u.TenantId == currentTenantId.Value);
 
             // Apply search filter if provided
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
@@ -94,15 +115,15 @@ public class UserServiceImplementation : Contracts.User.IUserService
                     u.Email.ToLower().Contains(searchLower));
             }
 
-            // ✅ Apply sorting BEFORE Include
+            // Apply sorting BEFORE Include
             query = ApplySorting(query, request.SortBy, request.SortDirection);
 
-            // ✅ Apply Include AFTER sorting
-            var queryWithIncludes = query.Include(u => u.TenantUsers);
-
+            // Count total items BEFORE applying pagination
             var totalCount = await query.CountAsync(cancellationToken);
 
-            var users = await queryWithIncludes
+            // Apply pagination and Include
+            var users = await query
+                .Include(u => u.TenantUsers)
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
@@ -171,8 +192,15 @@ public class UserServiceImplementation : Contracts.User.IUserService
     {
         try
         {
+            // FIXED: Apply tenant filtering explicitly
+            var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return ApiResponseDto<UserDto>.ErrorResult("Tenant context not found");
+            }
+
             var user = await _userRepository.Query()
-                .Where(u => u.Id == userId && u.IsActive)
+                .Where(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)
@@ -222,8 +250,15 @@ public class UserServiceImplementation : Contracts.User.IUserService
     {
         try
         {
+            // ✅ FIXED: Apply tenant filtering and check existence
+            var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return ApiResponseDto<bool>.ErrorResult("Tenant context not found");
+            }
+
             var user = await _userRepository.Query()
-                .Where(u => u.Id == userId)
+                .Where(u => u.Id == userId && u.TenantId == currentTenantId.Value)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)
@@ -250,8 +285,15 @@ public class UserServiceImplementation : Contracts.User.IUserService
     {
         try
         {
+            // FIXED: Apply tenant filtering explicitly
+            var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return ApiResponseDto<bool>.ErrorResult("Tenant context not found");
+            }
+
             var exists = await _userRepository.Query()
-                .AnyAsync(u => u.Id == userId && u.IsActive, cancellationToken);
+                .AnyAsync(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value, cancellationToken);
 
             return ApiResponseDto<bool>.SuccessResult(exists);
         }
@@ -279,15 +321,15 @@ public class UserServiceImplementation : Contracts.User.IUserService
                     u.Email.ToLower().Contains(searchLower));
             }
 
-            // ✅ Apply sorting BEFORE Include
+            // Apply sorting BEFORE Include
             query = ApplySorting(query, request.SortBy, request.SortDirection);
 
-            // ✅ Apply Include AFTER sorting
-            var queryWithIncludes = query.Include(u => u.TenantUsers);
-
+            // Count total items BEFORE applying pagination
             var totalCount = await query.CountAsync(cancellationToken);
 
-            var users = await queryWithIncludes
+            // Apply pagination and Include
+            var users = await query
+                .Include(u => u.TenantUsers)
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);

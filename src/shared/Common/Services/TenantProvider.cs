@@ -1,6 +1,7 @@
 // FILE: src/shared/Common/Services/TenantProvider.cs
 using System.Security.Claims;
 using Common.Configuration;
+using Common.Constants; // ✅ ADD: Missing namespace import
 using Contracts.Services;
 using DTOs.Entities;
 using Microsoft.AspNetCore.Http;
@@ -13,7 +14,7 @@ public class TenantProvider : ITenantProvider
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly TenantSettings _tenantSettings;
     private readonly ILogger<TenantProvider> _logger;
-    private readonly AsyncLocal<int?> _currentTenantId = new(); // Changed from Guid? to int?
+    private readonly AsyncLocal<int?> _currentTenantId = new();
     private readonly AsyncLocal<string?> _currentTenantIdentifier = new();
 
     public TenantProvider(
@@ -28,7 +29,7 @@ public class TenantProvider : ITenantProvider
 
     public bool HasTenantContext => _currentTenantId.Value.HasValue || !string.IsNullOrEmpty(_currentTenantIdentifier.Value);
 
-    public async Task<int?> GetCurrentTenantIdAsync() // Changed return type from Guid? to int?
+    public async Task<int?> GetCurrentTenantIdAsync()
     {
         // First check if tenant ID is already set in the async local
         if (_currentTenantId.Value.HasValue)
@@ -39,10 +40,12 @@ public class TenantProvider : ITenantProvider
         {
             // If no HTTP context, check for default tenant
             if (!string.IsNullOrEmpty(_tenantSettings.DefaultTenantId) &&
-                int.TryParse(_tenantSettings.DefaultTenantId, out var defaultTenantId)) // Changed from Guid.TryParse to int.TryParse
+                int.TryParse(_tenantSettings.DefaultTenantId, out var defaultTenantId))
             {
+                _logger.LogDebug("Using default tenant ID: {TenantId}", defaultTenantId);
                 return defaultTenantId;
             }
+            _logger.LogWarning("No HTTP context and no default tenant ID configured");
             return null;
         }
 
@@ -52,6 +55,11 @@ public class TenantProvider : ITenantProvider
             if (tenantId.HasValue)
             {
                 _currentTenantId.Value = tenantId;
+                _logger.LogDebug("Resolved tenant ID: {TenantId}", tenantId);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to resolve tenant ID from any source");
             }
             return tenantId;
         }
@@ -88,7 +96,7 @@ public class TenantProvider : ITenantProvider
         }
     }
 
-    public async Task SetCurrentTenantAsync(int tenantId) // Changed parameter type from Guid to int
+    public async Task SetCurrentTenantAsync(int tenantId)
     {
         _currentTenantId.Value = tenantId;
         _currentTenantIdentifier.Value = tenantId.ToString();
@@ -106,7 +114,7 @@ public class TenantProvider : ITenantProvider
     {
         _currentTenantIdentifier.Value = tenantIdentifier;
 
-        if (int.TryParse(tenantIdentifier, out var tenantId)) // Changed from Guid.TryParse to int.TryParse
+        if (int.TryParse(tenantIdentifier, out var tenantId))
         {
             _currentTenantId.Value = tenantId;
         }
@@ -135,14 +143,14 @@ public class TenantProvider : ITenantProvider
         await Task.CompletedTask;
     }
 
-    private async Task<int?> ResolveTenantIdAsync(HttpContext context) // Changed return type from Guid? to int?
+    private async Task<int?> ResolveTenantIdAsync(HttpContext context)
     {
         var identifier = await ResolveTenantIdentifierAsync(context);
         if (string.IsNullOrEmpty(identifier))
             return null;
 
         // Try to parse as int first
-        if (int.TryParse(identifier, out var tenantId)) // Changed from Guid.TryParse to int.TryParse
+        if (int.TryParse(identifier, out var tenantId))
             return tenantId;
 
         // TODO: In a real implementation, you would look up the tenant ID by identifier (domain, etc.)
@@ -152,14 +160,37 @@ public class TenantProvider : ITenantProvider
 
     private async Task<string?> ResolveTenantIdentifierAsync(HttpContext context)
     {
-        return _tenantSettings.ResolutionStrategy switch
+        // ✅ IMPROVED: Always try claims first for authenticated requests
+        if (context.User?.Identity?.IsAuthenticated == true)
+        {
+            var claimsResult = await ResolveFromClaimsAsync(context);
+            if (!string.IsNullOrEmpty(claimsResult))
+            {
+                _logger.LogDebug("Resolved tenant from JWT claims: {TenantId}", claimsResult);
+                return claimsResult;
+            }
+        }
+
+        // ✅ IMPROVED: Then try the configured strategy
+        var result = _tenantSettings.ResolutionStrategy switch
         {
             TenantResolutionStrategy.Header => ResolveFromHeader(context),
             TenantResolutionStrategy.Domain => ResolveFromDomain(context),
             TenantResolutionStrategy.Subdomain => ResolveFromSubdomain(context),
             TenantResolutionStrategy.Path => ResolveFromPath(context),
-            _ => await ResolveFromClaimsAsync(context) ?? ResolveFromHeader(context)
+            _ => ResolveFromHeader(context) // Default fallback
         };
+
+        if (!string.IsNullOrEmpty(result))
+        {
+            _logger.LogDebug("Resolved tenant from {Strategy}: {TenantId}", _tenantSettings.ResolutionStrategy, result);
+            return result;
+        }
+
+        _logger.LogWarning("Could not resolve tenant from any source. Strategy: {Strategy}, IsAuthenticated: {IsAuth}", 
+            _tenantSettings.ResolutionStrategy, context.User?.Identity?.IsAuthenticated);
+        
+        return null;
     }
 
     private string? ResolveFromHeader(HttpContext context)
@@ -174,6 +205,7 @@ public class TenantProvider : ITenantProvider
             }
         }
 
+        _logger.LogDebug("No tenant found in header: {HeaderName}", _tenantSettings.TenantHeaderName);
         return null;
     }
 
@@ -230,12 +262,17 @@ public class TenantProvider : ITenantProvider
     {
         if (context.User?.Identity?.IsAuthenticated == true)
         {
-            var tenantClaim = context.User.FindFirst(Constants.ClaimTypes.TenantId);
+            // ✅ FIXED: Use the correct namespace for ClaimTypes
+            var tenantClaim = context.User.FindFirst(Common.Constants.ClaimTypes.TenantId);
             if (tenantClaim != null && !string.IsNullOrEmpty(tenantClaim.Value))
             {
                 _logger.LogDebug("Resolved tenant from claims: {TenantId}", tenantClaim.Value);
                 return tenantClaim.Value;
             }
+
+            // ✅ DEBUG: Log all claims to help troubleshoot
+            var allClaims = context.User.Claims.Select(c => $"{c.Type}={c.Value}").ToArray();
+            _logger.LogDebug("Available claims: {Claims}", string.Join(", ", allClaims));
         }
 
         await Task.CompletedTask;
