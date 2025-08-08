@@ -32,9 +32,9 @@ public class PermissionService : IPermissionService
                 return false;
             }
 
-            // FIX: UserId is int, TenantId is int - no conversion needed
+            // FIX: Include IsActive filter for user roles
             var hasPermission = await _context.UserRoles
-                .Where(ur => ur.UserId == userId && ur.TenantId == tenantId.Value)
+                .Where(ur => ur.UserId == userId && ur.TenantId == tenantId.Value && ur.IsActive)
                 .Join(_context.RolePermissions, 
                     ur => ur.RoleId, 
                     rp => rp.RoleId, 
@@ -66,8 +66,9 @@ public class PermissionService : IPermissionService
                 return Enumerable.Empty<string>();
             }
 
+            // FIX: Include IsActive filter for user roles
             var permissions = await _context.UserRoles
-                .Where(ur => ur.UserId == userId && ur.TenantId == tenantId.Value)
+                .Where(ur => ur.UserId == userId && ur.TenantId == tenantId.Value && ur.IsActive)
                 .Join(_context.RolePermissions,
                     ur => ur.RoleId,
                     rp => rp.RoleId,
@@ -95,17 +96,17 @@ public class PermissionService : IPermissionService
         {
             _logger.LogInformation("🔍 PERMISSION DEBUG: Getting permissions for user {UserId} in tenant {TenantId}", userId, tenantId);
             
-            // Step 1: Check if user has roles in this tenant
+            // Step 1: Check if user has active roles in this tenant
             var userRoles = await _context.UserRoles
-                .Where(ur => ur.UserId == userId && ur.TenantId == tenantId)
+                .Where(ur => ur.UserId == userId && ur.TenantId == tenantId && ur.IsActive)
                 .ToListAsync(cancellationToken);
                 
-            _logger.LogInformation("🔍 PERMISSION DEBUG: Found {UserRoleCount} user roles for user {UserId} in tenant {TenantId}: {RoleIds}", 
+            _logger.LogInformation("🔍 PERMISSION DEBUG: Found {UserRoleCount} active user roles for user {UserId} in tenant {TenantId}: {RoleIds}", 
                 userRoles.Count, userId, tenantId, string.Join(",", userRoles.Select(ur => ur.RoleId)));
             
             if (!userRoles.Any())
             {
-                _logger.LogWarning("🔍 PERMISSION DEBUG: No user roles found for user {UserId} in tenant {TenantId}", userId, tenantId);
+                _logger.LogWarning("🔍 PERMISSION DEBUG: No active user roles found for user {UserId} in tenant {TenantId}", userId, tenantId);
                 return Enumerable.Empty<string>();
             }
             
@@ -124,9 +125,9 @@ public class PermissionService : IPermissionService
                 return Enumerable.Empty<string>();
             }
             
-            // Step 3: Get the actual permission names
+            // Step 3: Get the actual permission names - FIX: Include IsActive filter
             var permissions = await _context.UserRoles
-                .Where(ur => ur.UserId == userId && ur.TenantId == tenantId)
+                .Where(ur => ur.UserId == userId && ur.TenantId == tenantId && ur.IsActive)
                 .Join(_context.RolePermissions,
                     ur => ur.RoleId,
                     rp => rp.RoleId,
