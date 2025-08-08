@@ -80,3 +80,24 @@
 [2025-08-08 10:32:50.530 -05:00 INF] 🔍 TOKEN DEBUG: Token generation completed for user 5 {"SourceContext":"AuthService.Services.TokenService","ActionId":"80465529-2009-4d67-9e1f-1de261831f31","ActionName":"AuthService.Controllers.AuthController.Login (AuthService)","RequestId":"0HNEMH6C1LTF1:00000013","RequestPath":"/api/Auth/login","ConnectionId":"0HNEMH6C1LTF1"}
 [2025-08-08 10:32:50.539 -05:00 INF] User kevin@localhost logged in successfully {"SourceContext":"AuthService.Services.AuthServiceImplementation","ActionId":"80465529-2009-4d67-9e1f-1de261831f31","ActionName":"AuthService.Controllers.AuthController.Login (AuthService)","RequestId":"0HNEMH6C1LTF1:00000013","RequestPath":"/api/Auth/login","ConnectionId":"0HNEMH6C1LTF1"}
 [2025-08-08 10:32:50.542 -05:00 INF] HTTP POST /api/Auth/login responded 200 in 525.1781 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 15:59:01.615 -05:00 INF] Starting AuthService {}
+[2025-08-08 16:07:43.401 -05:00 INF] Starting AuthService {}
+[2025-08-08 16:07:43.476 -05:00 INF] Now listening on: https://localhost:7001 {}
+[2025-08-08 16:07:43.482 -05:00 INF] Now listening on: http://localhost:5001 {}
+[2025-08-08 16:07:43.795 -05:00 INF] HTTP GET /health responded 307 in 1.4253 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:07:43.863 -05:00 INF] HTTP GET /health responded 200 in 39.1245 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:08:13.713 -05:00 INF] HTTP GET /health responded 307 in 0.3491 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:08:13.733 -05:00 INF] HTTP GET /health responded 200 in 7.6971 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:08:43.742 -05:00 INF] HTTP GET /health responded 307 in 0.0419 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:08:43.757 -05:00 INF] HTTP GET /health responded 200 in 1.7999 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:08:47.755 -05:00 INF] HTTP GET /health responded 307 in 0.0366 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:08:57.363 -05:00 INF] HTTP GET /health responded 200 in 0.2889 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:09:13.693 -05:00 INF] HTTP GET /health responded 307 in 0.0348 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:09:13.732 -05:00 INF] HTTP GET /health responded 200 in 0.2603 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:09:43.701 -05:00 INF] HTTP GET /health responded 307 in 0.0874 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:09:43.710 -05:00 INF] HTTP GET /health responded 200 in 0.5158 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:10:13.708 -05:00 INF] HTTP GET /health responded 307 in 0.0686 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:10:13.753 -05:00 INF] HTTP GET /health responded 200 in 0.3513 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:11:12.531 -05:00 INF] HTTP GET /health responded 307 in 0.0352 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:16:13.090 -05:00 INF] HTTP GET /health responded 307 in 0.0561 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:20:15.077 -05:00 INF] HTTP GET /health responded 200 in 0.2741 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}

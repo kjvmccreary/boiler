@@ -83,3 +83,33 @@
 RolesAuthorizationRequirement:User.IsInRole must be true for one of the following roles: (Admin|SuperAdmin|TenantAdmin) {"EventId":{"Id":2,"Name":"UserAuthorizationFailed"},"SourceContext":"Microsoft.AspNetCore.Authorization.DefaultAuthorizationService","RequestId":"0HNEMH5BR0PVT:00000005","RequestPath":"/api/Permissions","ConnectionId":"0HNEMH5BR0PVT"}
 [2025-08-08 10:33:42.898 -05:00 INF] AuthenticationScheme: Bearer was forbidden. {"EventId":{"Id":13,"Name":"AuthenticationSchemeForbidden"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNEMH5BR0PVT:00000005","RequestPath":"/api/Permissions","ConnectionId":"0HNEMH5BR0PVT"}
 [2025-08-08 10:33:42.901 -05:00 INF] HTTP GET /api/Permissions responded 403 in 24.5265 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 15:59:12.432 -05:00 INF] Starting UserService {}
+[2025-08-08 15:59:12.538 -05:00 INF] Now listening on: https://localhost:7091 {}
+[2025-08-08 15:59:12.541 -05:00 INF] Now listening on: http://localhost:5292 {}
+[2025-08-08 16:07:33.363 -05:00 INF] Starting UserService {}
+[2025-08-08 16:07:33.452 -05:00 INF] Now listening on: https://localhost:7002 {}
+[2025-08-08 16:07:33.454 -05:00 INF] Now listening on: http://localhost:5002 {}
+[2025-08-08 16:07:43.788 -05:00 INF] HTTP GET /health responded 307 in 1.2450 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:07:43.853 -05:00 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId":{"Id":9,"Name":"AuthenticationSchemeNotAuthenticated"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNEMNUF2RI3C:00000001","RequestPath":"/health","ConnectionId":"0HNEMNUF2RI3C"}
+[2025-08-08 16:07:43.870 -05:00 INF] HTTP GET /health responded 200 in 49.9494 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:08:13.715 -05:00 INF] HTTP GET /health responded 307 in 0.3265 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:08:13.728 -05:00 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId":{"Id":9,"Name":"AuthenticationSchemeNotAuthenticated"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNEMNUF2RI3C:00000002","RequestPath":"/health","ConnectionId":"0HNEMNUF2RI3C"}
+[2025-08-08 16:08:13.743 -05:00 INF] HTTP GET /health responded 200 in 17.9364 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:08:43.742 -05:00 INF] HTTP GET /health responded 307 in 0.0480 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:08:43.754 -05:00 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId":{"Id":9,"Name":"AuthenticationSchemeNotAuthenticated"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNEMNUF2RI3C:00000003","RequestPath":"/health","ConnectionId":"0HNEMNUF2RI3C"}
+[2025-08-08 16:08:43.759 -05:00 INF] HTTP GET /health responded 200 in 7.8198 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:09:09.448 -05:00 INF] HTTP GET /health responded 307 in 0.0528 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:09:13.694 -05:00 INF] HTTP GET /health responded 307 in 0.0389 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:09:13.731 -05:00 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId":{"Id":9,"Name":"AuthenticationSchemeNotAuthenticated"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNEMNUF2RI3C:00000004","RequestPath":"/health","ConnectionId":"0HNEMNUF2RI3C"}
+[2025-08-08 16:09:13.737 -05:00 INF] HTTP GET /health responded 200 in 5.9633 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:09:20.721 -05:00 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId":{"Id":9,"Name":"AuthenticationSchemeNotAuthenticated"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNEMNUF2RI3E:00000001","RequestPath":"/health","ConnectionId":"0HNEMNUF2RI3E"}
+[2025-08-08 16:09:20.724 -05:00 INF] HTTP GET /health responded 200 in 3.1089 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:09:43.699 -05:00 INF] HTTP GET /health responded 307 in 0.0969 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:09:43.715 -05:00 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId":{"Id":9,"Name":"AuthenticationSchemeNotAuthenticated"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNEMNUF2RI3C:00000005","RequestPath":"/health","ConnectionId":"0HNEMNUF2RI3C"}
+[2025-08-08 16:09:43.721 -05:00 INF] HTTP GET /health responded 200 in 5.9743 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:10:13.707 -05:00 INF] HTTP GET /health responded 307 in 0.0812 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:10:13.745 -05:00 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId":{"Id":9,"Name":"AuthenticationSchemeNotAuthenticated"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNEMNUF2RI3G:00000001","RequestPath":"/health","ConnectionId":"0HNEMNUF2RI3G"}
+[2025-08-08 16:10:13.753 -05:00 INF] HTTP GET /health responded 200 in 8.5779 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:15:48.235 -05:00 INF] HTTP GET /health responded 307 in 0.0515 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}
+[2025-08-08 16:20:23.333 -05:00 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId":{"Id":9,"Name":"AuthenticationSchemeNotAuthenticated"},"SourceContext":"Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler","RequestId":"0HNEMNUF2RI3I:00000001","RequestPath":"/health","ConnectionId":"0HNEMNUF2RI3I"}
+[2025-08-08 16:20:23.335 -05:00 INF] HTTP GET /health responded 200 in 2.5605 ms {"SourceContext":"Serilog.AspNetCore.RequestLoggingMiddleware"}

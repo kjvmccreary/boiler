@@ -25,9 +25,11 @@ if (!string.IsNullOrEmpty(licenseKey))
     Environment.SetEnvironmentVariable("AUTOMAPPER_LICENSE_KEY", licenseKey);
 }
 
-// Add Serilog
-builder.Host.UseSerilog((context, configuration) =>
-    configuration.ReadFrom.Configuration(context.Configuration));
+// ✅ FIXED: Configure Serilog for .NET 9
+builder.Host.UseSerilog((hostingContext, loggerConfiguration) =>
+{
+    loggerConfiguration.ReadFrom.Configuration(hostingContext.Configuration);
+});
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -137,16 +139,35 @@ app.MapControllers();
 // Add health check endpoint
 app.MapGet("/health", () => Results.Ok(new { Status = "Healthy", Timestamp = DateTime.UtcNow }));
 
+// ➕ ADD: Explicit logging for startup visibility (like other services)
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    var addresses = app.Services.GetRequiredService<Microsoft.AspNetCore.Hosting.Server.IServer>()
+        .Features.Get<Microsoft.AspNetCore.Hosting.Server.Features.IServerAddressesFeature>()?.Addresses;
+    
+    foreach (var address in addresses ?? Enumerable.Empty<string>())
+    {
+        Console.WriteLine($"Now listening on: {address}");
+        Log.Information("Now listening on: {Address}", address);
+    }
+});
+
 try
 {
     Log.Information("Starting AuthService");
+    Console.WriteLine("=== AuthService Starting ===");
+    
     app.Run();
 }
 catch (Exception ex)
 {
     Log.Fatal(ex, "AuthService terminated unexpectedly");
+    Console.WriteLine($"FATAL ERROR: {ex.Message}");
 }
 finally
 {
     Log.CloseAndFlush();
 }
+
+// ADDED: Make Program class accessible for testing
+public partial class Program { }
