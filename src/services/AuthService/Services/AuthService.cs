@@ -158,11 +158,25 @@ public class AuthServiceImplementation : IAuthService
                 return ApiResponseDto<TokenResponseDto>.ErrorResult($"Account is locked until {user.LockedOutUntil}.");
             }
 
-            // ➕ ADD: Debug password verification
+            // ➕ ADD: Debug password verification with null safety
             _logger.LogWarning("🔍 LOGIN DEBUG: Attempting password verification for {Email}", request.Email);
             _logger.LogWarning("🔍 LOGIN DEBUG: Password length: {PasswordLength}, Hash starts with: {HashStart}", 
                 request.Password?.Length, user.PasswordHash?.Substring(0, Math.Min(10, user.PasswordHash?.Length ?? 0)));
-            
+
+            // FIX: Add null checks before calling VerifyPassword
+            if (string.IsNullOrEmpty(request.Password) || string.IsNullOrEmpty(user.PasswordHash))
+            {
+                _logger.LogWarning("Login attempt with null password or hash for {Email}", request.Email);
+                user.FailedLoginAttempts++;
+                if (user.FailedLoginAttempts >= 5)
+                {
+                    user.LockedOutUntil = DateTime.UtcNow.AddMinutes(30);
+                    _logger.LogWarning("User {Email} locked out due to failed login attempts", request.Email);
+                }
+                await _context.SaveChangesAsync(cancellationToken);
+                return ApiResponseDto<TokenResponseDto>.ErrorResult("Invalid email or password.");
+            }
+
             var passwordVerified = _passwordService.VerifyPassword(request.Password, user.PasswordHash);
             _logger.LogWarning("🔍 LOGIN DEBUG: Password verification result: {PasswordVerified}", passwordVerified);
 

@@ -1,4 +1,4 @@
-// FILE: src/shared/Common/Extensions/DatabaseExtensions.cs
+// FILE: src shared/Common/Extensions/DatabaseExtensions.cs
 using Common.Data;
 using Common.Repositories;
 using Common.Services;
@@ -32,29 +32,23 @@ public static class DatabaseExtensions
             }
         });
 
-        // Tenant Provider
-        services.AddScoped<ITenantProvider, TenantProvider>();
-
-        // Repository registrations
-        services.AddRepositories();
-
-        return services;
-    }
-
-    public static IServiceCollection AddRepositories(this IServiceCollection services)
-    {
-        // Existing repositories
+        // Repository registrations (existing ones)
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<ITenantManagementRepository, TenantManagementRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         
-        // NEW: RBAC repositories
+        // ADD: RBAC Repository registrations
         services.AddScoped<IRoleRepository, RoleRepository>();
-        services.AddScoped<IPermissionRepository, PermissionRepository>();
         services.AddScoped<IUserRoleRepository, UserRoleRepository>();
-
-        // Note: Add these as you implement them:
-        // services.AddScoped<ITenantManagementRepository, TenantManagementRepository>();
-        // services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-
+        services.AddScoped<IPermissionRepository, PermissionRepository>();
+        
+        // Service registrations
+        services.AddScoped<ITenantProvider, TenantProvider>();
+        services.AddScoped<IPermissionService, PermissionService>();
+        
+        // ADD: RBAC Service registrations
+        services.AddScoped<IRoleService, RoleService>();
+        
         return services;
     }
 
