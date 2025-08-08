@@ -31,6 +31,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoleService.Tests", "tests\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PermissionService.Tests", "tests\unit\PermissionService.Tests\PermissionService.Tests.csproj", "{9B32B833-5FA7-4BF7-9278-3BFA19C36D1E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ApiGateway.Tests", "tests\unit\ApiGateway.Tests\ApiGateway.Tests.csproj", "{197FD074-0760-4699-9D68-45125C2D90DB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -149,6 +151,18 @@ Global
 		{9B32B833-5FA7-4BF7-9278-3BFA19C36D1E}.Release|x64.Build.0 = Release|Any CPU
 		{9B32B833-5FA7-4BF7-9278-3BFA19C36D1E}.Release|x86.ActiveCfg = Release|Any CPU
 		{9B32B833-5FA7-4BF7-9278-3BFA19C36D1E}.Release|x86.Build.0 = Release|Any CPU
+		{197FD074-0760-4699-9D68-45125C2D90DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{197FD074-0760-4699-9D68-45125C2D90DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{197FD074-0760-4699-9D68-45125C2D90DB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{197FD074-0760-4699-9D68-45125C2D90DB}.Debug|x64.Build.0 = Debug|Any CPU
+		{197FD074-0760-4699-9D68-45125C2D90DB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{197FD074-0760-4699-9D68-45125C2D90DB}.Debug|x86.Build.0 = Debug|Any CPU
+		{197FD074-0760-4699-9D68-45125C2D90DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{197FD074-0760-4699-9D68-45125C2D90DB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{197FD074-0760-4699-9D68-45125C2D90DB}.Release|x64.ActiveCfg = Release|Any CPU
+		{197FD074-0760-4699-9D68-45125C2D90DB}.Release|x64.Build.0 = Release|Any CPU
+		{197FD074-0760-4699-9D68-45125C2D90DB}.Release|x86.ActiveCfg = Release|Any CPU
+		{197FD074-0760-4699-9D68-45125C2D90DB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -166,5 +180,6 @@ Global
 		{DC50E128-3C75-4D18-8A00-5864CED76D07} = {984BB9B3-3FA3-BE33-9484-CAC21695A33C}
 		{AC910919-7D49-40AD-A03D-602BAADC03F4} = {9D556B49-86D1-93A7-9596-FFAAB74EC556}
 		{9B32B833-5FA7-4BF7-9278-3BFA19C36D1E} = {9D556B49-86D1-93A7-9596-FFAAB74EC556}
+		{197FD074-0760-4699-9D68-45125C2D90DB} = {9D556B49-86D1-93A7-9596-FFAAB74EC556}
 	EndGlobalSection
 EndGlobal

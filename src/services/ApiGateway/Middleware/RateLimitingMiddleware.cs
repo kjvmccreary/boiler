@@ -19,6 +19,12 @@ public class RateLimitingMiddleware
         _options = configuration.GetSection("RateLimit").Get<RateLimitOptions>() ?? new RateLimitOptions();
     }
 
+    // ✅ ADDED: Method to clear cache for testing
+    public static void ClearCache()
+    {
+        _cache.Clear();
+    }
+
     public async Task InvokeAsync(HttpContext context)
     {
         var key = GenerateRateLimitKey(context);

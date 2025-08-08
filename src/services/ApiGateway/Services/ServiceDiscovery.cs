@@ -31,7 +31,6 @@ public class ServiceDiscovery : IServiceDiscovery
         _healthCheckTimer = new Timer(PerformHealthChecks, null, TimeSpan.Zero, TimeSpan.FromSeconds(_options.HealthCheckIntervalSeconds));
     }
 
-    // FIXED: Return Task.FromResult since this is a synchronous operation
     public Task<IEnumerable<ServiceEndpoint>> GetHealthyServicesAsync(string serviceName)
     {
         if (!_serviceRegistry.TryGetValue(serviceName, out var endpoints))
@@ -63,7 +62,6 @@ public class ServiceDiscovery : IServiceDiscovery
         return selectedService;
     }
 
-    // FIXED: Remove async since this is a synchronous operation
     public Task RegisterServiceAsync(ServiceEndpoint endpoint)
     {
         _serviceRegistry.AddOrUpdate(
@@ -86,7 +84,6 @@ public class ServiceDiscovery : IServiceDiscovery
         return Task.CompletedTask;
     }
 
-    // FIXED: Remove async since this is a synchronous operation
     public Task UnregisterServiceAsync(string serviceName, string instanceId)
     {
         if (_serviceRegistry.TryGetValue(serviceName, out var endpoints))
@@ -103,7 +100,6 @@ public class ServiceDiscovery : IServiceDiscovery
         return Task.CompletedTask;
     }
 
-    // FIXED: Return Task.FromResult since this is a synchronous operation
     public Task<Dictionary<string, ServiceHealthStatus>> GetServiceHealthStatusAsync()
     {
         var result = new Dictionary<string, ServiceHealthStatus>();
@@ -128,18 +124,30 @@ public class ServiceDiscovery : IServiceDiscovery
 
     private void InitializeKnownServices()
     {
-        var knownServices = _configuration.GetSection("ServiceDiscovery:KnownServices").Get<List<ServiceEndpoint>>() ?? new List<ServiceEndpoint>();
-        
-        foreach (var service in knownServices)
+        try
         {
-            service.InstanceId = $"{service.ServiceName}-{service.Host}-{service.Port}";
-            service.IsHealthy = true; // Will be verified by health check
+            // ✅ FIXED: Add null check and better error handling
+            var knownServicesSection = _configuration.GetSection("ServiceDiscovery:KnownServices");
+            var knownServices = new List<ServiceEndpoint>();
             
-            // FIXED: Don't block with .Wait(), use the synchronous method directly
-            RegisterServiceAsync(service);
+            if (knownServicesSection.Exists())
+            {
+                knownServices = knownServicesSection.Get<List<ServiceEndpoint>>() ?? new List<ServiceEndpoint>();
+            }
+            
+            foreach (var service in knownServices)
+            {
+                service.InstanceId = $"{service.ServiceName}-{service.Host}-{service.Port}";
+                service.IsHealthy = true; // Will be verified by health check
+                RegisterServiceAsync(service);
+            }
+            
+            _logger.LogInformation("Initialized {Count} known services", knownServices.Count);
         }
-        
-        _logger.LogInformation("Initialized {Count} known services", knownServices.Count);
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to initialize known services from configuration");
+        }
     }
 
     private async void PerformHealthChecks(object? state)
