@@ -39,6 +39,16 @@ public interface IPermissionService
     /// Get permissions grouped by category (for UI display)
     /// </summary>
     Task<Dictionary<string, List<PermissionInfo>>> GetPermissionsByCategoryAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get all permission categories
+    /// </summary>
+    Task<List<string>> GetPermissionCategoriesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get permissions for a specific category
+    /// </summary>
+    Task<List<PermissionInfo>> GetPermissionsForCategoryAsync(string category, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -46,7 +56,9 @@ public interface IPermissionService
 /// </summary>
 public class PermissionInfo
 {
+    public int Id { get; set; } // ADD: To match your entity
     public string Name { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true; // ADD: To match your entity
 }

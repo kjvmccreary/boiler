@@ -13,11 +13,13 @@ public class TokenServiceTests : TestBase
 {
     private readonly TokenService _tokenService;
     private readonly Mock<ILogger<TokenService>> _mockLogger;
+    private readonly Mock<IServiceProvider> _mockServiceProvider;
     private readonly JwtSettings _jwtSettings;
 
     public TokenServiceTests()
     {
         _mockLogger = new Mock<ILogger<TokenService>>();
+        _mockServiceProvider = new Mock<IServiceProvider>();
         _jwtSettings = new JwtSettings
         {
             SecretKey = "test-super-secret-jwt-key-that-is-at-least-256-bits-long-for-testing",
@@ -31,8 +33,8 @@ public class TokenServiceTests : TestBase
             ValidateIssuerSigningKey = true
         };
 
-        // FIXED: Pass JwtSettings directly instead of IOptions
-        _tokenService = new TokenService(_jwtSettings, _mockLogger.Object);
+        // FIXED: Pass all three required parameters
+        _tokenService = new TokenService(_jwtSettings, _mockServiceProvider.Object, _mockLogger.Object);
     }
 
     [Fact]

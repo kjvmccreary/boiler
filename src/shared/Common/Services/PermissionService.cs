@@ -168,9 +168,11 @@ public class PermissionService : IPermissionService
             .Where(p => p.IsActive)
             .Select(p => new PermissionInfo
             {
+                Id = p.Id, // ADD: Include ID
                 Name = p.Name,
                 Category = p.Category,
-                Description = p.Description
+                Description = p.Description,
+                IsActive = p.IsActive // ADD: Include IsActive
             })
             .ToListAsync(cancellationToken);
 
@@ -182,5 +184,55 @@ public class PermissionService : IPermissionService
         var permissions = await GetAllAvailablePermissionsAsync(cancellationToken);
         return permissions.GroupBy(p => p.Category)
             .ToDictionary(g => g.Key, g => g.ToList());
+    }
+
+    // ADD: Missing method - Get all permission categories
+    public async Task<List<string>> GetPermissionCategoriesAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var categories = await _context.Permissions
+                .Where(p => p.IsActive)
+                .Select(p => p.Category)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToListAsync(cancellationToken);
+
+            _logger.LogDebug("Retrieved {Count} permission categories", categories.Count);
+            return categories;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting permission categories");
+            return new List<string>();
+        }
+    }
+
+    // ADD: Missing method - Get permissions for a specific category
+    public async Task<List<PermissionInfo>> GetPermissionsForCategoryAsync(string category, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var permissions = await _context.Permissions
+                .Where(p => p.IsActive && p.Category == category)
+                .Select(p => new PermissionInfo
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    Category = p.Category,
+                    Description = p.Description,
+                    IsActive = p.IsActive
+                })
+                .OrderBy(p => p.Name)
+                .ToListAsync(cancellationToken);
+
+            _logger.LogDebug("Retrieved {Count} permissions for category {Category}", permissions.Count, category);
+            return permissions;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting permissions for category {Category}", category);
+            return new List<PermissionInfo>();
+        }
     }
 }

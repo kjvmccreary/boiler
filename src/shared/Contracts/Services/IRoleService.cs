@@ -1,4 +1,5 @@
 using DTOs.Entities;
+using DTOs.Common; // Add for pagination
 
 namespace Contracts.Services;
 
@@ -69,6 +70,21 @@ public interface IRoleService
     /// Create default roles for a new tenant
     /// </summary>
     Task CreateDefaultRolesForTenantAsync(int tenantId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get paged roles for current tenant with optional search functionality
+    /// </summary>
+    Task<PagedResult<RoleInfo>> GetTenantRolesPagedAsync(int page, int pageSize, string? searchTerm = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get the permissions of a specific role
+    /// </summary>
+    Task<List<string>> GetRolePermissionsAsync(int roleId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Update the permissions of a specific role
+    /// </summary>
+    Task UpdateRolePermissionsAsync(int roleId, List<string> permissions, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -98,4 +114,16 @@ public class UserInfo
     public string LastName { get; set; } = string.Empty;
     public string FullName => $"{FirstName} {LastName}".Trim();
     public bool IsActive { get; set; }
+}
+
+/// <summary>
+/// Simple paged result (not wrapped in ApiResponseDto)
+/// </summary>
+public class PagedResult<T>
+{
+    public IEnumerable<T> Items { get; set; } = new List<T>();
+    public int TotalCount { get; set; }
+    public int PageNumber { get; set; }
+    public int PageSize { get; set; }
+    public int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
 }
