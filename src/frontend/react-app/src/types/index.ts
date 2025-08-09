@@ -27,20 +27,40 @@ export interface RegisterRequest {
   lastName: string;
 }
 
+// 🔧 FIX: Update to match backend TokenResponseDto
 export interface AuthResponse {
-  token: string;
+  accessToken: string;     // Changed from 'token'
   refreshToken: string;
+  expiresAt: string;
+  tokenType: string;
   user: User;
-  permissions: string[];
+  tenant: Tenant;         // Added tenant info
 }
 
+// 🔧 ADD: Tenant type
+export interface Tenant {
+  id: string;
+  name: string;
+  subdomain?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 🔧 FIX: Update User to match backend UserDto
 export interface User {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
-  isEmailConfirmed: boolean;
-  roles: Role[];
+  fullName: string;
+  phoneNumber?: string;
+  timeZone?: string;
+  language?: string;
+  lastLoginAt?: string;
+  emailConfirmed: boolean;
+  isActive: boolean;
+  roles: string[];         // 🔧 FIX: Changed from Role[] to string[]
   tenantId: string;
   createdAt: string;
   updatedAt: string;

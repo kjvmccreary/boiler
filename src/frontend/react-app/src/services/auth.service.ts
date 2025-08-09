@@ -9,10 +9,21 @@ import type {
 
 export class AuthService {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
+    console.log('🔍 AuthService: Attempting login...');
     const response = await apiClient.post<AuthResponse>(
       API_ENDPOINTS.AUTH.LOGIN, 
       credentials
     );
+    
+    console.log('🔍 AuthService: Raw login response:', response);
+    console.log('🔍 AuthService: Response data structure:', {
+      hasData: !!response.data,
+      dataKeys: response.data ? Object.keys(response.data) : [],
+      accessToken: response.data?.accessToken ? 'present' : 'missing',
+      refreshToken: response.data?.refreshToken ? 'present' : 'missing',
+      user: response.data?.user ? 'present' : 'missing'
+    });
+    
     return response.data;
   }
 
@@ -58,8 +69,11 @@ export class AuthService {
     await apiClient.post(API_ENDPOINTS.AUTH.CONFIRM_EMAIL, { token });
   }
 
+  // 🔧 FIX: Use the /api/users/profile endpoint instead
   async validateToken(): Promise<User> {
-    const response = await apiClient.get<User>(API_ENDPOINTS.AUTH.VALIDATE_TOKEN);
+    console.log('🔍 AuthService: Validating token using /api/users/profile...');
+    const response = await apiClient.get<User>(API_ENDPOINTS.USERS.PROFILE);
+    console.log('✅ AuthService: Token validation successful:', response.data);
     return response.data;
   }
 

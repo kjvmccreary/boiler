@@ -150,6 +150,17 @@ public class AuthController : ControllerBase
     {
         try
         {
+            // 🔍 DEBUG: Log what we received
+            _logger.LogWarning("🔍 LOGOUT DEBUG: Received request");
+            _logger.LogWarning("🔍 LOGOUT DEBUG: Content-Type: {ContentType}", Request.ContentType);
+            _logger.LogWarning("🔍 LOGOUT DEBUG: Request body (RefreshToken): {RefreshToken}", request?.RefreshToken);
+            
+            if (request == null || string.IsNullOrEmpty(request.RefreshToken))
+            {
+                _logger.LogWarning("🚨 LOGOUT ERROR: Invalid request - missing refresh token");
+                return BadRequest(ApiResponseDto<bool>.ErrorResult("Refresh token is required"));
+            }
+
             var result = await _authService.LogoutAsync(request.RefreshToken, cancellationToken);
 
             if (result.Success)
@@ -288,6 +299,48 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
+            return BadRequest(new { Error = ex.Message });
+        }
+    }
+
+    // 🔍 ADD: Debug endpoint to understand logout request format
+    [HttpGet("debug/logout-format")]
+    public ActionResult<object> GetLogoutFormat()
+    {
+        return Ok(new
+        {
+            Message = "Logout endpoint expects POST with JSON body",
+            ExpectedContentType = "application/json",
+            ExpectedBody = new
+            {
+                refreshToken = "your-refresh-token-here"
+            },
+            ExampleCurl = "curl -X POST http://localhost:7000/api/auth/logout -H \"Content-Type: application/json\" -H \"Authorization: Bearer YOUR_JWT_TOKEN\" -d '{\"refreshToken\":\"YOUR_REFRESH_TOKEN\"}'"
+        });
+    }
+
+    // 🔍 ADD: Simple logout test endpoint that doesn't require auth for debugging
+    [HttpPost("debug/logout-test")]
+    public ActionResult<object> LogoutTest([FromBody] LogoutRequestDto? request)
+    {
+        try
+        {
+            _logger.LogWarning("🔍 LOGOUT TEST: Content-Type: {ContentType}", Request.ContentType);
+            _logger.LogWarning("🔍 LOGOUT TEST: Raw body exists: {HasBody}", Request.Body != null);
+            _logger.LogWarning("🔍 LOGOUT TEST: Request object: {Request}", request);
+            _logger.LogWarning("🔍 LOGOUT TEST: RefreshToken: {RefreshToken}", request?.RefreshToken);
+
+            return Ok(new
+            {
+                Success = true,
+                ReceivedContentType = Request.ContentType,
+                ReceivedRefreshToken = request?.RefreshToken,
+                Message = request?.RefreshToken != null ? "Request format is correct!" : "Missing refresh token in request body"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in logout test endpoint");
             return BadRequest(new { Error = ex.Message });
         }
     }

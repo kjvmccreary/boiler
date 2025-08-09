@@ -9,7 +9,7 @@ export const API_ENDPOINTS = {
     FORGOT_PASSWORD: '/api/auth/forgot-password',
     RESET_PASSWORD: '/api/auth/reset-password',
     CONFIRM_EMAIL: '/api/auth/confirm-email',
-    VALIDATE_TOKEN: '/api/auth/validate',
+    VALIDATE_TOKEN: '/api/auth/validate-token', // 🔧 FIX: Changed from '/api/auth/validate'
   },
   
   // User endpoints

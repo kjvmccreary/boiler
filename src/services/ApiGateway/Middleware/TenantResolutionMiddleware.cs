@@ -22,12 +22,20 @@ public class TenantResolutionMiddleware
             context.Items["TenantId"] = tenantId;
             context.Request.Headers["X-Tenant-ID"] = tenantId;
             
-            _logger.LogInformation("Tenant resolved: {TenantId} from {Source}", 
+            _logger.LogInformation("✅ Tenant resolved: {TenantId} from {Source}", 
                 tenantId, GetTenantSource(context));
         }
         else
         {
-            _logger.LogWarning("No tenant ID found in request");
+            // 🔧 FIX: Only warn if this is an authenticated request that should have tenant info
+            if (context.User.Identity?.IsAuthenticated == true)
+            {
+                _logger.LogWarning("⚠️ No tenant ID found for authenticated request to {Path}", context.Request.Path);
+            }
+            else
+            {
+                _logger.LogDebug("ℹ️ No tenant ID found for anonymous request to {Path}", context.Request.Path);
+            }
         }
 
         await _next(context);
@@ -35,7 +43,17 @@ public class TenantResolutionMiddleware
 
     private string? ExtractTenantId(HttpContext context)
     {
-        // 1. Try to get from domain (subdomain)
+        // 1. Try to get from JWT claims (now available since authentication ran first)
+        if (context.User.Identity?.IsAuthenticated == true)
+        {
+            var tenantClaim = context.User.FindFirst("tenant_id");
+            if (tenantClaim != null)
+            {
+                return tenantClaim.Value;
+            }
+        }
+
+        // 2. Try to get from domain (subdomain)
         var host = context.Request.Host.Host;
         if (host.Contains('.') && !host.StartsWith("localhost"))
         {
@@ -46,20 +64,10 @@ public class TenantResolutionMiddleware
             }
         }
 
-        // 2. Try to get from header
+        // 3. Try to get from header
         if (context.Request.Headers.ContainsKey("X-Tenant-ID"))
         {
             return context.Request.Headers["X-Tenant-ID"];
-        }
-
-        // 3. Try to get from JWT claims
-        if (context.User.Identity?.IsAuthenticated == true)
-        {
-            var tenantClaim = context.User.FindFirst("tenant_id");
-            if (tenantClaim != null)
-            {
-                return tenantClaim.Value;
-            }
         }
 
         // 4. Try to get from path (if using path-based routing)
@@ -78,6 +86,12 @@ public class TenantResolutionMiddleware
 
     private string GetTenantSource(HttpContext context)
     {
+        // Check JWT claims first (since authentication now runs before this middleware)
+        if (context.User.Identity?.IsAuthenticated == true && context.User.FindFirst("tenant_id") != null)
+        {
+            return "jwt-claim";
+        }
+        
         var host = context.Request.Host.Host;
         if (host.Contains('.') && !host.StartsWith("localhost"))
         {
@@ -87,11 +101,6 @@ public class TenantResolutionMiddleware
         if (context.Request.Headers.ContainsKey("X-Tenant-ID"))
         {
             return "header";
-        }
-        
-        if (context.User.Identity?.IsAuthenticated == true)
-        {
-            return "jwt-claim";
         }
         
         if (context.Request.Path.Value?.StartsWith("/tenant/") == true)

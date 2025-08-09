@@ -7,12 +7,41 @@ class ApiClient {
   private client: AxiosInstance;
 
   constructor() {
+    // 🚨 NUCLEAR DEBUG: Log everything about environment
+    console.log('🔍 API CLIENT CONSTRUCTOR - COMPLETE DEBUG:', {
+      'import.meta.env.MODE': import.meta.env.MODE,
+      'import.meta.env.DEV': import.meta.env.DEV,
+      'import.meta.env.PROD': import.meta.env.PROD,
+      'import.meta.env.VITE_API_BASE_URL': import.meta.env.VITE_API_BASE_URL,
+      'window.location': {
+        origin: window.location.origin,
+        hostname: window.location.hostname,
+        port: window.location.port,
+        protocol: window.location.protocol
+      },
+      'All environment variables': import.meta.env
+    });
+
+    // Force empty baseURL for development to use Vite proxy
+    const baseURL = '';
+    
+    console.log('🔍 API CLIENT: Creating axios instance with baseURL:', baseURL);
+
     this.client = axios.create({
-      baseURL: import.meta.env.VITE_API_BASE_URL,
+      baseURL,
       timeout: 10000,
       headers: {
         'Content-Type': 'application/json',
       },
+      withCredentials: false,
+    });
+
+    // 🚨 CRITICAL: Log the actual axios instance configuration
+    console.log('🔍 AXIOS INSTANCE CONFIG:', {
+      baseURL: this.client.defaults.baseURL,
+      timeout: this.client.defaults.timeout,
+      headers: this.client.defaults.headers,
+      adapter: this.client.defaults.adapter
     });
 
     this.setupInterceptors();
@@ -23,18 +52,36 @@ class ApiClient {
     this.client.interceptors.request.use(
       (config) => {
         const token = tokenManager.getToken();
+        
+        // 🚨 NUCLEAR DEBUG: Log EVERYTHING about the request
+        console.log('🚨 REQUEST INTERCEPTOR - COMPLETE DEBUG:', {
+          url: config.url,
+          baseURL: config.baseURL,
+          method: config.method,
+          headers: config.headers,
+          fullURL: `${config.baseURL || ''}${config.url}`,
+          hasToken: !!token,
+          tokenPreview: token ? `${token.substring(0, 20)}...` : 'none',
+          adapter: config.adapter,
+          timeout: config.timeout
+        });
+        
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
         }
         
-        // Add correlation ID for debugging - with fallback
+        // Add correlation ID for debugging
         if (config.headers) {
           config.headers['X-Correlation-ID'] = this.generateUUID();
         }
         
-        console.log(`🚀 API Request: ${config.method?.toUpperCase()} ${config.url}`, {
-          headers: config.headers,
-          data: config.data,
+        // 🚨 LOG FINAL REQUEST CONFIG
+        console.log('🚨 FINAL REQUEST CONFIG BEFORE SENDING:', {
+          method: config.method,
+          url: config.url,
+          baseURL: config.baseURL,
+          headers: Object.keys(config.headers || {}),
+          hasAuthHeader: !!(config.headers?.Authorization)
         });
         
         return config;
@@ -50,6 +97,7 @@ class ApiClient {
       (response: AxiosResponse) => {
         console.log(`✅ API Response: ${response.config.method?.toUpperCase()} ${response.config.url}`, {
           status: response.status,
+          requestURL: response.request?.responseURL || 'unknown',
           data: response.data,
         });
         return response;
@@ -57,9 +105,18 @@ class ApiClient {
       async (error) => {
         const originalRequest = error.config;
         
-        console.error(`❌ API Error: ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}`, {
+        // 🚨 NUCLEAR DEBUG: Log EVERYTHING about the error
+        console.error(`🚨 API ERROR - COMPLETE DEBUG:`, {
+          message: error.message,
           status: error.response?.status,
-          data: error.response?.data,
+          requestMethod: originalRequest?.method,
+          requestURL: originalRequest?.url,
+          requestBaseURL: originalRequest?.baseURL,
+          fullURL: `${originalRequest?.baseURL || ''}${originalRequest?.url}`,
+          actualURL: error.request?.responseURL || 'unknown',
+          headers: originalRequest?.headers,
+          responseData: error.response?.data,
+          requestStack: error.stack
         });
 
         // Handle 401 errors (unauthorized)
@@ -69,25 +126,30 @@ class ApiClient {
           try {
             const refreshToken = tokenManager.getRefreshToken();
             if (refreshToken) {
+              console.log('🔄 Attempting token refresh...');
+              
               // Attempt to refresh token
               const response = await this.post<{ token: string; refreshToken: string }>('/api/auth/refresh', {
                 refreshToken,
               });
 
               if (response.data.token && originalRequest.headers) {
+                console.log('✅ Token refresh successful');
                 tokenManager.setTokens(response.data.token, response.data.refreshToken);
                 originalRequest.headers.Authorization = `Bearer ${response.data.token}`;
                 return this.client(originalRequest);
               }
             }
           } catch (refreshError) {
-            console.error('Token refresh failed:', refreshError);
+            console.error('❌ Token refresh failed:', refreshError);
+            
+            tokenManager.clearTokens();
+            
+            // Dispatch a custom event that the AuthContext can listen to
+            window.dispatchEvent(new CustomEvent('auth:logout', { 
+              detail: { reason: 'token_refresh_failed' }
+            }));
           }
-
-          // If refresh fails, redirect to login
-          tokenManager.clearTokens();
-          window.location.href = '/login';
-          return Promise.reject(error);
         }
 
         return Promise.reject(error);
@@ -111,19 +173,28 @@ class ApiClient {
   // Generic request method
   async request<T = any>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
+      console.log('🔍 API CLIENT REQUEST METHOD CALLED:', {
+        method: config.method,
+        url: config.url,
+        data: config.data
+      });
+      
       const response = await this.client.request<ApiResponse<T>>(config);
       return response.data;
     } catch (error: any) {
+      console.error('🚨 API CLIENT REQUEST METHOD ERROR:', error);
       throw this.handleError(error);
     }
   }
 
   // HTTP methods
   async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    console.log('🔍 API CLIENT GET METHOD CALLED:', { url, config });
     return this.request<T>({ ...config, method: 'GET', url });
   }
 
   async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    console.log('🔍 API CLIENT POST METHOD CALLED:', { url, data, config });
     return this.request<T>({ ...config, method: 'POST', url, data });
   }
 
@@ -154,8 +225,5 @@ class ApiClient {
   }
 }
 
-// ✅ CREATE THE INSTANCE HERE
 const apiClient = new ApiClient();
-
-// ✅ NOW EXPORT IT
 export { apiClient };

@@ -30,22 +30,150 @@ builder.Services.AddOcelot();
 builder.Services.AddHttpClient<IServiceDiscovery, ServiceDiscovery>();
 builder.Services.AddSingleton<IServiceDiscovery, ServiceDiscovery>();
 
-// Add JWT Authentication
+// 🔧 FIXED: Improved JWT Authentication configuration
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer("Bearer", options =>
     {
         var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+        var secretKey = jwtSettings["SecretKey"];
+        var issuer = jwtSettings["Issuer"];
+        var audience = jwtSettings["Audience"];
+        
+        // 🔍 DEBUG: Enhanced JWT configuration logging
+        Console.WriteLine($"🔧 JWT Settings: Issuer={issuer}, Audience={audience}, SecretKey={secretKey?.Substring(0, 10)}...");
+        Console.WriteLine($"🔧 JWT Settings: SecretKey Length={secretKey?.Length}, Key Valid={!string.IsNullOrEmpty(secretKey)}");
+        
+        // 🔧 CRITICAL: Ensure secret key is not null
+        if (string.IsNullOrEmpty(secretKey))
+        {
+            throw new InvalidOperationException("JWT SecretKey is null or empty in configuration");
+        }
+        
+        // 🔧 FIXED: Create signing key with proper validation
+        var keyBytes = Encoding.UTF8.GetBytes(secretKey);
+        var signingKey = new SymmetricSecurityKey(keyBytes);
+        
+        Console.WriteLine($"🔧 JWT Key Info: Key Size={keyBytes.Length} bytes, Min Required=256 bits (32 bytes)");
+        
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings["Issuer"],
-            ValidAudience = jwtSettings["Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey not configured"))),
-            ClockSkew = TimeSpan.FromMinutes(5)
+            RequireExpirationTime = true,
+            RequireSignedTokens = true,
+            
+            ValidIssuer = issuer,
+            ValidAudience = audience,
+            IssuerSigningKey = signingKey,
+            
+            // 🔧 IMPORTANT: Clock skew for time synchronization issues
+            ClockSkew = TimeSpan.FromMinutes(5),
+            
+            // 🔧 NEW: Additional security validations
+            ValidateTokenReplay = false,
+            ValidateActor = false,
+            
+            // 🔧 CRITICAL: Specify allowed algorithms explicitly
+            ValidAlgorithms = new[] { SecurityAlgorithms.HmacSha256 }
+        };
+        
+        // 🔧 ENHANCED: Complete JWT debugging with better error handling
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+                Console.WriteLine($"🔍 JWT OnMessageReceived:");
+                Console.WriteLine($"   Path: {context.Request.Path}");
+                Console.WriteLine($"   Method: {context.Request.Method}");
+                Console.WriteLine($"   Authorization Header: {(authHeader != null ? $"{authHeader.Substring(0, Math.Min(50, authHeader.Length))}..." : "MISSING")}");
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                var userIdClaim = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                var emailClaim = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                var issuerClaim = context.Principal?.FindFirst("iss")?.Value;
+                var audienceClaim = context.Principal?.FindFirst("aud")?.Value;
+                
+                Console.WriteLine($"✅ JWT Token Validated Successfully:");
+                Console.WriteLine($"   UserId: {userIdClaim}");
+                Console.WriteLine($"   Email: {emailClaim}");
+                Console.WriteLine($"   Issuer: {issuerClaim}");
+                Console.WriteLine($"   Audience: {audienceClaim}");
+                Console.WriteLine($"   Claims Count: {context.Principal?.Claims?.Count() ?? 0}");
+                
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = context =>
+            {
+                Console.WriteLine($"🚨 JWT Authentication Failed:");
+                Console.WriteLine($"   Path: {context.Request.Path}");
+                Console.WriteLine($"   Error: {context.Exception.Message}");
+                Console.WriteLine($"   Exception Type: {context.Exception.GetType().Name}");
+                
+                // 🔧 NEW: More detailed debugging for signature validation failures
+                if (context.Exception is SecurityTokenSignatureKeyNotFoundException)
+                {
+                    Console.WriteLine($"   🔑 SIGNING KEY ISSUE: The security key for signature validation was not found");
+                    Console.WriteLine($"   🔑 Expected Issuer: {issuer}");
+                    Console.WriteLine($"   🔑 Expected Audience: {audience}");
+                    Console.WriteLine($"   🔑 Signing Key Present: {signingKey != null}");
+                }
+                
+                if (context.Exception.InnerException != null)
+                {
+                    Console.WriteLine($"   Inner Exception: {context.Exception.InnerException.Message}");
+                }
+                
+                // 🔍 Check token format
+                var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+                if (authHeader != null && authHeader.StartsWith("Bearer "))
+                {
+                    var token = authHeader.Substring(7);
+                    Console.WriteLine($"   Token Length: {token.Length}");
+                    Console.WriteLine($"   Token Format: {(token.Contains('.') ? "JWT" : "Unknown")}");
+                    
+                    try
+                    {
+                        var parts = token.Split('.');
+                        Console.WriteLine($"   JWT Parts: {parts.Length} (Expected: 3)");
+                        
+                        // 🔧 NEW: Decode JWT header for debugging
+                        if (parts.Length >= 1)
+                        {
+                            try
+                            {
+                                var header = parts[0];
+                                var paddedHeader = header.PadRight(header.Length + (4 - header.Length % 4) % 4, '=');
+                                var headerBytes = Convert.FromBase64String(paddedHeader);
+                                var headerJson = Encoding.UTF8.GetString(headerBytes);
+                                Console.WriteLine($"   JWT Header: {headerJson}");
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"   Header Decode Error: {ex.Message}");
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"   Token Parse Error: {ex.Message}");
+                    }
+                }
+                
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                Console.WriteLine($"🚨 JWT Challenge:");
+                Console.WriteLine($"   Path: {context.Request.Path}");
+                Console.WriteLine($"   Error: {context.Error}");
+                Console.WriteLine($"   Error Description: {context.ErrorDescription}");
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -81,13 +209,16 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
 
-// Add custom middleware in correct order
+// 🔧 FIX #1: Move RequestLogging first, but put Authentication before tenant resolution
 app.UseMiddleware<RequestLoggingMiddleware>();
-app.UseMiddleware<TenantResolutionMiddleware>();
-app.UseMiddleware<RateLimitingMiddleware>();
 
+// 🔧 CRITICAL: Authentication must come before tenant resolution to access JWT claims
 app.UseAuthentication();
 
+// 🔧 FIX #2: Now tenant resolution can access JWT claims since authentication ran first
+app.UseMiddleware<TenantResolutionMiddleware>();
+
+app.UseMiddleware<RateLimitingMiddleware>();
 app.UseMiddleware<AuthorizationContextMiddleware>();
 
 // IMPORTANT: Map local endpoints BEFORE Ocelot
