@@ -13,13 +13,13 @@ import {
 } from '@mui/material';
 import { useAuth } from '@/contexts/AuthContext.js';
 
-export function RegisterForm() {
+function RegisterForm() {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
+    firstName: '',
+    lastName: '',
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   
@@ -66,7 +66,7 @@ export function RegisterForm() {
     if (!formData.password) {
       errors.password = 'Password is required';
     } else if (formData.password.length < 8) {
-      errors.password = 'Password must be at least 8 characters long';
+      errors.password = 'Password must be at least 8 characters';
     }
     
     if (!formData.confirmPassword) {
@@ -87,7 +87,13 @@ export function RegisterForm() {
     }
 
     try {
-      await register(formData);
+      await register({
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+      });
       navigate('/dashboard');
     } catch (error) {
       // Error is handled by the auth context
@@ -120,14 +126,12 @@ export function RegisterForm() {
             <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
-                  margin="normal"
                   required
                   fullWidth
                   id="firstName"
                   label="First Name"
                   name="firstName"
                   autoComplete="given-name"
-                  autoFocus
                   value={formData.firstName}
                   onChange={handleInputChange('firstName')}
                   error={!!fieldErrors.firstName}
@@ -136,7 +140,6 @@ export function RegisterForm() {
                 />
                 
                 <TextField
-                  margin="normal"
                   required
                   fullWidth
                   id="lastName"
@@ -226,3 +229,9 @@ export function RegisterForm() {
     </Container>
   );
 }
+
+// Add named export for existing imports
+export { RegisterForm };
+
+// Add default export for React.lazy()
+export default RegisterForm;

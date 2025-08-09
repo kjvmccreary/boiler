@@ -1,66 +1,62 @@
 import type { ReactNode } from 'react';
-import { usePermissions } from '@/contexts/PermissionContext.js';
-import { useAuth } from '@/contexts/AuthContext.js';
+import { usePermission } from '@/contexts/PermissionContext.js';
 
 interface CanAccessProps {
-  children: ReactNode;
   permission?: string;
-  permissions?: string[];
-  requireAll?: boolean;
   role?: string;
+  permissions?: string[];
   roles?: string[];
-  requireAuthentication?: boolean;
+  requireAll?: boolean;
+  children: ReactNode;
   fallback?: ReactNode;
 }
 
 export function CanAccess({
-  children,
   permission,
-  permissions,
-  requireAll = false,
   role,
+  permissions,
   roles,
-  requireAuthentication = true,
+  requireAll = false,
+  children,
   fallback = null,
 }: CanAccessProps) {
-  const { isAuthenticated } = useAuth();
-  const { hasPermission, hasAnyPermission, hasAllPermissions, hasRole, hasAnyRole } = usePermissions();
+  const {
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
+    hasRole,
+    hasAnyRole,
+  } = usePermission();
 
-  // Check authentication first
-  if (requireAuthentication && !isAuthenticated) {
-    return <>{fallback}</>;
-  }
-
-  // If no specific permissions or roles required, just check authentication
-  if (!permission && !permissions && !role && !roles) {
-    return <>{children}</>;
-  }
+  let hasAccess = true;
 
   // Check single permission
   if (permission && !hasPermission(permission)) {
-    return <>{fallback}</>;
-  }
-
-  // Check multiple permissions
-  if (permissions) {
-    const hasRequiredPermissions = requireAll 
-      ? hasAllPermissions(permissions)
-      : hasAnyPermission(permissions);
-    
-    if (!hasRequiredPermissions) {
-      return <>{fallback}</>;
-    }
+    hasAccess = false;
   }
 
   // Check single role
   if (role && !hasRole(role)) {
-    return <>{fallback}</>;
+    hasAccess = false;
+  }
+
+  // Check multiple permissions
+  if (permissions && permissions.length > 0) {
+    if (requireAll) {
+      hasAccess = hasAccess && hasAllPermissions(permissions);
+    } else {
+      hasAccess = hasAccess && hasAnyPermission(permissions);
+    }
   }
 
   // Check multiple roles
-  if (roles && !hasAnyRole(roles)) {
-    return <>{fallback}</>;
+  if (roles && roles.length > 0) {
+    if (requireAll) {
+      hasAccess = hasAccess && roles.every(r => hasRole(r));
+    } else {
+      hasAccess = hasAccess && hasAnyRole(roles);
+    }
   }
 
-  return <>{children}</>;
+  return hasAccess ? <>{children}</> : <>{fallback}</>;
 }

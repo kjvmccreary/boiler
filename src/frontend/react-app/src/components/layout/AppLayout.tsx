@@ -3,14 +3,10 @@ import {
   Box,
   Drawer,
   AppBar,
-  Toolbar,
-  Typography,
   CssBaseline,
-  IconButton,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { Menu as MenuIcon } from '@mui/icons-material';
 import { Outlet } from 'react-router-dom';
 import { Header } from './Header.js';
 import { Sidebar } from './Sidebar.js';

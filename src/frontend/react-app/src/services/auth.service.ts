@@ -7,6 +7,12 @@ import type {
   User
 } from '@/types/index.js';
 
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+}
+
 export class AuthService {
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     console.log('🔍 AuthService: Attempting login...');
@@ -47,11 +53,8 @@ export class AuthService {
     return response.data;
   }
 
-  async changePassword(oldPassword: string, newPassword: string): Promise<void> {
-    await apiClient.post(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, {
-      oldPassword,
-      newPassword,
-    });
+  async changePassword(passwordData: ChangePasswordRequest): Promise<void> {
+    await apiClient.post(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, passwordData);
   }
 
   async forgotPassword(email: string): Promise<void> {
@@ -69,7 +72,6 @@ export class AuthService {
     await apiClient.post(API_ENDPOINTS.AUTH.CONFIRM_EMAIL, { token });
   }
 
-  // 🔧 FIX: Use the /api/users/profile endpoint instead
   async validateToken(): Promise<User> {
     console.log('🔍 AuthService: Validating token using /api/users/profile...');
     const response = await apiClient.get<User>(API_ENDPOINTS.USERS.PROFILE);

@@ -19,7 +19,7 @@ interface LocationState {
   };
 }
 
-export function LoginForm() {
+function LoginForm() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -175,3 +175,9 @@ export function LoginForm() {
     </Container>
   );
 }
+
+// Add named export for existing imports
+export { LoginForm };
+
+// Add default export for React.lazy()
+export default LoginForm;

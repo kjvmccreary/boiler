@@ -1,68 +1,73 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { useAuth } from './AuthContext.js';
 
-interface PermissionContextValue {
+interface PermissionContextType {
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (permissions: string[]) => boolean;
   hasAllPermissions: (permissions: string[]) => boolean;
   hasRole: (roleName: string) => boolean;
   hasAnyRole: (roleNames: string[]) => boolean;
-  getUserPermissions: () => string[];
   getUserRoles: () => string[];
+  getUserPermissions: () => string[];
 }
 
-const PermissionContext = createContext<PermissionContextValue | undefined>(undefined);
+const PermissionContext = createContext<PermissionContextType | undefined>(undefined);
 
 interface PermissionProviderProps {
   children: ReactNode;
 }
 
 export function PermissionProvider({ children }: PermissionProviderProps) {
-  const { user, permissions, isAuthenticated } = useAuth();
+  const { user } = useAuth();
 
   const hasPermission = (permission: string): boolean => {
-    if (!isAuthenticated || !permissions) return false;
-    return permissions.includes(permission);
+    if (!user) return false;
+    
+    // Get all permissions from user's roles
+    const userPermissions = user.roles.flatMap(role => 
+      role.permissions.map(p => p.name)
+    );
+    
+    return userPermissions.includes(permission);
   };
 
-  const hasAnyPermission = (requiredPermissions: string[]): boolean => {
-    if (!isAuthenticated || !permissions) return false;
-    return requiredPermissions.some(permission => permissions.includes(permission));
+  const hasAnyPermission = (permissions: string[]): boolean => {
+    return permissions.some(permission => hasPermission(permission));
   };
 
-  const hasAllPermissions = (requiredPermissions: string[]): boolean => {
-    if (!isAuthenticated || !permissions) return false;
-    return requiredPermissions.every(permission => permissions.includes(permission));
+  const hasAllPermissions = (permissions: string[]): boolean => {
+    return permissions.every(permission => hasPermission(permission));
   };
 
   const hasRole = (roleName: string): boolean => {
-    if (!isAuthenticated || !user?.roles) return false;
+    if (!user) return false;
     return user.roles.some(role => role.name === roleName);
   };
 
   const hasAnyRole = (roleNames: string[]): boolean => {
-    if (!isAuthenticated || !user?.roles) return false;
-    return roleNames.some(roleName => 
-      user.roles.some(role => role.name === roleName)
-    );
-  };
-
-  const getUserPermissions = (): string[] => {
-    return permissions || [];
+    return roleNames.some(roleName => hasRole(roleName));
   };
 
   const getUserRoles = (): string[] => {
     return user?.roles?.map(role => role.name) || [];
   };
 
-  const value: PermissionContextValue = {
+  const getUserPermissions = (): string[] => {
+    if (!user) return [];
+    
+    return user.roles.flatMap(role => 
+      role.permissions.map(p => p.name)
+    );
+  };
+
+  const value: PermissionContextType = {
     hasPermission,
     hasAnyPermission,
     hasAllPermissions,
     hasRole,
     hasAnyRole,
-    getUserPermissions,
     getUserRoles,
+    getUserPermissions,
   };
 
   return (
@@ -72,10 +77,10 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
   );
 }
 
-export function usePermissions() {
+export function usePermission(): PermissionContextType {
   const context = useContext(PermissionContext);
   if (context === undefined) {
-    throw new Error('usePermissions must be used within a PermissionProvider');
+    throw new Error('usePermission must be used within a PermissionProvider');
   }
   return context;
 }

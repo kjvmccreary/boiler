@@ -1,10 +1,9 @@
-import { RouterProvider } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from '@/contexts/AuthContext.js';
 import { PermissionProvider } from '@/contexts/PermissionContext.js';
-import { router } from '@/routes/index.js';
+import { AppRoutes } from '@/routes/index.js';
 
 const theme = createTheme({
   palette: {
@@ -23,7 +22,7 @@ function App() {
       <CssBaseline />
       <AuthProvider>
         <PermissionProvider>
-          <RouterProvider router={router} />
+          <AppRoutes />
           <Toaster
             position="top-right"
             toastOptions={{

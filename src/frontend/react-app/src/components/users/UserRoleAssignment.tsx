@@ -203,8 +203,8 @@ export function UserRoleAssignment() {
                     {user.email}
                   </Typography>
                   <Chip
-                    label={user.isEmailConfirmed ? 'Active' : 'Pending'}
-                    color={user.isEmailConfirmed ? 'success' : 'warning'}
+                    label={user.emailConfirmed ? 'Active' : 'Pending'}
+                    color={user.emailConfirmed ? 'success' : 'warning'}
                     size="small"
                     sx={{ mt: 1 }}
                   />
@@ -390,3 +390,5 @@ export function UserRoleAssignment() {
     </Box>
   );
 }
+
+export default UserRoleAssignment;

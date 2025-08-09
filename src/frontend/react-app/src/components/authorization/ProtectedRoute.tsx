@@ -1,68 +1,74 @@
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext.js';
-import { usePermissions } from '@/contexts/PermissionContext.js';
+import { usePermission } from '@/contexts/PermissionContext.js';
 
 interface ProtectedRouteProps {
   children: ReactNode;
   requirePermission?: string;
-  requirePermissions?: string[];
-  requireAllPermissions?: boolean;
   requireRole?: string;
+  requirePermissions?: string[];
   requireRoles?: string[];
+  requireAll?: boolean;
   redirectTo?: string;
 }
 
 export function ProtectedRoute({
   children,
   requirePermission,
-  requirePermissions,
-  requireAllPermissions = false,
   requireRole,
+  requirePermissions,
   requireRoles,
+  requireAll = false,
   redirectTo = '/login',
 }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth();
-  const { hasPermission, hasAnyPermission, hasAllPermissions, hasRole, hasAnyRole } = usePermissions();
+  const { user, isAuthenticated } = useAuth();
   const location = useLocation();
+  const {
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
+    hasRole,
+    hasAnyRole,
+  } = usePermission();
 
-  // Show loading state while checking authentication
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="loading-spinner"></div>
-      </div>
-    );
-  }
-
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
+  // Check if user is authenticated
+  if (!isAuthenticated || !user) {
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
+  let hasAccess = true;
+
   // Check single permission
   if (requirePermission && !hasPermission(requirePermission)) {
-    return <Navigate to="/unauthorized" replace />;
-  }
-
-  // Check multiple permissions
-  if (requirePermissions) {
-    const hasRequiredPermissions = requireAllPermissions 
-      ? hasAllPermissions(requirePermissions)
-      : hasAnyPermission(requirePermissions);
-    
-    if (!hasRequiredPermissions) {
-      return <Navigate to="/unauthorized" replace />;
-    }
+    hasAccess = false;
   }
 
   // Check single role
   if (requireRole && !hasRole(requireRole)) {
-    return <Navigate to="/unauthorized" replace />;
+    hasAccess = false;
+  }
+
+  // Check multiple permissions
+  if (requirePermissions && requirePermissions.length > 0) {
+    if (requireAll) {
+      hasAccess = hasAccess && hasAllPermissions(requirePermissions);
+    } else {
+      hasAccess = hasAccess && hasAnyPermission(requirePermissions);
+    }
   }
 
   // Check multiple roles
-  if (requireRoles && !hasAnyRole(requireRoles)) {
+  if (requireRoles && requireRoles.length > 0) {
+    if (requireAll) {
+      hasAccess = hasAccess && requireRoles.every(r => hasRole(r));
+    } else {
+      hasAccess = hasAccess && hasAnyRole(requireRoles);
+    }
+  }
+
+  // Redirect to unauthorized page if no access
+  if (!hasAccess) {
     return <Navigate to="/unauthorized" replace />;
   }
 

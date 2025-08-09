@@ -57,7 +57,6 @@ export function Sidebar({ onItemClick }: SidebarProps) {
             <CanAccess
               key={item.path}
               permission={item.permission}
-              requireAuthentication={true}
             >
               <ListItem disablePadding>
                 <ListItemButton

@@ -213,7 +213,7 @@ export function RoleEditor() {
                 )}
 
                 <PermissionSelector
-                  selectedPermissions={formData.permissions}
+                  value={formData.permissions}
                   onChange={handlePermissionsChange}
                   disabled={role?.isSystemRole || saving}
                 />
@@ -247,3 +247,5 @@ export function RoleEditor() {
     </Box>
   );
 }
+
+export default RoleEditor;

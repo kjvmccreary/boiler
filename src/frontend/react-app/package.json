@@ -6,12 +6,17 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "build:analyze": "tsc -b && vite build --mode analyze",
+    "build:staging": "tsc -b && vite build --mode staging",
+    "build:production": "tsc -b && vite build --mode production",
     "preview": "vite preview",
     "test": "vitest --config vitest.config.js",
     "test:ui": "vitest --ui --config vitest.config.js",
     "test:coverage": "vitest run --coverage --config vitest.config.js",
-    "test:watch": "vitest --watch --config vitest.config.js"
+    "test:watch": "vitest --watch --config vitest.config.js",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "bundle-analyzer": "npx vite-bundle-analyzer dist"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

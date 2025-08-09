@@ -27,17 +27,15 @@ export interface RegisterRequest {
   lastName: string;
 }
 
-// 🔧 FIX: Update to match backend TokenResponseDto
 export interface AuthResponse {
-  accessToken: string;     // Changed from 'token'
+  accessToken: string;
   refreshToken: string;
   expiresAt: string;
   tokenType: string;
   user: User;
-  tenant: Tenant;         // Added tenant info
+  tenant: Tenant;
 }
 
-// 🔧 ADD: Tenant type
 export interface Tenant {
   id: string;
   name: string;
@@ -47,7 +45,7 @@ export interface Tenant {
   updatedAt: string;
 }
 
-// 🔧 FIX: Update User to match backend UserDto
+// Fixed User type to match backend behavior
 export interface User {
   id: string;
   email: string;
@@ -58,9 +56,9 @@ export interface User {
   timeZone?: string;
   language?: string;
   lastLoginAt?: string;
-  emailConfirmed: boolean;
+  emailConfirmed: boolean;  // Fixed: was isEmailConfirmed
   isActive: boolean;
-  roles: string[];         // 🔧 FIX: Changed from Role[] to string[]
+  roles: Role[];           // Fixed: should be Role[] objects, not string[]
   tenantId: string;
   createdAt: string;
   updatedAt: string;

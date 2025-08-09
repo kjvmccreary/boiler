@@ -74,6 +74,42 @@ export const handlers = [
     return HttpResponse.json({ success: true, message: 'Password reset email sent' })
   }),
 
+  // Change password endpoint
+  http.post('/api/auth/change-password', async ({ request }) => {
+    const body = await request.json() as {
+      currentPassword: string;
+      newPassword: string;
+      confirmNewPassword: string;
+    }
+    
+    // Simulate validation
+    if (body.currentPassword === 'wrongpassword') {
+      return HttpResponse.json(
+        { success: false, message: 'Current password is incorrect.' },
+        { status: 400 }
+      )
+    }
+    
+    if (body.newPassword !== body.confirmNewPassword) {
+      return HttpResponse.json(
+        { success: false, message: 'New password and confirmation do not match.' },
+        { status: 400 }
+      )
+    }
+    
+    if (body.currentPassword === body.newPassword) {
+      return HttpResponse.json(
+        { success: false, message: 'New password must be different from current password.' },
+        { status: 400 }
+      )
+    }
+    
+    return HttpResponse.json({
+      success: true,
+      message: 'Password changed successfully'
+    })
+  }),
+
   // Permission endpoints
   http.get('/api/permissions/grouped', () => {
     return HttpResponse.json({

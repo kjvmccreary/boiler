@@ -372,8 +372,8 @@ export function UserProfile() {
               <Box sx={{ mb: 2 }}>
                 <Typography variant="body2" color="text.secondary">Status</Typography>
                 <Chip
-                  label={user.isEmailConfirmed ? 'Active' : 'Pending Verification'}
-                  color={user.isEmailConfirmed ? 'success' : 'warning'}
+                  label={user.emailConfirmed ? 'Active' : 'Pending Verification'}
+                  color={user.emailConfirmed ? 'success' : 'warning'}
                   size="small"
                 />
               </Box>
@@ -430,3 +430,5 @@ export function UserProfile() {
     </Box>
   );
 }
+
+export default UserProfile;

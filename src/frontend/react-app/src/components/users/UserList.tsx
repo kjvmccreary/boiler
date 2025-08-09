@@ -242,8 +242,8 @@ export function UserList() {
                       
                       <TableCell>
                         <Chip
-                          label={user.isEmailConfirmed ? 'Active' : 'Pending'}
-                          color={user.isEmailConfirmed ? 'success' : 'warning'}
+                          label={user.emailConfirmed ? 'Active' : 'Pending'}
+                          color={user.emailConfirmed ? 'success' : 'warning'}
                           size="small"
                         />
                       </TableCell>
@@ -329,3 +329,5 @@ export function UserList() {
     </Box>
   );
 }
+
+export default UserList;
