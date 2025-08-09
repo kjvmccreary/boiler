@@ -6,10 +6,10 @@ export const API_ENDPOINTS = {
     LOGOUT: '/api/auth/logout',
     REFRESH: '/api/auth/refresh',
     CHANGE_PASSWORD: '/api/auth/change-password',
-    FORGOT_PASSWORD: '/api/auth/forgot-password',
+    FORGOT_PASSWORD: '/api/auth/reset-password', // Backend endpoint
     RESET_PASSWORD: '/api/auth/reset-password',
     CONFIRM_EMAIL: '/api/auth/confirm-email',
-    VALIDATE_TOKEN: '/api/auth/validate-token', // 🔧 FIX: Changed from '/api/auth/validate'
+    VALIDATE_TOKEN: '/api/auth/validate-token',
   },
   
   // User endpoints
@@ -32,6 +32,12 @@ export const API_ENDPOINTS = {
   PERMISSIONS: {
     BASE: '/api/permissions',
     CATEGORIES: '/api/permissions/categories',
+    GROUPED: '/api/permissions/grouped',
+    USER_PERMISSIONS: (userId: number) => `/api/permissions/users/${userId}`,
+    CHECK_PERMISSION: (userId: number, permission: string) => `/api/permissions/users/${userId}/check/${permission}`,
+    CHECK_ANY: (userId: number) => `/api/permissions/users/${userId}/check-any`,
+    CHECK_ALL: (userId: number) => `/api/permissions/users/${userId}/check-all`,
+    ME: '/api/permissions/me',
   },
   
   // Health check

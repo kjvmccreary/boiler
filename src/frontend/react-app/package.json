@@ -8,9 +8,10 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "test": "vitest --config vitest.config.js",
+    "test:ui": "vitest --ui --config vitest.config.js",
+    "test:coverage": "vitest run --coverage --config vitest.config.js",
+    "test:watch": "vitest --watch --config vitest.config.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

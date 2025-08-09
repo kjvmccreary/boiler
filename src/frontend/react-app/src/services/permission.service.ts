@@ -1,39 +1,62 @@
 import { apiClient } from './api.client.js';
 import { API_ENDPOINTS } from '@/utils/api.constants.js';
-import type { Permission } from '@/types/index.js';
 
-export interface PermissionCategory {
+export interface PermissionDto {
+  id: number;
+  name: string;
   category: string;
-  permissions: Permission[];
+  description: string;
+  isActive: boolean;
+}
+
+export interface PermissionsByCategory {
+  [category: string]: PermissionDto[];
 }
 
 export class PermissionService {
-  async getAllPermissions(): Promise<Permission[]> {
-    const response = await apiClient.get<Permission[]>(API_ENDPOINTS.PERMISSIONS.BASE);
+  async getAllPermissions(): Promise<PermissionDto[]> {
+    const response = await apiClient.get<PermissionDto[]>(API_ENDPOINTS.PERMISSIONS.BASE);
     return response.data;
   }
 
-  async getPermissionCategories(): Promise<PermissionCategory[]> {
-    const response = await apiClient.get<PermissionCategory[]>(API_ENDPOINTS.PERMISSIONS.CATEGORIES);
+  async getPermissionCategories(): Promise<string[]> {
+    const response = await apiClient.get<string[]>(API_ENDPOINTS.PERMISSIONS.CATEGORIES);
     return response.data;
   }
 
-  // Helper method to organize permissions by category
-  organizePermissionsByCategory(permissions: Permission[]): PermissionCategory[] {
-    const categories = new Map<string, Permission[]>();
-    
-    permissions.forEach(permission => {
-      const category = permission.category;
-      if (!categories.has(category)) {
-        categories.set(category, []);
-      }
-      categories.get(category)!.push(permission);
-    });
+  async getPermissionsByCategory(category: string): Promise<PermissionDto[]> {
+    const response = await apiClient.get<PermissionDto[]>(`${API_ENDPOINTS.PERMISSIONS.CATEGORIES}/${category}`);
+    return response.data;
+  }
 
-    return Array.from(categories.entries()).map(([category, perms]) => ({
-      category,
-      permissions: perms.sort((a, b) => a.name.localeCompare(b.name))
-    }));
+  async getPermissionsGrouped(): Promise<PermissionsByCategory> {
+    const response = await apiClient.get<PermissionsByCategory>(`${API_ENDPOINTS.PERMISSIONS.BASE}/grouped`);
+    return response.data;
+  }
+
+  async getUserPermissions(userId: number): Promise<string[]> {
+    const response = await apiClient.get<string[]>(`${API_ENDPOINTS.PERMISSIONS.BASE}/users/${userId}`);
+    return response.data;
+  }
+
+  async getMyPermissions(): Promise<string[]> {
+    const response = await apiClient.get<string[]>(`${API_ENDPOINTS.PERMISSIONS.BASE}/me`);
+    return response.data;
+  }
+
+  async checkUserPermission(userId: number, permission: string): Promise<boolean> {
+    const response = await apiClient.get<boolean>(`${API_ENDPOINTS.PERMISSIONS.BASE}/users/${userId}/check/${permission}`);
+    return response.data;
+  }
+
+  async checkUserHasAnyPermissions(userId: number, permissions: string[]): Promise<boolean> {
+    const response = await apiClient.post<boolean>(`${API_ENDPOINTS.PERMISSIONS.BASE}/users/${userId}/check-any`, permissions);
+    return response.data;
+  }
+
+  async checkUserHasAllPermissions(userId: number, permissions: string[]): Promise<boolean> {
+    const response = await apiClient.post<boolean>(`${API_ENDPOINTS.PERMISSIONS.BASE}/users/${userId}/check-all`, permissions);
+    return response.data;
   }
 }
 
