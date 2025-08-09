@@ -1,1 +1,37 @@
 @import "tailwindcss";
+
+/* Global styles that work with Material UI */
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Custom utilities */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Loading spinner - Updated for Tailwind v4 */
+@layer utilities {
+  .loading-spinner {
+    @apply animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600;
+  }
+}
+
+/* Material UI compatibility - Updated for Tailwind v4 */
+@layer base {
+  .MuiCssBaseline-root {
+    @apply min-h-screen bg-gray-50;
+  }
+}
