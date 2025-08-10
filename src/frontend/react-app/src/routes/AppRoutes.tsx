@@ -8,6 +8,7 @@ const LoginForm = lazy(() => import('@/components/auth/LoginForm.js').then(m => 
 const RegisterForm = lazy(() => import('@/components/auth/RegisterForm.js').then(m => ({ default: m.RegisterForm })));
 const ForgotPasswordForm = lazy(() => import('@/components/auth/ForgotPasswordForm.js').then(m => ({ default: m.ForgotPasswordForm })));
 const ResetPasswordForm = lazy(() => import('@/components/auth/ResetPasswordForm.js').then(m => ({ default: m.ResetPasswordForm })));
+const EmailConfirmation = lazy(() => import('@/components/auth/EmailConfirmation.js').then(m => ({ default: m.EmailConfirmation })));
 const Dashboard = lazy(() => import('@/pages/Dashboard.js').then(m => ({ default: m.Dashboard })));
 const UserList = lazy(() => import('@/components/users/UserList.js').then(m => ({ default: m.UserList })));
 const RoleList = lazy(() => import('@/components/roles/RoleList.js').then(m => ({ default: m.RoleList })));
@@ -47,6 +48,14 @@ export function AppRoutes() {
             element={
               <ErrorBoundary level="component">
                 <ResetPasswordForm />
+              </ErrorBoundary>
+            } 
+          />
+          <Route 
+            path="/confirm-email" 
+            element={
+              <ErrorBoundary level="component">
+                <EmailConfirmation />
               </ErrorBoundary>
             } 
           />

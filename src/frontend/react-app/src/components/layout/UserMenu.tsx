@@ -16,9 +16,17 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext.js';
+import { LogoutButton } from '@/components/auth/LogoutButton.js';
 import { ROUTES } from '@/routes/route.constants.js';
 
-export function UserMenu() {
+interface UserMenuProps {
+  /**
+   * Use the new LogoutButton component instead of inline logout
+   */
+  useLogoutButton?: boolean;
+}
+
+export function UserMenu({ useLogoutButton = false }: UserMenuProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -114,12 +122,30 @@ export function UserMenu() {
         
         <Divider />
         
-        <MenuItem onClick={handleLogout}>
-          <ListItemIcon>
-            <LogoutIcon fontSize="small" />
-          </ListItemIcon>
-          Logout
-        </MenuItem>
+        {useLogoutButton ? (
+          <Box sx={{ px: 1, py: 0.5 }}>
+            <LogoutButton
+              variant="text"
+              showConfirmation={true}
+              onLogout={handleClose}
+              sx={{ 
+                width: '100%', 
+                justifyContent: 'flex-start',
+                color: 'text.primary',
+                '&:hover': {
+                  bgcolor: 'action.hover',
+                }
+              }}
+            />
+          </Box>
+        ) : (
+          <MenuItem onClick={handleLogout}>
+            <ListItemIcon>
+              <LogoutIcon fontSize="small" />
+            </ListItemIcon>
+            Logout
+          </MenuItem>
+        )}
       </Menu>
     </Box>
   );

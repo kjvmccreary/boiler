@@ -110,6 +110,37 @@ export const handlers = [
     })
   }),
 
+  // Email confirmation endpoint
+  http.post('/api/auth/confirm-email', async ({ request }) => {
+    const body = await request.json() as { token: string }
+    
+    if (body.token === 'valid-token') {
+      return HttpResponse.json({
+        success: true,
+        message: 'Email confirmed successfully'
+      })
+    }
+    
+    if (body.token === 'expired-token') {
+      return HttpResponse.json(
+        { error: 'The confirmation link has expired' },
+        { status: 400 }
+      )
+    }
+    
+    if (body.token === 'invalid-token') {
+      return HttpResponse.json(
+        { error: 'The confirmation link is invalid' },
+        { status: 400 }
+      )
+    }
+    
+    return HttpResponse.json(
+      { error: 'Token not found' },
+      { status: 404 }
+    )
+  }),
+
   // Permission endpoints
   http.get('/api/permissions/grouped', () => {
     return HttpResponse.json({

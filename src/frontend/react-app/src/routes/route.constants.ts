@@ -5,6 +5,7 @@ export const ROUTES = {
   REGISTER: '/register',
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password/:token',
+  EMAIL_CONFIRMATION: '/confirm-email',
   UNAUTHORIZED: '/unauthorized',
 
   // Protected routes
@@ -43,6 +44,6 @@ export const NAVIGATION_ITEMS = [
     label: 'Settings',
     path: ROUTES.SETTINGS,
     icon: 'Settings',
-    permission: undefined, // 🔧 FIX: Remove permission requirement
+    permission: undefined,
   },
 ] as const;

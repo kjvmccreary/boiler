@@ -3,12 +3,22 @@ import { render, screen, fireEvent, waitFor } from '../../../test/utils/test-uti
 import { ChangePasswordForm } from '../ChangePasswordForm.js'
 import * as authService from '../../../services/auth.service.js'
 
-// Mock the auth context
+// Mock the auth context with both useAuth and AuthProvider
 const mockLogout = vi.fn()
 vi.mock('../../../contexts/AuthContext.js', () => ({
   useAuth: () => ({
     logout: mockLogout,
-  })
+    user: null,
+    permissions: [],
+    isAuthenticated: false,
+    isLoading: false,
+    error: null,
+    login: vi.fn(),
+    register: vi.fn(),
+    clearError: vi.fn(),
+    refreshAuth: vi.fn(),
+  }),
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
 describe('ChangePasswordForm', () => {
