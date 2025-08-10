@@ -91,14 +91,14 @@ export function RoleList() {
 
   const handleEditRole = () => {
     if (selectedRole) {
-      navigate(`/roles/${selectedRole.id}/edit`);
+      navigate(`/roles/${selectedRole.id}/edit`); // Added /edit
     }
     handleMenuClose();
   };
 
   const handleViewRole = () => {
     if (selectedRole) {
-      navigate(`/roles/${selectedRole.id}`);
+      navigate(`/roles/${selectedRole.id}`); // This will now go to RoleDetails
     }
     handleMenuClose();
   };
@@ -164,7 +164,7 @@ export function RoleList() {
           <Button
             variant="contained"
             startIcon={<AddIcon />}
-            onClick={() => navigate('/roles/new')}
+            onClick={() => navigate('/roles/new')} // Updated route
           >
             Create Role
           </Button>

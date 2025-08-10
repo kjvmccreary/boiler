@@ -38,6 +38,7 @@ export default defineConfig({
           'role-components': [
             './src/components/roles/RoleList.jsx',
             './src/components/roles/RoleEditor.jsx',
+            './src/components/roles/RoleDetails.jsx', // Add this
             './src/components/roles/PermissionSelector.jsx'
           ]
         }

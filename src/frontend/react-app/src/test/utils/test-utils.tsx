@@ -3,6 +3,7 @@ import { render, type RenderOptions } from '@testing-library/react'
 import { BrowserRouter, MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/contexts/AuthContext.js'
+import type { User, Role, Permission } from '@/types/index.js'
 
 // Create a test query client
 const createTestQueryClient = () => new QueryClient({
@@ -68,7 +69,7 @@ const customRender = (
   })
 }
 
-// Mock user data for tests
+// Mock user data for tests with correct types
 export const mockUsers = {
   admin: {
     id: '1',
@@ -82,11 +83,11 @@ export const mockUsers = {
     lastLoginAt: '2024-01-01T00:00:00Z',
     emailConfirmed: true,
     isActive: true,
-    roles: [],
+    roles: [] as Role[],
     tenantId: '1',
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z'
-  },
+  } as User,
   user: {
     id: '2',
     email: 'user@test.com',
@@ -99,11 +100,11 @@ export const mockUsers = {
     lastLoginAt: '2024-01-01T00:00:00Z',
     emailConfirmed: true,
     isActive: true,
-    roles: [],
+    roles: [] as Role[],
     tenantId: '1',
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z'
-  }
+  } as User
 }
 
 // Mock auth responses
@@ -138,20 +139,20 @@ export const mockAuthResponses = {
   }
 }
 
-// Mock permissions for tests
+// Mock permissions for tests with correct types
 export const mockPermissions = {
   Users: [
-    { id: 1, name: 'users.view', category: 'Users', description: 'View users', isActive: true },
-    { id: 2, name: 'users.create', category: 'Users', description: 'Create users', isActive: true },
-    { id: 3, name: 'users.edit', category: 'Users', description: 'Edit users', isActive: true },
-    { id: 4, name: 'users.delete', category: 'Users', description: 'Delete users', isActive: true }
-  ],
+    { id: '1', name: 'users.view', category: 'Users', description: 'View users' },
+    { id: '2', name: 'users.create', category: 'Users', description: 'Create users' },
+    { id: '3', name: 'users.edit', category: 'Users', description: 'Edit users' },
+    { id: '4', name: 'users.delete', category: 'Users', description: 'Delete users' }
+  ] as Permission[],
   Roles: [
-    { id: 5, name: 'roles.view', category: 'Roles', description: 'View roles', isActive: true },
-    { id: 6, name: 'roles.create', category: 'Roles', description: 'Create roles', isActive: true },
-    { id: 7, name: 'roles.edit', category: 'Roles', description: 'Edit roles', isActive: true },
-    { id: 8, name: 'roles.delete', category: 'Roles', description: 'Delete roles', isActive: true }
-  ]
+    { id: '5', name: 'roles.view', category: 'Roles', description: 'View roles' },
+    { id: '6', name: 'roles.create', category: 'Roles', description: 'Create roles' },
+    { id: '7', name: 'roles.edit', category: 'Roles', description: 'Edit roles' },
+    { id: '8', name: 'roles.delete', category: 'Roles', description: 'Delete roles' }
+  ] as Permission[]
 }
 
 // Utility functions for common test scenarios

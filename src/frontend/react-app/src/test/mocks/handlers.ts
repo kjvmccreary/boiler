@@ -1,4 +1,68 @@
 import { http, HttpResponse } from 'msw'
+import type { Role, User } from '@/types/index.js'
+
+const API_BASE_URL = 'http://localhost:5000/api'
+
+// Mock role data with correct types
+const mockRole: Role = {
+  id: '1',
+  name: 'Admin',
+  description: 'Administrator role with full access',
+  isSystemRole: false,
+  isDefault: false,
+  tenantId: 'tenant-1',
+  permissions: [
+    {
+      id: '1',
+      name: 'users.view',
+      category: 'Users',
+      description: 'View users',
+    },
+    {
+      id: '2',
+      name: 'users.edit',
+      category: 'Users',
+      description: 'Edit users',
+    },
+    {
+      id: '3',
+      name: 'roles.view',
+      category: 'Roles',
+      description: 'View roles',
+    },
+  ],
+  createdAt: '2024-01-01T00:00:00Z',
+  updatedAt: '2024-01-01T00:00:00Z',
+}
+
+const mockUsers: User[] = [
+  {
+    id: '1',
+    firstName: 'John',
+    lastName: 'Doe',
+    fullName: 'John Doe',
+    email: 'john@example.com',
+    emailConfirmed: true,
+    isActive: true,
+    roles: [],
+    tenantId: 'tenant-1',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: '2',
+    firstName: 'Jane',
+    lastName: 'Smith',
+    fullName: 'Jane Smith',
+    email: 'jane@example.com',
+    emailConfirmed: false,
+    isActive: true,
+    roles: [],
+    tenantId: 'tenant-1',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
+]
 
 export const handlers = [
   // Auth endpoints
@@ -190,6 +254,48 @@ export const handlers = [
         updatedAt: '2024-01-01T00:00:00Z'
       }
     ])
+  }),
+
+  // Role Details
+  http.get(`${API_BASE_URL}/roles/:id`, ({ params }) => {
+    const { id } = params
+    
+    if (id === '1') {
+      return HttpResponse.json({
+        success: true,
+        data: mockRole,
+      })
+    }
+    
+    return HttpResponse.json(
+      { success: false, message: 'Role not found' },
+      { status: 404 }
+    )
+  }),
+
+  // Role Users
+  http.get(`${API_BASE_URL}/roles/:id/users`, ({ params }) => {
+    const { id } = params
+    
+    if (id === '1') {
+      return HttpResponse.json({
+        success: true,
+        data: mockUsers,
+      })
+    }
+    
+    return HttpResponse.json({
+      success: true,
+      data: [],
+    })
+  }),
+
+  // Delete Role
+  http.delete(`${API_BASE_URL}/roles/:id`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: true,
+    })
   }),
 
   // Error simulation endpoint
