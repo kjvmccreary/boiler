@@ -18,17 +18,14 @@ interface PermissionProviderProps {
 }
 
 export function PermissionProvider({ children }: PermissionProviderProps) {
-  const { user } = useAuth();
+  const { user, permissions: authPermissions } = useAuth();
 
   const hasPermission = (permission: string): boolean => {
     if (!user) return false;
     
-    // Get all permissions from user's roles
-    const userPermissions = user.roles.flatMap(role => 
-      role.permissions.map(p => p.name)
-    );
-    
-    return userPermissions.includes(permission);
+    // 🔧 FIX: Use permissions from AuthContext (extracted from JWT token)
+    // This is more reliable than trying to access user.roles.permissions
+    return authPermissions.includes(permission);
   };
 
   const hasAnyPermission = (permissions: string[]): boolean => {
@@ -40,7 +37,9 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
   };
 
   const hasRole = (roleName: string): boolean => {
-    if (!user) return false;
+    if (!user || !user.roles) return false;
+    
+    // 🔧 FIX: Safely access user.roles
     return user.roles.some(role => role.name === roleName);
   };
 
@@ -49,15 +48,14 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
   };
 
   const getUserRoles = (): string[] => {
+    // 🔧 FIX: Safely access user.roles with null checks
     return user?.roles?.map(role => role.name) || [];
   };
 
   const getUserPermissions = (): string[] => {
-    if (!user) return [];
-    
-    return user.roles.flatMap(role => 
-      role.permissions.map(p => p.name)
-    );
+    // 🔧 FIX: Use permissions from AuthContext instead of trying to access role.permissions
+    // This avoids the "can't access property 'map', role.permissions is undefined" error
+    return authPermissions || [];
   };
 
   const value: PermissionContextType = {

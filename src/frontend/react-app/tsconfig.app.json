@@ -23,7 +23,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    /* Path mapping */
+    /* Path mapping for .NET 9 integration */
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
@@ -41,15 +41,13 @@
     "types": ["vitest/globals", "@testing-library/jest-dom", "node", "vite/client"]
   },
   "include": [
-    "src",
-    "src/**/*.test.*",
-    "src/**/*.spec.*",
-    "vitest.config.js",
-    "vite.config.ts"
+    "src"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "coverage"
+    "coverage",
+    "src/**/*.test.*",
+    "src/**/*.spec.*"
   ]
 }

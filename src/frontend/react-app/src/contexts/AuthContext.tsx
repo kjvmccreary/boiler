@@ -44,7 +44,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     initializeAuth();
     
-    // 🔧 FIX: Listen for auth events from API client
+    // Listen for auth events from API client
     const handleAuthLogout = (event: CustomEvent) => {
       console.log('🚪 Received auth logout event:', event.detail);
       logout();
@@ -57,14 +57,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
 
-  // 🔧 NEW: Helper function to extract permissions from JWT token
+  // Helper function to extract permissions from JWT token
   const getPermissionsFromToken = (token: string): string[] => {
     try {
       const claims = tokenManager.getTokenClaims(token);
       if (!claims) return [];
       
-      // JWT permissions can be in different claim names
-      const permissions = claims.permissions || claims.permission || claims.perms || [];
+      // JWT permissions can be in different claim names for .NET 9
+      const permissions = claims.permissions || claims.permission || claims.perms || 
+                         claims['http://schemas.microsoft.com/identity/claims/role'] || 
+                         claims.role || [];
       
       console.log('🔍 AuthContext: Extracting permissions from token:', {
         tokenClaims: Object.keys(claims),
@@ -75,7 +77,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (Array.isArray(permissions)) {
         return permissions;
       } else if (typeof permissions === 'string') {
-        // Sometimes permissions are comma-separated in a single string
         return permissions.split(',').map(p => p.trim()).filter(p => p.length > 0);
       }
       
@@ -87,17 +88,73 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const initializeAuth = async () => {
+    console.log('🔍 AuthContext: Initializing authentication...');
+    
     try {
       const token = tokenManager.getToken();
+      const refreshToken = tokenManager.getRefreshToken();
+      
+      console.log('🔍 AuthContext: Token check:', {
+        hasToken: !!token,
+        hasRefreshToken: !!refreshToken,
+        tokenExpired: token ? tokenManager.isTokenExpired(token) : 'no-token'
+      });
+      
       if (!token) {
+        console.log('🔍 AuthContext: No token found, user not authenticated');
         setState(prev => ({ ...prev, isLoading: false }));
         return;
       }
 
-      // Validate token and get current user
+      // Check if token is expired
+      if (tokenManager.isTokenExpired(token)) {
+        console.log('🔍 AuthContext: Token expired, attempting refresh...');
+        
+        if (refreshToken) {
+          try {
+            const refreshResponse = await authService.refreshToken(refreshToken);
+            console.log('✅ AuthContext: Token refresh successful');
+            
+            // Update tokens
+            tokenManager.setTokens(refreshResponse.token, refreshResponse.refreshToken);
+            
+            // Validate the new token
+            const user = await authService.validateToken();
+            const permissions = getPermissionsFromToken(refreshResponse.token);
+            
+            setState(prev => ({
+              ...prev,
+              user,
+              permissions,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+            }));
+            return;
+          } catch (refreshError) {
+            console.error('❌ AuthContext: Token refresh failed:', refreshError);
+            tokenManager.clearTokens();
+            setState(prev => ({
+              ...prev,
+              user: null,
+              permissions: [],
+              isAuthenticated: false,
+              isLoading: false,
+              error: null,
+            }));
+            return;
+          }
+        } else {
+          console.log('🔍 AuthContext: No refresh token available, clearing auth');
+          tokenManager.clearTokens();
+          setState(prev => ({ ...prev, isLoading: false }));
+          return;
+        }
+      }
+
+      // Token is valid, validate it
+      console.log('🔍 AuthContext: Token valid, validating with backend...');
       const user = await authService.validateToken();
-      
-      // 🔧 FIX: Get permissions from token instead of user.roles
       const permissions = getPermissionsFromToken(token);
       
       setState(prev => ({
@@ -108,8 +165,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isLoading: false,
         error: null,
       }));
+      
+      console.log('✅ AuthContext: Authentication initialization successful');
+      
     } catch (error) {
-      console.error('Auth initialization failed:', error);
+      console.error('❌ AuthContext: Auth initialization failed:', error);
       tokenManager.clearTokens();
       setState(prev => ({
         ...prev,
@@ -130,10 +190,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       console.log('🔍 AuthContext: Login response received:', authResponse);
       
-      // 🔧 FIX: Use correct property names from backend
+      // Store tokens
       tokenManager.setTokens(authResponse.accessToken, authResponse.refreshToken);
       
-      // 🔧 FIX: Get permissions from token instead of user.roles
+      // Get permissions from token
       const permissions = getPermissionsFromToken(authResponse.accessToken);
       
       setState(prev => ({
@@ -167,10 +227,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const authResponse: AuthResponse = await authService.register(userData);
       
-      // 🔧 FIX: Use correct property names from backend
+      // Store tokens
       tokenManager.setTokens(authResponse.accessToken, authResponse.refreshToken);
       
-      // 🔧 FIX: Get permissions from token instead of user.roles
+      // Get permissions from token
       const permissions = getPermissionsFromToken(authResponse.accessToken);
       
       setState(prev => ({

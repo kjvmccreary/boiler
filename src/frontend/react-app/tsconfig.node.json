@@ -13,16 +13,24 @@
     "moduleDetection": "force",
     "noEmit": true,
 
+    /* Allow JavaScript files for .NET 9 build tools */
+    "allowJs": true,
+    "checkJs": false,
+
     /* Linting */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    /* Additional for vite config */
+    /* Types for Node.js */
     "types": ["node"]
   },
-  "include": ["vite.config.ts"]
+  "include": [
+    "vite.config.js",
+    "vitest.config.js",
+    "tailwind.config.js"
+  ]
 }

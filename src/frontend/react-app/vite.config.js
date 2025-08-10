@@ -7,11 +7,37 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   plugins: [react()],
+  
+  server: {
+    port: 3000,
+    // 🔧 MINIMAL HTTPS: Just enable without custom settings
+    https: {
+      // Empty object = let Vite handle everything automatically
+    },
+    proxy: {
+      '/api': {
+        target: 'https://localhost:7000',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('🚨 Proxy error:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('🔍 Proxying request:', req.method, req.url, '→', proxyReq.path);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('✅ Proxy response:', req.method, req.url, '→', proxyRes.statusCode);
+          });
+        },
+      },
+    },
+  },
+  
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
-          // Vendor chunks
           'react-vendor': ['react', 'react-dom'],
           'mui-vendor': [
             '@mui/material', 
@@ -22,8 +48,6 @@ export default defineConfig({
           'router-vendor': ['react-router-dom'],
           'query-vendor': ['@tanstack/react-query'],
           'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
-          
-          // App chunks
           'auth-components': [
             './src/components/auth/LoginForm.jsx',
             './src/components/auth/RegisterForm.jsx',
@@ -38,17 +62,16 @@ export default defineConfig({
           'role-components': [
             './src/components/roles/RoleList.jsx',
             './src/components/roles/RoleEditor.jsx',
-            './src/components/roles/RoleDetails.jsx', // Add this
+            './src/components/roles/RoleDetails.jsx',
             './src/components/roles/PermissionSelector.jsx'
           ]
         }
       }
     },
-    // Increase chunk size warning limit for .NET 9 enterprise app
     chunkSizeWarningLimit: 800,
-    // Enable source maps for production debugging
     sourcemap: true
   },
+  
   test: {
     environment: 'jsdom',
     globals: true,
@@ -85,6 +108,7 @@ export default defineConfig({
     reporters: ['verbose'],
     testTimeout: 10000
   },
+  
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')
