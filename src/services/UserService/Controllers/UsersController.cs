@@ -78,10 +78,10 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Get list of users (Admin and SuperAdmin only, tenant-scoped)
+    /// Get list of users (requires users.view permission)
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize] // Remove role requirement
     public async Task<ActionResult<ApiResponseDto<PagedResultDto<UserDto>>>> GetUsers(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -91,7 +91,18 @@ public class UsersController : ControllerBase
     {
         try
         {
-            // ✅ FIXED: Validate parameters and map to DTO
+            // 🔧 .NET 9 FIX: Check for users.view permission instead of Admin role
+            var hasUsersViewPermission = User.Claims.Any(c => 
+                c.Type == "permission" && c.Value == "users.view");
+                
+            if (!hasUsersViewPermission)
+            {
+                _logger.LogWarning("User {UserId} attempted to access users list without users.view permission", 
+                    GetCurrentUserId());
+                return Forbid("You don't have permission to view users");
+            }
+
+            // Validate parameters and map to DTO
             if (page <= 0)
             {
                 return BadRequest(ApiResponseDto<PagedResultDto<UserDto>>.ErrorResult("Page number must be greater than 0"));
@@ -137,13 +148,17 @@ public class UsersController : ControllerBase
         try
         {
             var currentUserId = GetCurrentUserId();
-            // FIXED: Check for both Admin and SuperAdmin roles
-            var isAdmin = User.IsInRole("Admin") || User.IsInRole("SuperAdmin");
+            
+            // 🔧 .NET 9 FIX: Use permission-based admin check instead of role-based
+            var hasUsersViewPermission = User.Claims.Any(c => 
+                c.Type == "permission" && c.Value == "users.view");
 
-            // Users can view their own profile, admins can view any user in their tenant
-            if (id != currentUserId && !isAdmin)
+            // Users can view their own profile, users with users.view permission can view any user in their tenant
+            if (id != currentUserId && !hasUsersViewPermission)
             {
-                return Forbid();
+                _logger.LogWarning("User {UserId} attempted to view user {TargetUserId} without users.view permission", 
+                    currentUserId, id);
+                return Forbid("You don't have permission to view this user");
             }
 
             var result = await _userService.GetUserByIdAsync(id);
@@ -163,20 +178,31 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Delete user (Admin and SuperAdmin only, cannot delete self)
+    /// Delete user (requires users.delete permission, cannot delete self)
     /// </summary>
     [HttpDelete("{id:int}")]
-    [Authorize(Roles = "Admin,SuperAdmin")]
+    [Authorize] // 🔧 .NET 9 FIX: Remove role requirement, use permission check
     public async Task<ActionResult<ApiResponseDto<bool>>> DeleteUser(int id)
     {
         try
         {
             var currentUserId = GetCurrentUserId();
 
-            // Prevent admins from deleting themselves
+            // Prevent users from deleting themselves
             if (id == currentUserId)
             {
                 return BadRequest(ApiResponseDto<bool>.ErrorResult("You cannot delete your own account"));
+            }
+
+            // 🔧 .NET 9 FIX: Check for users.delete permission instead of Admin role
+            var hasUsersDeletePermission = User.Claims.Any(c => 
+                c.Type == "permission" && c.Value == "users.delete");
+                
+            if (!hasUsersDeletePermission)
+            {
+                _logger.LogWarning("User {UserId} attempted to delete user {TargetUserId} without users.delete permission", 
+                    currentUserId, id);
+                return Forbid("You don't have permission to delete users");
             }
 
             var result = await _userService.DeleteUserAsync(id);
@@ -197,6 +223,54 @@ public class UsersController : ControllerBase
         {
             _logger.LogError(ex, "Error deleting user {UserId}", id);
             return StatusCode(500, ApiResponseDto<bool>.ErrorResult("An error occurred while deleting the user"));
+        }
+    }
+
+    /// <summary>
+    /// Update user by ID (requires users.edit permission)
+    /// </summary>
+    [HttpPut("{id:int}")]
+    [Authorize] // Remove role requirement, use permission check
+    public async Task<ActionResult<ApiResponseDto<UserDto>>> UpdateUser(int id, [FromBody] UserUpdateDto updateUserDto)
+    {
+        try
+        {
+            // 🔧 .NET 9 FIX: Check for users.edit permission instead of Admin role
+            var hasUsersEditPermission = User.Claims.Any(c => 
+                c.Type == "permission" && c.Value == "users.edit");
+                
+            if (!hasUsersEditPermission)
+            {
+                _logger.LogWarning("User {UserId} attempted to update user {TargetUserId} without users.edit permission", 
+                    GetCurrentUserId(), id);
+                return Forbid("You don't have permission to edit users");
+            }
+
+            var currentUserId = GetCurrentUserId();
+            
+            // Prevent admins from updating themselves via this endpoint (use profile endpoint instead)
+            if (id == currentUserId)
+            {
+                return BadRequest(ApiResponseDto<UserDto>.ErrorResult("Use the profile endpoint to update your own profile"));
+            }
+
+            var result = await _userService.UpdateUserAsync(id, updateUserDto);
+            
+            if (!result.Success)
+            {
+                if (result.Message?.Contains("not found") == true)
+                {
+                    return NotFound(result);
+                }
+                return BadRequest(result);
+            }
+            
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating user {UserId}", id);
+            return StatusCode(500, ApiResponseDto<UserDto>.ErrorResult("An error occurred while updating the user"));
         }
     }
 

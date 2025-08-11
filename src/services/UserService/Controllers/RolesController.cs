@@ -24,10 +24,10 @@ public class RolesController : ControllerBase
     }
 
     /// <summary>
-    /// Get all roles for the current tenant (tenant-scoped)
+    /// Get all roles for the current tenant (requires roles.view permission)
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin,SuperAdmin,TenantAdmin")]
+    [Authorize] // Remove role requirement
     public async Task<ActionResult<ApiResponseDto<List<RoleDto>>>> GetRoles(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -35,6 +35,17 @@ public class RolesController : ControllerBase
     {
         try
         {
+            // 🔧 .NET 9 FIX: Check for roles.view permission instead of Admin role
+            var hasRolesViewPermission = User.Claims.Any(c => 
+                c.Type == "permission" && c.Value == "roles.view");
+                
+            if (!hasRolesViewPermission)
+            {
+                _logger.LogWarning("User {UserId} attempted to access roles list without roles.view permission", 
+                    GetCurrentUserId());
+                return Forbid("You don't have permission to view roles");
+            }
+
             if (page <= 0)
             {
                 return BadRequest(ApiResponseDto<List<RoleDto>>.ErrorResult("Page number must be greater than 0"));
@@ -45,17 +56,14 @@ public class RolesController : ControllerBase
                 return BadRequest(ApiResponseDto<List<RoleDto>>.ErrorResult("Page size must be between 1 and 100"));
             }
 
-            // For now, get all roles (you can enhance with pagination later)
             var roles = await _roleService.GetTenantRolesAsync();
             
-            // Apply search filter if provided
             if (!string.IsNullOrWhiteSpace(searchTerm))
             {
                 roles = roles.Where(r => r.Name.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
                                         r.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
             }
 
-            // Convert to DTOs
             var roleDtos = roles.Select(MapToRoleDto).ToList();
             
             return Ok(ApiResponseDto<List<RoleDto>>.SuccessResult(roleDtos, "Roles retrieved successfully"));

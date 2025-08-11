@@ -41,6 +41,9 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
+# Local certs
+certs/
+
 # Environment
 .env
 appsettings.Development.json

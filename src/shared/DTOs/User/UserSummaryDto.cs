@@ -8,7 +8,10 @@ public class UserSummaryDto
     public string FirstName { get; set; } = string.Empty;
     public string LastName { get; set; } = string.Empty;
     public string FullName => $"{FirstName} {LastName}".Trim();
-    public string Role { get; set; } = string.Empty;
+    
+    // 🔧 .NET 9 FIX: Change from single Role to multi-role support
+    public List<string> Roles { get; set; } = new();
+    
     public DateTime CreatedAt { get; set; }
     public DateTime? LastLoginAt { get; set; }
     public bool IsActive { get; set; } = true;

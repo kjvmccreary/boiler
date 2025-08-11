@@ -33,4 +33,7 @@ public class User : BaseEntity
     public Tenant? PrimaryTenant { get; set; } // The user's primary/home tenant
     public ICollection<TenantUser> TenantUsers { get; set; } = new List<TenantUser>(); // All tenant associations
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+    
+    // 🔧 .NET 9 FIX: Add missing UserRoles navigation property
+    public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>(); // User role assignments
 }

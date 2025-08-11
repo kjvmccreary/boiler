@@ -23,6 +23,9 @@ public class UserDetailDto
     public DateTime? LockedUntil { get; set; }
     public List<string> Roles { get; set; } = new();
     
+    // 🔧 .NET 9 FIX: Add missing ActiveSessions property
+    public int ActiveSessions { get; set; } = 0;
+    
     // Optional: Full preferences for admin view
     public UserPreferencesDto? Preferences { get; set; }
 }

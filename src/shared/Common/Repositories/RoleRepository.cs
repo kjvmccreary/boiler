@@ -296,7 +296,7 @@ public class RoleRepository : TenantRepository<Role>, IRoleRepository
     /// <summary>
     /// Synchronously get current tenant ID (use with caution)
     /// </summary>
-    private int? GetCurrentTenantIdSync()
+    private new int? GetCurrentTenantIdSync()
     {
         try
         {

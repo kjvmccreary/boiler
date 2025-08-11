@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import fs from 'fs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -10,9 +11,10 @@ export default defineConfig({
   
   server: {
     port: 3000,
-    // 🔧 MINIMAL HTTPS: Just enable without custom settings
+    // 🔧 USE MKCERT CERTIFICATES: Browser-trusted SSL for .NET 9
     https: {
-      // Empty object = let Vite handle everything automatically
+      key: fs.readFileSync(path.resolve(__dirname, 'certs/localhost-key.pem')),
+      cert: fs.readFileSync(path.resolve(__dirname, 'certs/localhost.pem'))
     },
     proxy: {
       '/api': {

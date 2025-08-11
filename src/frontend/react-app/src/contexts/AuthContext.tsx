@@ -6,6 +6,7 @@ import { tokenManager } from '@/utils/token.manager.js';
 interface AuthState {
   user: User | null;
   permissions: string[];
+  roles: string[]; // 🔧 ADD: Track roles separately
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -35,6 +36,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>({
     user: null,
     permissions: [],
+    roles: [], // 🔧 ADD: Initialize roles
     isAuthenticated: false,
     isLoading: true,
     error: null,
@@ -87,6 +89,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  // 🔧 .NET 9 FIX: Helper function to extract roles from JWT token
+  const getRolesFromToken = (token: string): string[] => {
+    try {
+      const claims = tokenManager.getTokenClaims(token);
+      if (!claims) return [];
+      
+      // Check multiple possible role claim names for .NET 9
+      const roles = claims.role || 
+                   claims.roles || 
+                   claims['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
+                   claims['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role'] ||
+                   [];
+      
+      console.log('🔍 AuthContext: Extracting roles from token:', {
+        tokenClaims: Object.keys(claims),
+        roles: roles
+      });
+      
+      // Handle both array and string formats
+      if (Array.isArray(roles)) {
+        return roles;
+      } else if (typeof roles === 'string') {
+        return roles.split(',').map(r => r.trim()).filter(r => r.length > 0);
+      }
+      
+      return [];
+    } catch (error) {
+      console.error('🔍 AuthContext: Error extracting roles from token:', error);
+      return [];
+    }
+  };
+
   const initializeAuth = async () => {
     console.log('🔍 AuthContext: Initializing authentication...');
     
@@ -121,11 +155,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // Validate the new token
             const user = await authService.validateToken();
             const permissions = getPermissionsFromToken(refreshResponse.token);
+            const roles = getRolesFromToken(refreshResponse.token); // 🔧 ADD: Extract roles
             
             setState(prev => ({
               ...prev,
               user,
               permissions,
+              roles, // 🔧 ADD: Set roles
               isAuthenticated: true,
               isLoading: false,
               error: null,
@@ -138,6 +174,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               ...prev,
               user: null,
               permissions: [],
+              roles: [], // 🔧 ADD: Clear roles
               isAuthenticated: false,
               isLoading: false,
               error: null,
@@ -156,17 +193,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('🔍 AuthContext: Token valid, validating with backend...');
       const user = await authService.validateToken();
       const permissions = getPermissionsFromToken(token);
+      const roles = getRolesFromToken(token); // 🔧 ADD: Extract roles
       
       setState(prev => ({
         ...prev,
         user,
         permissions,
+        roles, // 🔧 ADD: Set roles
         isAuthenticated: true,
         isLoading: false,
         error: null,
       }));
       
-      console.log('✅ AuthContext: Authentication initialization successful');
+      console.log('✅ AuthContext: Authentication initialization successful', {
+        user: user?.email,
+        permissions,
+        roles
+      });
       
     } catch (error) {
       console.error('❌ AuthContext: Auth initialization failed:', error);
@@ -175,6 +218,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         ...prev,
         user: null,
         permissions: [],
+        roles: [], // 🔧 ADD: Clear roles
         isAuthenticated: false,
         isLoading: false,
         error: null,
@@ -193,13 +237,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Store tokens
       tokenManager.setTokens(authResponse.accessToken, authResponse.refreshToken);
       
-      // Get permissions from token
+      // Get permissions and roles from token
       const permissions = getPermissionsFromToken(authResponse.accessToken);
+      const roles = getRolesFromToken(authResponse.accessToken); // 🔧 ADD: Extract roles
       
       setState(prev => ({
         ...prev,
         user: authResponse.user,
         permissions,
+        roles, // 🔧 ADD: Set roles
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -230,13 +276,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Store tokens
       tokenManager.setTokens(authResponse.accessToken, authResponse.refreshToken);
       
-      // Get permissions from token
+      // Get permissions and roles from token
       const permissions = getPermissionsFromToken(authResponse.accessToken);
+      const roles = getRolesFromToken(authResponse.accessToken); // 🔧 ADD: Extract roles
       
       setState(prev => ({
         ...prev,
         user: authResponse.user,
         permissions,
+        roles, // 🔧 ADD: Set roles
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -262,6 +310,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setState({
         user: null,
         permissions: [],
+        roles: [], // 🔧 ADD: Clear roles
         isAuthenticated: false,
         isLoading: false,
         error: null,

@@ -45,7 +45,7 @@ export interface Tenant {
   updatedAt: string;
 }
 
-// Fixed User type to match backend behavior
+// Updated User type to match .NET 9 backend
 export interface User {
   id: string;
   email: string;
@@ -56,12 +56,13 @@ export interface User {
   timeZone?: string;
   language?: string;
   lastLoginAt?: string;
-  emailConfirmed: boolean;  // Fixed: was isEmailConfirmed
+  emailConfirmed: boolean;
   isActive: boolean;
-  roles: Role[];           // Fixed: should be Role[] objects, not string[]
+  roles: string[];          // .NET 9 FIX: Changed from Role[] to string[]
   tenantId: string;
   createdAt: string;
   updatedAt: string;
+  preferences?: any;
 }
 
 // RBAC Types

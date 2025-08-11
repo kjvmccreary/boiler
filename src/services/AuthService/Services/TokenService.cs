@@ -38,6 +38,19 @@ public class TokenService : ITokenService
     {
         _logger.LogInformation("🔍 TOKEN DEBUG: Starting token generation for user {UserId} in tenant {TenantId}", user.Id, tenant.Id);
         
+        // 🔧 .NET 9 FIX: Enhanced debugging for role loading
+        _logger.LogInformation("🔍 TOKEN DEBUG: User.TenantUsers collection status: Count={Count}, IsNull={IsNull}", 
+            user.TenantUsers?.Count ?? -1, user.TenantUsers == null);
+        
+        if (user.TenantUsers != null)
+        {
+            foreach (var tu in user.TenantUsers)
+            {
+                _logger.LogInformation("🔍 TOKEN DEBUG: TenantUser found: TenantId={TenantId}, Role={Role}, IsActive={IsActive}", 
+                    tu.TenantId, tu.Role, tu.IsActive);
+            }
+        }
+        
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -55,19 +68,57 @@ public class TokenService : ITokenService
                 ClaimValueTypes.Integer64)
         };
 
-        // Include user roles from TenantUsers relationship
+        // 🔧 .NET 9 FIX: Enhanced role inclusion with debugging
+        var rolesAdded = 0;
         if (user.TenantUsers != null && user.TenantUsers.Any())
         {
             foreach (var tenantUser in user.TenantUsers.Where(tu => tu.IsActive))
             {
                 claims.Add(new Claim(ClaimTypes.Role, tenantUser.Role));
-                _logger.LogInformation("🔍 TOKEN DEBUG: Added role {Role} for user {UserId}", tenantUser.Role, user.Id);
+                rolesAdded++;
+                _logger.LogInformation("🔍 TOKEN DEBUG: Added role claim '{Role}' for user {UserId}", tenantUser.Role, user.Id);
             }
         }
         else
         {
             _logger.LogWarning("🔍 TOKEN DEBUG: No TenantUsers found for user {UserId}", user.Id);
+            
+            // 🔧 .NET 9 FIX: Alternative - try to load roles from UserRoles table directly
+            _logger.LogInformation("🔍 TOKEN DEBUG: Attempting to load roles from UserRoles table as fallback...");
+            
+            // This is a fallback - ideally the TenantUsers should be loaded
+            // But let's see if we can get roles from UserRoles table
+            try
+            {
+                var serviceProvider = (IServiceProvider)_serviceProvider;
+                var context = serviceProvider.GetService<ApplicationDbContext>();
+                if (context != null)
+                {
+                    var userRoles = await context.UserRoles
+                        .Where(ur => ur.UserId == user.Id && ur.IsActive && ur.TenantId == tenant.Id)
+                        .Include(ur => ur.Role)
+                        .ToListAsync();
+                    
+                    _logger.LogInformation("🔍 TOKEN DEBUG: Found {Count} UserRoles for user {UserId}", userRoles.Count, user.Id);
+                    
+                    foreach (var userRole in userRoles)
+                    {
+                        if (userRole.Role != null)
+                        {
+                            claims.Add(new Claim(ClaimTypes.Role, userRole.Role.Name));
+                            rolesAdded++;
+                            _logger.LogInformation("🔍 TOKEN DEBUG: Added role claim '{Role}' from UserRoles for user {UserId}", userRole.Role.Name, user.Id);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "🔍 TOKEN DEBUG: Failed to load roles from UserRoles table");
+            }
         }
+        
+        _logger.LogInformation("🔍 TOKEN DEBUG: Total roles added to token: {RolesCount}", rolesAdded);
 
         // NEW: Include user permissions in JWT claims for Enhanced Phase 4
         try
@@ -100,10 +151,6 @@ public class TokenService : ITokenService
         {
             _logger.LogError(ex, "🔍 TOKEN DEBUG: FAILED to load permissions for user {UserId} during token generation", user.Id);
         }
-
-        // Add a test permission to verify the mechanism works
-        claims.Add(new Claim("permission", "test.permission"));
-        _logger.LogInformation("🔍 TOKEN DEBUG: Added test permission claim");
 
         _logger.LogInformation("🔍 TOKEN DEBUG: Total claims count before token generation: {ClaimCount}", claims.Count);
         

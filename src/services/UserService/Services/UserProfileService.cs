@@ -14,17 +14,20 @@ public class UserProfileService : IUserProfileService
 {
     private readonly IUserRepository _userRepository;
     private readonly ITenantProvider _tenantProvider;
+    private readonly IPermissionService _permissionService; // 🔧 ADD: Permission service for admin check
     private readonly IMapper _mapper;
     private readonly ILogger<UserProfileService> _logger;
 
     public UserProfileService(
         IUserRepository userRepository,
         ITenantProvider tenantProvider,
+        IPermissionService permissionService, // 🔧 ADD: Inject permission service
         IMapper mapper,
         ILogger<UserProfileService> logger)
     {
         _userRepository = userRepository;
         _tenantProvider = tenantProvider;
+        _permissionService = permissionService; // 🔧 ADD: Initialize permission service
         _mapper = mapper;
         _logger = logger;
     }
@@ -71,6 +74,15 @@ public class UserProfileService : IUserProfileService
                 return ApiResponseDto<UserDto>.ErrorResult("Tenant context not found");
             }
 
+            // 🔧 .NET 9 FIX: Use permission-based admin check instead of role-based
+            var isAdmin = await IsUserAdminAsync(userId, cancellationToken);
+            if (!isAdmin)
+            {
+                _logger.LogWarning("Non-admin user {UserId} attempted to update their profile. User permissions: {UserPermissions}", 
+                    userId, string.Join(", ", await _permissionService.GetUserPermissionsAsync(userId, cancellationToken)));
+                return ApiResponseDto<UserDto>.ErrorResult("Only admin users can update their profile");
+            }
+
             var user = await _userRepository.Query()
                 .Where(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value)
                 .FirstOrDefaultAsync(cancellationToken);
@@ -93,7 +105,7 @@ public class UserProfileService : IUserProfileService
             await _userRepository.UpdateAsync(user, cancellationToken);
 
             var userDto = _mapper.Map<UserDto>(user);
-            return ApiResponseDto<UserDto>.SuccessResult(userDto);
+            return ApiResponseDto<UserDto>.SuccessResult(userDto, "Profile updated successfully");
         }
         catch (Exception ex)
         {
@@ -184,6 +196,45 @@ public class UserProfileService : IUserProfileService
         {
             _logger.LogError(ex, "Error retrieving preferences for user {UserId}", userId);
             return ApiResponseDto<UserPreferencesDto>.ErrorResult("An error occurred while retrieving preferences");
+        }
+    }
+
+    // 🔧 .NET 9 FIX: Use permission-based admin check instead of role-based
+    private async Task<bool> IsUserAdminAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // Use permission service to check if user has admin permissions
+            // An admin user has these key administrative permissions
+            var adminPermissions = new[]
+            {
+                "users.edit",
+                "users.create", 
+                "users.delete",
+                "roles.edit",
+                "tenants.edit"
+            };
+
+            // Check if user has any of these core admin permissions
+            var hasAdminPermissions = await _permissionService.UserHasAnyPermissionAsync(userId, adminPermissions, cancellationToken);
+            
+            _logger.LogInformation("🔧 ADMIN CHECK: Permission-based admin check for user {UserId}: {IsAdmin} (checked permissions: {Permissions})", 
+                userId, hasAdminPermissions, string.Join(", ", adminPermissions));
+            
+            // 🔧 .NET 9 DEBUG: Let's also log what permissions the user actually has
+            if (!hasAdminPermissions)
+            {
+                var userPermissions = await _permissionService.GetUserPermissionsAsync(userId, cancellationToken);
+                _logger.LogWarning("🔧 ADMIN CHECK: User {UserId} failed admin check. User has {PermissionCount} permissions: {UserPermissions}", 
+                    userId, userPermissions.Count(), string.Join(", ", userPermissions.Take(10)));
+            }
+            
+            return hasAdminPermissions;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking admin permissions for user {UserId}", userId);
+            return false;
         }
     }
 }

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { Box, CircularProgress } from '@mui/material';
 import { useAuth } from '@/contexts/AuthContext.js';
 import { usePermission } from '@/contexts/PermissionContext.js';
 
@@ -22,7 +23,7 @@ export function ProtectedRoute({
   requireAll = false,
   redirectTo = '/login',
 }: ProtectedRouteProps) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth(); // ✅ ADD: isLoading
   const location = useLocation();
   const {
     hasPermission,
@@ -32,7 +33,21 @@ export function ProtectedRoute({
     hasAnyRole,
   } = usePermission();
 
-  // Check if user is authenticated
+  // 🔧 FIX: Show loading while authentication is being checked
+  if (isLoading) {
+    return (
+      <Box 
+        display="flex" 
+        justifyContent="center" 
+        alignItems="center" 
+        minHeight="100vh"
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Check if user is authenticated (only after loading is complete)
   if (!isAuthenticated || !user) {
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }

@@ -29,8 +29,8 @@ public class UserMappingProfile : Profile
 
         // User → UserSummaryDto (Lightweight for lists)
         CreateMap<User, UserSummaryDto>()
-            .ForMember(dest => dest.Role, opt => opt.MapFrom(src => 
-                src.TenantUsers.Where(tu => tu.IsActive).Select(tu => tu.Role).FirstOrDefault() ?? "User"));
+            .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => 
+                src.TenantUsers.Where(tu => tu.IsActive).Select(tu => tu.Role).ToList()));
 
         // User → UserDetailDto (Comprehensive admin view)
         CreateMap<User, UserDetailDto>()

@@ -221,18 +221,19 @@ export function UserList() {
                       
                       <TableCell>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {user.roles.slice(0, 2).map((role) => (
+                          {/* 🔧 .NET 9 FIX: Handle string roles from backend */}
+                          {(user.roles || []).slice(0, 2).map((role, index) => (
                             <Chip
-                              key={role.id}
-                              label={role.name}
+                              key={`${role}-${index}`}  // role is a string, not object
+                              label={role}              // role is already a string
                               size="small"
                               color="primary"
                               variant="outlined"
                             />
                           ))}
-                          {user.roles.length > 2 && (
+                          {(user.roles?.length || 0) > 2 && (
                             <Chip
-                              label={`+${user.roles.length - 2} more`}
+                              label={`+${(user.roles?.length || 0) - 2} more`}
                               size="small"
                               variant="outlined"
                             />
