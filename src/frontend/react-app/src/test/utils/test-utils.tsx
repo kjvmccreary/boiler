@@ -3,7 +3,7 @@ import { render, type RenderOptions } from '@testing-library/react'
 import { BrowserRouter, MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from '@/contexts/AuthContext.js'
-import type { User, Role, Permission } from '@/types/index.js'
+import type { User, Permission } from '@/types/index.js' // Remove Role import
 
 // Create a test query client
 const createTestQueryClient = () => new QueryClient({
@@ -73,7 +73,7 @@ const customRender = (
 export const mockUsers = {
   admin: {
     id: '1',
-    email: 'admin@test.com',
+    email: 'admin@example.com',
     firstName: 'Admin',
     lastName: 'User',
     fullName: 'Admin User',
@@ -83,25 +83,25 @@ export const mockUsers = {
     lastLoginAt: '2024-01-01T00:00:00Z',
     emailConfirmed: true,
     isActive: true,
-    roles: [] as Role[],
-    tenantId: '1',
+    roles: ['Admin', 'SuperAdmin'], // Change from Role[] to string[]
+    tenantId: 'tenant-1',
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z'
   } as User,
   user: {
     id: '2',
-    email: 'user@test.com',
+    email: 'user@example.com',
     firstName: 'Regular',
     lastName: 'User',
     fullName: 'Regular User',
-    phoneNumber: '+1234567890',
+    phoneNumber: '+1234567891',
     timeZone: 'UTC',
     language: 'en',
     lastLoginAt: '2024-01-01T00:00:00Z',
     emailConfirmed: true,
     isActive: true,
-    roles: [] as Role[],
-    tenantId: '1',
+    roles: ['User'], // Change from Role[] to string[]
+    tenantId: 'tenant-1',
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z'
   } as User

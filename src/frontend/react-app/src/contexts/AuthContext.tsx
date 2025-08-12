@@ -6,7 +6,7 @@ import { tokenManager } from '@/utils/token.manager.js';
 interface AuthState {
   user: User | null;
   permissions: string[];
-  roles: string[]; // 🔧 ADD: Track roles separately
+  roles: string[]; // 🔧 Track multiple roles
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [state, setState] = useState<AuthState>({
     user: null,
     permissions: [],
-    roles: [], // 🔧 ADD: Initialize roles
+    roles: [], // 🔧 Initialize multiple roles
     isAuthenticated: false,
     isLoading: true,
     error: null,
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
 
-  // Helper function to extract permissions from JWT token
+  // 🔧 .NET 9 MULTI-ROLE: Enhanced permission extraction from JWT token
   const getPermissionsFromToken = (token: string): string[] => {
     try {
       const claims = tokenManager.getTokenClaims(token);
@@ -68,7 +68,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // JWT permissions can be in different claim names for .NET 9
       const permissions = claims.permissions || claims.permission || claims.perms || 
                          claims['http://schemas.microsoft.com/identity/claims/role'] || 
-                         claims.role || [];
+                         [];
       
       console.log('🔍 AuthContext: Extracting permissions from token:', {
         tokenClaims: Object.keys(claims),
@@ -89,28 +89,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  // 🔧 .NET 9 FIX: Helper function to extract roles from JWT token
+  // 🔧 .NET 9 MULTI-ROLE FIX: Enhanced role extraction from JWT token
   const getRolesFromToken = (token: string): string[] => {
     try {
       const claims = tokenManager.getTokenClaims(token);
       if (!claims) return [];
       
       // Check multiple possible role claim names for .NET 9
-      const roles = claims.role || 
-                   claims.roles || 
-                   claims['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
+      const roles = claims['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] ||
                    claims['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role'] ||
+                   claims.role || 
+                   claims.roles || 
                    [];
       
-      console.log('🔍 AuthContext: Extracting roles from token:', {
+      console.log('🔍 AuthContext: Extracting roles from JWT token:', {
         tokenClaims: Object.keys(claims),
-        roles: roles
+        rolesRaw: roles,
+        rolesType: typeof roles
       });
       
-      // Handle both array and string formats
+      // 🔧 MULTI-ROLE FIX: Handle single role string, array, or comma-separated string
       if (Array.isArray(roles)) {
-        return roles;
-      } else if (typeof roles === 'string') {
+        return roles.filter(role => role && role.length > 0);
+      } else if (typeof roles === 'string' && roles.length > 0) {
+        // Handle comma-separated roles in single string (some JWT implementations)
         return roles.split(',').map(r => r.trim()).filter(r => r.length > 0);
       }
       
@@ -155,13 +157,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // Validate the new token
             const user = await authService.validateToken();
             const permissions = getPermissionsFromToken(refreshResponse.token);
-            const roles = getRolesFromToken(refreshResponse.token); // 🔧 ADD: Extract roles
+            const roles = getRolesFromToken(refreshResponse.token); // 🔧 Extract multiple roles
             
             setState(prev => ({
               ...prev,
               user,
               permissions,
-              roles, // 🔧 ADD: Set roles
+              roles, // 🔧 Set multiple roles
               isAuthenticated: true,
               isLoading: false,
               error: null,
@@ -174,7 +176,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               ...prev,
               user: null,
               permissions: [],
-              roles: [], // 🔧 ADD: Clear roles
+              roles: [], // 🔧 Clear roles
               isAuthenticated: false,
               isLoading: false,
               error: null,
@@ -193,13 +195,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('🔍 AuthContext: Token valid, validating with backend...');
       const user = await authService.validateToken();
       const permissions = getPermissionsFromToken(token);
-      const roles = getRolesFromToken(token); // 🔧 ADD: Extract roles
+      const roles = getRolesFromToken(token); // 🔧 Extract multiple roles
       
       setState(prev => ({
         ...prev,
         user,
         permissions,
-        roles, // 🔧 ADD: Set roles
+        roles, // 🔧 Set multiple roles
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -207,7 +209,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       console.log('✅ AuthContext: Authentication initialization successful', {
         user: user?.email,
-        permissions,
+        permissions: permissions.slice(0, 10), // Show first 10
         roles
       });
       
@@ -218,7 +220,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         ...prev,
         user: null,
         permissions: [],
-        roles: [], // 🔧 ADD: Clear roles
+        roles: [], // 🔧 Clear roles
         isAuthenticated: false,
         isLoading: false,
         error: null,
@@ -239,13 +241,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       // Get permissions and roles from token
       const permissions = getPermissionsFromToken(authResponse.accessToken);
-      const roles = getRolesFromToken(authResponse.accessToken); // 🔧 ADD: Extract roles
+      const roles = getRolesFromToken(authResponse.accessToken); // 🔧 Extract multiple roles
       
       setState(prev => ({
         ...prev,
         user: authResponse.user,
         permissions,
-        roles, // 🔧 ADD: Set roles
+        roles, // 🔧 Set multiple roles
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -278,13 +280,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       // Get permissions and roles from token
       const permissions = getPermissionsFromToken(authResponse.accessToken);
-      const roles = getRolesFromToken(authResponse.accessToken); // 🔧 ADD: Extract roles
+      const roles = getRolesFromToken(authResponse.accessToken); // 🔧 Extract multiple roles
       
       setState(prev => ({
         ...prev,
         user: authResponse.user,
         permissions,
-        roles, // 🔧 ADD: Set roles
+        roles, // 🔧 Set multiple roles
         isAuthenticated: true,
         isLoading: false,
         error: null,
@@ -310,7 +312,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setState({
         user: null,
         permissions: [],
-        roles: [], // 🔧 ADD: Clear roles
+        roles: [], // 🔧 Clear multiple roles
         isAuthenticated: false,
         isLoading: false,
         error: null,

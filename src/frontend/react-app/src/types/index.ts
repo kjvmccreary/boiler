@@ -1,5 +1,5 @@
 // API Response Types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data: T;
   message?: string;
   success: boolean;
@@ -45,7 +45,20 @@ export interface Tenant {
   updatedAt: string;
 }
 
-// Updated User type to match .NET 9 backend
+// User preferences interface
+export interface UserPreferences {
+  theme?: 'light' | 'dark';
+  language?: string;
+  timeZone?: string;
+  notifications?: {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+  };
+  [key: string]: unknown;
+}
+
+// 🔧 .NET 9 MULTI-ROLE FIX: Enhanced User type for multiple roles
 export interface User {
   id: string;
   email: string;
@@ -58,31 +71,47 @@ export interface User {
   lastLoginAt?: string;
   emailConfirmed: boolean;
   isActive: boolean;
-  roles: string[];          // .NET 9 FIX: Changed from Role[] to string[]
+  roles: string | string[];     // 🔧 Handle both single role from JWT and multiple roles from API
   tenantId: string;
   createdAt: string;
   updatedAt: string;
-  preferences?: any;
+  preferences?: UserPreferences;
 }
 
-// RBAC Types
-export interface Role {
-  id: string;
-  name: string;
-  description?: string;
-  isSystemRole: boolean;
-  isDefault: boolean;
-  tenantId: string;
-  permissions: Permission[];
-  createdAt: string;
-  updatedAt: string;
-}
-
+// Permission interface
 export interface Permission {
   id: string;
   name: string;
   category: string;
   description?: string;
+}
+
+// 🔧 UNIFIED ROLE TYPE: Use consistent ID type (number) to match backend
+export interface Role {
+  id: number;
+  name: string;
+  description?: string;
+  isSystemRole: boolean;
+  isDefault: boolean;
+  tenantId?: number;
+  permissions: Permission[];
+  createdAt: string;
+  updatedAt: string;
+  userCount?: number;
+}
+
+// 🔧 SIMPLIFIED: Use Role for both internal and API responses
+export type RoleDto = Role;
+
+// 🔧 NEW: Separate interface for RBAC role assignments
+export interface UserRoleAssignment {
+  userId: string;
+  roleId: number;
+  roleName: string;
+  tenantId: number;
+  assignedAt: string;
+  isActive: boolean;
+  role: Role;
 }
 
 export interface CreateRoleRequest {
@@ -99,7 +128,7 @@ export interface UpdateRoleRequest {
 
 export interface AssignRoleRequest {
   userId: string;
-  roleId: string;
+  roleId: number;
 }
 
 // UI Types
@@ -120,3 +149,33 @@ export interface NavItem {
   permission?: string;
   children?: NavItem[];
 }
+
+// Pagination interface
+export interface PagedResultDto<T> {
+  items: T[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+// API Response types
+export interface ApiResponseDto<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+  errors?: string[];
+}
+
+// Role API response types
+export type RolesListResponse = ApiResponseDto<PagedResultDto<RoleDto>>;
+export type RoleResponse = ApiResponseDto<RoleDto>;
+
+// Pagination request interface
+export interface PaginationParams {
+  page?: number;
+  pageSize?: number;
+  searchTerm?: string;
+}
+
+// Add the missing types that useRoles hook expects:

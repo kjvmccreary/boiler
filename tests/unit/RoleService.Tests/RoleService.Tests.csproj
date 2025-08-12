@@ -26,6 +26,11 @@
     <ProjectReference Include="..\..\..\src\shared\Contracts\Contracts.csproj" />
   </ItemGroup>
 
+  <!-- 🔧 .NET 9 FIX: Use framework reference for ASP.NET Core types -->
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
   <!-- Force specific EntityFrameworkCore versions to resolve conflicts -->
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.7" />

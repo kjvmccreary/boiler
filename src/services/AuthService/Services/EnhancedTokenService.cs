@@ -5,7 +5,9 @@ using System.Text;
 using Common.Configuration;
 using Contracts.Services;
 using DTOs.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Common.Data;
 
 namespace AuthService.Services;
 
@@ -14,14 +16,17 @@ public class EnhancedTokenService : ITokenService
     private readonly JwtSettings _jwtSettings;
     private readonly IPermissionService _permissionService;
     private readonly ILogger<EnhancedTokenService> _logger;
+    private readonly ApplicationDbContext _context; // 🔧 ADD: Need database access for UserRoles
 
     public EnhancedTokenService(
         JwtSettings jwtSettings, 
         IPermissionService permissionService,
+        ApplicationDbContext context, // 🔧 ADD: Inject database context
         ILogger<EnhancedTokenService> logger)
     {
         _jwtSettings = jwtSettings;
         _permissionService = permissionService;
+        _context = context; // 🔧 ADD: Initialize context
         _logger = logger;
     }
 
@@ -44,16 +49,56 @@ public class EnhancedTokenService : ITokenService
                 ClaimValueTypes.Integer64)
         };
 
-        // NEW: Include user roles from TenantUsers relationship
-        if (user.TenantUsers != null && user.TenantUsers.Any())
+        // 🔧 MULTI-ROLE FIX: Use UserRoles table instead of TenantUsers
+        try
         {
-            foreach (var tenantUser in user.TenantUsers.Where(tu => tu.IsActive))
+            var userRoles = await _context.UserRoles
+                .Where(ur => ur.UserId == user.Id && ur.TenantId == tenant.Id && ur.IsActive)
+                .Include(ur => ur.Role)
+                .ToListAsync();
+
+            _logger.LogInformation("🔍 JWT: Found {RoleCount} active roles for user {UserId} in tenant {TenantId}", 
+                userRoles.Count, user.Id, tenant.Id);
+
+            // Add multiple role claims to JWT
+            foreach (var userRole in userRoles)
             {
-                claims.Add(new Claim(ClaimTypes.Role, tenantUser.Role));
+                if (userRole.Role != null && userRole.Role.IsActive)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, userRole.Role.Name));
+                    _logger.LogInformation("🔍 JWT: Added role claim '{RoleName}' for user {UserId}", 
+                        userRole.Role.Name, user.Id);
+                }
+            }
+
+            // 🔧 FALLBACK: If no UserRoles found, use TenantUsers (legacy support)
+            if (!userRoles.Any() && user.TenantUsers != null && user.TenantUsers.Any())
+            {
+                _logger.LogWarning("🔍 JWT: No UserRoles found for user {UserId}, falling back to TenantUsers", user.Id);
+                
+                foreach (var tenantUser in user.TenantUsers.Where(tu => tu.IsActive && tu.TenantId == tenant.Id))
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, tenantUser.Role));
+                    _logger.LogInformation("🔍 JWT: Added legacy role claim '{RoleName}' from TenantUsers for user {UserId}", 
+                        tenantUser.Role, user.Id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "🔍 JWT: Failed to load roles for user {UserId}, using TenantUsers fallback", user.Id);
+            
+            // Emergency fallback to TenantUsers
+            if (user.TenantUsers != null && user.TenantUsers.Any())
+            {
+                foreach (var tenantUser in user.TenantUsers.Where(tu => tu.IsActive))
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, tenantUser.Role));
+                }
             }
         }
 
-        // NEW: Include user permissions in JWT claims for better performance
+        // Include user permissions in JWT claims for better performance
         try
         {
             var userPermissions = await _permissionService.GetUserPermissionsAsync(user.Id);
@@ -62,11 +107,12 @@ public class EnhancedTokenService : ITokenService
                 claims.Add(new Claim("permission", permission));
             }
             
-            _logger.LogDebug("Added {PermissionCount} permissions to JWT for user {UserId}", userPermissions.Count(), user.Id);
+            _logger.LogDebug("🔍 JWT: Added {PermissionCount} permissions to JWT for user {UserId}", 
+                userPermissions.Count(), user.Id);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to load permissions for user {UserId} during token generation", user.Id);
+            _logger.LogWarning(ex, "🔍 JWT: Failed to load permissions for user {UserId} during token generation", user.Id);
             // Continue without permissions - they can be loaded dynamically if needed
         }
 
@@ -81,10 +127,15 @@ public class EnhancedTokenService : ITokenService
             signingCredentials: credentials
         );
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        var generatedToken = new JwtSecurityTokenHandler().WriteToken(token);
+        
+        _logger.LogInformation("🔍 JWT: Generated token for user {UserId} with {RoleCount} roles and {PermissionCount} permissions", 
+            user.Id, claims.Count(c => c.Type == ClaimTypes.Role), claims.Count(c => c.Type == "permission"));
+
+        return generatedToken;
     }
 
-    // Keep existing methods unchanged
+    // Keep existing methods unchanged...
     public string GenerateRefreshToken()
     {
         var randomNumber = new byte[64];

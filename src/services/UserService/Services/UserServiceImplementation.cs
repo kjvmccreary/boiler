@@ -16,17 +16,24 @@ public class UserServiceImplementation : Contracts.User.IUserService
     private readonly ITenantProvider _tenantProvider;
     private readonly IMapper _mapper;
     private readonly ILogger<UserServiceImplementation> _logger;
+    // 🔧 .NET 9 FIX: Add dependencies for role/permission functionality
+    private readonly IRoleService _roleService;
+    private readonly IPermissionService _permissionService;
 
     public UserServiceImplementation(
         IUserRepository userRepository,
         ITenantProvider tenantProvider,
         IMapper mapper,
-        ILogger<UserServiceImplementation> logger)
+        ILogger<UserServiceImplementation> logger,
+        IRoleService roleService,
+        IPermissionService permissionService)
     {
         _userRepository = userRepository;
         _tenantProvider = tenantProvider;
         _mapper = mapper;
         _logger = logger;
+        _roleService = roleService;
+        _permissionService = permissionService;
     }
 
     public async Task<ApiResponseDto<UserDto>> GetUserByIdAsync(int userId, CancellationToken cancellationToken = default)
@@ -141,7 +148,7 @@ public class UserServiceImplementation : Contracts.User.IUserService
         }
     }
 
-    public async Task<ApiResponseDto<UserDto>> CreateUserAsync(UserCreateDto request, CancellationToken cancellationToken = default)
+    public async Task<ApiResponseDto<UserDto>> CreateUserAsync(CreateUserDto request, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -396,4 +403,138 @@ public class UserServiceImplementation : Contracts.User.IUserService
     }
 
     #endregion
+
+    // 🔧 .NET 9 FIX: Add missing role-related methods
+    public async Task<ApiResponseDto<List<string>>> GetUserRolesAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return ApiResponseDto<List<string>>.ErrorResult("Tenant context not found");
+            }
+
+            var userRoles = await _roleService.GetUserRolesAsync(userId, cancellationToken);
+            var roleNames = userRoles.Select(r => r.Name).ToList();
+
+            return ApiResponseDto<List<string>>.SuccessResult(roleNames, "User roles retrieved successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting roles for user {UserId}", userId);
+            return ApiResponseDto<List<string>>.ErrorResult("An error occurred while retrieving user roles");
+        }
+    }
+
+    public async Task<ApiResponseDto<bool>> AssignRoleToUserAsync(int userId, int roleId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return ApiResponseDto<bool>.ErrorResult("Tenant context not found");
+            }
+
+            // Verify user exists in current tenant
+            var userExists = await _userRepository.Query()
+                .AnyAsync(u => u.Id == userId && u.TenantId == currentTenantId.Value && u.IsActive, cancellationToken);
+
+            if (!userExists)
+            {
+                return ApiResponseDto<bool>.ErrorResult("User not found");
+            }
+
+            await _roleService.AssignRoleToUserAsync(userId, roleId, cancellationToken);
+            return ApiResponseDto<bool>.SuccessResult(true, "Role assigned to user successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error assigning role {RoleId} to user {UserId}", roleId, userId);
+            return ApiResponseDto<bool>.ErrorResult("An error occurred while assigning the role");
+        }
+    }
+
+    public async Task<ApiResponseDto<bool>> RemoveRoleFromUserAsync(int userId, int roleId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return ApiResponseDto<bool>.ErrorResult("Tenant context not found");
+            }
+
+            // Verify user exists in current tenant
+            var userExists = await _userRepository.Query()
+                .AnyAsync(u => u.Id == userId && u.TenantId == currentTenantId.Value && u.IsActive, cancellationToken);
+
+            if (!userExists)
+            {
+                return ApiResponseDto<bool>.ErrorResult("User not found");
+            }
+
+            await _roleService.RemoveRoleFromUserAsync(userId, roleId, cancellationToken);
+            return ApiResponseDto<bool>.SuccessResult(true, "Role removed from user successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing role {RoleId} from user {UserId}", roleId, userId);
+            return ApiResponseDto<bool>.ErrorResult("An error occurred while removing the role");
+        }
+    }
+
+    public async Task<ApiResponseDto<List<string>>> GetUserPermissionsAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return ApiResponseDto<List<string>>.ErrorResult("Tenant context not found");
+            }
+
+            var permissions = await _permissionService.GetUserPermissionsForTenantAsync(userId, currentTenantId.Value, cancellationToken);
+            return ApiResponseDto<List<string>>.SuccessResult(permissions.ToList(), "User permissions retrieved successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting permissions for user {UserId}", userId);
+            return ApiResponseDto<List<string>>.ErrorResult("An error occurred while retrieving user permissions");
+        }
+    }
+
+    public async Task<ApiResponseDto<bool>> UpdateUserStatusAsync(int userId, bool isActive, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!currentTenantId.HasValue)
+            {
+                return ApiResponseDto<bool>.ErrorResult("Tenant context not found");
+            }
+
+            var user = await _userRepository.Query()
+                .Where(u => u.Id == userId && u.TenantId == currentTenantId.Value)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (user == null)
+            {
+                return ApiResponseDto<bool>.ErrorResult("User not found");
+            }
+
+            user.IsActive = isActive;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            await _userRepository.UpdateAsync(user, cancellationToken);
+
+            return ApiResponseDto<bool>.SuccessResult(true, $"User status updated to {(isActive ? "active" : "inactive")} successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating status for user {UserId}", userId);
+            return ApiResponseDto<bool>.ErrorResult("An error occurred while updating user status");
+        }
+    }
 }

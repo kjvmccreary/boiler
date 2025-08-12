@@ -1,6 +1,6 @@
 using Common.Data;
 using DTOs.Entities;
-using BCrypt.Net; // Keep this using statement
+using Microsoft.EntityFrameworkCore;
 
 namespace UserService.IntegrationTests.TestUtilities;
 
@@ -8,297 +8,297 @@ public static class TestDataSeeder
 {
     public static async Task SeedTestDataAsync(ApplicationDbContext dbContext)
     {
-        // Clear existing data first (ENHANCED with RBAC entities)
-        dbContext.UserRoles.RemoveRange(dbContext.UserRoles);
-        dbContext.RolePermissions.RemoveRange(dbContext.RolePermissions);
-        dbContext.RefreshTokens.RemoveRange(dbContext.RefreshTokens);
-        dbContext.TenantUsers.RemoveRange(dbContext.TenantUsers);
-        dbContext.Users.RemoveRange(dbContext.Users);
-        dbContext.Roles.RemoveRange(dbContext.Roles);
-        dbContext.Permissions.RemoveRange(dbContext.Permissions);
-        dbContext.Tenants.RemoveRange(dbContext.Tenants);
-        await dbContext.SaveChangesAsync();
-
-        // Create Test Tenants
-        var tenant1 = new Tenant
+        // ✅ CHECK IF ALREADY SEEDED
+        if (await dbContext.Tenants.AnyAsync())
         {
-            Id = 1,
-            Name = "Test Tenant 1",
-            Domain = "tenant1.test.com",
-            SubscriptionPlan = "Premium", // Add required property
-            Settings = "{\"theme\":\"blue\"}", // Add required property
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            return; // Already seeded
+        }
+        
+        // Create all test data with PREDICTABLE IDs
+        await CreateTenantsAsync(dbContext);
+        await CreatePermissionsAsync(dbContext);
+        await CreateRolesAsync(dbContext);
+        await CreateRolePermissionsAsync(dbContext);
+        await CreateUsersAsync(dbContext);
+        await CreateUserRoleAssignmentsAsync(dbContext);
+        await CreateLegacyTenantUsersAsync(dbContext);
+    }
+
+    private static async Task CreateTenantsAsync(ApplicationDbContext dbContext)
+    {
+        var tenants = new[]
+        {
+            new Tenant { Name = "Test Tenant 1", Domain = "tenant1.test.com", SubscriptionPlan = "Premium", Settings = "{\"theme\":\"blue\"}", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            new Tenant { Name = "Test Tenant 2", Domain = "tenant2.test.com", SubscriptionPlan = "Basic", Settings = "{\"theme\":\"green\"}", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }
         };
 
-        var tenant2 = new Tenant
-        {
-            Id = 2,
-            Name = "Test Tenant 2", 
-            Domain = "tenant2.test.com",
-            SubscriptionPlan = "Basic", // Add required property
-            Settings = "{\"theme\":\"green\"}", // Add required property
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        dbContext.Tenants.AddRange(tenant1, tenant2);
+        dbContext.Tenants.AddRange(tenants);
         await dbContext.SaveChangesAsync();
+    }
 
-        // ENHANCED: Create Test Permissions
-        var permissions = new List<Permission>
+    private static async Task CreatePermissionsAsync(ApplicationDbContext dbContext)
+    {
+        var permissions = new[]
         {
             // Users permissions
-            new() { Id = 1, Name = "users.view", Category = "Users", Description = "View users", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            new() { Id = 2, Name = "users.edit", Category = "Users", Description = "Edit users", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            new() { Id = 3, Name = "users.create", Category = "Users", Description = "Create users", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            new() { Id = 4, Name = "users.delete", Category = "Users", Description = "Delete users", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            
+            new Permission { Name = "users.view", Category = "Users", Description = "View users", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            new Permission { Name = "users.edit", Category = "Users", Description = "Edit users", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            new Permission { Name = "users.create", Category = "Users", Description = "Create users", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            new Permission { Name = "users.delete", Category = "Users", Description = "Delete users", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            new Permission { Name = "users.manage", Category = "Users", Description = "Manage users", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            new Permission { Name = "users.manage_roles", Category = "Users", Description = "Manage user roles", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
             // Roles permissions
-            new() { Id = 5, Name = "roles.view", Category = "Roles", Description = "View roles", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            new() { Id = 6, Name = "roles.create", Category = "Roles", Description = "Create roles", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            new() { Id = 7, Name = "roles.edit", Category = "Roles", Description = "Edit roles", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            new() { Id = 8, Name = "roles.delete", Category = "Roles", Description = "Delete roles", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            
-            // Reports permissions
-            new() { Id = 9, Name = "reports.view", Category = "Reports", Description = "View reports", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            new() { Id = 10, Name = "reports.create", Category = "Reports", Description = "Create reports", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }
+            new Permission { Name = "roles.view", Category = "Roles", Description = "View roles", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            new Permission { Name = "roles.create", Category = "Roles", Description = "Create roles", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            new Permission { Name = "roles.edit", Category = "Roles", Description = "Edit roles", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            new Permission { Name = "roles.delete", Category = "Roles", Description = "Delete roles", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            new Permission { Name = "roles.manage_permissions", Category = "Roles", Description = "Manage role permissions", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            // Tenants permissions
+            new Permission { Name = "tenants.view", Category = "Tenants", Description = "View tenants", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            new Permission { Name = "tenants.edit", Category = "Tenants", Description = "Edit tenants", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
         };
 
         dbContext.Permissions.AddRange(permissions);
         await dbContext.SaveChangesAsync();
+    }
 
-        // ENHANCED: Create Test Roles
-        var roles = new List<Role>
+    private static async Task CreateRolesAsync(ApplicationDbContext dbContext)
+    {
+        var tenant1 = await dbContext.Tenants.FirstAsync(t => t.Name == "Test Tenant 1");
+        var tenant2 = await dbContext.Tenants.FirstAsync(t => t.Name == "Test Tenant 2");
+
+        var roles = new[]
         {
-            // System roles (no tenant)
-            new() 
-            { 
-                Id = 1, 
-                TenantId = null, 
-                Name = "SuperAdmin", 
-                Description = "System super administrator", 
-                IsSystemRole = true, 
-                IsDefault = false, 
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-            
+            // System roles
+            new Role { TenantId = null, Name = "SuperAdmin", Description = "System super admin", IsSystemRole = true, IsDefault = false, IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
             // Tenant 1 roles
-            new() 
-            { 
-                Id = 2, 
-                TenantId = 1, 
-                Name = "Admin", 
-                Description = "Tenant administrator", 
-                IsSystemRole = false, 
-                IsDefault = false, 
+            new Role { TenantId = tenant1.Id, Name = "Admin", Description = "Tenant admin", IsSystemRole = false, IsDefault = false, IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            new Role { TenantId = tenant1.Id, Name = "User", Description = "Regular user", IsSystemRole = false, IsDefault = true, IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            new Role { TenantId = tenant1.Id, Name = "Manager", Description = "Department manager", IsSystemRole = false, IsDefault = false, IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            // Tenant 2 roles  
+            new Role { TenantId = tenant2.Id, Name = "Admin", Description = "Tenant 2 admin", IsSystemRole = false, IsDefault = false, IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+            new Role { TenantId = tenant2.Id, Name = "User", Description = "Tenant 2 user", IsSystemRole = false, IsDefault = true, IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
+        };
+
+        dbContext.Roles.AddRange(roles);
+        await dbContext.SaveChangesAsync();
+    }
+
+    private static async Task CreateRolePermissionsAsync(ApplicationDbContext dbContext)
+    {
+        var tenant1 = await dbContext.Tenants.FirstAsync(t => t.Name == "Test Tenant 1");
+        var permissions = await dbContext.Permissions.ToListAsync();
+        var roles = await dbContext.Roles.ToListAsync();
+
+        var rolePermissions = new List<RolePermission>();
+
+        // SuperAdmin gets ALL permissions
+        var superAdminRole = roles.First(r => r.Name == "SuperAdmin");
+        foreach (var permission in permissions)
+        {
+            rolePermissions.Add(new RolePermission
+            {
+                RoleId = superAdminRole.Id,
+                PermissionId = permission.Id,
+                GrantedAt = DateTime.UtcNow,
+                GrantedBy = "System"
+            });
+        }
+
+        // Tenant 1 Admin gets most permissions (but NOT all - to test authorization)
+        var tenant1AdminRole = roles.First(r => r.Name == "Admin" && r.TenantId == tenant1.Id);
+        var adminPermissions = permissions.Where(p => 
+            p.Category == "Users" || 
+            p.Category == "Roles" || 
+            p.Category == "Tenants").ToList();
+
+        foreach (var permission in adminPermissions)
+        {
+            rolePermissions.Add(new RolePermission
+            {
+                RoleId = tenant1AdminRole.Id,
+                PermissionId = permission.Id,
+                GrantedAt = DateTime.UtcNow,
+                GrantedBy = "System"
+            });
+        }
+
+        // ✅ FIX: Tenant 1 User gets VERY LIMITED permissions (NO users.view to match test expectations)
+        var tenant1UserRole = roles.First(r => r.Name == "User" && r.TenantId == tenant1.Id);
+        var userPermissions = permissions.Where(p => 
+            p.Name == "roles.view").ToList(); // Only roles.view, NOT users.view
+
+        foreach (var permission in userPermissions)
+        {
+            rolePermissions.Add(new RolePermission
+            {
+                RoleId = tenant1UserRole.Id,
+                PermissionId = permission.Id,
+                GrantedAt = DateTime.UtcNow,
+                GrantedBy = "System"
+            });
+        }
+
+        // Tenant 1 Manager gets intermediate permissions
+        var tenant1ManagerRole = roles.First(r => r.Name == "Manager" && r.TenantId == tenant1.Id);
+        var managerPermissions = permissions.Where(p => 
+            p.Name == "users.view" || 
+            p.Name == "users.edit" ||
+            p.Name == "roles.view").ToList();
+
+        foreach (var permission in managerPermissions)
+        {
+            rolePermissions.Add(new RolePermission
+            {
+                RoleId = tenant1ManagerRole.Id,
+                PermissionId = permission.Id,
+                GrantedAt = DateTime.UtcNow,
+                GrantedBy = "System"
+            });
+        }
+
+        // Tenant 2 Admin gets admin permissions
+        var tenant2AdminRole = roles.First(r => r.Name == "Admin" && r.TenantId != tenant1.Id);
+        foreach (var permission in adminPermissions)
+        {
+            rolePermissions.Add(new RolePermission
+            {
+                RoleId = tenant2AdminRole.Id,
+                PermissionId = permission.Id,
+                GrantedAt = DateTime.UtcNow,
+                GrantedBy = "System"
+            });
+        }
+
+        dbContext.RolePermissions.AddRange(rolePermissions);
+        await dbContext.SaveChangesAsync();
+    }
+
+    private static async Task CreateUsersAsync(ApplicationDbContext dbContext)
+    {
+        var tenant1 = await dbContext.Tenants.FirstAsync(t => t.Name == "Test Tenant 1");
+        var tenant2 = await dbContext.Tenants.FirstAsync(t => t.Name == "Test Tenant 2");
+
+        var users = new[]
+        {
+            // Tenant 1 users
+            new User
+            {
+                TenantId = tenant1.Id,
+                Email = "admin@tenant1.com",
+                FirstName = "Admin",
+                LastName = "User1",
+                PasswordHash = "hashed_password",
+                EmailConfirmed = true,
+                IsActive = true,
+                LastLoginAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new User
+            {
+                TenantId = tenant1.Id,
+                Email = "user@tenant1.com",
+                FirstName = "Regular",
+                LastName = "User1",
+                PasswordHash = "hashed_password",
+                EmailConfirmed = true,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
-            new() 
-            { 
-                Id = 3, 
-                TenantId = 1, 
-                Name = "User", 
-                Description = "Standard user", 
-                IsSystemRole = false, 
-                IsDefault = true, 
+            new User
+            {
+                TenantId = tenant1.Id,
+                Email = "manager@tenant1.com",
+                FirstName = "Manager",
+                LastName = "User1",
+                PasswordHash = "hashed_password",
+                EmailConfirmed = true,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
-            new() 
-            { 
-                Id = 4, 
-                TenantId = 1, 
-                Name = "Manager", 
-                Description = "Manager role", 
-                IsSystemRole = false, 
-                IsDefault = false, 
+            // Tenant 2 users
+            new User
+            {
+                TenantId = tenant2.Id,
+                Email = "admin@tenant2.com",
+                FirstName = "Admin",
+                LastName = "User2",
+                PasswordHash = "hashed_password",
+                EmailConfirmed = true,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             },
-            
-            // Tenant 2 roles
-            new() 
-            { 
-                Id = 5, 
-                TenantId = 2, 
-                Name = "Admin", 
-                Description = "Tenant 2 administrator", 
-                IsSystemRole = false, 
-                IsDefault = false, 
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            },
-            new() 
-            { 
-                Id = 6, 
-                TenantId = 2, 
-                Name = "User", 
-                Description = "Tenant 2 standard user", 
-                IsSystemRole = false, 
-                IsDefault = true, 
+            new User
+            {
+                TenantId = tenant2.Id,
+                Email = "user@tenant2.com",
+                FirstName = "Regular",
+                LastName = "User2",
+                PasswordHash = "hashed_password",
+                EmailConfirmed = true,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             }
         };
 
-        dbContext.Roles.AddRange(roles);
+        dbContext.Users.AddRange(users);
         await dbContext.SaveChangesAsync();
+    }
 
-        // ENHANCED: Create Role-Permission assignments
-        var rolePermissions = new List<RolePermission>
+    private static async Task CreateUserRoleAssignmentsAsync(ApplicationDbContext dbContext)
+    {
+        var tenant1 = await dbContext.Tenants.FirstAsync(t => t.Name == "Test Tenant 1");
+        var tenant2 = await dbContext.Tenants.FirstAsync(t => t.Name == "Test Tenant 2");
+        var users = await dbContext.Users.ToListAsync();
+        var roles = await dbContext.Roles.ToListAsync();
+
+        var adminUser1 = users.First(u => u.Email == "admin@tenant1.com");
+        var regularUser1 = users.First(u => u.Email == "user@tenant1.com");
+        var managerUser1 = users.First(u => u.Email == "manager@tenant1.com");
+        var adminUser2 = users.First(u => u.Email == "admin@tenant2.com");
+        var regularUser2 = users.First(u => u.Email == "user@tenant2.com");
+
+        var tenant1AdminRole = roles.First(r => r.Name == "Admin" && r.TenantId == tenant1.Id);
+        var tenant1UserRole = roles.First(r => r.Name == "User" && r.TenantId == tenant1.Id);
+        var tenant1ManagerRole = roles.First(r => r.Name == "Manager" && r.TenantId == tenant1.Id);
+        var tenant2AdminRole = roles.First(r => r.Name == "Admin" && r.TenantId == tenant2.Id);
+        var tenant2UserRole = roles.First(r => r.Name == "User" && r.TenantId == tenant2.Id);
+
+        var userRoles = new[]
         {
-            // Admin role (ID: 2) gets comprehensive permissions
-            new() { RoleId = 2, PermissionId = 1, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // users.view
-            new() { RoleId = 2, PermissionId = 2, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // users.edit
-            new() { RoleId = 2, PermissionId = 3, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // users.create
-            new() { RoleId = 2, PermissionId = 4, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // users.delete
-            new() { RoleId = 2, PermissionId = 5, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // roles.view
-            new() { RoleId = 2, PermissionId = 6, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // roles.create
-            new() { RoleId = 2, PermissionId = 7, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // roles.edit
-            new() { RoleId = 2, PermissionId = 8, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // roles.delete
-            new() { RoleId = 2, PermissionId = 9, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // reports.view
-            new() { RoleId = 2, PermissionId = 10, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // reports.create
-            
-            // User role (ID: 3) gets basic permissions
-            new() { RoleId = 3, PermissionId = 1, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // users.view
-            new() { RoleId = 3, PermissionId = 9, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // reports.view
-            
-            // Manager role (ID: 4) gets intermediate permissions
-            new() { RoleId = 4, PermissionId = 1, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // users.view
-            new() { RoleId = 4, PermissionId = 2, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // users.edit
-            new() { RoleId = 4, PermissionId = 5, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // roles.view
-            new() { RoleId = 4, PermissionId = 9, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // reports.view
-            new() { RoleId = 4, PermissionId = 10, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // reports.create
-            
-            // Tenant 2 Admin role (ID: 5) gets comprehensive permissions
-            new() { RoleId = 5, PermissionId = 1, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // users.view
-            new() { RoleId = 5, PermissionId = 2, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // users.edit
-            new() { RoleId = 5, PermissionId = 3, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // users.create
-            new() { RoleId = 5, PermissionId = 5, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // roles.view
-            new() { RoleId = 5, PermissionId = 6, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // roles.create
-            
-            // Tenant 2 User role (ID: 6) gets basic permissions
-            new() { RoleId = 6, PermissionId = 1, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // users.view
-            new() { RoleId = 6, PermissionId = 9, GrantedAt = DateTime.UtcNow, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }  // reports.view
-        };
-
-        dbContext.RolePermissions.AddRange(rolePermissions);
-        await dbContext.SaveChangesAsync();
-
-        // Create Test Users for Tenant 1
-        var adminUser1 = new User
-        {
-            Id = 1,
-            Email = "admin@tenant1.com",
-            FirstName = "Admin",
-            LastName = "User1",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Password123!"),
-            TenantId = 1,
-            IsActive = true,
-            EmailConfirmed = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            LastLoginAt = DateTime.UtcNow
-        };
-
-        var regularUser1 = new User
-        {
-            Id = 2,
-            Email = "user@tenant1.com",
-            FirstName = "Regular", 
-            LastName = "User1",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Password123!"),
-            TenantId = 1,
-            IsActive = true,
-            EmailConfirmed = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        var managerUser1 = new User
-        {
-            Id = 3,
-            Email = "manager@tenant1.com",
-            FirstName = "Manager",
-            LastName = "User1", 
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Password123!"),
-            TenantId = 1,
-            IsActive = true,
-            EmailConfirmed = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        // Create Test Users for Tenant 2
-        var adminUser2 = new User
-        {
-            Id = 4,
-            Email = "admin@tenant2.com",
-            FirstName = "Admin",
-            LastName = "User2",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Password123!"),
-            TenantId = 2,
-            IsActive = true,
-            EmailConfirmed = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        var regularUser2 = new User
-        {
-            Id = 5,
-            Email = "user@tenant2.com",
-            FirstName = "Regular",
-            LastName = "User2",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Password123!"),
-            TenantId = 2,
-            IsActive = true,
-            EmailConfirmed = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        dbContext.Users.AddRange(adminUser1, regularUser1, managerUser1, adminUser2, regularUser2);
-        await dbContext.SaveChangesAsync();
-
-        // ENHANCED: Create User-Role assignments
-        var userRoles = new List<UserRole>
-        {
-            // Tenant 1 assignments
-            new() { UserId = 1, RoleId = 2, TenantId = 1, AssignedAt = DateTime.UtcNow, IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // Admin user gets Admin role
-            new() { UserId = 2, RoleId = 3, TenantId = 1, AssignedAt = DateTime.UtcNow, IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // Regular user gets User role
-            new() { UserId = 3, RoleId = 4, TenantId = 1, AssignedAt = DateTime.UtcNow, IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // Manager user gets Manager role
-            
-            // Tenant 2 assignments
-            new() { UserId = 4, RoleId = 5, TenantId = 2, AssignedAt = DateTime.UtcNow, IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }, // Admin user gets Admin role
-            new() { UserId = 5, RoleId = 6, TenantId = 2, AssignedAt = DateTime.UtcNow, IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }  // Regular user gets User role
+            // ✅ ENSURE: Only assign the intended roles, NO SuperAdmin to regular users
+            new UserRole { UserId = adminUser1.Id, RoleId = tenant1AdminRole.Id, TenantId = tenant1.Id, AssignedAt = DateTime.UtcNow, AssignedBy = "System", IsActive = true },
+            new UserRole { UserId = regularUser1.Id, RoleId = tenant1UserRole.Id, TenantId = tenant1.Id, AssignedAt = DateTime.UtcNow, AssignedBy = "System", IsActive = true },
+            new UserRole { UserId = managerUser1.Id, RoleId = tenant1ManagerRole.Id, TenantId = tenant1.Id, AssignedAt = DateTime.UtcNow, AssignedBy = "System", IsActive = true },
+            new UserRole { UserId = adminUser2.Id, RoleId = tenant2AdminRole.Id, TenantId = tenant2.Id, AssignedAt = DateTime.UtcNow, AssignedBy = "System", IsActive = true },
+            new UserRole { UserId = regularUser2.Id, RoleId = tenant2UserRole.Id, TenantId = tenant2.Id, AssignedAt = DateTime.UtcNow, AssignedBy = "System", IsActive = true }
+            // ✅ IMPORTANT: Do NOT assign SuperAdmin role to any test users
         };
 
         dbContext.UserRoles.AddRange(userRoles);
         await dbContext.SaveChangesAsync();
+    }
 
-        // Create Tenant-User relationships (ENHANCED with new roles)
-        var tenantUsers = new[]
+    private static async Task CreateLegacyTenantUsersAsync(ApplicationDbContext dbContext)
+    {
+        var users = await dbContext.Users.ToListAsync();
+
+        var legacyTenantUsers = users.Select(user => new TenantUser
         {
-            new TenantUser { UserId = 1, TenantId = 1, Role = "Admin", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            new TenantUser { UserId = 2, TenantId = 1, Role = "User", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            new TenantUser { UserId = 3, TenantId = 1, Role = "Manager", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            new TenantUser { UserId = 4, TenantId = 2, Role = "Admin", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-            new TenantUser { UserId = 5, TenantId = 2, Role = "User", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow }
-        };
+            UserId = user.Id,
+            TenantId = user.TenantId!.Value,
+            Role = user.Email.Contains("admin") ? "Admin" : 
+                   user.Email.Contains("manager") ? "Manager" : "User",
+            IsActive = true,
+            JoinedAt = DateTime.UtcNow
+        }).ToArray();
 
-        dbContext.TenantUsers.AddRange(tenantUsers);
+        dbContext.TenantUsers.AddRange(legacyTenantUsers);
         await dbContext.SaveChangesAsync();
     }
 }

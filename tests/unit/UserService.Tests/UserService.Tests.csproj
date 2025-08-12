@@ -15,18 +15,23 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Moq" Version="4.20.69" />
     <PackageReference Include="FluentAssertions" Version="6.12.0" />
+    <PackageReference Include="Moq" Version="4.20.69" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.7" />
+    <PackageReference Include="AutoMapper" Version="12.0.1" />
+    <!-- 🔧 .NET 9 FIX: Add MockQueryable for async LINQ support -->
+    <PackageReference Include="MockQueryable.Moq" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\shared\DTOs\DTOs.csproj" />
+    <ProjectReference Include="..\..\..\src\services\UserService\UserService.csproj" />
     <ProjectReference Include="..\..\..\src\shared\Common\Common.csproj" />
+    <ProjectReference Include="..\..\..\src\shared\DTOs\DTOs.csproj" />
     <ProjectReference Include="..\..\..\src\shared\Contracts\Contracts.csproj" />
   </ItemGroup>
 
-  <!-- 🔧 .NET 9 FIX: Use framework reference instead of package reference -->
+  <!-- ASP.NET Core framework reference -->
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>

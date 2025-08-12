@@ -191,11 +191,19 @@ public class RoleServiceTests : IDisposable
         var result = await _roleService.UpdateRoleAsync(existingRole.Id, newName, newDescription, newPermissions);
 
         // Assert
-        result.Should().NotBeNull();
-        result.Name.Should().Be(newName);
-        result.Description.Should().Be(newDescription);
-        result.Permissions.Should().Contain("users.view");
-        result.Permissions.Should().Contain("roles.view");
+        // 🔧 .NET 9 FIX: UpdateRoleAsync now returns bool, not RoleInfo
+        result.Should().BeTrue();
+
+        // Verify the role was actually updated in the database
+        var updatedRole = await _context.Roles.FindAsync(existingRole.Id);
+        updatedRole.Should().NotBeNull();
+        updatedRole!.Name.Should().Be(newName);
+        updatedRole.Description.Should().Be(newDescription);
+
+        // Verify permissions were updated
+        var permissions = await _roleService.GetRolePermissionsAsync(existingRole.Id);
+        permissions.Should().Contain("users.view");
+        permissions.Should().Contain("roles.view");
 
         VerifyLogging(LogLevel.Information, "Updated role");
     }
@@ -232,7 +240,7 @@ public class RoleServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task UpdateRoleAsync_WithNonExistentRole_ShouldThrowInvalidOperationException()
+    public async Task UpdateRoleAsync_WithNonExistentRole_ShouldReturnFalse()
     {
         // Arrange
         const int tenantId = 1;
@@ -241,12 +249,12 @@ public class RoleServiceTests : IDisposable
         _mockTenantProvider.Setup(x => x.GetCurrentTenantIdAsync())
             .ReturnsAsync(tenantId);
 
-        // Act & Assert
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _roleService.UpdateRoleAsync(roleId, "NewName", "NewDescription", new List<string>()));
+        // Act
+        var result = await _roleService.UpdateRoleAsync(roleId, "NewName", "NewDescription", new List<string>());
 
-        exception.Message.Should().Contain("Role not found");
-        VerifyLogging(LogLevel.Error, "Error updating role");
+        // Assert
+        // 🔧 .NET 9 FIX: Now returns false instead of throwing exception
+        result.Should().BeFalse();
     }
 
     #endregion
@@ -431,7 +439,10 @@ public class RoleServiceTests : IDisposable
         result!.Id.Should().Be(systemRole.Id);
         result.Name.Should().Be("SystemRole");
         result.IsSystemRole.Should().BeTrue();
-        result.TenantId.Should().Be(0); // Mapped from null
+        // 🔧 .NET 9 FIX: Change expectation to null or 0 based on your preference
+        result.TenantId.Should().Be(0); // If using mapping fix above
+        // OR
+        // result.TenantId.Should().BeNull(); // If keeping nullable behavior
     }
 
     [Fact]

@@ -25,13 +25,15 @@ public class AuthServiceImplementationTests : TestBase
     private readonly Mock<ITenantProvider> _mockTenantProvider;
     private readonly JwtSettings _jwtSettings;
 
+    // 🔧 UPDATE: Add missing dependencies in constructor
     public AuthServiceImplementationTests()
     {
         _mockLogger = new Mock<ILogger<AuthServiceImplementation>>();
         _mockPasswordService = new Mock<IPasswordService>();
         _mockTokenService = new Mock<ITokenService>();
         _mockTenantRepository = new Mock<ITenantManagementRepository>();
-        // NEW: Initialize missing mocks
+        
+        // 🔧 .NET 9 FIX: Add missing mocks for Enhanced RBAC
         _mockPermissionService = new Mock<IPermissionService>();
         _mockTenantProvider = new Mock<ITenantProvider>();
         
@@ -44,7 +46,7 @@ public class AuthServiceImplementationTests : TestBase
             RefreshTokenExpiryDays = 7
         };
 
-        // FIXED: Add missing constructor parameters
+        // 🔧 .NET 9 FIX: Updated constructor call with new dependencies
         _authService = new AuthServiceImplementation(
             Context,
             _mockPasswordService.Object,

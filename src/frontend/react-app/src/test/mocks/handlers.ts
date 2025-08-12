@@ -1,38 +1,20 @@
 import { http, HttpResponse } from 'msw'
-import type { Role, User } from '@/types/index.js'
+import type { User } from '@/types/index.js' // Remove Role import
 
 const API_BASE_URL = 'http://localhost:5000/api'
 
-// Mock role data with correct types
-const mockRole: Role = {
-  id: '1',
+// Fix the mock role to use number IDs
+const mockRole = {
+  id: 1, // Change from '1' to 1
   name: 'Admin',
-  description: 'Administrator role with full access',
-  isSystemRole: false,
+  description: 'Administrator role',
+  isSystemRole: true,
   isDefault: false,
-  tenantId: 'tenant-1',
-  permissions: [
-    {
-      id: '1',
-      name: 'users.view',
-      category: 'Users',
-      description: 'View users',
-    },
-    {
-      id: '2',
-      name: 'users.edit',
-      category: 'Users',
-      description: 'Edit users',
-    },
-    {
-      id: '3',
-      name: 'roles.view',
-      category: 'Roles',
-      description: 'View roles',
-    },
-  ],
+  tenantId: 1, // Change from 'tenant-1' to 1
+  permissions: [],
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',
+  userCount: 5
 }
 
 const mockUsers: User[] = [

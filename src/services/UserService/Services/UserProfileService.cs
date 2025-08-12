@@ -36,7 +36,6 @@ public class UserProfileService : IUserProfileService
     {
         try
         {
-            // ✅ FIXED: Apply tenant filtering
             var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!currentTenantId.HasValue)
             {
@@ -67,7 +66,6 @@ public class UserProfileService : IUserProfileService
     {
         try
         {
-            // ✅ FIXED: Apply tenant filtering
             var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!currentTenantId.HasValue)
             {
@@ -100,8 +98,6 @@ public class UserProfileService : IUserProfileService
             user.Language = updateProfileDto.Language;
             user.UpdatedAt = DateTime.UtcNow;
 
-            // Note: IsActive and Roles are not updated here (admin-only fields)
-
             await _userRepository.UpdateAsync(user, cancellationToken);
 
             var userDto = _mapper.Map<UserDto>(user);
@@ -118,7 +114,6 @@ public class UserProfileService : IUserProfileService
     {
         try
         {
-            // ✅ FIXED: Apply tenant filtering
             var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!currentTenantId.HasValue)
             {
@@ -134,7 +129,6 @@ public class UserProfileService : IUserProfileService
                 return ApiResponseDto<bool>.ErrorResult("User not found");
             }
 
-            // Serialize preferences to JSON for database storage
             user.Preferences = System.Text.Json.JsonSerializer.Serialize(preferences);
             user.UpdatedAt = DateTime.UtcNow;
 
@@ -153,7 +147,6 @@ public class UserProfileService : IUserProfileService
     {
         try
         {
-            // ✅ FIXED: Apply tenant filtering
             var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!currentTenantId.HasValue)
             {
@@ -173,7 +166,6 @@ public class UserProfileService : IUserProfileService
             
             if (string.IsNullOrWhiteSpace(user.Preferences))
             {
-                // Return default preferences if none exist
                 preferences = new UserPreferencesDto();
             }
             else
@@ -185,7 +177,6 @@ public class UserProfileService : IUserProfileService
                 }
                 catch (Exception)
                 {
-                    // If deserialization fails, return default preferences
                     preferences = new UserPreferencesDto();
                 }
             }
@@ -205,7 +196,6 @@ public class UserProfileService : IUserProfileService
         try
         {
             // Use permission service to check if user has admin permissions
-            // An admin user has these key administrative permissions
             var adminPermissions = new[]
             {
                 "users.edit",
@@ -215,13 +205,11 @@ public class UserProfileService : IUserProfileService
                 "tenants.edit"
             };
 
-            // Check if user has any of these core admin permissions
             var hasAdminPermissions = await _permissionService.UserHasAnyPermissionAsync(userId, adminPermissions, cancellationToken);
             
             _logger.LogInformation("🔧 ADMIN CHECK: Permission-based admin check for user {UserId}: {IsAdmin} (checked permissions: {Permissions})", 
                 userId, hasAdminPermissions, string.Join(", ", adminPermissions));
             
-            // 🔧 .NET 9 DEBUG: Let's also log what permissions the user actually has
             if (!hasAdminPermissions)
             {
                 var userPermissions = await _permissionService.GetUserPermissionsAsync(userId, cancellationToken);

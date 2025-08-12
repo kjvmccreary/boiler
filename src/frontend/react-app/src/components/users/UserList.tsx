@@ -38,6 +38,7 @@ import { userService } from '@/services/user.service.js';
 import { PERMISSIONS } from '@/utils/api.constants.js';
 import type { User } from '@/types/index.js';
 import toast from 'react-hot-toast';
+import { normalizeRoles } from '@/utils/role.utils.js';
 
 export function UserList() {
   const [users, setUsers] = useState<User[]>([]);
@@ -222,19 +223,21 @@ export function UserList() {
                       <TableCell>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                           {/* 🔧 .NET 9 FIX: Handle string roles from backend */}
-                          {(user.roles || []).slice(0, 2).map((role, index) => (
+                          {normalizeRoles(user.roles).slice(0, 2).map((role: string, index: number) => (
                             <Chip
-                              key={`${role}-${index}`}  // role is a string, not object
-                              label={role}              // role is already a string
+                              key={`${role}-${index}`}
+                              label={role}
                               size="small"
                               color="primary"
                               variant="outlined"
+                              sx={{ mr: 0.5, mb: 0.5 }}
                             />
                           ))}
-                          {(user.roles?.length || 0) > 2 && (
+                          {normalizeRoles(user.roles).length > 2 && (
                             <Chip
-                              label={`+${(user.roles?.length || 0) - 2} more`}
+                              label={`+${normalizeRoles(user.roles).length - 2} more`}
                               size="small"
+                              color="default"
                               variant="outlined"
                             />
                           )}

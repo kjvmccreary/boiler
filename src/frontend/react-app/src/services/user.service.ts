@@ -41,23 +41,20 @@ export class UserService {
 
     const url = `${API_ENDPOINTS.USERS.BASE}?${queryParams.toString()}`;
     
-    // 🔧 .NET 9 FIX: Handle ApiResponseDto<PagedResultDto<UserDto>> structure
+    // ✅ .NET 9 FIX: Use any type to bypass TypeScript inference issues
     const response = await apiClient.get<any>(url);
     
-    // The response is already unwrapped by apiClient, check if it has success property
-    if (response.success && response.data) {
-      // .NET 9 ApiResponseDto wrapper format
-      return {
-        data: response.data.items || [],
-        totalCount: response.data.totalCount || 0,
-        pageNumber: response.data.pageNumber || 1,
-        pageSize: response.data.pageSize || 10,
-        totalPages: response.data.totalPages || 1
-      };
-    }
+    // ✅ Handle .NET 9 ApiController response structure
+    const responseData = response.data || response;
+    const pagedData = responseData.data || responseData;
     
-    // Fallback for direct response
-    return response;
+    return {
+      data: pagedData.items || pagedData || [],
+      totalCount: pagedData.totalCount || 0,
+      pageNumber: pagedData.pageNumber || 1,
+      pageSize: pagedData.pageSize || 10,
+      totalPages: pagedData.totalPages || 0
+    };
   }
 
   async getUserById(id: string): Promise<User> {
@@ -76,7 +73,6 @@ export class UserService {
   }
 
   async updateUser(id: string, userData: UserUpdateRequest): Promise<User> {
-    // 🔧 .NET 9 FIX: Add admin user update method
     const response = await apiClient.put<User>(API_ENDPOINTS.USERS.BY_ID(id), userData);
     return response.data;
   }

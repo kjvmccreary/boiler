@@ -36,21 +36,15 @@ export function RoleEditor() {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  useEffect(() => {
-    if (isEditing && id) {
-      loadRole(id);
-    }
-  }, [id, isEditing]);
-
   const loadRole = async (roleId: string) => {
     try {
       setLoading(true);
-      const roleData = await roleService.getRoleById(roleId);
+      const roleData = await roleService.getRoleById(parseInt(roleId));
       setRole(roleData);
       setFormData({
         name: roleData.name,
         description: roleData.description || '',
-        permissions: roleData.permissions.map(p => p.name),
+        permissions: roleData.permissions.map((p: any) => typeof p === 'string' ? p : p.name),
       });
     } catch (error) {
       console.error('Failed to load role:', error);
@@ -60,6 +54,12 @@ export function RoleEditor() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isEditing && id) {
+      loadRole(id);
+    }
+  }, [id, isEditing]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -94,7 +94,7 @@ export function RoleEditor() {
           description: formData.description.trim() || undefined,
           permissions: formData.permissions,
         };
-        await roleService.updateRole(id, updateData);
+        await roleService.updateRole(parseInt(id), updateData);
         toast.success('Role updated successfully');
       } else {
         const createData: RoleCreateRequest = {

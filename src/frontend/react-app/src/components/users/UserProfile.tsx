@@ -25,19 +25,20 @@ import { userService, type UserUpdateRequest } from '@/services/user.service.js'
 import { CanAccess } from '@/components/authorization/CanAccess.js';
 import { PERMISSIONS } from '@/utils/api.constants.js';
 import { tokenManager } from '@/utils/token.manager.js';
-import { usePermission } from '@/contexts/PermissionContext.js'; // 🔧 ADD: Import permission hook
+import { usePermission } from '@/contexts/PermissionContext.js';
 import type { User } from '@/types/index.js';
 import toast from 'react-hot-toast';
+import { normalizeRoles } from '@/utils/role.utils.js';
 
 export function UserProfile() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const { hasRole, isAdmin } = usePermission(); // 🔧 ADD: Use permission hook with new isAdmin method
+  const { isAdmin, getUserRoles } = usePermission(); // Removed unused hasRole
   
   // 🔧 .NET 9 FIX: Properly determine if this is own profile
   const [isOwnProfile, setIsOwnProfile] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [canEditProfile, setCanEditProfile] = useState(false); // 🔧 ADD: Track edit permission
+  const [canEditProfile, setCanEditProfile] = useState(false);
 
   const [user, setUser] = useState<User | null>(null);
   const [editing, setEditing] = useState(false);
@@ -50,53 +51,7 @@ export function UserProfile() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // 🔧 .NET 9 FIX: Determine if this is own profile and edit permissions
-  useEffect(() => {
-    const token = tokenManager.getToken();
-    if (token) {
-      const userIdFromToken = tokenManager.getUserIdFromToken(token);
-      setCurrentUserId(userIdFromToken);
-      
-      // Check if we're viewing own profile
-      const isOwn = !userId || userId === userIdFromToken;
-      setIsOwnProfile(isOwn);
-      
-      // 🔧 .NET 9 FIX: Use permission-based admin check instead of role-based
-      if (isOwn) {
-        // Only admin users can edit their own profile
-        const userIsAdmin = isAdmin(); // Use the new permission-based admin check
-        setCanEditProfile(userIsAdmin);
-        
-        console.log('🔍 UserProfile: Permission-based admin check for own profile:', {
-          userIdParam: userId,
-          userIdFromToken,
-          isOwnProfile: isOwn,
-          isAdmin: userIsAdmin,
-          canEditProfile: userIsAdmin
-        });
-      } else {
-        // Admins can edit other users' profiles
-        const canEditOthers = isAdmin(); // Use the new permission-based admin check
-        setCanEditProfile(canEditOthers);
-        
-        console.log('🔍 UserProfile: Permission-based admin check for other user profile:', {
-          userIdParam: userId,
-          userIdFromToken,
-          isOwnProfile: isOwn,
-          canEditOthers,
-          canEditProfile: canEditOthers
-        });
-      }
-    }
-  }, [userId, isAdmin]); // 🔧 FIX: Use isAdmin instead of hasRole
-
-  useEffect(() => {
-    console.log('🔍 UserProfile: useEffect triggered', { userId, isOwnProfile, canEditProfile });
-    if (currentUserId !== null) { // Wait for user ID to be determined
-      loadUser();
-    }
-  }, [userId, currentUserId]);
-
+  // Load user data function
   const loadUser = async () => {
     console.log('🔍 UserProfile: loadUser called', { 
       isOwnProfile, 
@@ -144,6 +99,53 @@ export function UserProfile() {
       setLoading(false);
     }
   };
+
+  // 🔧 .NET 9 FIX: Determine if this is own profile and edit permissions
+  useEffect(() => {
+    const token = tokenManager.getToken();
+    if (token) {
+      const userIdFromToken = tokenManager.getUserIdFromToken(token);
+      setCurrentUserId(userIdFromToken);
+      
+      // Check if we're viewing own profile
+      const isOwn = !userId || userId === userIdFromToken;
+      setIsOwnProfile(isOwn);
+      
+      // 🔧 .NET 9 FIX: Use permission-based admin check instead of role-based
+      if (isOwn) {
+        // Admin users can edit their own profile
+        const userIsAdmin = isAdmin();
+        setCanEditProfile(userIsAdmin);
+        
+        console.log('🔍 UserProfile: Permission-based admin check for own profile:', {
+          userIdParam: userId,
+          userIdFromToken,
+          isOwnProfile: isOwn,
+          isAdmin: userIsAdmin,
+          canEditProfile: userIsAdmin
+        });
+      } else {
+        // Admins can edit other users' profiles
+        const canEditOthers = isAdmin();
+        setCanEditProfile(canEditOthers);
+        
+        console.log('🔍 UserProfile: Permission-based admin check for other user profile:', {
+          userIdParam: userId,
+          userIdFromToken,
+          isOwnProfile: isOwn,
+          canEditOthers,
+          canEditProfile: canEditOthers
+        });
+      }
+    }
+  }, [userId, isAdmin]);
+
+  useEffect(() => {
+    console.log('🔍 UserProfile: useEffect triggered', { userId, isOwnProfile, canEditProfile });
+    if (currentUserId !== null) {
+      loadUser();
+    }
+  }, [userId, currentUserId, isOwnProfile, canEditProfile, loadUser]); // Added missing dependencies
 
   const handleRetry = () => {
     console.log('🔍 UserProfile: Retry button clicked');
@@ -193,11 +195,9 @@ export function UserProfile() {
 
       let updatedUser: User;
       if (isOwnProfile) {
-        // 🔧 .NET 9 FIX: Always use profile endpoint for own updates
         console.log('🔍 UserProfile: Using updateCurrentUserProfile for own profile');
         updatedUser = await userService.updateCurrentUserProfile(updateData);
       } else {
-        // 🔧 .NET 9 FIX: Only use admin endpoint for other users
         console.log('🔍 UserProfile: Using updateUser for admin update of user:', userId);
         updatedUser = await userService.updateUser(userId!, updateData);
       }
@@ -208,7 +208,6 @@ export function UserProfile() {
     } catch (error) {
       console.error('Failed to update profile:', error);
       
-      // 🔧 .NET 9 FIX: Show specific error message for non-admin users
       if (error instanceof Error) {
         if (error.message.includes('Only admin users can update their profile')) {
           toast.error('Only admin users can update their profile');
@@ -324,7 +323,6 @@ export function UserProfile() {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                 <Typography variant="h6">Profile Information</Typography>
                 
-                {/* 🔧 .NET 9 FIX: Only show edit button if user can edit */}
                 {canEditProfile && (
                   <Button
                     variant={editing ? "outlined" : "contained"}
@@ -471,7 +469,12 @@ export function UserProfile() {
               <Divider sx={{ my: 2 }} />
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">Roles ({user.roles.length})</Typography>
+                <Typography variant="h6">
+                  Roles ({(() => {
+                    const roles = getUserRoles(); // Use context method for accurate count
+                    return roles.length;
+                  })()})
+                </Typography>
                 {!isOwnProfile && (
                   <CanAccess permission={PERMISSIONS.USERS_MANAGE_ROLES}>
                     <Button
@@ -486,15 +489,43 @@ export function UserProfile() {
               </Box>
 
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {user.roles.map((role, index) => (
-                  <Chip
-                    key={typeof role === 'string' ? `${role}-${index}` : role.id || `role-${index}`}
-                    label={typeof role === 'string' ? role : role.name || role}
-                    size="small"
-                    color={typeof role === 'string' ? 'primary' : (role.isSystemRole ? 'warning' : 'primary')}
-                    variant="outlined"
-                  />
-                ))}
+                {/* 🔧 MULTI-ROLE FIX: Enhanced role display handling */}
+                {(() => {
+                  const userRoles = getUserRoles(); // Get from context for consistency
+                  
+                  // Fallback to user object if context doesn't have roles
+                  const displayRoles = userRoles.length > 0 ? userRoles : normalizeRoles(user.roles);
+                  
+                  console.log('🔍 UserProfile: Displaying roles:', {
+                    userRolesFromContext: userRoles,
+                    userRolesFromProps: user.roles,
+                    finalDisplayRoles: displayRoles
+                  });
+                  
+                  if (displayRoles.length === 0) {
+                    return (
+                      <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                        No roles assigned
+                      </Typography>
+                    );
+                  }
+                  
+                  return displayRoles.map((roleName: string, index: number) => {
+                    // Determine if this is a system role (rough heuristic)
+                    const isSystemRole = ['SuperAdmin', 'SystemAdmin'].includes(roleName);
+                    
+                    return (
+                      <Chip
+                        key={`${roleName}-${index}`}
+                        label={roleName}
+                        size="small"
+                        color={isSystemRole ? 'warning' : 'primary'}
+                        variant="outlined"
+                        sx={{ mb: 0.5 }}
+                      />
+                    );
+                  });
+                })()}
               </Box>
             </CardContent>
           </Card>

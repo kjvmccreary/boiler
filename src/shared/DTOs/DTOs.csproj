@@ -11,4 +11,7 @@
     <PackageReference Include="FluentValidation" Version="11.9.0" />
   </ItemGroup>
 
+  <!-- REMOVED: These explicit Compile items are causing duplicates -->
+  <!-- The .NET SDK automatically includes all .cs files -->
+
 </Project>

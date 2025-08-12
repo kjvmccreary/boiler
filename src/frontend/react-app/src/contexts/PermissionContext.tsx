@@ -8,9 +8,10 @@ interface PermissionContextType {
   hasAllPermissions: (permissions: string[]) => boolean;
   hasRole: (roleName: string) => boolean;
   hasAnyRole: (roleNames: string[]) => boolean;
+  hasAllRoles: (roleNames: string[]) => boolean;  // 🔧 NEW: Multi-role support
   getUserRoles: () => string[];
   getUserPermissions: () => string[];
-  isAdmin: () => boolean; // 🔧 ADD: New admin check method
+  isAdmin: () => boolean;
 }
 
 const PermissionContext = createContext<PermissionContextType | undefined>(undefined);
@@ -20,9 +21,9 @@ interface PermissionProviderProps {
 }
 
 export function PermissionProvider({ children }: PermissionProviderProps) {
-  const { user, permissions: authPermissions } = useAuth();
+  const { user } = useAuth();
 
-  // 🔧 .NET 9 FIX: Get permissions from JWT token
+  // 🔧 .NET 9 MULTI-ROLE: Enhanced permission extraction from JWT token
   const getPermissionsFromToken = (): string[] => {
     try {
       const token = tokenManager.getToken();
@@ -53,7 +54,7 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     }
   };
 
-  // 🔧 .NET 9 FIX: Get roles from JWT token
+  // 🔧 .NET 9 MULTI-ROLE: Enhanced role extraction from JWT token
   const getRolesFromToken = (): string[] => {
     try {
       const token = tokenManager.getToken();
@@ -71,13 +72,15 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
       
       console.log('🔍 PermissionContext: Extracting roles from JWT token:', {
         tokenClaims: Object.keys(claims),
-        roles: roles
+        rolesRaw: roles,
+        rolesType: typeof roles
       });
       
-      // Handle both array and string formats
+      // 🔧 MULTI-ROLE FIX: Handle single role string, array, or comma-separated string
       if (Array.isArray(roles)) {
-        return roles;
-      } else if (typeof roles === 'string') {
+        return roles.filter(role => role && role.length > 0);
+      } else if (typeof roles === 'string' && roles.length > 0) {
+        // Handle comma-separated roles in single string (some JWT implementations)
         return roles.split(',').map(r => r.trim()).filter(r => r.length > 0);
       }
       
@@ -112,31 +115,62 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     return permissions.every(permission => hasPermission(permission));
   };
 
+  // 🔧 MULTI-ROLE: Enhanced single role checking
   const hasRole = (roleName: string): boolean => {
     if (!user) return false;
     
-    // 🔧 .NET 9 FIX: Get roles from JWT token (most reliable)
-    const tokenRoles = getRolesFromToken();
-    const hasRole = tokenRoles.includes(roleName);
+    const userRoles = getUserRoles();
+    const hasRole = userRoles.includes(roleName);
     
-    console.log('🔍 PermissionContext: Role check:', {
+    console.log('🔍 PermissionContext: Single role check:', {
       roleName,
       hasRole,
-      tokenRoles
+      userRoles,
+      checkType: 'single-role'
     });
     
     return hasRole;
   };
 
+  // 🔧 MULTI-ROLE: Check if user has ANY of the specified roles
   const hasAnyRole = (roleNames: string[]): boolean => {
-    return roleNames.some(roleName => hasRole(roleName));
+    if (!user || roleNames.length === 0) return false;
+    
+    const userRoles = getUserRoles();
+    const hasAnyRole = roleNames.some(roleName => userRoles.includes(roleName));
+    
+    console.log('🔍 PermissionContext: Multi-role ANY check:', {
+      requestedRoles: roleNames,
+      userRoles,
+      hasAnyRole,
+      checkType: 'any-role'
+    });
+    
+    return hasAnyRole;
   };
 
-  // 🔧 .NET 9 FIX: New admin check based on permissions instead of roles
+  // 🔧 MULTI-ROLE: Check if user has ALL of the specified roles
+  const hasAllRoles = (roleNames: string[]): boolean => {
+    if (!user || roleNames.length === 0) return false;
+    
+    const userRoles = getUserRoles();
+    const hasAllRoles = roleNames.every(roleName => userRoles.includes(roleName));
+    
+    console.log('🔍 PermissionContext: Multi-role ALL check:', {
+      requestedRoles: roleNames,
+      userRoles,
+      hasAllRoles,
+      checkType: 'all-roles'
+    });
+    
+    return hasAllRoles;
+  };
+
+  // 🔧 MULTI-ROLE: Enhanced admin check based on permissions AND roles
   const isAdmin = (): boolean => {
     if (!user) return false;
     
-    // An admin user has these key administrative permissions
+    // Method 1: Check for admin permissions (most reliable)
     const adminPermissions = [
       'users.edit',
       'users.create', 
@@ -145,36 +179,55 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
       'tenants.edit'
     ];
     
-    // If user has any of these core admin permissions, they're an admin
     const hasAdminPermissions = hasAnyPermission(adminPermissions);
     
-    console.log('🔍 PermissionContext: Admin check via permissions:', {
+    // Method 2: Check for admin roles (fallback)
+    const adminRoles = ['Admin', 'SuperAdmin', 'TenantAdmin'];
+    const hasAdminRole = hasAnyRole(adminRoles);
+    
+    const isAdminUser = hasAdminPermissions || hasAdminRole;
+    
+    console.log('🔍 PermissionContext: Multi-role admin check:', {
       hasAdminPermissions,
-      userPermissions: getPermissionsFromToken().slice(0, 10) // Show first 10
+      hasAdminRole,
+      isAdminUser,
+      userRoles: getUserRoles(),
+      userPermissions: getPermissionsFromToken().slice(0, 5)
     });
     
-    return hasAdminPermissions;
+    return isAdminUser;
   };
 
+  // 🔧 MULTI-ROLE: Enhanced role retrieval supporting multiple roles
   const getUserRoles = (): string[] => {
-    // 🔧 .NET 9 FIX: Get roles from token first, then fallback to user object
+    // Priority 1: JWT token roles (most reliable for current session)
     const tokenRoles = getRolesFromToken();
     if (tokenRoles.length > 0) {
       return tokenRoles;
     }
     
-    // Fallback to user object with safe access
+    // Priority 2: User object roles (from API responses)
     if (!user?.roles) return [];
     
-    // Handle string array format
-    if (typeof user.roles[0] === 'string') {
-      return user.roles as string[];
+    // 🔧 MULTI-ROLE: Handle various role formats from API
+    if (typeof user.roles === 'string') {
+      return [user.roles]; // Single role
+    } else if (Array.isArray(user.roles)) {
+      // Handle string array (most common for RBAC)
+      if (user.roles.length === 0) return [];
+      
+      if (typeof user.roles[0] === 'string') {
+        return user.roles as string[];
+      }
+      
+      // Handle Role object array (when populated from UserRoleAssignment)
+      return user.roles.map((role: any) => {
+        if (typeof role === 'string') return role;
+        return role?.name || role?.roleName || '';
+      }).filter(role => role.length > 0);
     }
     
-    // Handle object array format
-    return user.roles.map((role: any) => 
-      typeof role === 'string' ? role : role?.name || ''
-    ).filter(role => role.length > 0);
+    return [];
   };
 
   const getUserPermissions = (): string[] => {
@@ -188,9 +241,10 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     hasAllPermissions,
     hasRole,
     hasAnyRole,
+    hasAllRoles,        // 🔧 NEW: Multi-role support
     getUserRoles,
     getUserPermissions,
-    isAdmin, // 🔧 ADD: New admin check method
+    isAdmin,
   };
 
   return (

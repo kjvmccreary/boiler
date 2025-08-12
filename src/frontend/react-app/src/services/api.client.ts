@@ -1,7 +1,11 @@
 import axios from 'axios';
-import type { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 import type { ApiResponse } from '@/types/index.js';
 import { tokenManager } from '@/utils/token.manager.js';
+
+interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
+  _retry?: boolean;
+}
 
 class ApiClient {
   private client: AxiosInstance;
@@ -102,8 +106,8 @@ class ApiClient {
         });
         return response;
       },
-      async (error) => {
-        const originalRequest = error.config;
+      async (error: AxiosError) => {
+        const originalRequest = error.config as ExtendedAxiosRequestConfig;
         
         // 🚨 NUCLEAR DEBUG: Log EVERYTHING about the error
         console.error(`🚨 API ERROR - COMPLETE DEBUG:`, {
@@ -171,7 +175,7 @@ class ApiClient {
   }
 
   // Generic request method
-  async request<T = any>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async request<T = unknown>(config: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
       console.log('🔍 API CLIENT REQUEST METHOD CALLED:', {
         method: config.method,
@@ -181,39 +185,41 @@ class ApiClient {
       
       const response = await this.client.request<ApiResponse<T>>(config);
       return response.data;
-    } catch (error: any) {
+    } catch (error) {
       console.error('🚨 API CLIENT REQUEST METHOD ERROR:', error);
-      throw this.handleError(error);
+      throw this.handleError(error as AxiosError);
     }
   }
 
   // HTTP methods
-  async get<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     console.log('🔍 API CLIENT GET METHOD CALLED:', { url, config });
     return this.request<T>({ ...config, method: 'GET', url });
   }
 
-  async post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     console.log('🔍 API CLIENT POST METHOD CALLED:', { url, data, config });
     return this.request<T>({ ...config, method: 'POST', url, data });
   }
 
-  async put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     return this.request<T>({ ...config, method: 'PUT', url, data });
   }
 
-  async patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     return this.request<T>({ ...config, method: 'PATCH', url, data });
   }
 
-  async delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     return this.request<T>({ ...config, method: 'DELETE', url });
   }
 
-  private handleError(error: any): Error {
+  private handleError(error: AxiosError): Error {
     if (error.response) {
       // Server responded with error status
-      const message = error.response.data?.message || error.response.statusText || 'An error occurred';
+      const message = (error.response.data as { message?: string })?.message || 
+                     error.response.statusText || 
+                     'An error occurred';
       return new Error(message);
     } else if (error.request) {
       // Request was made but no response received

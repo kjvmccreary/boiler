@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Common.Data;
 using UserService.IntegrationTests.TestUtilities;
 using UserService.IntegrationTests.Fixtures;
@@ -14,6 +15,7 @@ public abstract class TestBase : IClassFixture<WebApplicationTestFixture>, IAsyn
     protected readonly HttpClient _client;
     protected readonly IServiceScope _scope;
     protected readonly ApplicationDbContext _dbContext;
+    protected readonly ILogger<TestBase> _logger;
 
     protected TestBase(WebApplicationTestFixture fixture)
     {
@@ -21,82 +23,160 @@ public abstract class TestBase : IClassFixture<WebApplicationTestFixture>, IAsyn
         _client = _fixture.CreateClient();
         _scope = _fixture.Services.CreateScope();
         _dbContext = _scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        _logger = _scope.ServiceProvider.GetRequiredService<ILogger<TestBase>>();
     }
 
     public virtual async Task InitializeAsync()
     {
-        // Ensure database is created and clean
-        await _dbContext.Database.EnsureCreatedAsync();
-        await CleanDatabase();
-        
-        // Seed test data
-        await TestDataSeeder.SeedTestDataAsync(_dbContext);
+        try 
+        {
+            // ✅ FIX: Initialize database directly since each fixture has unique database
+            await InitializeDatabaseAsync();
+            
+            // Verify data was seeded correctly with detailed logging
+            await LogTestDataStatus();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to initialize test database");
+            throw;
+        }
     }
 
     public virtual async Task DisposeAsync()
     {
-        await CleanDatabase();
         _scope.Dispose();
+        await Task.CompletedTask;
     }
 
-    protected virtual async Task CleanDatabase()
+    private async Task InitializeDatabaseAsync()
     {
-        // Clean in reverse order of dependencies (ENHANCED with RBAC entities)
-        _dbContext.UserRoles.RemoveRange(_dbContext.UserRoles);
-        _dbContext.RolePermissions.RemoveRange(_dbContext.RolePermissions);
-        _dbContext.RefreshTokens.RemoveRange(_dbContext.RefreshTokens);
-        _dbContext.TenantUsers.RemoveRange(_dbContext.TenantUsers);
-        _dbContext.Users.RemoveRange(_dbContext.Users);
-        _dbContext.Roles.RemoveRange(_dbContext.Roles);
-        _dbContext.Permissions.RemoveRange(_dbContext.Permissions);
-        _dbContext.Tenants.RemoveRange(_dbContext.Tenants);
+        // Ensure database is created and seeded
+        await _dbContext.Database.EnsureCreatedAsync();
         
-        await _dbContext.SaveChangesAsync();
+        // Only seed if not already seeded (check if any tenants exist)
+        if (!await _dbContext.Tenants.AnyAsync())
+        {
+            await TestDataSeeder.SeedTestDataAsync(_dbContext);
+        }
     }
 
-    #region Enhanced Authentication Helpers
-
-    protected async Task<string> GetAuthTokenAsync(string email = "admin@tenant1.com", string role = "Admin")
+    private async Task LogTestDataStatus()
     {
-        return await AuthenticationHelper.GetValidTokenAsync(_client, _dbContext, email, role);
+        try
+        {
+            var tenantCount = await _dbContext.Tenants.CountAsync();
+            var userCount = await _dbContext.Users.CountAsync();
+            var roleCount = await _dbContext.Roles.CountAsync();
+            var permissionCount = await _dbContext.Permissions.CountAsync();
+            var userRoleCount = await _dbContext.UserRoles.CountAsync();
+            var totalRolePermissionCount = await _dbContext.RolePermissions.CountAsync();
+
+            _logger.LogInformation("📊 Test Data Status: Tenants={TenantCount}, Users={UserCount}, Roles={RoleCount}, Permissions={PermissionCount}, UserRoles={UserRoleCount}, RolePermissions={RolePermissionCount}",
+                tenantCount, userCount, roleCount, permissionCount, userRoleCount, totalRolePermissionCount);
+
+            // ✅ CHECK ACTUAL TENANT AND USER IDs
+            var tenant1 = await _dbContext.Tenants.FirstOrDefaultAsync(t => t.Name == "Test Tenant 1");
+            var tenant2 = await _dbContext.Tenants.FirstOrDefaultAsync(t => t.Name == "Test Tenant 2");
+            var adminUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == "admin@tenant1.com");
+            var regularUser = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == "user@tenant1.com");
+
+            _logger.LogInformation("🏢 Tenant IDs: Tenant1={Tenant1Id}, Tenant2={Tenant2Id}", 
+                tenant1?.Id ?? 0, tenant2?.Id ?? 0);
+            _logger.LogInformation("👤 User IDs: Admin={AdminId}, User={UserId}", 
+                adminUser?.Id ?? 0, regularUser?.Id ?? 0);
+
+            // Log detailed admin user analysis for debugging
+            if (adminUser != null)
+            {
+                var adminUserWithRoles = await _dbContext.Users
+                    .Include(u => u.PrimaryTenant)
+                    .Include(u => u.UserRoles.Where(ur => ur.IsActive))
+                        .ThenInclude(ur => ur.Role)
+                            .ThenInclude(r => r.RolePermissions)
+                                .ThenInclude(rp => rp.Permission)
+                    .FirstOrDefaultAsync(u => u.Id == adminUser.Id);
+
+                var adminPermissions = adminUserWithRoles?.UserRoles
+                    .Where(ur => ur.IsActive)
+                    .SelectMany(ur => ur.Role.RolePermissions)
+                    .Select(rp => rp.Permission.Name)
+                    .Distinct()
+                    .ToList() ?? new List<string>();
+                
+                _logger.LogInformation("🔑 Admin user analysis:");
+                _logger.LogInformation("   - Email: {Email}", adminUserWithRoles?.Email);
+                _logger.LogInformation("   - TenantId: {TenantId}", adminUserWithRoles?.TenantId);
+                _logger.LogInformation("   - PrimaryTenant: {PrimaryTenant}", adminUserWithRoles?.PrimaryTenant?.Name ?? "NULL");
+                _logger.LogInformation("   - UserRoles count: {UserRoleCount}", adminUserWithRoles?.UserRoles.Count ?? 0);
+                _logger.LogInformation("   - Active UserRoles: {ActiveUserRoleCount}", adminUserWithRoles?.UserRoles.Count(ur => ur.IsActive) ?? 0);
+                _logger.LogInformation("   - Permissions: {PermissionCount} [{Permissions}]", adminPermissions.Count, string.Join(", ", adminPermissions));
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not log test data status");
+        }
+    }
+
+    #region Enhanced Authentication Helpers - RBAC Version
+
+    protected async Task<string> GetAuthTokenAsync(string email = "admin@tenant1.com", string? overrideRole = null)
+    {
+        // ✅ RBAC FIX: Use actual role from RBAC unless specifically overridden for test scenarios
+        return await AuthenticationHelper.GetValidTokenAsync(_client, _dbContext, email, overrideRole);
     }
 
     protected async Task<string> GetUserTokenAsync(string email = "user@tenant1.com")
     {
-        return await AuthenticationHelper.GetValidTokenAsync(_client, _dbContext, email, "User");
+        // ✅ RBAC FIX: Don't override role - use actual RBAC role
+        return await AuthenticationHelper.GetValidTokenAsync(_client, _dbContext, email);
     }
 
     protected async Task<string> GetManagerTokenAsync(string email = "manager@tenant1.com")
     {
-        return await AuthenticationHelper.GetValidTokenAsync(_client, _dbContext, email, "Manager");
+        // ✅ RBAC FIX: Don't override role - use actual RBAC role
+        return await AuthenticationHelper.GetValidTokenAsync(_client, _dbContext, email);
     }
 
     protected async Task<string> GetTenant2AdminTokenAsync(string email = "admin@tenant2.com")
     {
-        return await AuthenticationHelper.GetValidTokenAsync(_client, _dbContext, email, "Admin");
+        // ✅ RBAC FIX: Don't override role - use actual RBAC role
+        return await AuthenticationHelper.GetValidTokenAsync(_client, _dbContext, email);
     }
 
     protected async Task<string> GetTenant2UserTokenAsync(string email = "user@tenant2.com")
     {
-        return await AuthenticationHelper.GetValidTokenAsync(_client, _dbContext, email, "User");
+        // ✅ RBAC FIX: Don't override role - use actual RBAC role
+        return await AuthenticationHelper.GetValidTokenAsync(_client, _dbContext, email);
     }
 
     #endregion
 
-    #region RBAC Test Data Helpers
+    #region Test Data Verification Helpers - RBAC Version
 
-    protected int GetTenant1AdminRoleId() => 2;
-    protected int GetTenant1UserRoleId() => 3;
-    protected int GetTenant1ManagerRoleId() => 4;
-    protected int GetTenant2AdminRoleId() => 5;
-    protected int GetTenant2UserRoleId() => 6;
-    protected int GetSystemSuperAdminRoleId() => 1;
+    protected async Task<List<string>> GetUserPermissionsAsync(string email)
+    {
+        // ✅ RBAC FIX: Use same pattern as AuthenticationHelper to avoid EF Include filtering issues
+        var user = await _dbContext.Users
+            .FirstOrDefaultAsync(u => u.Email == email);
 
-    protected int GetTenant1AdminUserId() => 1;
-    protected int GetTenant1UserUserId() => 2;
-    protected int GetTenant1ManagerUserId() => 3;
-    protected int GetTenant2AdminUserId() => 4;
-    protected int GetTenant2UserUserId() => 5;
+        if (user == null) return new List<string>();
+
+        // ✅ RBAC FIX: Load UserRoles separately to avoid Include filtering
+        var userRoles = await _dbContext.UserRoles
+            .Include(ur => ur.Role)
+                .ThenInclude(r => r.RolePermissions)
+                    .ThenInclude(rp => rp.Permission)
+            .Where(ur => ur.UserId == user.Id && ur.IsActive)
+            .ToListAsync();
+
+        return userRoles
+            .SelectMany(ur => ur.Role.RolePermissions)
+            .Select(rp => rp.Permission.Name)
+            .Distinct()
+            .ToList();
+    }
 
     #endregion
 }

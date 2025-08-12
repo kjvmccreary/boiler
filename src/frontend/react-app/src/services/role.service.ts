@@ -1,103 +1,138 @@
-import { apiClient } from './api.client.js';
-import { API_ENDPOINTS } from '@/utils/api.constants.js';
+import { apiClient } from './api.client';
 import type { 
-  Role,
-  User
-} from '@/types/index.js';
-
-export interface RoleCreateRequest {
-  name: string;
-  description?: string;
-  permissions: string[];
-}
-
-export interface RoleUpdateRequest {
-  name: string;
-  description?: string;
-  permissions: string[];
-}
-
-export interface AssignRoleRequest {
-  userId: number;
-  roleId: number;
-}
-
-export interface RoleListParams {
-  page?: number;
-  pageSize?: number;
-  searchTerm?: string;
-}
+  RolesListResponse, 
+  RoleResponse, 
+  RoleDto, 
+  ApiResponseDto,
+  PaginationParams,
+  CreateRoleRequest,
+  UpdateRoleRequest
+} from '../types';
 
 export class RoleService {
-  async getRoles(params: RoleListParams = {}): Promise<Role[]> {
-    const queryParams = new URLSearchParams();
+  async getRoles(params: PaginationParams = {}): Promise<{
+    roles: RoleDto[];
+    pagination: {
+      totalCount: number;
+      pageNumber: number;
+      pageSize: number;
+      totalPages: number;
+    };
+  }> {
+    const {
+      page = 1,
+      pageSize = 10,
+      searchTerm
+    } = params;
+
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      pageSize: pageSize.toString(),
+      ...(searchTerm && { searchTerm })
+    });
+
+    const response = await apiClient.get<RolesListResponse>(
+      `/api/roles?${queryParams}`
+    );
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to fetch roles');
+    }
+
+    const pagedData = response.data.data;
+
+    return {
+      roles: pagedData.items,
+      pagination: {
+        totalCount: pagedData.totalCount,
+        pageNumber: pagedData.pageNumber,
+        pageSize: pagedData.pageSize,
+        totalPages: pagedData.totalPages
+      }
+    };
+  }
+
+  async getRoleById(id: number): Promise<RoleDto> {
+    const response = await apiClient.get<RoleResponse>(`/api/roles/${id}`);
     
-    if (params.page) queryParams.append('page', params.page.toString());
-    if (params.pageSize) queryParams.append('pageSize', params.pageSize.toString());
-    if (params.searchTerm) queryParams.append('searchTerm', params.searchTerm);
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to fetch role');
+    }
 
-    const url = `${API_ENDPOINTS.ROLES.BASE}?${queryParams.toString()}`;
-    const response = await apiClient.get<Role[]>(url);
-    return response.data;
+    return response.data.data;
   }
 
-  async getRoleById(id: string): Promise<Role> {
-    const response = await apiClient.get<Role>(API_ENDPOINTS.ROLES.BY_ID(id));
-    return response.data;
+  async createRole(roleData: CreateRoleRequest): Promise<RoleDto> {
+    const response = await apiClient.post<RoleResponse>('/api/roles', roleData);
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to create role');
+    }
+
+    return response.data.data;
   }
 
-  async createRole(roleData: RoleCreateRequest): Promise<Role> {
-    const response = await apiClient.post<Role>(API_ENDPOINTS.ROLES.BASE, roleData);
-    return response.data;
+  async updateRole(id: number, roleData: UpdateRoleRequest): Promise<RoleDto> {
+    const response = await apiClient.put<RoleResponse>(`/api/roles/${id}`, roleData);
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to update role');
+    }
+
+    return response.data.data;
   }
 
-  async updateRole(id: string, roleData: RoleUpdateRequest): Promise<Role> {
-    const response = await apiClient.put<Role>(API_ENDPOINTS.ROLES.BY_ID(id), roleData);
-    return response.data;
+  async deleteRole(id: number): Promise<void> {
+    const response = await apiClient.delete<ApiResponseDto<boolean>>(`/api/roles/${id}`);
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to delete role');
+    }
   }
 
-  async deleteRole(id: string): Promise<boolean> {
-    const response = await apiClient.delete<boolean>(API_ENDPOINTS.ROLES.BY_ID(id));
-    return response.data;
+  async getUserRoles(userId: string): Promise<RoleDto[]> {
+    const response = await apiClient.get<ApiResponseDto<RoleDto[]>>(`/api/users/${userId}/roles`);
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to fetch user roles');
+    }
+
+    return response.data.data;
   }
 
-  async getRolePermissions(id: string): Promise<string[]> {
-    const response = await apiClient.get<string[]>(API_ENDPOINTS.ROLES.PERMISSIONS(id));
-    return response.data;
+  async getRoleUsers(roleId: number): Promise<any[]> {
+    const response = await apiClient.get<ApiResponseDto<any[]>>(`/api/roles/${roleId}/users`);
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to fetch role users');
+    }
+
+    return response.data.data;
   }
 
-  async updateRolePermissions(id: string, permissions: string[]): Promise<boolean> {
-    const response = await apiClient.put<boolean>(
-      API_ENDPOINTS.ROLES.PERMISSIONS(id), 
-      { permissions }
-    );
-    return response.data;
+  async assignRoleToUser(userId: number, roleId: number): Promise<void> {
+    const response = await apiClient.post<ApiResponseDto<boolean>>('/api/roles/assign', {
+      userId: userId.toString(),
+      roleId
+    });
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to assign role');
+    }
   }
 
-  async assignRoleToUser(userId: number, roleId: number): Promise<boolean> {
-    const response = await apiClient.post<boolean>(
-      `${API_ENDPOINTS.ROLES.BASE}/assign`, 
-      { userId, roleId }
-    );
-    return response.data;
-  }
-
-  async removeRoleFromUser(roleId: string, userId: string): Promise<boolean> {
-    const response = await apiClient.delete<boolean>(
-      API_ENDPOINTS.ROLES.ASSIGN_USER(roleId, userId)
-    );
-    return response.data;
-  }
-
-  async getUserRoles(userId: string): Promise<Role[]> {
-    const response = await apiClient.get<Role[]>(`${API_ENDPOINTS.ROLES.BASE}/users/${userId}`);
-    return response.data;
-  }
-
-  async getRoleUsers(roleId: string): Promise<User[]> {
-    const response = await apiClient.get<User[]>(`${API_ENDPOINTS.ROLES.BY_ID(roleId)}/users`);
-    return response.data;
+  async removeRoleFromUser(roleId: number, userId: string): Promise<void> {
+    const response = await apiClient.delete<ApiResponseDto<boolean>>(`/api/roles/${roleId}/users/${userId}`);
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to remove role');
+    }
   }
 }
 
+// Export instance for easy use
 export const roleService = new RoleService();
+
+// Export types
+export type RoleCreateRequest = CreateRoleRequest;
+export type RoleUpdateRequest = UpdateRoleRequest;

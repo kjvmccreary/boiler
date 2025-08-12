@@ -4,8 +4,11 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Common.Configuration;
+using Common.Data; // 🔧 .NET 9 FIX: Add missing using directive
 using Contracts.Services;
 using DTOs.Entities;
+using Microsoft.EntityFrameworkCore; // 🔧 .NET 9 FIX: Add missing using directive
+using Microsoft.Extensions.DependencyInjection; // 🔧 .NET 9 FIX: Add missing using directive
 using Microsoft.IdentityModel.Tokens;
 
 namespace AuthService.Services;
@@ -90,8 +93,9 @@ public class TokenService : ITokenService
             // But let's see if we can get roles from UserRoles table
             try
             {
-                var serviceProvider = (IServiceProvider)_serviceProvider;
-                var context = serviceProvider.GetService<ApplicationDbContext>();
+                // 🔧 .NET 9 FIX: Proper service resolution
+                using var scope = _serviceProvider.CreateScope();
+                var context = scope.ServiceProvider.GetService<ApplicationDbContext>();
                 if (context != null)
                 {
                     var userRoles = await context.UserRoles
@@ -125,7 +129,9 @@ public class TokenService : ITokenService
         {
             _logger.LogInformation("🔍 TOKEN DEBUG: Attempting to resolve IPermissionService for user {UserId}", user.Id);
             
-            var permissionService = _serviceProvider.GetService<IPermissionService>();
+            // 🔧 .NET 9 FIX: Proper service resolution with scope
+            using var scope = _serviceProvider.CreateScope();
+            var permissionService = scope.ServiceProvider.GetService<IPermissionService>();
             if (permissionService != null)
             {
                 _logger.LogInformation("🔍 TOKEN DEBUG: IPermissionService resolved successfully, getting permissions for user {UserId} in tenant {TenantId}", user.Id, tenant.Id);
@@ -212,7 +218,7 @@ public class TokenService : ITokenService
         }
     }
 
-    public Task<RefreshToken> CreateRefreshTokenAsync(User user)
+    public async Task<RefreshToken> CreateRefreshTokenAsync(User user)
     {
         var refreshToken = new RefreshToken
         {
@@ -222,6 +228,6 @@ public class TokenService : ITokenService
             IsRevoked = false
         };
 
-        return Task.FromResult(refreshToken);
+        return await Task.FromResult(refreshToken); // 🔧 .NET 9 FIX: Add await to remove warning
     }
 }

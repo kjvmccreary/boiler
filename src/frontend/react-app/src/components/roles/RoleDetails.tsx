@@ -45,26 +45,26 @@ export function RoleDetails() {
   const [loading, setLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      loadRoleDetails();
-    }
-  }, [id]);
-
   const loadRoleDetails = async () => {
     if (!id) return;
 
     try {
       setLoading(true);
       
-      // Load role details
-      const roleData = await roleService.getRoleById(id);
+      // Convert string ID to number for API call
+      const roleId = parseInt(id, 10);
+      if (isNaN(roleId)) {
+        throw new Error('Invalid role ID');
+      }
+      
+      // Load role details - USE roleId not id
+      const roleData = await roleService.getRoleById(roleId);
       setRole(roleData);
 
-      // Load users with this role
+      // Load users with this role - USE roleId not id
       setUsersLoading(true);
       try {
-        const usersData = await roleService.getRoleUsers(id);
+        const usersData = await roleService.getRoleUsers(roleId);
         setUsers(usersData);
       } catch (error) {
         console.error('Failed to load role users:', error);
@@ -81,6 +81,12 @@ export function RoleDetails() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (id) {
+      loadRoleDetails();
+    }
+  }, [id]);
 
   const handleEdit = () => {
     if (role && !role.isSystemRole) {

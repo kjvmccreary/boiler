@@ -67,7 +67,7 @@ public class UserMappingProfile : Profile
             .ForMember(dest => dest.Preferences, opt => opt.Ignore()); // Handled separately
 
         // UserCreateDto → User (New user creation)
-        CreateMap<UserCreateDto, User>()
+        CreateMap<CreateUserDto, User>()
             .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.ToLower())) // Normalize email
             .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
             .ForMember(dest => dest.EmailConfirmed, opt => opt.MapFrom(src => false))

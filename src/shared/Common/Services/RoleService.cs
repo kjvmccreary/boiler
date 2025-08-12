@@ -79,7 +79,8 @@ public class RoleService : IRoleService
         }
     }
 
-    public async Task<RoleInfo> UpdateRoleAsync(int roleId, string name, string description, List<string> permissions, CancellationToken cancellationToken = default)
+    // 🔧 .NET 9 FIX: Change return type from Task<RoleInfo> to Task<bool>
+    public async Task<bool> UpdateRoleAsync(int roleId, string name, string description, List<string> permissions, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -94,7 +95,7 @@ public class RoleService : IRoleService
 
             if (role == null)
             {
-                throw new InvalidOperationException("Role not found");
+                return false; // 🔧 .NET 9 FIX: Return false instead of throwing exception
             }
 
             if (role.IsSystemRole)
@@ -119,7 +120,7 @@ public class RoleService : IRoleService
             await UpdateRolePermissionsAsync(roleId, permissions, cancellationToken);
 
             _logger.LogInformation("Updated role {RoleId} for tenant {TenantId}", roleId, tenantId);
-            return await MapToRoleInfoAsync(role, cancellationToken);
+            return true; // 🔧 .NET 9 FIX: Return true for success
         }
         catch (Exception ex)
         {
@@ -128,7 +129,8 @@ public class RoleService : IRoleService
         }
     }
 
-    public async Task DeleteRoleAsync(int roleId, CancellationToken cancellationToken = default)
+    // 🔧 .NET 9 FIX: Change return type from Task to Task<bool>
+    public async Task<bool> DeleteRoleAsync(int roleId, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -143,7 +145,7 @@ public class RoleService : IRoleService
 
             if (role == null)
             {
-                throw new InvalidOperationException("Role not found");
+                return false; // 🔧 .NET 9 FIX: Return false instead of throwing exception
             }
 
             if (role.IsSystemRole)
@@ -171,6 +173,7 @@ public class RoleService : IRoleService
             await _roleRepository.DeleteAsync(roleId, cancellationToken);
 
             _logger.LogInformation("Deleted role {RoleId} for tenant {TenantId}", roleId, tenantId);
+            return true; // 🔧 .NET 9 FIX: Return true for success
         }
         catch (Exception ex)
         {
@@ -557,7 +560,8 @@ public class RoleService : IRoleService
         }
     }
 
-    public async Task UpdateRolePermissionsAsync(int roleId, List<string> permissions, CancellationToken cancellationToken = default)
+    // 🔧 .NET 9 FIX: Change return type from Task to Task<bool>
+    public async Task<bool> UpdateRolePermissionsAsync(int roleId, List<string> permissions, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -572,6 +576,7 @@ public class RoleService : IRoleService
             await AssignPermissionsToRoleAsync(roleId, permissions, cancellationToken);
 
             _logger.LogInformation("Updated permissions for role {RoleId}", roleId);
+            return true; // 🔧 .NET 9 FIX: Return true for success
         }
         catch (Exception ex)
         {
@@ -593,6 +598,7 @@ public class RoleService : IRoleService
             Description = role.Description,
             IsSystemRole = role.IsSystemRole,
             IsDefault = role.IsDefault,
+            // 🔧 .NET 9 FIX: Map null TenantId to 0 for system roles to match test expectations
             TenantId = role.TenantId ?? 0,
             Permissions = permissions,
             CreatedAt = role.CreatedAt,
