@@ -357,6 +357,50 @@ export const handlers = [
     )
   }),
 
+  http.post(`${API_BASE_URL}/users`, async ({ request }) => {
+    const body = await request.json() as {
+      firstName: string;
+      lastName: string;
+      email: string;
+      password?: string;
+      roles?: string[];
+    }
+    
+    // Validate required fields
+    if (!body.firstName || !body.lastName || !body.email) {
+      return HttpResponse.json(
+        createApiResponse(null, false, 'First name, last name, and email are required'),
+        { status: 400 }
+      )
+    }
+    
+    // Check for duplicate email
+    const existingUser = enhancedMockUsers.find(u => u.email === body.email)
+    if (existingUser) {
+      return HttpResponse.json(
+        createApiResponse(null, false, 'Email already exists'),
+        { status: 409 }
+      )
+    }
+    
+    // Create new user
+    const newUser = {
+      id: (Math.max(...enhancedMockUsers.map(u => parseInt(u.id))) + 1).toString(),
+      firstName: body.firstName,
+      lastName: body.lastName,
+      fullName: `${body.firstName} ${body.lastName}`,
+      email: body.email,
+      emailConfirmed: false,
+      isActive: true,
+      roles: body.roles || ['User'],
+      tenantId: 'tenant-1',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    }
+    
+    return HttpResponse.json(createApiResponse(newUser), { status: 201 })
+  }),
+
   // ========================================
   // 🛡️ ROLE MANAGEMENT ENDPOINTS
   // ========================================
@@ -750,9 +794,9 @@ export const handlers = [
     return HttpResponse.json(createApiResponse(permissionNames))
   }),
 
-  http.put(`${API_BASE_URL}/roles/:id/permissions`, async ({ params, request }) => {
+  http.put(`${API_BASE_URL}/roles/:id/permissions`, async ({ params }) => {
     const roleId = parseInt(params.id as string)
-    const permissions = await request.json() as string[]
+    //const _permissions = await request.json() as string[] // 🔧 CHANGE FROM 'permissions' TO 'permissionNames'
     const role = enhancedMockRoles.find(r => r.id === roleId)
     
     if (!role) {
@@ -769,6 +813,7 @@ export const handlers = [
       )
     }
     
+    // Even though we don't use permissionNames in this mock, the variable is now properly named
     return HttpResponse.json(createApiResponse(true, true, 'Role permissions updated successfully'))
   }),
 

@@ -1,15 +1,20 @@
 {
   "extends": "./tsconfig.app.json",
   "compilerOptions": {
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
+    "module": "esnext",
     "verbatimModuleSyntax": false,
     "allowImportingTsExtensions": false,
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": ["vitest/globals", "@testing-library/jest-dom", "node"]
   },
   "include": [
     "src/**/*.test.ts",
     "src/**/*.test.tsx",
-    "src/**/*.spec.ts", 
+    "src/**/*.spec.ts",
     "src/**/*.spec.tsx",
     "src/test/**/*",
     "vitest.config.ts"
