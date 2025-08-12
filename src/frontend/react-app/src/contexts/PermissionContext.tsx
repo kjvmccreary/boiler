@@ -8,20 +8,45 @@ interface PermissionContextType {
   hasAllPermissions: (permissions: string[]) => boolean;
   hasRole: (roleName: string) => boolean;
   hasAnyRole: (roleNames: string[]) => boolean;
-  hasAllRoles: (roleNames: string[]) => boolean;  // 🔧 NEW: Multi-role support
+  hasAllRoles: (roleNames: string[]) => boolean;
   getUserRoles: () => string[];
   getUserPermissions: () => string[];
   isAdmin: () => boolean;
+  // 🔧 NEW: Additional methods for comprehensive testing
+  isSuperAdmin: () => boolean;
+  isSystemAdmin: () => boolean;
+  isTenantAdmin: () => boolean;
+  canManageUsers: () => boolean;
+  canManageRoles: () => boolean;
+  getEffectivePermissions: () => string[];
+  getRoleHierarchy: () => number;
 }
 
 const PermissionContext = createContext<PermissionContextType | undefined>(undefined);
 
 interface PermissionProviderProps {
   children: ReactNode;
+  // 🔧 NEW: Mock context for testing
+  mockContext?: PermissionContextType;
+  // 🔧 NEW: Test mode flag
+  testMode?: boolean;
 }
 
-export function PermissionProvider({ children }: PermissionProviderProps) {
+export function PermissionProvider({ 
+  children, 
+  mockContext, 
+  testMode = false 
+}: PermissionProviderProps) {
   const { user } = useAuth();
+
+  // 🔧 NEW: If in test mode with mock context, use it
+  if (testMode && mockContext) {
+    return (
+      <PermissionContext.Provider value={mockContext}>
+        {children}
+      </PermissionContext.Provider>
+    );
+  }
 
   // 🔧 .NET 9 MULTI-ROLE: Enhanced permission extraction from JWT token
   const getPermissionsFromToken = (): string[] => {
@@ -198,6 +223,27 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     return isAdminUser;
   };
 
+  // 🔧 NEW: Specific admin type checks
+  const isSuperAdmin = (): boolean => {
+    return hasRole('SuperAdmin') || hasPermission('system.admin');
+  };
+
+  const isSystemAdmin = (): boolean => {
+    return hasAnyRole(['SuperAdmin', 'SystemAdmin']) || hasPermission('system.admin');
+  };
+
+  const isTenantAdmin = (): boolean => {
+    return hasRole('Admin') || hasPermission('tenants.manage');
+  };
+
+  const canManageUsers = (): boolean => {
+    return hasAnyPermission(['users.create', 'users.edit', 'users.delete', 'users.manage_roles']);
+  };
+
+  const canManageRoles = (): boolean => {
+    return hasAnyPermission(['roles.create', 'roles.edit', 'roles.delete', 'roles.assign_permissions']);
+  };
+
   // 🔧 MULTI-ROLE: Enhanced role retrieval supporting multiple roles
   const getUserRoles = (): string[] => {
     // Priority 1: JWT token roles (most reliable for current session)
@@ -235,16 +281,46 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     return getPermissionsFromToken();
   };
 
+  // 🔧 NEW: Get effective permissions (for debugging and testing)
+  const getEffectivePermissions = (): string[] => {
+    return getUserPermissions();
+  };
+
+  // 🔧 NEW: Get role hierarchy level (for testing and UI)
+  const getRoleHierarchy = (): number => {
+    const userRoles = getUserRoles();
+    const hierarchy = ['SuperAdmin', 'SystemAdmin', 'Admin', 'Manager', 'User', 'Viewer'];
+    
+    // Return the highest role level (lowest index)
+    let highestLevel = hierarchy.length;
+    for (const role of userRoles) {
+      const level = hierarchy.indexOf(role);
+      if (level !== -1 && level < highestLevel) {
+        highestLevel = level;
+      }
+    }
+    
+    return highestLevel;
+  };
+
   const value: PermissionContextType = {
     hasPermission,
     hasAnyPermission,
     hasAllPermissions,
     hasRole,
     hasAnyRole,
-    hasAllRoles,        // 🔧 NEW: Multi-role support
+    hasAllRoles,
     getUserRoles,
     getUserPermissions,
     isAdmin,
+    // 🔧 NEW: Additional methods
+    isSuperAdmin,
+    isSystemAdmin,
+    isTenantAdmin,
+    canManageUsers,
+    canManageRoles,
+    getEffectivePermissions,
+    getRoleHierarchy
   };
 
   return (
@@ -261,3 +337,6 @@ export function usePermission(): PermissionContextType {
   }
   return context;
 }
+
+// 🔧 NEW: Export context for testing
+export { PermissionContext };

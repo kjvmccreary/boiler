@@ -30,9 +30,18 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 interface AuthProviderProps {
   children: ReactNode;
+  // 🔧 NEW: Testing support
+  mockUser?: User;
+  mockAuthState?: 'authenticated' | 'unauthenticated' | 'loading';
+  testMode?: boolean;
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
+export function AuthProvider({ 
+  children, 
+  mockUser,
+  mockAuthState = 'unauthenticated',
+  testMode = false
+}: AuthProviderProps) {
   const [state, setState] = useState<AuthState>({
     user: null,
     permissions: [],
@@ -42,8 +51,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     error: null,
   });
 
-  // Initialize authentication state on mount
+  // 🔧 NEW: Test mode initialization
   useEffect(() => {
+    if (testMode) {
+      // Initialize test state
+      setState({
+        user: mockUser || null,
+        permissions: [], // Will be handled by PermissionContext
+        roles: mockUser?.roles ? (Array.isArray(mockUser.roles) ? mockUser.roles : [mockUser.roles]) : [],
+        isAuthenticated: mockAuthState === 'authenticated',
+        isLoading: mockAuthState === 'loading',
+        error: null,
+      });
+      return;
+    }
+
+    // Normal initialization for non-test mode
     initializeAuth();
     
     // Listen for auth events from API client
@@ -57,7 +80,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => {
       window.removeEventListener('auth:logout', handleAuthLogout as EventListener);
     };
-  }, []);
+  }, [testMode, mockUser, mockAuthState]);
 
   // 🔧 .NET 9 MULTI-ROLE: Enhanced permission extraction from JWT token
   const getPermissionsFromToken = (token: string): string[] => {
@@ -304,11 +327,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
-      await authService.logout();
+      if (!testMode) {
+        await authService.logout();
+      }
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      tokenManager.clearTokens();
+      if (!testMode) {
+        tokenManager.clearTokens();
+      }
       setState({
         user: null,
         permissions: [],
@@ -325,7 +352,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const refreshAuth = async () => {
-    await initializeAuth();
+    if (!testMode) {
+      await initializeAuth();
+    }
   };
 
   const value: AuthContextValue = {
