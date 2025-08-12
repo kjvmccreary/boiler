@@ -143,838 +143,8 @@ stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\ser
     PROGRAMW6432: 'C:\\Program Files',
     SYSTEMDRIVE: 'C:',
     SYSTEMROOT: 'C:\\WINDOWS',
-    VITEST_WORKER_ID: '10',
-    VITEST_POOL_ID: '10',
-    SSR: ''
-  }
-}
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:32:13)
-🔍 API CLIENT: Creating axios instance with baseURL:
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:44:13)
-🔍 AXIOS INSTANCE CONFIG: {
-  baseURL: '',
-  timeout: 10000,
-  headers: {
-    common: {
-      Accept: 'application/json, text/plain, */*',
-      'Content-Type': undefined
-    },
-    delete: {},
-    get: {},
-    head: {},
-    post: {},
-    put: {},
-    patch: {},
-    'Content-Type': 'application/json'
-  },
-  adapter: [ 'xhr', 'http', 'fetch' ]
-}
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:15:13)
-🔍 API CLIENT CONSTRUCTOR - COMPLETE DEBUG: {
-  'import.meta.env.MODE': 'test',
-  'import.meta.env.DEV': true,
-  'import.meta.env.PROD': false,
-  'import.meta.env.VITE_API_BASE_URL': undefined,
-  'window.location': {
-    origin: 'http://localhost:3000',
-    hostname: 'localhost',
-    port: '3000',
-    protocol: 'http:'
-  },
-  'All environment variables': {
-    HOMEPATH: '\\Users\\mccre',
-    TEST: 'true',
-    APPDATA: 'C:\\Users\\mccre\\AppData\\Roaming',
-    VITEST: 'true',
-    NODE_ENV: 'test',
-    ALLUSERSPROFILE: 'C:\\ProgramData',
-    VITEST_MODE: 'RUN',
-    BASE_URL: '/',
-    ChocolateyInstall: 'C:\\ProgramData\\chocolatey',
-    EFC_11020_2397410445: '1',
-    ChocolateyLastPathUpdate: '133993438273562931',
-    COLOR: '1',
-    EDITOR: 'C:\\WINDOWS\\notepad.exe',
-    CommonProgramFiles: 'C:\\Program Files\\Common Files',
-    'CommonProgramFiles(Arm)': 'C:\\Program Files (Arm)\\Common Files',
-    NUMBER_OF_PROCESSORS: '12',
-    EFC_11020_1592913036: '1',
-    'CommonProgramFiles(x86)': 'C:\\Program Files (x86)\\Common Files',
-    npm_config_local_prefix: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    CommonProgramW6432: 'C:\\Program Files\\Common Files',
-    EFC_11020_1262719628: '1',
-    PROCESSOR_IDENTIFIER: 'ARMv8 (64-bit) Family 8 Model 1 Revision 201, Qualcomm Technologies Inc',
-    npm_config_userconfig: 'C:\\Users\\mccre\\.npmrc',
-    COMPUTERNAME: 'MACDADDYARM',
-    USERNAME: 'mccre',
-    ComSpec: 'C:\\WINDOWS\\system32\\cmd.exe',
-    npm_command: 'test',
-    DEV: '1',
-    DriverData: 'C:\\Windows\\System32\\Drivers\\DriverData',
-    EFC_11020_2283032206: '1',
-    EFC_11020_2775293581: '1',
-    npm_execpath: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
-    npm_config_node_gyp: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
-    npm_config_init_module: 'C:\\Users\\mccre\\.npm-init.js',
-    NPM_CONFIG_NODE_GYP: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
-    EFC_11020_3789132940: '1',
-    npm_config_noproxy: '',
-    PSMODULEPATH: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
-    FPS_BROWSER_APP_PROFILE_STRING: 'Internet Explorer',
-    PROGRAMDATA: 'C:\\ProgramData',
-    FPS_BROWSER_USER_PROFILE_STRING: 'Default',
-    npm_config_global_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    HOME: 'C:\\Users\\mccre',
-    npm_package_version: '0.0.0',
-    HOMEDRIVE: 'C:',
-    INIT_CWD: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    Path: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    npm_lifecycle_event: 'test',
-    LOCALAPPDATA: 'C:\\Users\\mccre\\AppData\\Local',
-    LOGONSERVER: '\\\\MACDADDYARM',
-    MODE: 'test',
-    NODE: 'C:\\Program Files\\nodejs\\node.exe',
-    npm_config_cache: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
-    npm_config_globalconfig: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
-    OneDriveConsumer: 'C:\\Users\\mccre\\OneDrive',
-    npm_config_legacy_peer_deps: 'true',
-    npm_config_npm_version: '10.9.3',
-    npm_config_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    OS: 'Windows_NT',
-    npm_config_user_agent: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
-    npm_lifecycle_script: 'vitest --config vitest.config.js',
-    npm_node_execpath: 'C:\\Program Files\\nodejs\\node.exe',
-    WINDIR: 'C:\\WINDOWS',
-    npm_package_json: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
-    npm_package_name: 'microservices-frontend',
-    OneDrive: 'C:\\Users\\mccre\\OneDrive',
-    PATHEXT: '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL',
-    CHOCOLATEYINSTALL: 'C:\\ProgramData\\chocolatey',
-    PROCESSOR_ARCHITECTURE: 'ARM64',
-    PROCESSOR_LEVEL: '1',
-    PROCESSOR_REVISION: '0201',
-    PROD: '',
-    ProgramData: 'C:\\ProgramData',
-    ProgramFiles: 'C:\\Program Files',
-    'ProgramFiles(Arm)': 'C:\\Program Files (Arm)',
-    'ProgramFiles(x86)': 'C:\\Program Files (x86)',
-    ProgramW6432: 'C:\\Program Files',
-    PROMPT: '$P$G',
-    PSModulePath: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
-    PUBLIC: 'C:\\Users\\Public',
-    SESSIONNAME: 'Console',
-    SystemDrive: 'C:',
-    SystemRoot: 'C:\\WINDOWS',
-    TEMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
-    TMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
-    USERDOMAIN: 'MACDADDYARM',
-    USERDOMAIN_ROAMINGPROFILE: 'MACDADDYARM',
-    USERPROFILE: 'C:\\Users\\mccre',
-    windir: 'C:\\WINDOWS',
-    CHOCOLATEYLASTPATHUPDATE: '133993438273562931',
-    COMMONPROGRAMFILES: 'C:\\Program Files\\Common Files',
-    'COMMONPROGRAMFILES(ARM)': 'C:\\Program Files (Arm)\\Common Files',
-    'COMMONPROGRAMFILES(X86)': 'C:\\Program Files (x86)\\Common Files',
-    COMMONPROGRAMW6432: 'C:\\Program Files\\Common Files',
-    COMSPEC: 'C:\\WINDOWS\\system32\\cmd.exe',
-    DRIVERDATA: 'C:\\Windows\\System32\\Drivers\\DriverData',
-    NPM_COMMAND: 'test',
-    NPM_CONFIG_CACHE: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
-    NPM_CONFIG_GLOBALCONFIG: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
-    NPM_CONFIG_GLOBAL_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    NPM_CONFIG_INIT_MODULE: 'C:\\Users\\mccre\\.npm-init.js',
-    NPM_CONFIG_LEGACY_PEER_DEPS: 'true',
-    NPM_CONFIG_LOCAL_PREFIX: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    NPM_CONFIG_NOPROXY: '',
-    NPM_CONFIG_NPM_VERSION: '10.9.3',
-    NPM_CONFIG_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    NPM_CONFIG_USERCONFIG: 'C:\\Users\\mccre\\.npmrc',
-    NPM_CONFIG_USER_AGENT: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
-    NPM_LIFECYCLE_SCRIPT: 'vitest --config vitest.config.js',
-    NPM_EXECPATH: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
-    NPM_LIFECYCLE_EVENT: 'test',
-    PROGRAMFILES: 'C:\\Program Files',
-    NPM_NODE_EXECPATH: 'C:\\Program Files\\nodejs\\node.exe',
-    NPM_PACKAGE_JSON: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
-    NPM_PACKAGE_NAME: 'microservices-frontend',
-    NPM_PACKAGE_VERSION: '0.0.0',
-    ONEDRIVE: 'C:\\Users\\mccre\\OneDrive',
-    ONEDRIVECONSUMER: 'C:\\Users\\mccre\\OneDrive',
-    PATH: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    'PROGRAMFILES(ARM)': 'C:\\Program Files (Arm)',
-    'PROGRAMFILES(X86)': 'C:\\Program Files (x86)',
-    PROGRAMW6432: 'C:\\Program Files',
-    SYSTEMDRIVE: 'C:',
-    SYSTEMROOT: 'C:\\WINDOWS',
-    VITEST_WORKER_ID: '1',
-    VITEST_POOL_ID: '1',
-    SSR: ''
-  }
-}
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:32:13)
-🔍 API CLIENT: Creating axios instance with baseURL:
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:44:13)
-🔍 AXIOS INSTANCE CONFIG: {
-  baseURL: '',
-  timeout: 10000,
-  headers: {
-    common: {
-      Accept: 'application/json, text/plain, */*',
-      'Content-Type': undefined
-    },
-    delete: {},
-    get: {},
-    head: {},
-    post: {},
-    put: {},
-    patch: {},
-    'Content-Type': 'application/json'
-  },
-  adapter: [ 'xhr', 'http', 'fetch' ]
-}
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:15:13)
-🔍 API CLIENT CONSTRUCTOR - COMPLETE DEBUG: {
-  'import.meta.env.MODE': 'test',
-  'import.meta.env.DEV': true,
-  'import.meta.env.PROD': false,
-  'import.meta.env.VITE_API_BASE_URL': undefined,
-  'window.location': {
-    origin: 'http://localhost:3000',
-    hostname: 'localhost',
-    port: '3000',
-    protocol: 'http:'
-  },
-  'All environment variables': {
-    HOMEPATH: '\\Users\\mccre',
-    TEST: 'true',
-    APPDATA: 'C:\\Users\\mccre\\AppData\\Roaming',
-    VITEST: 'true',
-    NODE_ENV: 'test',
-    ALLUSERSPROFILE: 'C:\\ProgramData',
-    VITEST_MODE: 'RUN',
-    BASE_URL: '/',
-    ChocolateyInstall: 'C:\\ProgramData\\chocolatey',
-    EFC_11020_2397410445: '1',
-    ChocolateyLastPathUpdate: '133993438273562931',
-    COLOR: '1',
-    EDITOR: 'C:\\WINDOWS\\notepad.exe',
-    CommonProgramFiles: 'C:\\Program Files\\Common Files',
-    'CommonProgramFiles(Arm)': 'C:\\Program Files (Arm)\\Common Files',
-    NUMBER_OF_PROCESSORS: '12',
-    EFC_11020_1592913036: '1',
-    'CommonProgramFiles(x86)': 'C:\\Program Files (x86)\\Common Files',
-    npm_config_local_prefix: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    CommonProgramW6432: 'C:\\Program Files\\Common Files',
-    EFC_11020_1262719628: '1',
-    PROCESSOR_IDENTIFIER: 'ARMv8 (64-bit) Family 8 Model 1 Revision 201, Qualcomm Technologies Inc',
-    npm_config_userconfig: 'C:\\Users\\mccre\\.npmrc',
-    COMPUTERNAME: 'MACDADDYARM',
-    USERNAME: 'mccre',
-    ComSpec: 'C:\\WINDOWS\\system32\\cmd.exe',
-    npm_command: 'test',
-    DEV: '1',
-    DriverData: 'C:\\Windows\\System32\\Drivers\\DriverData',
-    EFC_11020_2283032206: '1',
-    EFC_11020_2775293581: '1',
-    npm_execpath: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
-    npm_config_node_gyp: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
-    npm_config_init_module: 'C:\\Users\\mccre\\.npm-init.js',
-    NPM_CONFIG_NODE_GYP: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
-    EFC_11020_3789132940: '1',
-    npm_config_noproxy: '',
-    PSMODULEPATH: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
-    FPS_BROWSER_APP_PROFILE_STRING: 'Internet Explorer',
-    PROGRAMDATA: 'C:\\ProgramData',
-    FPS_BROWSER_USER_PROFILE_STRING: 'Default',
-    npm_config_global_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    HOME: 'C:\\Users\\mccre',
-    npm_package_version: '0.0.0',
-    HOMEDRIVE: 'C:',
-    INIT_CWD: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    Path: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    npm_lifecycle_event: 'test',
-    LOCALAPPDATA: 'C:\\Users\\mccre\\AppData\\Local',
-    LOGONSERVER: '\\\\MACDADDYARM',
-    MODE: 'test',
-    NODE: 'C:\\Program Files\\nodejs\\node.exe',
-    npm_config_cache: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
-    npm_config_globalconfig: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
-    OneDriveConsumer: 'C:\\Users\\mccre\\OneDrive',
-    npm_config_legacy_peer_deps: 'true',
-    npm_config_npm_version: '10.9.3',
-    npm_config_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    OS: 'Windows_NT',
-    npm_config_user_agent: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
-    npm_lifecycle_script: 'vitest --config vitest.config.js',
-    npm_node_execpath: 'C:\\Program Files\\nodejs\\node.exe',
-    WINDIR: 'C:\\WINDOWS',
-    npm_package_json: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
-    npm_package_name: 'microservices-frontend',
-    OneDrive: 'C:\\Users\\mccre\\OneDrive',
-    PATHEXT: '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL',
-    CHOCOLATEYINSTALL: 'C:\\ProgramData\\chocolatey',
-    PROCESSOR_ARCHITECTURE: 'ARM64',
-    PROCESSOR_LEVEL: '1',
-    PROCESSOR_REVISION: '0201',
-    PROD: '',
-    ProgramData: 'C:\\ProgramData',
-    ProgramFiles: 'C:\\Program Files',
-    'ProgramFiles(Arm)': 'C:\\Program Files (Arm)',
-    'ProgramFiles(x86)': 'C:\\Program Files (x86)',
-    ProgramW6432: 'C:\\Program Files',
-    PROMPT: '$P$G',
-    PSModulePath: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
-    PUBLIC: 'C:\\Users\\Public',
-    SESSIONNAME: 'Console',
-    SystemDrive: 'C:',
-    SystemRoot: 'C:\\WINDOWS',
-    TEMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
-    TMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
-    USERDOMAIN: 'MACDADDYARM',
-    USERDOMAIN_ROAMINGPROFILE: 'MACDADDYARM',
-    USERPROFILE: 'C:\\Users\\mccre',
-    windir: 'C:\\WINDOWS',
-    CHOCOLATEYLASTPATHUPDATE: '133993438273562931',
-    COMMONPROGRAMFILES: 'C:\\Program Files\\Common Files',
-    'COMMONPROGRAMFILES(ARM)': 'C:\\Program Files (Arm)\\Common Files',
-    'COMMONPROGRAMFILES(X86)': 'C:\\Program Files (x86)\\Common Files',
-    COMMONPROGRAMW6432: 'C:\\Program Files\\Common Files',
-    COMSPEC: 'C:\\WINDOWS\\system32\\cmd.exe',
-    DRIVERDATA: 'C:\\Windows\\System32\\Drivers\\DriverData',
-    NPM_COMMAND: 'test',
-    NPM_CONFIG_CACHE: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
-    NPM_CONFIG_GLOBALCONFIG: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
-    NPM_CONFIG_GLOBAL_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    NPM_CONFIG_INIT_MODULE: 'C:\\Users\\mccre\\.npm-init.js',
-    NPM_CONFIG_LEGACY_PEER_DEPS: 'true',
-    NPM_CONFIG_LOCAL_PREFIX: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    NPM_CONFIG_NOPROXY: '',
-    NPM_CONFIG_NPM_VERSION: '10.9.3',
-    NPM_CONFIG_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    NPM_CONFIG_USERCONFIG: 'C:\\Users\\mccre\\.npmrc',
-    NPM_CONFIG_USER_AGENT: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
-    NPM_LIFECYCLE_SCRIPT: 'vitest --config vitest.config.js',
-    NPM_EXECPATH: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
-    NPM_LIFECYCLE_EVENT: 'test',
-    PROGRAMFILES: 'C:\\Program Files',
-    NPM_NODE_EXECPATH: 'C:\\Program Files\\nodejs\\node.exe',
-    NPM_PACKAGE_JSON: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
-    NPM_PACKAGE_NAME: 'microservices-frontend',
-    NPM_PACKAGE_VERSION: '0.0.0',
-    ONEDRIVE: 'C:\\Users\\mccre\\OneDrive',
-    ONEDRIVECONSUMER: 'C:\\Users\\mccre\\OneDrive',
-    PATH: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    'PROGRAMFILES(ARM)': 'C:\\Program Files (Arm)',
-    'PROGRAMFILES(X86)': 'C:\\Program Files (x86)',
-    PROGRAMW6432: 'C:\\Program Files',
-    SYSTEMDRIVE: 'C:',
-    SYSTEMROOT: 'C:\\WINDOWS',
     VITEST_WORKER_ID: '11',
     VITEST_POOL_ID: '11',
-    SSR: ''
-  }
-}
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:32:13)
-🔍 API CLIENT: Creating axios instance with baseURL:
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:44:13)
-🔍 AXIOS INSTANCE CONFIG: {
-  baseURL: '',
-  timeout: 10000,
-  headers: {
-    common: {
-      Accept: 'application/json, text/plain, */*',
-      'Content-Type': undefined
-    },
-    delete: {},
-    get: {},
-    head: {},
-    post: {},
-    put: {},
-    patch: {},
-    'Content-Type': 'application/json'
-  },
-  adapter: [ 'xhr', 'http', 'fetch' ]
-}
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:15:13)
-🔍 API CLIENT CONSTRUCTOR - COMPLETE DEBUG: {
-  'import.meta.env.MODE': 'test',
-  'import.meta.env.DEV': true,
-  'import.meta.env.PROD': false,
-  'import.meta.env.VITE_API_BASE_URL': undefined,
-  'window.location': {
-    origin: 'http://localhost:3000',
-    hostname: 'localhost',
-    port: '3000',
-    protocol: 'http:'
-  },
-  'All environment variables': {
-    HOMEPATH: '\\Users\\mccre',
-    TEST: 'true',
-    APPDATA: 'C:\\Users\\mccre\\AppData\\Roaming',
-    VITEST: 'true',
-    NODE_ENV: 'test',
-    ALLUSERSPROFILE: 'C:\\ProgramData',
-    VITEST_MODE: 'RUN',
-    BASE_URL: '/',
-    ChocolateyInstall: 'C:\\ProgramData\\chocolatey',
-    EFC_11020_2397410445: '1',
-    ChocolateyLastPathUpdate: '133993438273562931',
-    COLOR: '1',
-    EDITOR: 'C:\\WINDOWS\\notepad.exe',
-    CommonProgramFiles: 'C:\\Program Files\\Common Files',
-    'CommonProgramFiles(Arm)': 'C:\\Program Files (Arm)\\Common Files',
-    NUMBER_OF_PROCESSORS: '12',
-    EFC_11020_1592913036: '1',
-    'CommonProgramFiles(x86)': 'C:\\Program Files (x86)\\Common Files',
-    npm_config_local_prefix: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    CommonProgramW6432: 'C:\\Program Files\\Common Files',
-    EFC_11020_1262719628: '1',
-    PROCESSOR_IDENTIFIER: 'ARMv8 (64-bit) Family 8 Model 1 Revision 201, Qualcomm Technologies Inc',
-    npm_config_userconfig: 'C:\\Users\\mccre\\.npmrc',
-    COMPUTERNAME: 'MACDADDYARM',
-    USERNAME: 'mccre',
-    ComSpec: 'C:\\WINDOWS\\system32\\cmd.exe',
-    npm_command: 'test',
-    DEV: '1',
-    DriverData: 'C:\\Windows\\System32\\Drivers\\DriverData',
-    EFC_11020_2283032206: '1',
-    EFC_11020_2775293581: '1',
-    npm_execpath: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
-    npm_config_node_gyp: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
-    npm_config_init_module: 'C:\\Users\\mccre\\.npm-init.js',
-    NPM_CONFIG_NODE_GYP: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
-    EFC_11020_3789132940: '1',
-    npm_config_noproxy: '',
-    PSMODULEPATH: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
-    FPS_BROWSER_APP_PROFILE_STRING: 'Internet Explorer',
-    PROGRAMDATA: 'C:\\ProgramData',
-    FPS_BROWSER_USER_PROFILE_STRING: 'Default',
-    npm_config_global_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    HOME: 'C:\\Users\\mccre',
-    npm_package_version: '0.0.0',
-    HOMEDRIVE: 'C:',
-    INIT_CWD: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    Path: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    npm_lifecycle_event: 'test',
-    LOCALAPPDATA: 'C:\\Users\\mccre\\AppData\\Local',
-    LOGONSERVER: '\\\\MACDADDYARM',
-    MODE: 'test',
-    NODE: 'C:\\Program Files\\nodejs\\node.exe',
-    npm_config_cache: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
-    npm_config_globalconfig: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
-    OneDriveConsumer: 'C:\\Users\\mccre\\OneDrive',
-    npm_config_legacy_peer_deps: 'true',
-    npm_config_npm_version: '10.9.3',
-    npm_config_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    OS: 'Windows_NT',
-    npm_config_user_agent: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
-    npm_lifecycle_script: 'vitest --config vitest.config.js',
-    npm_node_execpath: 'C:\\Program Files\\nodejs\\node.exe',
-    WINDIR: 'C:\\WINDOWS',
-    npm_package_json: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
-    npm_package_name: 'microservices-frontend',
-    OneDrive: 'C:\\Users\\mccre\\OneDrive',
-    PATHEXT: '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL',
-    CHOCOLATEYINSTALL: 'C:\\ProgramData\\chocolatey',
-    PROCESSOR_ARCHITECTURE: 'ARM64',
-    PROCESSOR_LEVEL: '1',
-    PROCESSOR_REVISION: '0201',
-    PROD: '',
-    ProgramData: 'C:\\ProgramData',
-    ProgramFiles: 'C:\\Program Files',
-    'ProgramFiles(Arm)': 'C:\\Program Files (Arm)',
-    'ProgramFiles(x86)': 'C:\\Program Files (x86)',
-    ProgramW6432: 'C:\\Program Files',
-    PROMPT: '$P$G',
-    PSModulePath: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
-    PUBLIC: 'C:\\Users\\Public',
-    SESSIONNAME: 'Console',
-    SystemDrive: 'C:',
-    SystemRoot: 'C:\\WINDOWS',
-    TEMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
-    TMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
-    USERDOMAIN: 'MACDADDYARM',
-    USERDOMAIN_ROAMINGPROFILE: 'MACDADDYARM',
-    USERPROFILE: 'C:\\Users\\mccre',
-    windir: 'C:\\WINDOWS',
-    CHOCOLATEYLASTPATHUPDATE: '133993438273562931',
-    COMMONPROGRAMFILES: 'C:\\Program Files\\Common Files',
-    'COMMONPROGRAMFILES(ARM)': 'C:\\Program Files (Arm)\\Common Files',
-    'COMMONPROGRAMFILES(X86)': 'C:\\Program Files (x86)\\Common Files',
-    COMMONPROGRAMW6432: 'C:\\Program Files\\Common Files',
-    COMSPEC: 'C:\\WINDOWS\\system32\\cmd.exe',
-    DRIVERDATA: 'C:\\Windows\\System32\\Drivers\\DriverData',
-    NPM_COMMAND: 'test',
-    NPM_CONFIG_CACHE: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
-    NPM_CONFIG_GLOBALCONFIG: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
-    NPM_CONFIG_GLOBAL_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    NPM_CONFIG_INIT_MODULE: 'C:\\Users\\mccre\\.npm-init.js',
-    NPM_CONFIG_LEGACY_PEER_DEPS: 'true',
-    NPM_CONFIG_LOCAL_PREFIX: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    NPM_CONFIG_NOPROXY: '',
-    NPM_CONFIG_NPM_VERSION: '10.9.3',
-    NPM_CONFIG_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    NPM_CONFIG_USERCONFIG: 'C:\\Users\\mccre\\.npmrc',
-    NPM_CONFIG_USER_AGENT: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
-    NPM_LIFECYCLE_SCRIPT: 'vitest --config vitest.config.js',
-    NPM_EXECPATH: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
-    NPM_LIFECYCLE_EVENT: 'test',
-    PROGRAMFILES: 'C:\\Program Files',
-    NPM_NODE_EXECPATH: 'C:\\Program Files\\nodejs\\node.exe',
-    NPM_PACKAGE_JSON: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
-    NPM_PACKAGE_NAME: 'microservices-frontend',
-    NPM_PACKAGE_VERSION: '0.0.0',
-    ONEDRIVE: 'C:\\Users\\mccre\\OneDrive',
-    ONEDRIVECONSUMER: 'C:\\Users\\mccre\\OneDrive',
-    PATH: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    'PROGRAMFILES(ARM)': 'C:\\Program Files (Arm)',
-    'PROGRAMFILES(X86)': 'C:\\Program Files (x86)',
-    PROGRAMW6432: 'C:\\Program Files',
-    SYSTEMDRIVE: 'C:',
-    SYSTEMROOT: 'C:\\WINDOWS',
-    VITEST_WORKER_ID: '8',
-    VITEST_POOL_ID: '8',
-    SSR: ''
-  }
-}
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:32:13)
-🔍 API CLIENT: Creating axios instance with baseURL:
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:44:13)
-🔍 AXIOS INSTANCE CONFIG: {
-  baseURL: '',
-  timeout: 10000,
-  headers: {
-    common: {
-      Accept: 'application/json, text/plain, */*',
-      'Content-Type': undefined
-    },
-    delete: {},
-    get: {},
-    head: {},
-    post: {},
-    put: {},
-    patch: {},
-    'Content-Type': 'application/json'
-  },
-  adapter: [ 'xhr', 'http', 'fetch' ]
-}
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:15:13)
-🔍 API CLIENT CONSTRUCTOR - COMPLETE DEBUG: {
-  'import.meta.env.MODE': 'test',
-  'import.meta.env.DEV': true,
-  'import.meta.env.PROD': false,
-  'import.meta.env.VITE_API_BASE_URL': undefined,
-  'window.location': {
-    origin: 'http://localhost:3000',
-    hostname: 'localhost',
-    port: '3000',
-    protocol: 'http:'
-  },
-  'All environment variables': {
-    HOMEPATH: '\\Users\\mccre',
-    TEST: 'true',
-    APPDATA: 'C:\\Users\\mccre\\AppData\\Roaming',
-    VITEST: 'true',
-    NODE_ENV: 'test',
-    ALLUSERSPROFILE: 'C:\\ProgramData',
-    VITEST_MODE: 'RUN',
-    BASE_URL: '/',
-    ChocolateyInstall: 'C:\\ProgramData\\chocolatey',
-    EFC_11020_2397410445: '1',
-    ChocolateyLastPathUpdate: '133993438273562931',
-    COLOR: '1',
-    EDITOR: 'C:\\WINDOWS\\notepad.exe',
-    CommonProgramFiles: 'C:\\Program Files\\Common Files',
-    'CommonProgramFiles(Arm)': 'C:\\Program Files (Arm)\\Common Files',
-    NUMBER_OF_PROCESSORS: '12',
-    EFC_11020_1592913036: '1',
-    'CommonProgramFiles(x86)': 'C:\\Program Files (x86)\\Common Files',
-    npm_config_local_prefix: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    CommonProgramW6432: 'C:\\Program Files\\Common Files',
-    EFC_11020_1262719628: '1',
-    PROCESSOR_IDENTIFIER: 'ARMv8 (64-bit) Family 8 Model 1 Revision 201, Qualcomm Technologies Inc',
-    npm_config_userconfig: 'C:\\Users\\mccre\\.npmrc',
-    COMPUTERNAME: 'MACDADDYARM',
-    USERNAME: 'mccre',
-    ComSpec: 'C:\\WINDOWS\\system32\\cmd.exe',
-    npm_command: 'test',
-    DEV: '1',
-    DriverData: 'C:\\Windows\\System32\\Drivers\\DriverData',
-    EFC_11020_2283032206: '1',
-    EFC_11020_2775293581: '1',
-    npm_execpath: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
-    npm_config_node_gyp: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
-    npm_config_init_module: 'C:\\Users\\mccre\\.npm-init.js',
-    NPM_CONFIG_NODE_GYP: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
-    EFC_11020_3789132940: '1',
-    npm_config_noproxy: '',
-    PSMODULEPATH: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
-    FPS_BROWSER_APP_PROFILE_STRING: 'Internet Explorer',
-    PROGRAMDATA: 'C:\\ProgramData',
-    FPS_BROWSER_USER_PROFILE_STRING: 'Default',
-    npm_config_global_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    HOME: 'C:\\Users\\mccre',
-    npm_package_version: '0.0.0',
-    HOMEDRIVE: 'C:',
-    INIT_CWD: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    Path: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    npm_lifecycle_event: 'test',
-    LOCALAPPDATA: 'C:\\Users\\mccre\\AppData\\Local',
-    LOGONSERVER: '\\\\MACDADDYARM',
-    MODE: 'test',
-    NODE: 'C:\\Program Files\\nodejs\\node.exe',
-    npm_config_cache: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
-    npm_config_globalconfig: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
-    OneDriveConsumer: 'C:\\Users\\mccre\\OneDrive',
-    npm_config_legacy_peer_deps: 'true',
-    npm_config_npm_version: '10.9.3',
-    npm_config_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    OS: 'Windows_NT',
-    npm_config_user_agent: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
-    npm_lifecycle_script: 'vitest --config vitest.config.js',
-    npm_node_execpath: 'C:\\Program Files\\nodejs\\node.exe',
-    WINDIR: 'C:\\WINDOWS',
-    npm_package_json: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
-    npm_package_name: 'microservices-frontend',
-    OneDrive: 'C:\\Users\\mccre\\OneDrive',
-    PATHEXT: '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL',
-    CHOCOLATEYINSTALL: 'C:\\ProgramData\\chocolatey',
-    PROCESSOR_ARCHITECTURE: 'ARM64',
-    PROCESSOR_LEVEL: '1',
-    PROCESSOR_REVISION: '0201',
-    PROD: '',
-    ProgramData: 'C:\\ProgramData',
-    ProgramFiles: 'C:\\Program Files',
-    'ProgramFiles(Arm)': 'C:\\Program Files (Arm)',
-    'ProgramFiles(x86)': 'C:\\Program Files (x86)',
-    ProgramW6432: 'C:\\Program Files',
-    PROMPT: '$P$G',
-    PSModulePath: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
-    PUBLIC: 'C:\\Users\\Public',
-    SESSIONNAME: 'Console',
-    SystemDrive: 'C:',
-    SystemRoot: 'C:\\WINDOWS',
-    TEMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
-    TMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
-    USERDOMAIN: 'MACDADDYARM',
-    USERDOMAIN_ROAMINGPROFILE: 'MACDADDYARM',
-    USERPROFILE: 'C:\\Users\\mccre',
-    windir: 'C:\\WINDOWS',
-    CHOCOLATEYLASTPATHUPDATE: '133993438273562931',
-    COMMONPROGRAMFILES: 'C:\\Program Files\\Common Files',
-    'COMMONPROGRAMFILES(ARM)': 'C:\\Program Files (Arm)\\Common Files',
-    'COMMONPROGRAMFILES(X86)': 'C:\\Program Files (x86)\\Common Files',
-    COMMONPROGRAMW6432: 'C:\\Program Files\\Common Files',
-    COMSPEC: 'C:\\WINDOWS\\system32\\cmd.exe',
-    DRIVERDATA: 'C:\\Windows\\System32\\Drivers\\DriverData',
-    NPM_COMMAND: 'test',
-    NPM_CONFIG_CACHE: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
-    NPM_CONFIG_GLOBALCONFIG: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
-    NPM_CONFIG_GLOBAL_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    NPM_CONFIG_INIT_MODULE: 'C:\\Users\\mccre\\.npm-init.js',
-    NPM_CONFIG_LEGACY_PEER_DEPS: 'true',
-    NPM_CONFIG_LOCAL_PREFIX: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    NPM_CONFIG_NOPROXY: '',
-    NPM_CONFIG_NPM_VERSION: '10.9.3',
-    NPM_CONFIG_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    NPM_CONFIG_USERCONFIG: 'C:\\Users\\mccre\\.npmrc',
-    NPM_CONFIG_USER_AGENT: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
-    NPM_LIFECYCLE_SCRIPT: 'vitest --config vitest.config.js',
-    NPM_EXECPATH: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
-    NPM_LIFECYCLE_EVENT: 'test',
-    PROGRAMFILES: 'C:\\Program Files',
-    NPM_NODE_EXECPATH: 'C:\\Program Files\\nodejs\\node.exe',
-    NPM_PACKAGE_JSON: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
-    NPM_PACKAGE_NAME: 'microservices-frontend',
-    NPM_PACKAGE_VERSION: '0.0.0',
-    ONEDRIVE: 'C:\\Users\\mccre\\OneDrive',
-    ONEDRIVECONSUMER: 'C:\\Users\\mccre\\OneDrive',
-    PATH: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    'PROGRAMFILES(ARM)': 'C:\\Program Files (Arm)',
-    'PROGRAMFILES(X86)': 'C:\\Program Files (x86)',
-    PROGRAMW6432: 'C:\\Program Files',
-    SYSTEMDRIVE: 'C:',
-    SYSTEMROOT: 'C:\\WINDOWS',
-    VITEST_WORKER_ID: '9',
-    VITEST_POOL_ID: '9',
-    SSR: ''
-  }
-}
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:32:13)
-🔍 API CLIENT: Creating axios instance with baseURL:
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:44:13)
-🔍 AXIOS INSTANCE CONFIG: {
-  baseURL: '',
-  timeout: 10000,
-  headers: {
-    common: {
-      Accept: 'application/json, text/plain, */*',
-      'Content-Type': undefined
-    },
-    delete: {},
-    get: {},
-    head: {},
-    post: {},
-    put: {},
-    patch: {},
-    'Content-Type': 'application/json'
-  },
-  adapter: [ 'xhr', 'http', 'fetch' ]
-}
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:15:13)
-🔍 API CLIENT CONSTRUCTOR - COMPLETE DEBUG: {
-  'import.meta.env.MODE': 'test',
-  'import.meta.env.DEV': true,
-  'import.meta.env.PROD': false,
-  'import.meta.env.VITE_API_BASE_URL': undefined,
-  'window.location': {
-    origin: 'http://localhost:3000',
-    hostname: 'localhost',
-    port: '3000',
-    protocol: 'http:'
-  },
-  'All environment variables': {
-    HOMEPATH: '\\Users\\mccre',
-    TEST: 'true',
-    APPDATA: 'C:\\Users\\mccre\\AppData\\Roaming',
-    VITEST: 'true',
-    NODE_ENV: 'test',
-    ALLUSERSPROFILE: 'C:\\ProgramData',
-    VITEST_MODE: 'RUN',
-    BASE_URL: '/',
-    ChocolateyInstall: 'C:\\ProgramData\\chocolatey',
-    EFC_11020_2397410445: '1',
-    ChocolateyLastPathUpdate: '133993438273562931',
-    COLOR: '1',
-    EDITOR: 'C:\\WINDOWS\\notepad.exe',
-    CommonProgramFiles: 'C:\\Program Files\\Common Files',
-    'CommonProgramFiles(Arm)': 'C:\\Program Files (Arm)\\Common Files',
-    NUMBER_OF_PROCESSORS: '12',
-    EFC_11020_1592913036: '1',
-    'CommonProgramFiles(x86)': 'C:\\Program Files (x86)\\Common Files',
-    npm_config_local_prefix: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    CommonProgramW6432: 'C:\\Program Files\\Common Files',
-    EFC_11020_1262719628: '1',
-    PROCESSOR_IDENTIFIER: 'ARMv8 (64-bit) Family 8 Model 1 Revision 201, Qualcomm Technologies Inc',
-    npm_config_userconfig: 'C:\\Users\\mccre\\.npmrc',
-    COMPUTERNAME: 'MACDADDYARM',
-    USERNAME: 'mccre',
-    ComSpec: 'C:\\WINDOWS\\system32\\cmd.exe',
-    npm_command: 'test',
-    DEV: '1',
-    DriverData: 'C:\\Windows\\System32\\Drivers\\DriverData',
-    EFC_11020_2283032206: '1',
-    EFC_11020_2775293581: '1',
-    npm_execpath: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
-    npm_config_node_gyp: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
-    npm_config_init_module: 'C:\\Users\\mccre\\.npm-init.js',
-    NPM_CONFIG_NODE_GYP: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
-    EFC_11020_3789132940: '1',
-    npm_config_noproxy: '',
-    PSMODULEPATH: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
-    FPS_BROWSER_APP_PROFILE_STRING: 'Internet Explorer',
-    PROGRAMDATA: 'C:\\ProgramData',
-    FPS_BROWSER_USER_PROFILE_STRING: 'Default',
-    npm_config_global_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    HOME: 'C:\\Users\\mccre',
-    npm_package_version: '0.0.0',
-    HOMEDRIVE: 'C:',
-    INIT_CWD: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    Path: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    npm_lifecycle_event: 'test',
-    LOCALAPPDATA: 'C:\\Users\\mccre\\AppData\\Local',
-    LOGONSERVER: '\\\\MACDADDYARM',
-    MODE: 'test',
-    NODE: 'C:\\Program Files\\nodejs\\node.exe',
-    npm_config_cache: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
-    npm_config_globalconfig: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
-    OneDriveConsumer: 'C:\\Users\\mccre\\OneDrive',
-    npm_config_legacy_peer_deps: 'true',
-    npm_config_npm_version: '10.9.3',
-    npm_config_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    OS: 'Windows_NT',
-    npm_config_user_agent: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
-    npm_lifecycle_script: 'vitest --config vitest.config.js',
-    npm_node_execpath: 'C:\\Program Files\\nodejs\\node.exe',
-    WINDIR: 'C:\\WINDOWS',
-    npm_package_json: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
-    npm_package_name: 'microservices-frontend',
-    OneDrive: 'C:\\Users\\mccre\\OneDrive',
-    PATHEXT: '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL',
-    CHOCOLATEYINSTALL: 'C:\\ProgramData\\chocolatey',
-    PROCESSOR_ARCHITECTURE: 'ARM64',
-    PROCESSOR_LEVEL: '1',
-    PROCESSOR_REVISION: '0201',
-    PROD: '',
-    ProgramData: 'C:\\ProgramData',
-    ProgramFiles: 'C:\\Program Files',
-    'ProgramFiles(Arm)': 'C:\\Program Files (Arm)',
-    'ProgramFiles(x86)': 'C:\\Program Files (x86)',
-    ProgramW6432: 'C:\\Program Files',
-    PROMPT: '$P$G',
-    PSModulePath: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
-    PUBLIC: 'C:\\Users\\Public',
-    SESSIONNAME: 'Console',
-    SystemDrive: 'C:',
-    SystemRoot: 'C:\\WINDOWS',
-    TEMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
-    TMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
-    USERDOMAIN: 'MACDADDYARM',
-    USERDOMAIN_ROAMINGPROFILE: 'MACDADDYARM',
-    USERPROFILE: 'C:\\Users\\mccre',
-    windir: 'C:\\WINDOWS',
-    CHOCOLATEYLASTPATHUPDATE: '133993438273562931',
-    COMMONPROGRAMFILES: 'C:\\Program Files\\Common Files',
-    'COMMONPROGRAMFILES(ARM)': 'C:\\Program Files (Arm)\\Common Files',
-    'COMMONPROGRAMFILES(X86)': 'C:\\Program Files (x86)\\Common Files',
-    COMMONPROGRAMW6432: 'C:\\Program Files\\Common Files',
-    COMSPEC: 'C:\\WINDOWS\\system32\\cmd.exe',
-    DRIVERDATA: 'C:\\Windows\\System32\\Drivers\\DriverData',
-    NPM_COMMAND: 'test',
-    NPM_CONFIG_CACHE: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
-    NPM_CONFIG_GLOBALCONFIG: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
-    NPM_CONFIG_GLOBAL_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    NPM_CONFIG_INIT_MODULE: 'C:\\Users\\mccre\\.npm-init.js',
-    NPM_CONFIG_LEGACY_PEER_DEPS: 'true',
-    NPM_CONFIG_LOCAL_PREFIX: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    NPM_CONFIG_NOPROXY: '',
-    NPM_CONFIG_NPM_VERSION: '10.9.3',
-    NPM_CONFIG_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    NPM_CONFIG_USERCONFIG: 'C:\\Users\\mccre\\.npmrc',
-    NPM_CONFIG_USER_AGENT: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
-    NPM_LIFECYCLE_SCRIPT: 'vitest --config vitest.config.js',
-    NPM_EXECPATH: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
-    NPM_LIFECYCLE_EVENT: 'test',
-    PROGRAMFILES: 'C:\\Program Files',
-    NPM_NODE_EXECPATH: 'C:\\Program Files\\nodejs\\node.exe',
-    NPM_PACKAGE_JSON: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
-    NPM_PACKAGE_NAME: 'microservices-frontend',
-    NPM_PACKAGE_VERSION: '0.0.0',
-    ONEDRIVE: 'C:\\Users\\mccre\\OneDrive',
-    ONEDRIVECONSUMER: 'C:\\Users\\mccre\\OneDrive',
-    PATH: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    'PROGRAMFILES(ARM)': 'C:\\Program Files (Arm)',
-    'PROGRAMFILES(X86)': 'C:\\Program Files (x86)',
-    PROGRAMW6432: 'C:\\Program Files',
-    SYSTEMDRIVE: 'C:',
-    SYSTEMROOT: 'C:\\WINDOWS',
-    VITEST_WORKER_ID: '5',
-    VITEST_POOL_ID: '5',
     SSR: ''
   }
 }
@@ -1305,14 +475,34 @@ stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\ser
     PROGRAMW6432: 'C:\\Program Files',
     SYSTEMDRIVE: 'C:',
     SYSTEMROOT: 'C:\\WINDOWS',
-    VITEST_WORKER_ID: '3',
-    VITEST_POOL_ID: '3',
+    VITEST_WORKER_ID: '4',
+    VITEST_POOL_ID: '4',
     SSR: ''
   }
 }
 
 stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:32:13)
 🔍 API CLIENT: Creating axios instance with baseURL:
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:44:13)
+🔍 AXIOS INSTANCE CONFIG: {
+  baseURL: '',
+  timeout: 10000,
+  headers: {
+    common: {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': undefined
+    },
+    delete: {},
+    get: {},
+    head: {},
+    post: {},
+    put: {},
+    patch: {},
+    'Content-Type': 'application/json'
+  },
+  adapter: [ 'xhr', 'http', 'fetch' ]
+}
 
 stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:15:13)
 🔍 API CLIENT CONSTRUCTOR - COMPLETE DEBUG: {
@@ -1451,34 +641,14 @@ stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\ser
     PROGRAMW6432: 'C:\\Program Files',
     SYSTEMDRIVE: 'C:',
     SYSTEMROOT: 'C:\\WINDOWS',
-    VITEST_WORKER_ID: '4',
-    VITEST_POOL_ID: '4',
+    VITEST_WORKER_ID: '3',
+    VITEST_POOL_ID: '3',
     SSR: ''
   }
 }
 
 stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:32:13)
 🔍 API CLIENT: Creating axios instance with baseURL:
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:44:13)
-🔍 AXIOS INSTANCE CONFIG: {
-  baseURL: '',
-  timeout: 10000,
-  headers: {
-    common: {
-      Accept: 'application/json, text/plain, */*',
-      'Content-Type': undefined
-    },
-    delete: {},
-    get: {},
-    head: {},
-    post: {},
-    put: {},
-    patch: {},
-    'Content-Type': 'application/json'
-  },
-  adapter: [ 'xhr', 'http', 'fetch' ]
-}
 
 stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:44:13)
 🔍 AXIOS INSTANCE CONFIG: {
@@ -1803,8 +973,838 @@ stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\ser
     PROGRAMW6432: 'C:\\Program Files',
     SYSTEMDRIVE: 'C:',
     SYSTEMROOT: 'C:\\WINDOWS',
+    VITEST_WORKER_ID: '5',
+    VITEST_POOL_ID: '5',
+    SSR: ''
+  }
+}
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:32:13)
+🔍 API CLIENT: Creating axios instance with baseURL:
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:44:13)
+🔍 AXIOS INSTANCE CONFIG: {
+  baseURL: '',
+  timeout: 10000,
+  headers: {
+    common: {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': undefined
+    },
+    delete: {},
+    get: {},
+    head: {},
+    post: {},
+    put: {},
+    patch: {},
+    'Content-Type': 'application/json'
+  },
+  adapter: [ 'xhr', 'http', 'fetch' ]
+}
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:15:13)
+🔍 API CLIENT CONSTRUCTOR - COMPLETE DEBUG: {
+  'import.meta.env.MODE': 'test',
+  'import.meta.env.DEV': true,
+  'import.meta.env.PROD': false,
+  'import.meta.env.VITE_API_BASE_URL': undefined,
+  'window.location': {
+    origin: 'http://localhost:3000',
+    hostname: 'localhost',
+    port: '3000',
+    protocol: 'http:'
+  },
+  'All environment variables': {
+    HOMEPATH: '\\Users\\mccre',
+    TEST: 'true',
+    APPDATA: 'C:\\Users\\mccre\\AppData\\Roaming',
+    VITEST: 'true',
+    NODE_ENV: 'test',
+    ALLUSERSPROFILE: 'C:\\ProgramData',
+    VITEST_MODE: 'RUN',
+    BASE_URL: '/',
+    ChocolateyInstall: 'C:\\ProgramData\\chocolatey',
+    EFC_11020_2397410445: '1',
+    ChocolateyLastPathUpdate: '133993438273562931',
+    COLOR: '1',
+    EDITOR: 'C:\\WINDOWS\\notepad.exe',
+    CommonProgramFiles: 'C:\\Program Files\\Common Files',
+    'CommonProgramFiles(Arm)': 'C:\\Program Files (Arm)\\Common Files',
+    NUMBER_OF_PROCESSORS: '12',
+    EFC_11020_1592913036: '1',
+    'CommonProgramFiles(x86)': 'C:\\Program Files (x86)\\Common Files',
+    npm_config_local_prefix: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    CommonProgramW6432: 'C:\\Program Files\\Common Files',
+    EFC_11020_1262719628: '1',
+    PROCESSOR_IDENTIFIER: 'ARMv8 (64-bit) Family 8 Model 1 Revision 201, Qualcomm Technologies Inc',
+    npm_config_userconfig: 'C:\\Users\\mccre\\.npmrc',
+    COMPUTERNAME: 'MACDADDYARM',
+    USERNAME: 'mccre',
+    ComSpec: 'C:\\WINDOWS\\system32\\cmd.exe',
+    npm_command: 'test',
+    DEV: '1',
+    DriverData: 'C:\\Windows\\System32\\Drivers\\DriverData',
+    EFC_11020_2283032206: '1',
+    EFC_11020_2775293581: '1',
+    npm_execpath: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+    npm_config_node_gyp: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
+    npm_config_init_module: 'C:\\Users\\mccre\\.npm-init.js',
+    NPM_CONFIG_NODE_GYP: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
+    EFC_11020_3789132940: '1',
+    npm_config_noproxy: '',
+    PSMODULEPATH: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
+    FPS_BROWSER_APP_PROFILE_STRING: 'Internet Explorer',
+    PROGRAMDATA: 'C:\\ProgramData',
+    FPS_BROWSER_USER_PROFILE_STRING: 'Default',
+    npm_config_global_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    HOME: 'C:\\Users\\mccre',
+    npm_package_version: '0.0.0',
+    HOMEDRIVE: 'C:',
+    INIT_CWD: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    Path: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    npm_lifecycle_event: 'test',
+    LOCALAPPDATA: 'C:\\Users\\mccre\\AppData\\Local',
+    LOGONSERVER: '\\\\MACDADDYARM',
+    MODE: 'test',
+    NODE: 'C:\\Program Files\\nodejs\\node.exe',
+    npm_config_cache: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
+    npm_config_globalconfig: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
+    OneDriveConsumer: 'C:\\Users\\mccre\\OneDrive',
+    npm_config_legacy_peer_deps: 'true',
+    npm_config_npm_version: '10.9.3',
+    npm_config_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    OS: 'Windows_NT',
+    npm_config_user_agent: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
+    npm_lifecycle_script: 'vitest --config vitest.config.js',
+    npm_node_execpath: 'C:\\Program Files\\nodejs\\node.exe',
+    WINDIR: 'C:\\WINDOWS',
+    npm_package_json: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
+    npm_package_name: 'microservices-frontend',
+    OneDrive: 'C:\\Users\\mccre\\OneDrive',
+    PATHEXT: '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL',
+    CHOCOLATEYINSTALL: 'C:\\ProgramData\\chocolatey',
+    PROCESSOR_ARCHITECTURE: 'ARM64',
+    PROCESSOR_LEVEL: '1',
+    PROCESSOR_REVISION: '0201',
+    PROD: '',
+    ProgramData: 'C:\\ProgramData',
+    ProgramFiles: 'C:\\Program Files',
+    'ProgramFiles(Arm)': 'C:\\Program Files (Arm)',
+    'ProgramFiles(x86)': 'C:\\Program Files (x86)',
+    ProgramW6432: 'C:\\Program Files',
+    PROMPT: '$P$G',
+    PSModulePath: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
+    PUBLIC: 'C:\\Users\\Public',
+    SESSIONNAME: 'Console',
+    SystemDrive: 'C:',
+    SystemRoot: 'C:\\WINDOWS',
+    TEMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
+    TMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
+    USERDOMAIN: 'MACDADDYARM',
+    USERDOMAIN_ROAMINGPROFILE: 'MACDADDYARM',
+    USERPROFILE: 'C:\\Users\\mccre',
+    windir: 'C:\\WINDOWS',
+    CHOCOLATEYLASTPATHUPDATE: '133993438273562931',
+    COMMONPROGRAMFILES: 'C:\\Program Files\\Common Files',
+    'COMMONPROGRAMFILES(ARM)': 'C:\\Program Files (Arm)\\Common Files',
+    'COMMONPROGRAMFILES(X86)': 'C:\\Program Files (x86)\\Common Files',
+    COMMONPROGRAMW6432: 'C:\\Program Files\\Common Files',
+    COMSPEC: 'C:\\WINDOWS\\system32\\cmd.exe',
+    DRIVERDATA: 'C:\\Windows\\System32\\Drivers\\DriverData',
+    NPM_COMMAND: 'test',
+    NPM_CONFIG_CACHE: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
+    NPM_CONFIG_GLOBALCONFIG: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
+    NPM_CONFIG_GLOBAL_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    NPM_CONFIG_INIT_MODULE: 'C:\\Users\\mccre\\.npm-init.js',
+    NPM_CONFIG_LEGACY_PEER_DEPS: 'true',
+    NPM_CONFIG_LOCAL_PREFIX: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    NPM_CONFIG_NOPROXY: '',
+    NPM_CONFIG_NPM_VERSION: '10.9.3',
+    NPM_CONFIG_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    NPM_CONFIG_USERCONFIG: 'C:\\Users\\mccre\\.npmrc',
+    NPM_CONFIG_USER_AGENT: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
+    NPM_LIFECYCLE_SCRIPT: 'vitest --config vitest.config.js',
+    NPM_EXECPATH: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+    NPM_LIFECYCLE_EVENT: 'test',
+    PROGRAMFILES: 'C:\\Program Files',
+    NPM_NODE_EXECPATH: 'C:\\Program Files\\nodejs\\node.exe',
+    NPM_PACKAGE_JSON: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
+    NPM_PACKAGE_NAME: 'microservices-frontend',
+    NPM_PACKAGE_VERSION: '0.0.0',
+    ONEDRIVE: 'C:\\Users\\mccre\\OneDrive',
+    ONEDRIVECONSUMER: 'C:\\Users\\mccre\\OneDrive',
+    PATH: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    'PROGRAMFILES(ARM)': 'C:\\Program Files (Arm)',
+    'PROGRAMFILES(X86)': 'C:\\Program Files (x86)',
+    PROGRAMW6432: 'C:\\Program Files',
+    SYSTEMDRIVE: 'C:',
+    SYSTEMROOT: 'C:\\WINDOWS',
+    VITEST_WORKER_ID: '9',
+    VITEST_POOL_ID: '9',
+    SSR: ''
+  }
+}
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:32:13)
+🔍 API CLIENT: Creating axios instance with baseURL:
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:44:13)
+🔍 AXIOS INSTANCE CONFIG: {
+  baseURL: '',
+  timeout: 10000,
+  headers: {
+    common: {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': undefined
+    },
+    delete: {},
+    get: {},
+    head: {},
+    post: {},
+    put: {},
+    patch: {},
+    'Content-Type': 'application/json'
+  },
+  adapter: [ 'xhr', 'http', 'fetch' ]
+}
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:15:13)
+🔍 API CLIENT CONSTRUCTOR - COMPLETE DEBUG: {
+  'import.meta.env.MODE': 'test',
+  'import.meta.env.DEV': true,
+  'import.meta.env.PROD': false,
+  'import.meta.env.VITE_API_BASE_URL': undefined,
+  'window.location': {
+    origin: 'http://localhost:3000',
+    hostname: 'localhost',
+    port: '3000',
+    protocol: 'http:'
+  },
+  'All environment variables': {
+    HOMEPATH: '\\Users\\mccre',
+    TEST: 'true',
+    APPDATA: 'C:\\Users\\mccre\\AppData\\Roaming',
+    VITEST: 'true',
+    NODE_ENV: 'test',
+    ALLUSERSPROFILE: 'C:\\ProgramData',
+    VITEST_MODE: 'RUN',
+    BASE_URL: '/',
+    ChocolateyInstall: 'C:\\ProgramData\\chocolatey',
+    EFC_11020_2397410445: '1',
+    ChocolateyLastPathUpdate: '133993438273562931',
+    COLOR: '1',
+    EDITOR: 'C:\\WINDOWS\\notepad.exe',
+    CommonProgramFiles: 'C:\\Program Files\\Common Files',
+    'CommonProgramFiles(Arm)': 'C:\\Program Files (Arm)\\Common Files',
+    NUMBER_OF_PROCESSORS: '12',
+    EFC_11020_1592913036: '1',
+    'CommonProgramFiles(x86)': 'C:\\Program Files (x86)\\Common Files',
+    npm_config_local_prefix: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    CommonProgramW6432: 'C:\\Program Files\\Common Files',
+    EFC_11020_1262719628: '1',
+    PROCESSOR_IDENTIFIER: 'ARMv8 (64-bit) Family 8 Model 1 Revision 201, Qualcomm Technologies Inc',
+    npm_config_userconfig: 'C:\\Users\\mccre\\.npmrc',
+    COMPUTERNAME: 'MACDADDYARM',
+    USERNAME: 'mccre',
+    ComSpec: 'C:\\WINDOWS\\system32\\cmd.exe',
+    npm_command: 'test',
+    DEV: '1',
+    DriverData: 'C:\\Windows\\System32\\Drivers\\DriverData',
+    EFC_11020_2283032206: '1',
+    EFC_11020_2775293581: '1',
+    npm_execpath: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+    npm_config_node_gyp: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
+    npm_config_init_module: 'C:\\Users\\mccre\\.npm-init.js',
+    NPM_CONFIG_NODE_GYP: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
+    EFC_11020_3789132940: '1',
+    npm_config_noproxy: '',
+    PSMODULEPATH: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
+    FPS_BROWSER_APP_PROFILE_STRING: 'Internet Explorer',
+    PROGRAMDATA: 'C:\\ProgramData',
+    FPS_BROWSER_USER_PROFILE_STRING: 'Default',
+    npm_config_global_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    HOME: 'C:\\Users\\mccre',
+    npm_package_version: '0.0.0',
+    HOMEDRIVE: 'C:',
+    INIT_CWD: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    Path: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    npm_lifecycle_event: 'test',
+    LOCALAPPDATA: 'C:\\Users\\mccre\\AppData\\Local',
+    LOGONSERVER: '\\\\MACDADDYARM',
+    MODE: 'test',
+    NODE: 'C:\\Program Files\\nodejs\\node.exe',
+    npm_config_cache: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
+    npm_config_globalconfig: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
+    OneDriveConsumer: 'C:\\Users\\mccre\\OneDrive',
+    npm_config_legacy_peer_deps: 'true',
+    npm_config_npm_version: '10.9.3',
+    npm_config_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    OS: 'Windows_NT',
+    npm_config_user_agent: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
+    npm_lifecycle_script: 'vitest --config vitest.config.js',
+    npm_node_execpath: 'C:\\Program Files\\nodejs\\node.exe',
+    WINDIR: 'C:\\WINDOWS',
+    npm_package_json: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
+    npm_package_name: 'microservices-frontend',
+    OneDrive: 'C:\\Users\\mccre\\OneDrive',
+    PATHEXT: '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL',
+    CHOCOLATEYINSTALL: 'C:\\ProgramData\\chocolatey',
+    PROCESSOR_ARCHITECTURE: 'ARM64',
+    PROCESSOR_LEVEL: '1',
+    PROCESSOR_REVISION: '0201',
+    PROD: '',
+    ProgramData: 'C:\\ProgramData',
+    ProgramFiles: 'C:\\Program Files',
+    'ProgramFiles(Arm)': 'C:\\Program Files (Arm)',
+    'ProgramFiles(x86)': 'C:\\Program Files (x86)',
+    ProgramW6432: 'C:\\Program Files',
+    PROMPT: '$P$G',
+    PSModulePath: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
+    PUBLIC: 'C:\\Users\\Public',
+    SESSIONNAME: 'Console',
+    SystemDrive: 'C:',
+    SystemRoot: 'C:\\WINDOWS',
+    TEMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
+    TMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
+    USERDOMAIN: 'MACDADDYARM',
+    USERDOMAIN_ROAMINGPROFILE: 'MACDADDYARM',
+    USERPROFILE: 'C:\\Users\\mccre',
+    windir: 'C:\\WINDOWS',
+    CHOCOLATEYLASTPATHUPDATE: '133993438273562931',
+    COMMONPROGRAMFILES: 'C:\\Program Files\\Common Files',
+    'COMMONPROGRAMFILES(ARM)': 'C:\\Program Files (Arm)\\Common Files',
+    'COMMONPROGRAMFILES(X86)': 'C:\\Program Files (x86)\\Common Files',
+    COMMONPROGRAMW6432: 'C:\\Program Files\\Common Files',
+    COMSPEC: 'C:\\WINDOWS\\system32\\cmd.exe',
+    DRIVERDATA: 'C:\\Windows\\System32\\Drivers\\DriverData',
+    NPM_COMMAND: 'test',
+    NPM_CONFIG_CACHE: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
+    NPM_CONFIG_GLOBALCONFIG: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
+    NPM_CONFIG_GLOBAL_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    NPM_CONFIG_INIT_MODULE: 'C:\\Users\\mccre\\.npm-init.js',
+    NPM_CONFIG_LEGACY_PEER_DEPS: 'true',
+    NPM_CONFIG_LOCAL_PREFIX: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    NPM_CONFIG_NOPROXY: '',
+    NPM_CONFIG_NPM_VERSION: '10.9.3',
+    NPM_CONFIG_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    NPM_CONFIG_USERCONFIG: 'C:\\Users\\mccre\\.npmrc',
+    NPM_CONFIG_USER_AGENT: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
+    NPM_LIFECYCLE_SCRIPT: 'vitest --config vitest.config.js',
+    NPM_EXECPATH: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+    NPM_LIFECYCLE_EVENT: 'test',
+    PROGRAMFILES: 'C:\\Program Files',
+    NPM_NODE_EXECPATH: 'C:\\Program Files\\nodejs\\node.exe',
+    NPM_PACKAGE_JSON: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
+    NPM_PACKAGE_NAME: 'microservices-frontend',
+    NPM_PACKAGE_VERSION: '0.0.0',
+    ONEDRIVE: 'C:\\Users\\mccre\\OneDrive',
+    ONEDRIVECONSUMER: 'C:\\Users\\mccre\\OneDrive',
+    PATH: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    'PROGRAMFILES(ARM)': 'C:\\Program Files (Arm)',
+    'PROGRAMFILES(X86)': 'C:\\Program Files (x86)',
+    PROGRAMW6432: 'C:\\Program Files',
+    SYSTEMDRIVE: 'C:',
+    SYSTEMROOT: 'C:\\WINDOWS',
+    VITEST_WORKER_ID: '8',
+    VITEST_POOL_ID: '8',
+    SSR: ''
+  }
+}
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:32:13)
+🔍 API CLIENT: Creating axios instance with baseURL:
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:44:13)
+🔍 AXIOS INSTANCE CONFIG: {
+  baseURL: '',
+  timeout: 10000,
+  headers: {
+    common: {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': undefined
+    },
+    delete: {},
+    get: {},
+    head: {},
+    post: {},
+    put: {},
+    patch: {},
+    'Content-Type': 'application/json'
+  },
+  adapter: [ 'xhr', 'http', 'fetch' ]
+}
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:15:13)
+🔍 API CLIENT CONSTRUCTOR - COMPLETE DEBUG: {
+  'import.meta.env.MODE': 'test',
+  'import.meta.env.DEV': true,
+  'import.meta.env.PROD': false,
+  'import.meta.env.VITE_API_BASE_URL': undefined,
+  'window.location': {
+    origin: 'http://localhost:3000',
+    hostname: 'localhost',
+    port: '3000',
+    protocol: 'http:'
+  },
+  'All environment variables': {
+    HOMEPATH: '\\Users\\mccre',
+    TEST: 'true',
+    APPDATA: 'C:\\Users\\mccre\\AppData\\Roaming',
+    VITEST: 'true',
+    NODE_ENV: 'test',
+    ALLUSERSPROFILE: 'C:\\ProgramData',
+    VITEST_MODE: 'RUN',
+    BASE_URL: '/',
+    ChocolateyInstall: 'C:\\ProgramData\\chocolatey',
+    EFC_11020_2397410445: '1',
+    ChocolateyLastPathUpdate: '133993438273562931',
+    COLOR: '1',
+    EDITOR: 'C:\\WINDOWS\\notepad.exe',
+    CommonProgramFiles: 'C:\\Program Files\\Common Files',
+    'CommonProgramFiles(Arm)': 'C:\\Program Files (Arm)\\Common Files',
+    NUMBER_OF_PROCESSORS: '12',
+    EFC_11020_1592913036: '1',
+    'CommonProgramFiles(x86)': 'C:\\Program Files (x86)\\Common Files',
+    npm_config_local_prefix: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    CommonProgramW6432: 'C:\\Program Files\\Common Files',
+    EFC_11020_1262719628: '1',
+    PROCESSOR_IDENTIFIER: 'ARMv8 (64-bit) Family 8 Model 1 Revision 201, Qualcomm Technologies Inc',
+    npm_config_userconfig: 'C:\\Users\\mccre\\.npmrc',
+    COMPUTERNAME: 'MACDADDYARM',
+    USERNAME: 'mccre',
+    ComSpec: 'C:\\WINDOWS\\system32\\cmd.exe',
+    npm_command: 'test',
+    DEV: '1',
+    DriverData: 'C:\\Windows\\System32\\Drivers\\DriverData',
+    EFC_11020_2283032206: '1',
+    EFC_11020_2775293581: '1',
+    npm_execpath: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+    npm_config_node_gyp: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
+    npm_config_init_module: 'C:\\Users\\mccre\\.npm-init.js',
+    NPM_CONFIG_NODE_GYP: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
+    EFC_11020_3789132940: '1',
+    npm_config_noproxy: '',
+    PSMODULEPATH: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
+    FPS_BROWSER_APP_PROFILE_STRING: 'Internet Explorer',
+    PROGRAMDATA: 'C:\\ProgramData',
+    FPS_BROWSER_USER_PROFILE_STRING: 'Default',
+    npm_config_global_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    HOME: 'C:\\Users\\mccre',
+    npm_package_version: '0.0.0',
+    HOMEDRIVE: 'C:',
+    INIT_CWD: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    Path: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    npm_lifecycle_event: 'test',
+    LOCALAPPDATA: 'C:\\Users\\mccre\\AppData\\Local',
+    LOGONSERVER: '\\\\MACDADDYARM',
+    MODE: 'test',
+    NODE: 'C:\\Program Files\\nodejs\\node.exe',
+    npm_config_cache: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
+    npm_config_globalconfig: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
+    OneDriveConsumer: 'C:\\Users\\mccre\\OneDrive',
+    npm_config_legacy_peer_deps: 'true',
+    npm_config_npm_version: '10.9.3',
+    npm_config_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    OS: 'Windows_NT',
+    npm_config_user_agent: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
+    npm_lifecycle_script: 'vitest --config vitest.config.js',
+    npm_node_execpath: 'C:\\Program Files\\nodejs\\node.exe',
+    WINDIR: 'C:\\WINDOWS',
+    npm_package_json: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
+    npm_package_name: 'microservices-frontend',
+    OneDrive: 'C:\\Users\\mccre\\OneDrive',
+    PATHEXT: '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL',
+    CHOCOLATEYINSTALL: 'C:\\ProgramData\\chocolatey',
+    PROCESSOR_ARCHITECTURE: 'ARM64',
+    PROCESSOR_LEVEL: '1',
+    PROCESSOR_REVISION: '0201',
+    PROD: '',
+    ProgramData: 'C:\\ProgramData',
+    ProgramFiles: 'C:\\Program Files',
+    'ProgramFiles(Arm)': 'C:\\Program Files (Arm)',
+    'ProgramFiles(x86)': 'C:\\Program Files (x86)',
+    ProgramW6432: 'C:\\Program Files',
+    PROMPT: '$P$G',
+    PSModulePath: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
+    PUBLIC: 'C:\\Users\\Public',
+    SESSIONNAME: 'Console',
+    SystemDrive: 'C:',
+    SystemRoot: 'C:\\WINDOWS',
+    TEMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
+    TMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
+    USERDOMAIN: 'MACDADDYARM',
+    USERDOMAIN_ROAMINGPROFILE: 'MACDADDYARM',
+    USERPROFILE: 'C:\\Users\\mccre',
+    windir: 'C:\\WINDOWS',
+    CHOCOLATEYLASTPATHUPDATE: '133993438273562931',
+    COMMONPROGRAMFILES: 'C:\\Program Files\\Common Files',
+    'COMMONPROGRAMFILES(ARM)': 'C:\\Program Files (Arm)\\Common Files',
+    'COMMONPROGRAMFILES(X86)': 'C:\\Program Files (x86)\\Common Files',
+    COMMONPROGRAMW6432: 'C:\\Program Files\\Common Files',
+    COMSPEC: 'C:\\WINDOWS\\system32\\cmd.exe',
+    DRIVERDATA: 'C:\\Windows\\System32\\Drivers\\DriverData',
+    NPM_COMMAND: 'test',
+    NPM_CONFIG_CACHE: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
+    NPM_CONFIG_GLOBALCONFIG: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
+    NPM_CONFIG_GLOBAL_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    NPM_CONFIG_INIT_MODULE: 'C:\\Users\\mccre\\.npm-init.js',
+    NPM_CONFIG_LEGACY_PEER_DEPS: 'true',
+    NPM_CONFIG_LOCAL_PREFIX: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    NPM_CONFIG_NOPROXY: '',
+    NPM_CONFIG_NPM_VERSION: '10.9.3',
+    NPM_CONFIG_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    NPM_CONFIG_USERCONFIG: 'C:\\Users\\mccre\\.npmrc',
+    NPM_CONFIG_USER_AGENT: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
+    NPM_LIFECYCLE_SCRIPT: 'vitest --config vitest.config.js',
+    NPM_EXECPATH: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+    NPM_LIFECYCLE_EVENT: 'test',
+    PROGRAMFILES: 'C:\\Program Files',
+    NPM_NODE_EXECPATH: 'C:\\Program Files\\nodejs\\node.exe',
+    NPM_PACKAGE_JSON: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
+    NPM_PACKAGE_NAME: 'microservices-frontend',
+    NPM_PACKAGE_VERSION: '0.0.0',
+    ONEDRIVE: 'C:\\Users\\mccre\\OneDrive',
+    ONEDRIVECONSUMER: 'C:\\Users\\mccre\\OneDrive',
+    PATH: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    'PROGRAMFILES(ARM)': 'C:\\Program Files (Arm)',
+    'PROGRAMFILES(X86)': 'C:\\Program Files (x86)',
+    PROGRAMW6432: 'C:\\Program Files',
+    SYSTEMDRIVE: 'C:',
+    SYSTEMROOT: 'C:\\WINDOWS',
     VITEST_WORKER_ID: '7',
     VITEST_POOL_ID: '7',
+    SSR: ''
+  }
+}
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:32:13)
+🔍 API CLIENT: Creating axios instance with baseURL:
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:44:13)
+🔍 AXIOS INSTANCE CONFIG: {
+  baseURL: '',
+  timeout: 10000,
+  headers: {
+    common: {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': undefined
+    },
+    delete: {},
+    get: {},
+    head: {},
+    post: {},
+    put: {},
+    patch: {},
+    'Content-Type': 'application/json'
+  },
+  adapter: [ 'xhr', 'http', 'fetch' ]
+}
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:15:13)
+🔍 API CLIENT CONSTRUCTOR - COMPLETE DEBUG: {
+  'import.meta.env.MODE': 'test',
+  'import.meta.env.DEV': true,
+  'import.meta.env.PROD': false,
+  'import.meta.env.VITE_API_BASE_URL': undefined,
+  'window.location': {
+    origin: 'http://localhost:3000',
+    hostname: 'localhost',
+    port: '3000',
+    protocol: 'http:'
+  },
+  'All environment variables': {
+    HOMEPATH: '\\Users\\mccre',
+    TEST: 'true',
+    APPDATA: 'C:\\Users\\mccre\\AppData\\Roaming',
+    VITEST: 'true',
+    NODE_ENV: 'test',
+    ALLUSERSPROFILE: 'C:\\ProgramData',
+    VITEST_MODE: 'RUN',
+    BASE_URL: '/',
+    ChocolateyInstall: 'C:\\ProgramData\\chocolatey',
+    EFC_11020_2397410445: '1',
+    ChocolateyLastPathUpdate: '133993438273562931',
+    COLOR: '1',
+    EDITOR: 'C:\\WINDOWS\\notepad.exe',
+    CommonProgramFiles: 'C:\\Program Files\\Common Files',
+    'CommonProgramFiles(Arm)': 'C:\\Program Files (Arm)\\Common Files',
+    NUMBER_OF_PROCESSORS: '12',
+    EFC_11020_1592913036: '1',
+    'CommonProgramFiles(x86)': 'C:\\Program Files (x86)\\Common Files',
+    npm_config_local_prefix: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    CommonProgramW6432: 'C:\\Program Files\\Common Files',
+    EFC_11020_1262719628: '1',
+    PROCESSOR_IDENTIFIER: 'ARMv8 (64-bit) Family 8 Model 1 Revision 201, Qualcomm Technologies Inc',
+    npm_config_userconfig: 'C:\\Users\\mccre\\.npmrc',
+    COMPUTERNAME: 'MACDADDYARM',
+    USERNAME: 'mccre',
+    ComSpec: 'C:\\WINDOWS\\system32\\cmd.exe',
+    npm_command: 'test',
+    DEV: '1',
+    DriverData: 'C:\\Windows\\System32\\Drivers\\DriverData',
+    EFC_11020_2283032206: '1',
+    EFC_11020_2775293581: '1',
+    npm_execpath: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+    npm_config_node_gyp: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
+    npm_config_init_module: 'C:\\Users\\mccre\\.npm-init.js',
+    NPM_CONFIG_NODE_GYP: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
+    EFC_11020_3789132940: '1',
+    npm_config_noproxy: '',
+    PSMODULEPATH: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
+    FPS_BROWSER_APP_PROFILE_STRING: 'Internet Explorer',
+    PROGRAMDATA: 'C:\\ProgramData',
+    FPS_BROWSER_USER_PROFILE_STRING: 'Default',
+    npm_config_global_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    HOME: 'C:\\Users\\mccre',
+    npm_package_version: '0.0.0',
+    HOMEDRIVE: 'C:',
+    INIT_CWD: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    Path: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    npm_lifecycle_event: 'test',
+    LOCALAPPDATA: 'C:\\Users\\mccre\\AppData\\Local',
+    LOGONSERVER: '\\\\MACDADDYARM',
+    MODE: 'test',
+    NODE: 'C:\\Program Files\\nodejs\\node.exe',
+    npm_config_cache: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
+    npm_config_globalconfig: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
+    OneDriveConsumer: 'C:\\Users\\mccre\\OneDrive',
+    npm_config_legacy_peer_deps: 'true',
+    npm_config_npm_version: '10.9.3',
+    npm_config_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    OS: 'Windows_NT',
+    npm_config_user_agent: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
+    npm_lifecycle_script: 'vitest --config vitest.config.js',
+    npm_node_execpath: 'C:\\Program Files\\nodejs\\node.exe',
+    WINDIR: 'C:\\WINDOWS',
+    npm_package_json: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
+    npm_package_name: 'microservices-frontend',
+    OneDrive: 'C:\\Users\\mccre\\OneDrive',
+    PATHEXT: '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL',
+    CHOCOLATEYINSTALL: 'C:\\ProgramData\\chocolatey',
+    PROCESSOR_ARCHITECTURE: 'ARM64',
+    PROCESSOR_LEVEL: '1',
+    PROCESSOR_REVISION: '0201',
+    PROD: '',
+    ProgramData: 'C:\\ProgramData',
+    ProgramFiles: 'C:\\Program Files',
+    'ProgramFiles(Arm)': 'C:\\Program Files (Arm)',
+    'ProgramFiles(x86)': 'C:\\Program Files (x86)',
+    ProgramW6432: 'C:\\Program Files',
+    PROMPT: '$P$G',
+    PSModulePath: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
+    PUBLIC: 'C:\\Users\\Public',
+    SESSIONNAME: 'Console',
+    SystemDrive: 'C:',
+    SystemRoot: 'C:\\WINDOWS',
+    TEMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
+    TMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
+    USERDOMAIN: 'MACDADDYARM',
+    USERDOMAIN_ROAMINGPROFILE: 'MACDADDYARM',
+    USERPROFILE: 'C:\\Users\\mccre',
+    windir: 'C:\\WINDOWS',
+    CHOCOLATEYLASTPATHUPDATE: '133993438273562931',
+    COMMONPROGRAMFILES: 'C:\\Program Files\\Common Files',
+    'COMMONPROGRAMFILES(ARM)': 'C:\\Program Files (Arm)\\Common Files',
+    'COMMONPROGRAMFILES(X86)': 'C:\\Program Files (x86)\\Common Files',
+    COMMONPROGRAMW6432: 'C:\\Program Files\\Common Files',
+    COMSPEC: 'C:\\WINDOWS\\system32\\cmd.exe',
+    DRIVERDATA: 'C:\\Windows\\System32\\Drivers\\DriverData',
+    NPM_COMMAND: 'test',
+    NPM_CONFIG_CACHE: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
+    NPM_CONFIG_GLOBALCONFIG: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
+    NPM_CONFIG_GLOBAL_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    NPM_CONFIG_INIT_MODULE: 'C:\\Users\\mccre\\.npm-init.js',
+    NPM_CONFIG_LEGACY_PEER_DEPS: 'true',
+    NPM_CONFIG_LOCAL_PREFIX: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    NPM_CONFIG_NOPROXY: '',
+    NPM_CONFIG_NPM_VERSION: '10.9.3',
+    NPM_CONFIG_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    NPM_CONFIG_USERCONFIG: 'C:\\Users\\mccre\\.npmrc',
+    NPM_CONFIG_USER_AGENT: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
+    NPM_LIFECYCLE_SCRIPT: 'vitest --config vitest.config.js',
+    NPM_EXECPATH: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+    NPM_LIFECYCLE_EVENT: 'test',
+    PROGRAMFILES: 'C:\\Program Files',
+    NPM_NODE_EXECPATH: 'C:\\Program Files\\nodejs\\node.exe',
+    NPM_PACKAGE_JSON: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
+    NPM_PACKAGE_NAME: 'microservices-frontend',
+    NPM_PACKAGE_VERSION: '0.0.0',
+    ONEDRIVE: 'C:\\Users\\mccre\\OneDrive',
+    ONEDRIVECONSUMER: 'C:\\Users\\mccre\\OneDrive',
+    PATH: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    'PROGRAMFILES(ARM)': 'C:\\Program Files (Arm)',
+    'PROGRAMFILES(X86)': 'C:\\Program Files (x86)',
+    PROGRAMW6432: 'C:\\Program Files',
+    SYSTEMDRIVE: 'C:',
+    SYSTEMROOT: 'C:\\WINDOWS',
+    VITEST_WORKER_ID: '10',
+    VITEST_POOL_ID: '10',
+    SSR: ''
+  }
+}
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:32:13)
+🔍 API CLIENT: Creating axios instance with baseURL:
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:44:13)
+🔍 AXIOS INSTANCE CONFIG: {
+  baseURL: '',
+  timeout: 10000,
+  headers: {
+    common: {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': undefined
+    },
+    delete: {},
+    get: {},
+    head: {},
+    post: {},
+    put: {},
+    patch: {},
+    'Content-Type': 'application/json'
+  },
+  adapter: [ 'xhr', 'http', 'fetch' ]
+}
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:15:13)
+🔍 API CLIENT CONSTRUCTOR - COMPLETE DEBUG: {
+  'import.meta.env.MODE': 'test',
+  'import.meta.env.DEV': true,
+  'import.meta.env.PROD': false,
+  'import.meta.env.VITE_API_BASE_URL': undefined,
+  'window.location': {
+    origin: 'http://localhost:3000',
+    hostname: 'localhost',
+    port: '3000',
+    protocol: 'http:'
+  },
+  'All environment variables': {
+    HOMEPATH: '\\Users\\mccre',
+    TEST: 'true',
+    APPDATA: 'C:\\Users\\mccre\\AppData\\Roaming',
+    VITEST: 'true',
+    NODE_ENV: 'test',
+    ALLUSERSPROFILE: 'C:\\ProgramData',
+    VITEST_MODE: 'RUN',
+    BASE_URL: '/',
+    ChocolateyInstall: 'C:\\ProgramData\\chocolatey',
+    EFC_11020_2397410445: '1',
+    ChocolateyLastPathUpdate: '133993438273562931',
+    COLOR: '1',
+    EDITOR: 'C:\\WINDOWS\\notepad.exe',
+    CommonProgramFiles: 'C:\\Program Files\\Common Files',
+    'CommonProgramFiles(Arm)': 'C:\\Program Files (Arm)\\Common Files',
+    NUMBER_OF_PROCESSORS: '12',
+    EFC_11020_1592913036: '1',
+    'CommonProgramFiles(x86)': 'C:\\Program Files (x86)\\Common Files',
+    npm_config_local_prefix: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    CommonProgramW6432: 'C:\\Program Files\\Common Files',
+    EFC_11020_1262719628: '1',
+    PROCESSOR_IDENTIFIER: 'ARMv8 (64-bit) Family 8 Model 1 Revision 201, Qualcomm Technologies Inc',
+    npm_config_userconfig: 'C:\\Users\\mccre\\.npmrc',
+    COMPUTERNAME: 'MACDADDYARM',
+    USERNAME: 'mccre',
+    ComSpec: 'C:\\WINDOWS\\system32\\cmd.exe',
+    npm_command: 'test',
+    DEV: '1',
+    DriverData: 'C:\\Windows\\System32\\Drivers\\DriverData',
+    EFC_11020_2283032206: '1',
+    EFC_11020_2775293581: '1',
+    npm_execpath: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+    npm_config_node_gyp: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
+    npm_config_init_module: 'C:\\Users\\mccre\\.npm-init.js',
+    NPM_CONFIG_NODE_GYP: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
+    EFC_11020_3789132940: '1',
+    npm_config_noproxy: '',
+    PSMODULEPATH: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
+    FPS_BROWSER_APP_PROFILE_STRING: 'Internet Explorer',
+    PROGRAMDATA: 'C:\\ProgramData',
+    FPS_BROWSER_USER_PROFILE_STRING: 'Default',
+    npm_config_global_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    HOME: 'C:\\Users\\mccre',
+    npm_package_version: '0.0.0',
+    HOMEDRIVE: 'C:',
+    INIT_CWD: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    Path: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    npm_lifecycle_event: 'test',
+    LOCALAPPDATA: 'C:\\Users\\mccre\\AppData\\Local',
+    LOGONSERVER: '\\\\MACDADDYARM',
+    MODE: 'test',
+    NODE: 'C:\\Program Files\\nodejs\\node.exe',
+    npm_config_cache: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
+    npm_config_globalconfig: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
+    OneDriveConsumer: 'C:\\Users\\mccre\\OneDrive',
+    npm_config_legacy_peer_deps: 'true',
+    npm_config_npm_version: '10.9.3',
+    npm_config_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    OS: 'Windows_NT',
+    npm_config_user_agent: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
+    npm_lifecycle_script: 'vitest --config vitest.config.js',
+    npm_node_execpath: 'C:\\Program Files\\nodejs\\node.exe',
+    WINDIR: 'C:\\WINDOWS',
+    npm_package_json: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
+    npm_package_name: 'microservices-frontend',
+    OneDrive: 'C:\\Users\\mccre\\OneDrive',
+    PATHEXT: '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL',
+    CHOCOLATEYINSTALL: 'C:\\ProgramData\\chocolatey',
+    PROCESSOR_ARCHITECTURE: 'ARM64',
+    PROCESSOR_LEVEL: '1',
+    PROCESSOR_REVISION: '0201',
+    PROD: '',
+    ProgramData: 'C:\\ProgramData',
+    ProgramFiles: 'C:\\Program Files',
+    'ProgramFiles(Arm)': 'C:\\Program Files (Arm)',
+    'ProgramFiles(x86)': 'C:\\Program Files (x86)',
+    ProgramW6432: 'C:\\Program Files',
+    PROMPT: '$P$G',
+    PSModulePath: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
+    PUBLIC: 'C:\\Users\\Public',
+    SESSIONNAME: 'Console',
+    SystemDrive: 'C:',
+    SystemRoot: 'C:\\WINDOWS',
+    TEMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
+    TMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
+    USERDOMAIN: 'MACDADDYARM',
+    USERDOMAIN_ROAMINGPROFILE: 'MACDADDYARM',
+    USERPROFILE: 'C:\\Users\\mccre',
+    windir: 'C:\\WINDOWS',
+    CHOCOLATEYLASTPATHUPDATE: '133993438273562931',
+    COMMONPROGRAMFILES: 'C:\\Program Files\\Common Files',
+    'COMMONPROGRAMFILES(ARM)': 'C:\\Program Files (Arm)\\Common Files',
+    'COMMONPROGRAMFILES(X86)': 'C:\\Program Files (x86)\\Common Files',
+    COMMONPROGRAMW6432: 'C:\\Program Files\\Common Files',
+    COMSPEC: 'C:\\WINDOWS\\system32\\cmd.exe',
+    DRIVERDATA: 'C:\\Windows\\System32\\Drivers\\DriverData',
+    NPM_COMMAND: 'test',
+    NPM_CONFIG_CACHE: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
+    NPM_CONFIG_GLOBALCONFIG: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
+    NPM_CONFIG_GLOBAL_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    NPM_CONFIG_INIT_MODULE: 'C:\\Users\\mccre\\.npm-init.js',
+    NPM_CONFIG_LEGACY_PEER_DEPS: 'true',
+    NPM_CONFIG_LOCAL_PREFIX: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    NPM_CONFIG_NOPROXY: '',
+    NPM_CONFIG_NPM_VERSION: '10.9.3',
+    NPM_CONFIG_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    NPM_CONFIG_USERCONFIG: 'C:\\Users\\mccre\\.npmrc',
+    NPM_CONFIG_USER_AGENT: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
+    NPM_LIFECYCLE_SCRIPT: 'vitest --config vitest.config.js',
+    NPM_EXECPATH: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+    NPM_LIFECYCLE_EVENT: 'test',
+    PROGRAMFILES: 'C:\\Program Files',
+    NPM_NODE_EXECPATH: 'C:\\Program Files\\nodejs\\node.exe',
+    NPM_PACKAGE_JSON: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
+    NPM_PACKAGE_NAME: 'microservices-frontend',
+    NPM_PACKAGE_VERSION: '0.0.0',
+    ONEDRIVE: 'C:\\Users\\mccre\\OneDrive',
+    ONEDRIVECONSUMER: 'C:\\Users\\mccre\\OneDrive',
+    PATH: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    'PROGRAMFILES(ARM)': 'C:\\Program Files (Arm)',
+    'PROGRAMFILES(X86)': 'C:\\Program Files (x86)',
+    PROGRAMW6432: 'C:\\Program Files',
+    SYSTEMDRIVE: 'C:',
+    SYSTEMROOT: 'C:\\WINDOWS',
+    VITEST_WORKER_ID: '1',
+    VITEST_POOL_ID: '1',
     SSR: ''
   }
 }
@@ -2172,6 +2172,28 @@ stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\ser
   adapter: [ 'xhr', 'http', 'fetch' ]
 }
 
+stderr | src/test/scenarios/api-permission-integration.test.tsx > API Permission Integration Scenarios > Permission-Based Error Handling > should handle 403 Forbidden responses gracefully
+An update to ProtectedActionComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProtectedActionComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
 stderr | src/test/scenarios/api-permission-integration.test.tsx > API Permission Integration Scenarios > Permission-Based Error Handling > should handle successful operations for authorized users
 [MSW] Error: intercepted a request without a matching request handler:
 
@@ -2179,172 +2201,26 @@ stderr | src/test/scenarios/api-permission-integration.test.tsx > API Permission
 
 If you still wish to intercept this unhandled request, please create a request handler for it.
 Read more: https://mswjs.io/docs/http/intercepting-requests
+An update to ProtectedActionComponent inside a test was not wrapped in act(...).
 
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:15:13)
-🔍 API CLIENT CONSTRUCTOR - COMPLETE DEBUG: {
-  'import.meta.env.MODE': 'test',
-  'import.meta.env.DEV': true,
-  'import.meta.env.PROD': false,
-  'import.meta.env.VITE_API_BASE_URL': undefined,
-  'window.location': {
-    origin: 'http://localhost:3000',
-    hostname: 'localhost',
-    port: '3000',
-    protocol: 'http:'
-  },
-  'All environment variables': {
-    HOMEPATH: '\\Users\\mccre',
-    TEST: 'true',
-    APPDATA: 'C:\\Users\\mccre\\AppData\\Roaming',
-    VITEST: 'true',
-    NODE_ENV: 'test',
-    ALLUSERSPROFILE: 'C:\\ProgramData',
-    VITEST_MODE: 'RUN',
-    BASE_URL: '/',
-    ChocolateyInstall: 'C:\\ProgramData\\chocolatey',
-    EFC_11020_2397410445: '1',
-    ChocolateyLastPathUpdate: '133993438273562931',
-    COLOR: '1',
-    EDITOR: 'C:\\WINDOWS\\notepad.exe',
-    CommonProgramFiles: 'C:\\Program Files\\Common Files',
-    'CommonProgramFiles(Arm)': 'C:\\Program Files (Arm)\\Common Files',
-    NUMBER_OF_PROCESSORS: '12',
-    EFC_11020_1592913036: '1',
-    'CommonProgramFiles(x86)': 'C:\\Program Files (x86)\\Common Files',
-    npm_config_local_prefix: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    CommonProgramW6432: 'C:\\Program Files\\Common Files',
-    EFC_11020_1262719628: '1',
-    PROCESSOR_IDENTIFIER: 'ARMv8 (64-bit) Family 8 Model 1 Revision 201, Qualcomm Technologies Inc',
-    npm_config_userconfig: 'C:\\Users\\mccre\\.npmrc',
-    COMPUTERNAME: 'MACDADDYARM',
-    USERNAME: 'mccre',
-    ComSpec: 'C:\\WINDOWS\\system32\\cmd.exe',
-    npm_command: 'test',
-    DEV: '1',
-    DriverData: 'C:\\Windows\\System32\\Drivers\\DriverData',
-    EFC_11020_2283032206: '1',
-    EFC_11020_2775293581: '1',
-    npm_execpath: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
-    npm_config_node_gyp: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
-    npm_config_init_module: 'C:\\Users\\mccre\\.npm-init.js',
-    NPM_CONFIG_NODE_GYP: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
-    EFC_11020_3789132940: '1',
-    npm_config_noproxy: '',
-    PSMODULEPATH: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
-    FPS_BROWSER_APP_PROFILE_STRING: 'Internet Explorer',
-    PROGRAMDATA: 'C:\\ProgramData',
-    FPS_BROWSER_USER_PROFILE_STRING: 'Default',
-    npm_config_global_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    HOME: 'C:\\Users\\mccre',
-    npm_package_version: '0.0.0',
-    HOMEDRIVE: 'C:',
-    INIT_CWD: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    Path: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    npm_lifecycle_event: 'test',
-    LOCALAPPDATA: 'C:\\Users\\mccre\\AppData\\Local',
-    LOGONSERVER: '\\\\MACDADDYARM',
-    MODE: 'test',
-    NODE: 'C:\\Program Files\\nodejs\\node.exe',
-    npm_config_cache: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
-    npm_config_globalconfig: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
-    OneDriveConsumer: 'C:\\Users\\mccre\\OneDrive',
-    npm_config_legacy_peer_deps: 'true',
-    npm_config_npm_version: '10.9.3',
-    npm_config_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    OS: 'Windows_NT',
-    npm_config_user_agent: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
-    npm_lifecycle_script: 'vitest --config vitest.config.js',
-    npm_node_execpath: 'C:\\Program Files\\nodejs\\node.exe',
-    WINDIR: 'C:\\WINDOWS',
-    npm_package_json: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
-    npm_package_name: 'microservices-frontend',
-    OneDrive: 'C:\\Users\\mccre\\OneDrive',
-    PATHEXT: '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL',
-    CHOCOLATEYINSTALL: 'C:\\ProgramData\\chocolatey',
-    PROCESSOR_ARCHITECTURE: 'ARM64',
-    PROCESSOR_LEVEL: '1',
-    PROCESSOR_REVISION: '0201',
-    PROD: '',
-    ProgramData: 'C:\\ProgramData',
-    ProgramFiles: 'C:\\Program Files',
-    'ProgramFiles(Arm)': 'C:\\Program Files (Arm)',
-    'ProgramFiles(x86)': 'C:\\Program Files (x86)',
-    ProgramW6432: 'C:\\Program Files',
-    PROMPT: '$P$G',
-    PSModulePath: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
-    PUBLIC: 'C:\\Users\\Public',
-    SESSIONNAME: 'Console',
-    SystemDrive: 'C:',
-    SystemRoot: 'C:\\WINDOWS',
-    TEMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
-    TMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
-    USERDOMAIN: 'MACDADDYARM',
-    USERDOMAIN_ROAMINGPROFILE: 'MACDADDYARM',
-    USERPROFILE: 'C:\\Users\\mccre',
-    windir: 'C:\\WINDOWS',
-    CHOCOLATEYLASTPATHUPDATE: '133993438273562931',
-    COMMONPROGRAMFILES: 'C:\\Program Files\\Common Files',
-    'COMMONPROGRAMFILES(ARM)': 'C:\\Program Files (Arm)\\Common Files',
-    'COMMONPROGRAMFILES(X86)': 'C:\\Program Files (x86)\\Common Files',
-    COMMONPROGRAMW6432: 'C:\\Program Files\\Common Files',
-    COMSPEC: 'C:\\WINDOWS\\system32\\cmd.exe',
-    DRIVERDATA: 'C:\\Windows\\System32\\Drivers\\DriverData',
-    NPM_COMMAND: 'test',
-    NPM_CONFIG_CACHE: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
-    NPM_CONFIG_GLOBALCONFIG: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
-    NPM_CONFIG_GLOBAL_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    NPM_CONFIG_INIT_MODULE: 'C:\\Users\\mccre\\.npm-init.js',
-    NPM_CONFIG_LEGACY_PEER_DEPS: 'true',
-    NPM_CONFIG_LOCAL_PREFIX: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
-    NPM_CONFIG_NOPROXY: '',
-    NPM_CONFIG_NPM_VERSION: '10.9.3',
-    NPM_CONFIG_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    NPM_CONFIG_USERCONFIG: 'C:\\Users\\mccre\\.npmrc',
-    NPM_CONFIG_USER_AGENT: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
-    NPM_LIFECYCLE_SCRIPT: 'vitest --config vitest.config.js',
-    NPM_EXECPATH: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
-    NPM_LIFECYCLE_EVENT: 'test',
-    PROGRAMFILES: 'C:\\Program Files',
-    NPM_NODE_EXECPATH: 'C:\\Program Files\\nodejs\\node.exe',
-    NPM_PACKAGE_JSON: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
-    NPM_PACKAGE_NAME: 'microservices-frontend',
-    NPM_PACKAGE_VERSION: '0.0.0',
-    ONEDRIVE: 'C:\\Users\\mccre\\OneDrive',
-    ONEDRIVECONSUMER: 'C:\\Users\\mccre\\OneDrive',
-    PATH: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
-    'PROGRAMFILES(ARM)': 'C:\\Program Files (Arm)',
-    'PROGRAMFILES(X86)': 'C:\\Program Files (x86)',
-    PROGRAMW6432: 'C:\\Program Files',
-    SYSTEMDRIVE: 'C:',
-    SYSTEMROOT: 'C:\\WINDOWS',
-    VITEST_WORKER_ID: '15',
-    VITEST_POOL_ID: '1',
-    SSR: ''
-  }
-}
+When testing, code that causes React state updates should be wrapped into act(...):
 
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:32:13)
-🔍 API CLIENT: Creating axios instance with baseURL:
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
 
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:44:13)
-🔍 AXIOS INSTANCE CONFIG: {
-  baseURL: '',
-  timeout: 10000,
-  headers: {
-    common: {
-      Accept: 'application/json, text/plain, */*',
-      'Content-Type': undefined
-    },
-    delete: {},
-    get: {},
-    head: {},
-    post: {},
-    put: {},
-    patch: {},
-    'Content-Type': 'application/json'
-  },
-  adapter: [ 'xhr', 'http', 'fetch' ]
-}
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ProtectedActionComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
 
 stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:15:13)
 🔍 API CLIENT CONSTRUCTOR - COMPLETE DEBUG: {
@@ -2649,6 +2525,172 @@ stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\ser
     PROGRAMW6432: 'C:\\Program Files',
     SYSTEMDRIVE: 'C:',
     SYSTEMROOT: 'C:\\WINDOWS',
+    VITEST_WORKER_ID: '15',
+    VITEST_POOL_ID: '1',
+    SSR: ''
+  }
+}
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:32:13)
+🔍 API CLIENT: Creating axios instance with baseURL:
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:44:13)
+🔍 AXIOS INSTANCE CONFIG: {
+  baseURL: '',
+  timeout: 10000,
+  headers: {
+    common: {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': undefined
+    },
+    delete: {},
+    get: {},
+    head: {},
+    post: {},
+    put: {},
+    patch: {},
+    'Content-Type': 'application/json'
+  },
+  adapter: [ 'xhr', 'http', 'fetch' ]
+}
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:15:13)
+🔍 API CLIENT CONSTRUCTOR - COMPLETE DEBUG: {
+  'import.meta.env.MODE': 'test',
+  'import.meta.env.DEV': true,
+  'import.meta.env.PROD': false,
+  'import.meta.env.VITE_API_BASE_URL': undefined,
+  'window.location': {
+    origin: 'http://localhost:3000',
+    hostname: 'localhost',
+    port: '3000',
+    protocol: 'http:'
+  },
+  'All environment variables': {
+    HOMEPATH: '\\Users\\mccre',
+    TEST: 'true',
+    APPDATA: 'C:\\Users\\mccre\\AppData\\Roaming',
+    VITEST: 'true',
+    NODE_ENV: 'test',
+    ALLUSERSPROFILE: 'C:\\ProgramData',
+    VITEST_MODE: 'RUN',
+    BASE_URL: '/',
+    ChocolateyInstall: 'C:\\ProgramData\\chocolatey',
+    EFC_11020_2397410445: '1',
+    ChocolateyLastPathUpdate: '133993438273562931',
+    COLOR: '1',
+    EDITOR: 'C:\\WINDOWS\\notepad.exe',
+    CommonProgramFiles: 'C:\\Program Files\\Common Files',
+    'CommonProgramFiles(Arm)': 'C:\\Program Files (Arm)\\Common Files',
+    NUMBER_OF_PROCESSORS: '12',
+    EFC_11020_1592913036: '1',
+    'CommonProgramFiles(x86)': 'C:\\Program Files (x86)\\Common Files',
+    npm_config_local_prefix: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    CommonProgramW6432: 'C:\\Program Files\\Common Files',
+    EFC_11020_1262719628: '1',
+    PROCESSOR_IDENTIFIER: 'ARMv8 (64-bit) Family 8 Model 1 Revision 201, Qualcomm Technologies Inc',
+    npm_config_userconfig: 'C:\\Users\\mccre\\.npmrc',
+    COMPUTERNAME: 'MACDADDYARM',
+    USERNAME: 'mccre',
+    ComSpec: 'C:\\WINDOWS\\system32\\cmd.exe',
+    npm_command: 'test',
+    DEV: '1',
+    DriverData: 'C:\\Windows\\System32\\Drivers\\DriverData',
+    EFC_11020_2283032206: '1',
+    EFC_11020_2775293581: '1',
+    npm_execpath: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+    npm_config_node_gyp: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
+    npm_config_init_module: 'C:\\Users\\mccre\\.npm-init.js',
+    NPM_CONFIG_NODE_GYP: 'C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\node-gyp\\bin\\node-gyp.js',
+    EFC_11020_3789132940: '1',
+    npm_config_noproxy: '',
+    PSMODULEPATH: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
+    FPS_BROWSER_APP_PROFILE_STRING: 'Internet Explorer',
+    PROGRAMDATA: 'C:\\ProgramData',
+    FPS_BROWSER_USER_PROFILE_STRING: 'Default',
+    npm_config_global_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    HOME: 'C:\\Users\\mccre',
+    npm_package_version: '0.0.0',
+    HOMEDRIVE: 'C:',
+    INIT_CWD: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    Path: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    npm_lifecycle_event: 'test',
+    LOCALAPPDATA: 'C:\\Users\\mccre\\AppData\\Local',
+    LOGONSERVER: '\\\\MACDADDYARM',
+    MODE: 'test',
+    NODE: 'C:\\Program Files\\nodejs\\node.exe',
+    npm_config_cache: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
+    npm_config_globalconfig: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
+    OneDriveConsumer: 'C:\\Users\\mccre\\OneDrive',
+    npm_config_legacy_peer_deps: 'true',
+    npm_config_npm_version: '10.9.3',
+    npm_config_prefix: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    OS: 'Windows_NT',
+    npm_config_user_agent: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
+    npm_lifecycle_script: 'vitest --config vitest.config.js',
+    npm_node_execpath: 'C:\\Program Files\\nodejs\\node.exe',
+    WINDIR: 'C:\\WINDOWS',
+    npm_package_json: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
+    npm_package_name: 'microservices-frontend',
+    OneDrive: 'C:\\Users\\mccre\\OneDrive',
+    PATHEXT: '.COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC;.CPL',
+    CHOCOLATEYINSTALL: 'C:\\ProgramData\\chocolatey',
+    PROCESSOR_ARCHITECTURE: 'ARM64',
+    PROCESSOR_LEVEL: '1',
+    PROCESSOR_REVISION: '0201',
+    PROD: '',
+    ProgramData: 'C:\\ProgramData',
+    ProgramFiles: 'C:\\Program Files',
+    'ProgramFiles(Arm)': 'C:\\Program Files (Arm)',
+    'ProgramFiles(x86)': 'C:\\Program Files (x86)',
+    ProgramW6432: 'C:\\Program Files',
+    PROMPT: '$P$G',
+    PSModulePath: 'C:\\Users\\mccre\\OneDrive\\Documents\\WindowsPowerShell\\Modules;C:\\Program Files\\WindowsPowerShell\\Modules;C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\Modules',
+    PUBLIC: 'C:\\Users\\Public',
+    SESSIONNAME: 'Console',
+    SystemDrive: 'C:',
+    SystemRoot: 'C:\\WINDOWS',
+    TEMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
+    TMP: 'C:\\Users\\mccre\\AppData\\Local\\Temp',
+    USERDOMAIN: 'MACDADDYARM',
+    USERDOMAIN_ROAMINGPROFILE: 'MACDADDYARM',
+    USERPROFILE: 'C:\\Users\\mccre',
+    windir: 'C:\\WINDOWS',
+    CHOCOLATEYLASTPATHUPDATE: '133993438273562931',
+    COMMONPROGRAMFILES: 'C:\\Program Files\\Common Files',
+    'COMMONPROGRAMFILES(ARM)': 'C:\\Program Files (Arm)\\Common Files',
+    'COMMONPROGRAMFILES(X86)': 'C:\\Program Files (x86)\\Common Files',
+    COMMONPROGRAMW6432: 'C:\\Program Files\\Common Files',
+    COMSPEC: 'C:\\WINDOWS\\system32\\cmd.exe',
+    DRIVERDATA: 'C:\\Windows\\System32\\Drivers\\DriverData',
+    NPM_COMMAND: 'test',
+    NPM_CONFIG_CACHE: 'C:\\Users\\mccre\\AppData\\Local\\npm-cache',
+    NPM_CONFIG_GLOBALCONFIG: 'C:\\Users\\mccre\\AppData\\Roaming\\npm\\etc\\npmrc',
+    NPM_CONFIG_GLOBAL_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    NPM_CONFIG_INIT_MODULE: 'C:\\Users\\mccre\\.npm-init.js',
+    NPM_CONFIG_LEGACY_PEER_DEPS: 'true',
+    NPM_CONFIG_LOCAL_PREFIX: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app',
+    NPM_CONFIG_NOPROXY: '',
+    NPM_CONFIG_NPM_VERSION: '10.9.3',
+    NPM_CONFIG_PREFIX: 'C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    NPM_CONFIG_USERCONFIG: 'C:\\Users\\mccre\\.npmrc',
+    NPM_CONFIG_USER_AGENT: 'npm/10.9.3 node/v22.18.0 win32 arm64 workspaces/false',
+    NPM_LIFECYCLE_SCRIPT: 'vitest --config vitest.config.js',
+    NPM_EXECPATH: 'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+    NPM_LIFECYCLE_EVENT: 'test',
+    PROGRAMFILES: 'C:\\Program Files',
+    NPM_NODE_EXECPATH: 'C:\\Program Files\\nodejs\\node.exe',
+    NPM_PACKAGE_JSON: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\package.json',
+    NPM_PACKAGE_NAME: 'microservices-frontend',
+    NPM_PACKAGE_VERSION: '0.0.0',
+    ONEDRIVE: 'C:\\Users\\mccre\\OneDrive',
+    ONEDRIVECONSUMER: 'C:\\Users\\mccre\\OneDrive',
+    PATH: 'C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\react-app\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\frontend\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\src\\node_modules\\.bin;C:\\Users\\mccre\\dev\\boiler\\node_modules\\.bin;C:\\Users\\mccre\\dev\\node_modules\\.bin;C:\\Users\\mccre\\node_modules\\.bin;C:\\Users\\node_modules\\.bin;C:\\node_modules\\.bin;C:\\Program Files\\nodejs\\node_modules\\npm\\node_modules\\@npmcli\\run-script\\lib\\node-gyp-bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\Microsoft SQL Server\\150\\Tools\\Binn\\;C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\;C:\\Program Files\\dotnet\\;C:\\Program Files\\nodejs\\;C:\\Program Files\\Git\\cmd;C:\\Program Files\\Docker\\Docker\\resources\\bin;C:\\ProgramData\\chocolatey\\bin;C:\\Users\\mccre\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Users\\mccre\\.dotnet\\tools;C:\\Users\\mccre\\AppData\\Roaming\\npm',
+    'PROGRAMFILES(ARM)': 'C:\\Program Files (Arm)',
+    'PROGRAMFILES(X86)': 'C:\\Program Files (x86)',
+    PROGRAMW6432: 'C:\\Program Files',
+    SYSTEMDRIVE: 'C:',
+    SYSTEMROOT: 'C:\\WINDOWS',
     VITEST_WORKER_ID: '16',
     VITEST_POOL_ID: '3',
     SSR: ''
@@ -2678,6 +2720,1492 @@ stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\ser
   adapter: [ 'xhr', 'http', 'fetch' ]
 }
 
+stderr | src/components/__tests__/auth/auth-integration.test.tsx > Authentication Integration Tests > Email Confirmation Flow > handles confirmation failure and provides recovery options
+Email confirmation failed: Error: The confirmation link has expired
+    at C:\Users\mccre\dev\boiler\src\frontend\react-app\src\components\__tests__\auth\auth-integration.test.tsx:80:9
+    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:958:5)
+    at startTests (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:967:3)
+    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+
+stderr | src/components/__tests__/auth/LogoutButton.test.tsx > LogoutButton > Logout Functionality > performs logout without confirmation by default
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/LogoutButton.test.tsx > LogoutButton > Logout Functionality > shows confirmation dialog when showConfirmation is true
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Portal) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Modal) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/auth-integration.test.tsx > Authentication Integration Tests > Logout Flow > performs logout with confirmation dialog
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Portal) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Modal) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/auth-integration.test.tsx > Authentication Integration Tests > Logout Flow > performs logout with confirmation dialog
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/LogoutButton.test.tsx > LogoutButton > Logout Functionality > cancels logout from confirmation dialog
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Portal) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Modal) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/auth-integration.test.tsx > Authentication Integration Tests > Logout Flow > performs logout with confirmation dialog
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to MemoryRouter inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/LogoutButton.test.tsx > LogoutButton > Logout Functionality > cancels logout from confirmation dialog
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/LogoutButton.test.tsx > LogoutButton > Logout Functionality > cancels logout from confirmation dialog
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/auth-integration.test.tsx > Authentication Integration Tests > Logout Flow > cancels logout when user chooses cancel
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Portal) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Modal) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/auth-integration.test.tsx > Authentication Integration Tests > Logout Flow > cancels logout when user chooses cancel
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/auth-integration.test.tsx > Authentication Integration Tests > Logout Flow > cancels logout when user chooses cancel
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/LogoutButton.test.tsx > LogoutButton > Logout Functionality > confirms logout from confirmation dialog
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Portal) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Modal) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/LogoutButton.test.tsx > LogoutButton > Logout Functionality > confirms logout from confirmation dialog
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/auth-integration.test.tsx > Authentication Integration Tests > Error Recovery > provides clear error messages and recovery paths
+Email confirmation failed: Error: Network error occurred
+    at C:\Users\mccre\dev\boiler\src\frontend\react-app\src\components\__tests__\auth\auth-integration.test.tsx:149:9
+    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:958:5)
+    at startTests (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:967:3)
+    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+
+stderr | src/components/__tests__/auth/LogoutButton.test.tsx > LogoutButton > Logout Functionality > confirms logout from confirmation dialog
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/LogoutButton.test.tsx > LogoutButton > Error Handling > handles logout error gracefully
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+Logout failed: Error: Logout failed
+    at C:\Users\mccre\dev\boiler\src\frontend\react-app\src\components\__tests__\auth\LogoutButton.test.tsx:171:21
+    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:958:5)
+    at startTests (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:967:3)
+    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/LogoutButton.test.tsx > LogoutButton > Error Handling > shows loading state during logout
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/auth-integration.test.tsx > Authentication Integration Tests > Accessibility Integration > provides appropriate ARIA announcements for state changes
+Email confirmation failed: Error: Confirmation failed
+    at C:\Users\mccre\dev\boiler\src\frontend\react-app\src\components\__tests__\auth\auth-integration.test.tsx:188:9
+    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:135:14
+    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:60:26
+    at runTest (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:781:17)
+    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
+    at runFiles (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:958:5)
+    at startTests (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:967:3)
+    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+
+stderr | src/components/__tests__/auth/LogoutButton.test.tsx > LogoutButton > Accessibility > manages dialog accessibility correctly
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to LogoutButton inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Portal) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(Modal) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to Transition inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/roles/RoleList.test.tsx > RoleList > handles search functionality
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(FormControl) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(FormControl) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/roles/RoleList.test.tsx > RoleList > handles search functionality
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(FormControl) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(FormControl) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(FormControl) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/roles/RoleList.test.tsx > RoleList > handles search functionality
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/roles/RoleList.test.tsx > RoleList > handles search functionality
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(FormControl) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(FormControl) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/EmailConfirmation.test.tsx > EmailConfirmation > Successful Confirmation > navigates to login when Sign In Now button is clicked
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/roles/RoleList.test.tsx > RoleList > handles search functionality
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
 stderr | src/components/__tests__/auth/EmailConfirmation.test.tsx > EmailConfirmation > Error Handling > displays error message when confirmation fails
 Email confirmation failed: Error: Confirmation failed
     at C:\Users\mccre\dev\boiler\src\frontend\react-app\src\components\__tests__\auth\EmailConfirmation.test.tsx:101:65
@@ -2690,6 +4218,38 @@ Email confirmation failed: Error: Confirmation failed
     at runFiles (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:958:5)
     at startTests (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:967:3)
     at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+
+stderr | src/components/__tests__/roles/RoleList.test.tsx > RoleList > handles search functionality
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(FormControl) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(FormControl) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
 
 stderr | src/components/__tests__/auth/EmailConfirmation.test.tsx > EmailConfirmation > Error Handling > handles expired token error specifically
 Email confirmation failed: Error: The confirmation link has expired
@@ -2730,18 +4290,131 @@ Email confirmation failed: Error: Token not found
     at startTests (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:967:3)
     at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
 
-stderr | src/components/__tests__/auth/auth-integration.test.tsx > Authentication Integration Tests > Email Confirmation Flow > handles confirmation failure and provides recovery options
-Email confirmation failed: Error: The confirmation link has expired
-    at C:\Users\mccre\dev\boiler\src\frontend\react-app\src\components\__tests__\auth\auth-integration.test.tsx:80:9
-    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:135:14
-    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:60:26
-    at runTest (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:781:17)
-    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
-    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
-    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
-    at runFiles (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:958:5)
-    at startTests (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:967:3)
-    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+stderr | src/components/__tests__/auth/EmailConfirmation.test.tsx > EmailConfirmation > User Actions > handles resend confirmation button click
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/roles/RoleDetails.test.tsx > RoleDetails > handles edit button click for non-system roles
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/auth/EmailConfirmation.test.tsx > EmailConfirmation > User Actions > handles back to login button click
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
 
 stderr | src/components/__tests__/auth/EmailConfirmation.test.tsx > EmailConfirmation > API Integration > handles network errors gracefully
 Email confirmation failed: Error: Network error
@@ -2769,44 +4442,273 @@ Email confirmation failed: Error: Test error
     at startTests (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:967:3)
     at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
 
-stderr | src/components/__tests__/auth/auth-integration.test.tsx > Authentication Integration Tests > Error Recovery > provides clear error messages and recovery paths
-Email confirmation failed: Error: Network error occurred
-    at C:\Users\mccre\dev\boiler\src\frontend\react-app\src\components\__tests__\auth\auth-integration.test.tsx:149:9
-    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:135:14
-    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:60:26
-    at runTest (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:781:17)
-    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
-    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
-    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
-    at runFiles (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:958:5)
-    at startTests (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:967:3)
-    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+stderr | src/components/__tests__/roles/RoleList.test.tsx > RoleList > handles pagination correctly
+An update to RoleList inside a test was not wrapped in act(...).
 
-stderr | src/components/__tests__/auth/LogoutButton.test.tsx > LogoutButton > Error Handling > handles logout error gracefully
-Logout failed: Error: Logout failed
-    at C:\Users\mccre\dev\boiler\src\frontend\react-app\src\components\__tests__\auth\LogoutButton.test.tsx:171:21
-    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:135:14
-    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:60:26
-    at runTest (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:781:17)
-    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
-    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
-    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
-    at runFiles (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:958:5)
-    at startTests (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:967:3)
-    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+When testing, code that causes React state updates should be wrapped into act(...):
 
-stderr | src/components/__tests__/auth/auth-integration.test.tsx > Authentication Integration Tests > Accessibility Integration > provides appropriate ARIA announcements for state changes
-Email confirmation failed: Error: Confirmation failed
-    at C:\Users\mccre\dev\boiler\src\frontend\react-app\src\components\__tests__\auth\auth-integration.test.tsx:188:9
-    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:135:14
-    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:60:26
-    at runTest (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:781:17)
-    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
-    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
-    at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
-    at runFiles (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:958:5)
-    at startTests (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:967:3)
-    at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/roles/RoleList.test.tsx > RoleList > handles pagination correctly
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(SelectInput) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/roles/RoleList.test.tsx > RoleList > calls onEditRole when edit button is clicked
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to RoleList inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+
+stderr | src/components/__tests__/roles/RoleDetails.test.tsx > RoleDetails > handles delete role with confirmation
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
 
 stderr | src/components/__tests__/roles/RoleDetails.test.tsx > RoleDetails > handles role not found error
 Failed to load role details: Error: Role not found
@@ -2820,6 +4722,48 @@ Failed to load role details: Error: Role not found
     at startTests (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:967:3)
     at file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:116:7
     at withEnv (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:83:5)
+
+stderr | src/components/__tests__/roles/RoleList.test.tsx > RoleList > calls onDeleteRole when delete button is clicked
+An update to ForwardRef(ButtonBase) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to TransitionGroup inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
+An update to ForwardRef(TouchRipple) inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act
 
 stderr | src/components/__tests__/roles/PermissionSelector.test.tsx > PermissionSelector > should render loading state initially
 An update to PermissionSelector inside a test was not wrapped in act(...).
@@ -2871,6 +4815,18 @@ Tooltip needs to listen to the child element's events to display the title.
 
 Add a simple wrapper element, such as a `span`.
 
+stderr | src/components/__tests__/roles/PermissionSelector.test.tsx > PermissionSelector > should be disabled when disabled prop is true
+MUI: You are providing a disabled `button` child to the Tooltip component.
+A disabled element does not fire events.
+Tooltip needs to listen to the child element's events to display the title.
+
+Add a simple wrapper element, such as a `span`.
+MUI: You are providing a disabled `button` child to the Tooltip component.
+A disabled element does not fire events.
+Tooltip needs to listen to the child element's events to display the title.
+
+Add a simple wrapper element, such as a `span`.
+
 stderr | src/components/__tests__/roles/PermissionTreeView.test.tsx > PermissionTreeView > should render permission hierarchy
 Each child in a list should have a unique "key" prop.
 
@@ -2908,18 +4864,6 @@ This will cause a hydration error.
 <p> cannot contain a nested <div>.
 See this log for the ancestor stack trace.
 
-stderr | src/components/__tests__/roles/PermissionSelector.test.tsx > PermissionSelector > should be disabled when disabled prop is true
-MUI: You are providing a disabled `button` child to the Tooltip component.
-A disabled element does not fire events.
-Tooltip needs to listen to the child element's events to display the title.
-
-Add a simple wrapper element, such as a `span`.
-MUI: You are providing a disabled `button` child to the Tooltip component.
-A disabled element does not fire events.
-Tooltip needs to listen to the child element's events to display the title.
-
-Add a simple wrapper element, such as a `span`.
-
 stderr | src/components/__tests__/roles/PermissionSelector.test.tsx > PermissionSelector > should handle API error gracefully
 Failed to load permissions: Error: API Error
     at C:\Users\mccre\dev\boiler\src\frontend\react-app\src\components\__tests__\roles\PermissionSelector.test.tsx:126:74
@@ -2933,6 +4877,17 @@ Failed to load permissions: Error: API Error
     at runSuite (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:909:15)
     at runFiles (file:///C:/Users/mccre/dev/boiler/src/frontend/react-app/node_modules/@vitest/runner/dist/index.js:958:5)
 
+ ❯ src/test/scenarios/api-permission-integration.test.tsx (6) 4795ms
+   ❯ API Permission Integration Scenarios (6) 4793ms
+     ❯ API Call Authorization (2) 2348ms
+       × should allow API calls for users with correct permissions 1147ms
+       × should reject API calls for users without permissions 1201ms
+     ❯ Role-Based Data Filtering (2) 1094ms
+       × should filter user data based on role permissions 1055ms
+       × should limit data for lower privilege users
+     ❯ Permission-Based Error Handling (2) 1350ms
+       ✓ should handle 403 Forbidden responses gracefully
+       × should handle successful operations for authorized users 1144ms
  ❯ src/test/scenarios/multi-tenant-isolation.test.tsx (6)
    ❯ Multi-Tenant Permission Isolation Scenarios (6)
      ❯ Tenant Data Isolation (2)
@@ -2944,17 +4899,6 @@ Failed to load permissions: Error: API Error
      ❯ Tenant Context Switching (2)
        ✓ should handle tenant context switching for multi-tenant users
        × should restrict tenant switching for single-tenant users
- ❯ src/test/scenarios/api-permission-integration.test.tsx (6) 4870ms
-   ❯ API Permission Integration Scenarios (6) 4868ms
-     ❯ API Call Authorization (2) 2413ms
-       × should allow API calls for users with correct permissions 1203ms
-       × should reject API calls for users without permissions 1203ms
-     ❯ Role-Based Data Filtering (2) 1104ms
-       × should filter user data based on role permissions 1042ms
-       × should limit data for lower privilege users
-     ❯ Permission-Based Error Handling (2) 1351ms
-       ✓ should handle 403 Forbidden responses gracefully
-       × should handle successful operations for authorized users 1189ms
  ❯ src/test/scenarios/role-hierarchy-scenarios.test.tsx (6)
    ❯ Role Hierarchy Validation Scenarios (6)
      ❯ Permission Inheritance (2)
@@ -2966,8 +4910,18 @@ Failed to load permissions: Error: API Error
      ✓ Multi-Role User Scenarios (2)
        ✓ should handle users with multiple roles correctly
        ✓ should prioritize highest role level for admin checks
- ❯ src/test/examples/rbac-usage-examples.test.tsx (10) 1147ms
-   ❯ RBAC Test Utilities - Usage Examples (10) 1137ms
+ ❯ src/test/scenarios/permission-component-patterns.test.tsx (4) 1494ms
+   ❯ RBAC Permission Component Patterns (4) 1487ms
+     ❯ Conditional UI Rendering (1) 1162ms
+       × should show/hide UI elements based on user permissions 1162ms
+     ❯ Form Field Permissions (1)
+       × should enable/disable form fields based on permissions
+     ❯ Navigation Menu Permissions (1)
+       × should show navigation items based on user permissions
+     ❯ Data Table Action Buttons (1)
+       × should show/hide action buttons based on permissions
+ ❯ src/test/examples/rbac-usage-examples.test.tsx (10) 1109ms
+   ❯ RBAC Test Utilities - Usage Examples (10) 1106ms
      ❯ Basic Role Rendering (1)
        × should render differently for different roles
      ✓ Scenario Builder Pattern (1)
@@ -2986,127 +4940,117 @@ Failed to load permissions: Error: API Error
        ✓ should use predefined scenarios
      ✓ Multi-Role User Testing (1)
        ✓ should test users with multiple roles
-     ❯ Error State Testing (1) 1042ms
-       × should test permission-based errors 1042ms
- ❯ src/test/scenarios/permission-component-patterns.test.tsx (4) 1420ms
-   ❯ RBAC Permission Component Patterns (4) 1414ms
-     ❯ Conditional UI Rendering (1) 1150ms
-       × should show/hide UI elements based on user permissions 1150ms
-     ❯ Form Field Permissions (1)
-       × should enable/disable form fields based on permissions
-     ❯ Navigation Menu Permissions (1)
-       × should show navigation items based on user permissions
-     ❯ Data Table Action Buttons (1)
-       × should show/hide action buttons based on permissions
- ✓ src/components/common/__tests__/LoadingStates.test.tsx (11) 2511ms
-   ✓ LoadingStates (11) 2506ms
-     ✓ LoadingSpinner (3) 578ms
-       ✓ renders with default props 429ms
+     ❯ Error State Testing (1) 1018ms
+       × should test permission-based errors 1018ms
+ ✓ src/components/common/__tests__/LoadingStates.test.tsx (11) 2435ms
+   ✓ LoadingStates (11) 2424ms
+     ✓ LoadingSpinner (3) 594ms
+       ✓ renders with default props 446ms
        ✓ renders with custom message
        ✓ renders with full height when specified
      ✓ PageLoading (3)
        ✓ renders with default message
        ✓ renders with custom message
        ✓ shows progress percentage when provided
-     ✓ TableSkeleton (3) 1257ms
-       ✓ renders skeleton elements 627ms
+     ✓ TableSkeleton (3) 1158ms
+       ✓ renders skeleton elements 708ms
        ✓ renders custom number of rows and columns
-       ✓ can hide header 389ms
-     ✓ UserListSkeleton (2) 437ms
-       ✓ renders default number of user items
+       ✓ can hide header
+     ✓ UserListSkeleton (2) 442ms
+       ✓ renders default number of user items 350ms
        ✓ renders custom number of user items
- ✓ src/components/auth/__tests__/ChangePasswordForm.test.tsx (7) 6806ms
-   ✓ ChangePasswordForm (7) 6798ms
-     ✓ renders the form fields 1487ms
-     ✓ shows validation errors for empty fields 832ms
-     ✓ shows error when new password is same as current 883ms
-     ✓ shows error when passwords do not match 783ms
-     ✓ successfully changes password and shows success screen 1230ms
+ ✓ src/components/__tests__/auth/auth-integration.test.tsx (7) 3851ms
+   ✓ Authentication Integration Tests (7) 3841ms
+     ✓ Email Confirmation Flow (2) 1328ms
+       ✓ completes email confirmation and shows success state 665ms
+       ✓ handles confirmation failure and provides recovery options 663ms
+     ✓ Logout Flow (2) 1781ms
+       ✓ performs logout with confirmation dialog 925ms
+       ✓ cancels logout when user chooses cancel 855ms
+     ✓ Error Recovery (1)
+       ✓ provides clear error messages and recovery paths
+     ✓ Accessibility Integration (2) 467ms
+       ✓ maintains proper focus management through auth flows
+       ✓ provides appropriate ARIA announcements for state changes
+ ✓ src/components/__tests__/auth/LogoutButton.test.tsx (12) 4234ms
+   ✓ LogoutButton (12) 4225ms
+     ✓ Button Variants (4) 881ms
+       ✓ renders button variant by default 413ms
+       ✓ renders icon variant correctly
+       ✓ renders text variant correctly
+       ✓ renders custom children text
+     ✓ Logout Functionality (4) 2316ms
+       ✓ performs logout without confirmation by default 353ms
+       ✓ shows confirmation dialog when showConfirmation is true 708ms
+       ✓ cancels logout from confirmation dialog 673ms
+       ✓ confirms logout from confirmation dialog 582ms
+     ✓ Error Handling (2) 559ms
+       ✓ handles logout error gracefully
+       ✓ shows loading state during logout 321ms
+     ✓ Accessibility (2) 469ms
+       ✓ has proper ARIA attributes for icon variant
+       ✓ manages dialog accessibility correctly 378ms
+ ✓ src/components/auth/__tests__/ChangePasswordForm.test.tsx (7) 5976ms
+   ✓ ChangePasswordForm (7) 5967ms
+     ✓ renders the form fields 1483ms
+     ✓ shows validation errors for empty fields 488ms
+     ✓ shows error when new password is same as current 727ms
+     ✓ shows error when passwords do not match 702ms
+     ✓ successfully changes password and shows success screen 1305ms
      ✓ toggles password visibility
-     ✓ calls logout when clicking "Sign In Again" 1344ms
- ❯ src/components/__tests__/roles/RoleList.test.tsx (10) 8772ms
-   ❯ RoleList (10) 8763ms
-     ✓ renders roles list correctly 1224ms
-     ✓ handles search functionality 2001ms
-     × handles pagination correctly 1510ms
-     ✓ calls onEditRole when edit button is clicked 1064ms
-     × calls onDeleteRole when delete button is clicked 770ms
-     ✓ disables edit and delete buttons for system roles 566ms
+     ✓ calls logout when clicking "Sign In Again" 1109ms
+ ✓ src/components/__tests__/roles/RoleDetails.test.tsx (10) 6079ms
+   ✓ RoleDetails (10) 6063ms
+     ✓ renders role information correctly 1406ms
+     ✓ displays permissions grouped by category 413ms
+     ✓ shows assigned users with correct status chips 417ms
+     ✓ handles edit button click for non-system roles 1416ms
+     ✓ disables edit and delete buttons for system roles 1103ms
+     ✓ handles delete role with confirmation 833ms
+     ✓ handles role not found error
      ✓ shows loading state initially
-     × shows error state when loading fails 1037ms
+     ✓ handles empty permissions list
+     ✓ handles empty users list
+ ❯ src/components/__tests__/roles/RoleList.test.tsx (10) 6993ms
+   ❯ RoleList (10) 6988ms
+     ✓ renders roles list correctly 1031ms
+     ✓ handles search functionality 1834ms
+     × handles pagination correctly 1095ms
+     ✓ calls onEditRole when edit button is clicked 538ms
+     × calls onDeleteRole when delete button is clicked 500ms
+     ✓ disables edit and delete buttons for system roles 464ms
+     ✓ shows loading state initially
+     × shows error state when loading fails 1022ms
      × displays role information correctly
-     × handles page size changes 323ms
- ✓ src/components/__tests__/auth/EmailConfirmation.test.tsx (13) 4220ms
-   ✓ EmailConfirmation (13) 4204ms
-     ✓ Token Validation (2) 1685ms
-       ✓ displays invalid token message when no token is provided 1307ms
-       ✓ shows loading state initially when token is present 367ms
-     ✓ Successful Confirmation (2) 693ms
-       ✓ displays success message when confirmation succeeds 360ms
-       ✓ navigates to login when Sign In Now button is clicked 333ms
-     ✓ Error Handling (4) 404ms
+     × handles page size changes
+ ✓ src/components/__tests__/auth/EmailConfirmation.test.tsx (13) 3308ms
+   ✓ EmailConfirmation (13) 3304ms
+     ✓ Token Validation (2) 1390ms
+       ✓ displays invalid token message when no token is provided 1110ms
+       ✓ shows loading state initially when token is present
+     ✓ Successful Confirmation (2) 680ms
+       ✓ displays success message when confirmation succeeds 409ms
+       ✓ navigates to login when Sign In Now button is clicked
+     ✓ Error Handling (4)
        ✓ displays error message when confirmation fails
        ✓ handles expired token error specifically
        ✓ handles invalid token error specifically
        ✓ handles not found error specifically
-     ✓ User Actions (2) 1015ms
-       ✓ handles resend confirmation button click 503ms
-       ✓ handles back to login button click 512ms
+     ✓ User Actions (2) 637ms
+       ✓ handles resend confirmation button click
+       ✓ handles back to login button click 360ms
      ✓ API Integration (2)
        ✓ calls authService.confirmEmail with correct token
        ✓ handles network errors gracefully
      ✓ Accessibility (1)
        ✓ provides appropriate error announcements
- ✓ src/components/__tests__/roles/RoleDetails.test.tsx (10) 7339ms
-   ✓ RoleDetails (10) 7330ms
-     ✓ renders role information correctly 1804ms
-     ✓ displays permissions grouped by category 309ms
-     ✓ shows assigned users with correct status chips 384ms
-     ✓ handles edit button click for non-system roles 2032ms
-     ✓ disables edit and delete buttons for system roles 1247ms
-     ✓ handles delete role with confirmation 1087ms
-     ✓ handles role not found error
-     ✓ shows loading state initially
-     ✓ handles empty permissions list
-     ✓ handles empty users list
- ✓ src/components/__tests__/auth/auth-integration.test.tsx (7) 4296ms
-   ✓ Authentication Integration Tests (7) 4277ms
-     ✓ Email Confirmation Flow (2) 1580ms
-       ✓ completes email confirmation and shows success state 898ms
-       ✓ handles confirmation failure and provides recovery options 681ms
-     ✓ Logout Flow (2) 2072ms
-       ✓ performs logout with confirmation dialog 1172ms
-       ✓ cancels logout when user chooses cancel 900ms
-     ✓ Error Recovery (1)
-       ✓ provides clear error messages and recovery paths
-     ✓ Accessibility Integration (2) 361ms
-       ✓ maintains proper focus management through auth flows
-       ✓ provides appropriate ARIA announcements for state changes
- ✓ src/components/__tests__/auth/LogoutButton.test.tsx (12) 4759ms
-   ✓ LogoutButton (12) 4748ms
-     ✓ Button Variants (4) 1254ms
-       ✓ renders button variant by default 641ms
-       ✓ renders icon variant correctly
-       ✓ renders text variant correctly
-       ✓ renders custom children text
-     ✓ Logout Functionality (4) 2632ms
-       ✓ performs logout without confirmation by default 377ms
-       ✓ shows confirmation dialog when showConfirmation is true 943ms
-       ✓ cancels logout from confirmation dialog 783ms
-       ✓ confirms logout from confirmation dialog 529ms
-     ✓ Error Handling (2) 517ms
-       ✓ handles logout error gracefully
-       ✓ shows loading state during logout
-     ✓ Accessibility (2) 344ms
-       ✓ has proper ARIA attributes for icon variant
-       ✓ manages dialog accessibility correctly
- ✓ src/components/__tests__/roles/PermissionSelector.test.tsx (8) 2970ms
-   ✓ PermissionSelector (8) 2965ms
+ ✓ src/components/__tests__/roles/PermissionSelector.test.tsx (8) 3066ms
+   ✓ PermissionSelector (8) 3061ms
      ✓ should render loading state initially
-     ✓ should render permissions after loading 537ms
+     ✓ should render permissions after loading 420ms
      ✓ should show search box when showSearch is true
-     ✓ should call onChange when permission is selected 1008ms
-     ✓ should select all permissions in category when category checkbox is clicked 662ms
+     ✓ should call onChange when permission is selected 1159ms
+     ✓ should select all permissions in category when category checkbox is clicked 679ms
      ✓ should show selected count
      ✓ should be disabled when disabled prop is true
      ✓ should handle API error gracefully
@@ -3118,17 +5062,17 @@ Failed to load permissions: Error: API Error
      ✓ renders role list on /roles route
      ✓ redirects root to dashboard
      ✓ renders login form on /login route
- ✓ src/components/common/__tests__/ErrorBoundary.test.tsx (6) 897ms
-   ✓ ErrorBoundary (6) 894ms
+ ✓ src/components/common/__tests__/ErrorBoundary.test.tsx (6) 890ms
+   ✓ ErrorBoundary (6) 886ms
      ✓ renders children when no error occurs
-     ✓ renders error UI when error occurs 466ms
+     ✓ renders error UI when error occurs 421ms
      ✓ shows page-level error UI when level is page
      ✓ calls onError callback when error occurs
      ✓ shows error details when details button is clicked
      ✓ renders custom fallback when provided
- ✓ src/components/__tests__/roles/PermissionTreeView.test.tsx (5) 912ms
-   ✓ PermissionTreeView (5) 906ms
-     ✓ should render permission hierarchy 458ms
+ ✓ src/components/__tests__/roles/PermissionTreeView.test.tsx (5) 734ms
+   ✓ PermissionTreeView (5) 730ms
+     ✓ should render permission hierarchy 368ms
      ✓ should highlight selected permissions
      ✓ should show search when enabled
      ✓ should handle permission click when callback provided
@@ -3188,11 +5132,11 @@ Ignored nodes: comments, script, style
     </div>
   </div>
 </body>
- ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
- ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
- ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
- ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
- ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ Object.getElementError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
  ❯ src/test/examples/rbac-usage-examples.test.tsx:31:21
      29|       // Test as regular user
      30|       rbacRender.asUser(<TestComponent />)
@@ -3268,11 +5212,11 @@ Ignored nodes: comments, script, style
     </form>
   </div>
 </body>
- ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
- ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
- ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
- ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
- ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ Object.getElementError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
  ❯ Object.testFieldPermissions src/test/utils/rbac-component-helpers.tsx:21:30
      19|         rbacRender.scenario().asRole(role as any).render(formComponent)
      20|
@@ -3358,7 +5302,7 @@ Ignored nodes: comments, script, style
     </div>
   </body>
 </html>
- ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:163:27
  ❯ Object.testPermissionErrors src/test/utils/rbac-component-helpers.tsx:202:15
     200|
     201|       if (scenario.expectedError) {
@@ -3401,14 +5345,14 @@ Ignored nodes: comments, script, style
     </div>
   </body>
 </html>
- ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
- ❯ src/test/scenarios/api-permission-integration.test.tsx:61:13
-     59|       await user.click(createButton)
-     60|
-     61|       await waitFor(() => {
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/test/scenarios/api-permission-integration.test.tsx:63:13
+     61|       await user.click(createButton)
+     62|
+     63|       await waitFor(() => {
        |             ^
-     62|         expect(screen.getByTestId('success-message')).toBeInTheDocument()
-     63|       })
+     64|         expect(screen.getByTestId('success-message')).toBeInTheDocument()
+     65|       })
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/24]⎯
 
@@ -3443,14 +5387,14 @@ Ignored nodes: comments, script, style
     </div>
   </body>
 </html>
- ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
- ❯ src/test/scenarios/api-permission-integration.test.tsx:88:13
-     86|       await user.click(createButton)
-     87|
-     88|       await waitFor(() => {
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/test/scenarios/api-permission-integration.test.tsx:90:13
+     88|       await user.click(createButton)
+     89|
+     90|       await waitFor(() => {
        |             ^
-     89|         expect(screen.getByTestId('permission-error')).toBeInTheDocument()
-     90|       })
+     91|         expect(screen.getByTestId('permission-error')).toBeInTheDocument()
+     92|       })
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/24]⎯
 
@@ -3476,16 +5420,16 @@ Ignored nodes: comments, script, style
     </div>
   </body>
 </html>
- ❯ src/test/scenarios/api-permission-integration.test.tsx:128:53
-    126|
-    127|       await waitFor(() => {
-    128|         expect(screen.queryByTestId('loading')).not.toBeInTheDocument()
+ ❯ src/test/scenarios/api-permission-integration.test.tsx:130:53
+    128|
+    129|       await waitFor(() => {
+    130|         expect(screen.queryByTestId('loading')).not.toBeInTheDocument()
        |                                                     ^
-    129|       })
-    130|
- ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/dom/dist/config.js:47:12
- ❯ checkCallback node_modules/@testing-library/dom/dist/wait-for.js:124:77
- ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/dom/dist/wait-for.js:118:16
+    131|       })
+    132|
+ ❯ runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/config.js:47:12
+ ❯ checkCallback node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:124:77
+ ❯ Timeout.checkRealTimersCallback node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:118:16
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/24]⎯
 
@@ -3496,13 +5440,13 @@ Expected element to have text content:
   Users: 0
 Received:
   Users: 2
- ❯ src/test/scenarios/api-permission-integration.test.tsx:178:25
-    176|       // Viewer should see no users due to permission restrictions
-    177|       const userCount = screen.getByTestId('user-count')
-    178|       expect(userCount).toHaveTextContent('Users: 0')
+ ❯ src/test/scenarios/api-permission-integration.test.tsx:180:25
+    178|       // Viewer should see no users due to permission restrictions
+    179|       const userCount = screen.getByTestId('user-count')
+    180|       expect(userCount).toHaveTextContent('Users: 0')
        |                         ^
-    179|     })
-    180|   })
+    181|     })
+    182|   })
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/24]⎯
 
@@ -3547,14 +5491,14 @@ Ignored nodes: comments, script, style
     </div>
   </body>
 </html>
- ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
- ❯ src/test/scenarios/api-permission-integration.test.tsx:256:13
-    254|       await user.click(deleteButton)
-    255|
-    256|       await waitFor(() => {
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/test/scenarios/api-permission-integration.test.tsx:258:13
+    256|       await user.click(deleteButton)
+    257|
+    258|       await waitFor(() => {
        |             ^
-    257|         expect(screen.getByTestId('success-message')).toHaveTextContent(
-    258|           'User deleted successfully'
+    259|         expect(screen.getByTestId('success-message')).toHaveTextContent(
+    260|           'User deleted successfully'
 
 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/24]⎯
 
@@ -3628,11 +5572,11 @@ Ignored nodes: comments, script, style
     </div>
   </div>
 </body>
- ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
- ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
- ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
- ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
- ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ Object.getElementError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
  ❯ src/test/scenarios/multi-tenant-isolation.test.tsx:34:21
      32|         .render(<TenantDataComponent tenantId="tenant-2" />)
      33|
@@ -3869,7 +5813,7 @@ Ignored nodes: comments, script, style
     </div>
   </body>
 </html>
- ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:163:27
  ❯ Object.testAllRoles src/test/utils/rbac-test-utils.tsx:315:17
     313|       if (expectVisible) {
     314|         for (const testId of expectVisible) {
@@ -4041,11 +5985,11 @@ Ignored nodes: comments, script, style
     </form>
   </div>
 </body>
- ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
- ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
- ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
- ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
- ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ Object.getElementError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
  ❯ Object.testFieldPermissions src/test/utils/rbac-component-helpers.tsx:21:30
      19|         rbacRender.scenario().asRole(role as any).render(formComponent)
      20|
@@ -4195,11 +6139,11 @@ Ignored nodes: comments, script, style
     </nav>
   </div>
 </body>
- ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
- ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
- ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
- ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
- ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ Object.getElementError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
  ❯ Object.testMenuVisibility src/test/utils/rbac-component-helpers.tsx:85:36
      83|       for (const menuItem of menuItems) {
      84|         const shouldBeVisible = menuItem.visibleForRoles.includes(role)
@@ -4368,7 +6312,7 @@ Ignored nodes: comments, script, style
     </div>
   </body>
 </html>...
- ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:163:27
  ❯ src/components/__tests__/roles/RoleList.test.tsx:277:11
     275|     )
     276|
@@ -4535,11 +6479,11 @@ Ignored nodes: comments, script, style
                 <div
                   class="MuiChip-root MuiChip-filled MuiChip-sizeSmall MuiChip-colorDefault MuiChip-filledDefault css-1lflu6f-MuiChip-root"
                 >...
- ❯ Object.getElementError node_modules/@testing-library/dom/dist/config.js:37:19
- ❯ getElementError node_modules/@testing-library/dom/dist/query-helpers.js:20:35
- ❯ getMultipleElementsFoundError node_modules/@testing-library/dom/dist/query-helpers.js:23:10
- ❯ node_modules/@testing-library/dom/dist/query-helpers.js:55:13
- ❯ node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+ ❯ Object.getElementError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/config.js:37:19
+ ❯ getElementError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:20:35
+ ❯ getMultipleElementsFoundError node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:23:10
+ ❯ node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:55:13
+ ❯ node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/query-helpers.js:95:19
  ❯ src/components/__tests__/roles/RoleList.test.tsx:296:19
     294|     expect(screen.getByText('2')).toBeInTheDocument() // Permission count for Admin
     295|     expect(screen.getByText('5')).toBeInTheDocument() // User count for Admin
@@ -4559,7 +6503,6 @@ INPUT
  ❯ PointerHost.move node_modules/@testing-library/user-event/dist/esm/system/pointer/index.js:51:85
  ❯ pointerAction node_modules/@testing-library/user-event/dist/esm/pointer/index.js:57:39
  ❯ Object.pointer node_modules/@testing-library/user-event/dist/esm/pointer/index.js:25:15
- ❯ Object.asyncWrapper node_modules/@testing-library/react/dist/pure.js:88:22
  ❯ src/components/__tests__/roles/RoleList.test.tsx:312:5
     310|     // Find the rows per page selector
     311|     const pageSizeSelect = screen.getByDisplayValue('10')
@@ -4596,5 +6539,5 @@ The latest test that might've caused the error is "should filter user data based
  Test Files  6 failed | 10 passed (16)
       Tests  24 failed | 103 passed (127)
      Errors  1 error
-   Start at  11:14:31
-   Duration  29.10s (transform 3.37s, setup 16.38s, collect 179.06s, tests 51.14s, environment 14.17s, prepare 5.09s)
+   Start at  12:08:08
+   Duration  29.81s (transform 3.03s, setup 16.94s, collect 185.13s, tests 45.17s, environment 17.84s, prepare 5.65s)

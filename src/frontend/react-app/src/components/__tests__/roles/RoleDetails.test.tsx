@@ -3,10 +3,10 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { RoleDetails } from '@/components/roles/RoleDetails.js'
-import { roleService } from '@/services/role.service.js'
+import { RoleDetails } from '@/components/roles/RoleDetails'
+import { roleService } from '@/services/role.service'
 import toast from 'react-hot-toast'
-import type { Role, User } from '@/types/index.js'
+import type { Role, User } from '@/types/index'
 
 // Mock dependencies
 vi.mock('@/services/role.service.js')
