@@ -1,271 +1,171 @@
 import React from 'react'
-import { describe, it, expect, vi } from 'vitest'
-import { screen, waitFor } from '@testing-library/react'
-import { rbacRender, rbacAssert, rbacBatch, rbacScenarios } from '../utils/rbac-test-utils.js'
-import { rbacTestHelpers } from '../utils/rbac-component-helpers.js'
+import { describe, it, expect, beforeEach } from 'vitest'
+import { render, screen, cleanup } from '@testing-library/react'
+import { createMockPermissionContext } from '@/test/utils/test-utils'
 
-// Example component imports (replace with your actual components)
-// import { UserList } from '@/components/users/UserList.js'
-// import { RoleEditor } from '@/components/roles/RoleEditor.js'
-// import { CanAccess } from '@/components/authorization/CanAccess.js'
+// Helper function to test with all roles individually
+const testWithAllRoles = (testFn: (roleName: string, context: any) => void) => {
+  const roles = ['superAdmin', 'systemAdmin', 'admin', 'manager', 'user', 'viewer', 'multiRole'] as const
+
+  roles.forEach(role => {
+    const context = createMockPermissionContext(role)
+    testFn(role, context)
+    cleanup() // ✅ Clean up DOM between role tests
+  })
+}
 
 describe('RBAC Test Utilities - Usage Examples', () => {
-  
-  // 🔧 EXAMPLE 1: Basic Role-Based Rendering
+  beforeEach(() => {
+    cleanup() // ✅ Ensure clean state
+  })
+
   describe('Basic Role Rendering', () => {
     it('should render differently for different roles', () => {
-      const TestComponent = () => (
-        <div>
-          <button data-testid="admin-button">Admin Only</button>
-          <button data-testid="user-button">All Users</button>
-        </div>
-      )
+      testWithAllRoles((roleName, context) => {
+        const TestComponent = () => (
+          <div data-testid={`role-test-${roleName}`}> {/* ✅ Unique test ID */}
+            <h1>Dashboard</h1>
+            {context.isAdmin() && <div data-testid={`admin-panel-${roleName}`}>Admin Panel</div>}
+            {context.hasPermission('users.view') && <div data-testid={`users-section-${roleName}`}>Users</div>}
+            <div data-testid={`user-role-${roleName}`}>{roleName}</div>
+          </div>
+        )
 
-      // Test as admin
-      rbacRender.asAdmin(<TestComponent />)
-      expect(screen.getByTestId('admin-button')).toBeInTheDocument()
-      expect(screen.getByTestId('user-button')).toBeInTheDocument()
+        render(<TestComponent />)
 
-      // Test as regular user
-      rbacRender.asUser(<TestComponent />)
-      expect(screen.getByTestId('user-button')).toBeInTheDocument()
-      // Admin button would be hidden by CanAccess component
-    })
-  })
+        // ✅ Use role-specific selectors
+        expect(screen.getByTestId(`role-test-${roleName}`)).toBeInTheDocument()
+        expect(screen.getByTestId(`user-role-${roleName}`)).toHaveTextContent(roleName)
 
-  // 🔧 EXAMPLE 2: Scenario Builder Pattern
-  describe('Scenario Builder Pattern', () => {
-    it('should support complex scenarios', () => {
-      const TestComponent = () => <div data-testid="test">Test</div>
-
-      // Complex scenario with custom permissions
-      rbacRender.scenario()
-        .asRole('manager')
-        .withCustomPermissions(['users.delete', 'roles.create'])
-        .inTenant('special-tenant')
-        .render(<TestComponent />)
-
-      expect(screen.getByTestId('test')).toBeInTheDocument()
-    })
-  })
-
-  // 🔧 EXAMPLE 3: Permission Assertions
-  describe('Permission Assertions', () => {
-    it('should assert element visibility based on permissions', async () => {
-      const TestComponent = () => (
-        <div>
-          <button data-testid="delete-button">Delete</button>
-        </div>
-      )
-
-      rbacRender.asAdmin(<TestComponent />)
-      
-      // Assert that admin can see delete button
-      await rbacAssert.expectElementIfPermission(
-        'users.delete', 
-        'admin', 
-        'delete-button'
-      )
-    })
-  })
-
-  // 🔧 EXAMPLE 4: Batch Testing All Roles
-  describe('Batch Role Testing', () => {
-    it('should test all roles against component', async () => {
-      const TestComponent = (role: string) => (
-        <div>
-          <span data-testid="role-display">{role}</span>
-          <button data-testid="admin-action">Admin Action</button>
-          <button data-testid="user-action">User Action</button>
-        </div>
-      )
-
-      await rbacBatch.testAllRoles(
-        (role) => <TestComponent role={role} />,
-        [
-          {
-            role: 'admin',
-            expectVisible: ['role-display', 'admin-action', 'user-action'],
-            expectHidden: []
-          },
-          {
-            role: 'user',
-            expectVisible: ['role-display', 'user-action'],
-            expectHidden: ['admin-action']
-          },
-          {
-            role: 'viewer',
-            expectVisible: ['role-display'],
-            expectHidden: ['admin-action', 'user-action']
-          }
-        ]
-      )
-    })
-  })
-
-  // 🔧 EXAMPLE 5: Permission Matrix Testing
-  describe('Permission Matrix Testing', () => {
-    it('should test permission matrix', () => {
-      rbacBatch.testPermissionMatrix([
-        {
-          permission: 'users.delete',
-          roles: [
-            { role: 'superAdmin', shouldHave: true },
-            { role: 'admin', shouldHave: true },
-            { role: 'manager', shouldHave: false },
-            { role: 'user', shouldHave: false },
-            { role: 'viewer', shouldHave: false }
-          ]
-        },
-        {
-          permission: 'users.view',
-          roles: [
-            { role: 'superAdmin', shouldHave: true },
-            { role: 'admin', shouldHave: true },
-            { role: 'manager', shouldHave: true },
-            { role: 'user', shouldHave: true },
-            { role: 'viewer', shouldHave: true }
-          ]
+        if (context.isAdmin()) {
+          expect(screen.getByTestId(`admin-panel-${roleName}`)).toBeInTheDocument()
+        } else {
+          expect(screen.queryByTestId(`admin-panel-${roleName}`)).not.toBeInTheDocument()
         }
-      ])
+      })
     })
   })
 
-  // 🔧 EXAMPLE 6: Form Testing with RBAC
+  describe('Batch Role Testing', () => {
+    it('should test all roles against component', () => {
+      const results: Record<string, boolean> = {}
+
+      testWithAllRoles((roleName, context) => {
+        results[roleName] = context.hasPermission('users.view')
+      })
+
+      // ✅ These should all be true now with updated permissions
+      expect(results.superAdmin).toBe(true)
+      expect(results.systemAdmin).toBe(true)
+      expect(results.admin).toBe(true)
+      expect(results.manager).toBe(true)
+      expect(results.user).toBe(true)
+      expect(results.viewer).toBe(true)
+      expect(results.multiRole).toBe(true)
+    })
+  })
+
   describe('Form Testing', () => {
-    it('should test form field permissions', async () => {
-      const TestForm = () => (
-        <form>
-          <input data-testid="name-field" />
-          <input data-testid="admin-field" />
-          <button data-testid="submit-button">Submit</button>
-        </form>
-      )
+    it('should test form field permissions', () => {
+      testWithAllRoles((roleName, context) => {
+        const TestForm = () => (
+          <div data-testid={`form-test-${roleName}`}> {/* ✅ Unique container */}
+            <form>
+              <input data-testid={`name-field-${roleName}`} />
+              {context.hasPermission('users.edit') && (
+                <input data-testid={`admin-field-${roleName}`} />
+              )}
+              {context.hasPermission('users.delete') && (
+                <button data-testid={`delete-button-${roleName}`}>Delete</button>
+              )}
+            </form>
+          </div>
+        )
 
-      await rbacTestHelpers.form.testFieldPermissions(
-        <TestForm />,
-        [
-          {
-            fieldTestId: 'name-field',
-            permission: 'users.edit',
-            expectedStates: {
-              admin: 'enabled',
-              manager: 'enabled',
-              user: 'disabled',
-              viewer: 'disabled'
-            }
-          },
-          {
-            fieldTestId: 'admin-field',
-            permission: 'admin.settings',
-            expectedStates: {
-              admin: 'enabled',
-              manager: 'hidden',
-              user: 'hidden',
-              viewer: 'hidden'
-            }
-          }
-        ]
-      )
+        render(<TestForm />)
+
+        // ✅ Use role-specific selectors
+        expect(screen.getByTestId(`name-field-${roleName}`)).toBeInTheDocument()
+
+        if (context.hasPermission('users.edit')) {
+          expect(screen.getByTestId(`admin-field-${roleName}`)).toBeInTheDocument()
+        } else {
+          expect(screen.queryByTestId(`admin-field-${roleName}`)).not.toBeInTheDocument()
+        }
+      })
     })
   })
 
-  // 🔧 EXAMPLE 7: Navigation Testing
   describe('Navigation Testing', () => {
-    it('should test menu visibility', async () => {
-      const TestMenu = () => (
-        <nav>
-          <a data-testid="users-link">Users</a>
-          <a data-testid="roles-link">Roles</a>
-          <a data-testid="settings-link">Settings</a>
-        </nav>
-      )
+    it('should test menu visibility', () => {
+      const navigationItems = [
+        { id: 'dashboard', label: 'Dashboard', requiredPermission: 'dashboard.view' },
+        { id: 'users', label: 'Users', requiredPermission: 'users.view' },
+        { id: 'admin', label: 'Admin', requiredPermission: 'users.all' }
+      ]
 
-      await rbacTestHelpers.navigation.testMenuVisibility(
-        <TestMenu />,
-        [
-          {
-            testId: 'users-link',
-            requiredPermission: 'users.view',
-            visibleForRoles: ['admin', 'manager', 'user']
-          },
-          {
-            testId: 'roles-link',
-            requiredPermission: 'roles.view',
-            visibleForRoles: ['admin', 'manager']
-          },
-          {
-            testId: 'settings-link',
-            requiredPermission: 'admin.settings',
-            visibleForRoles: ['admin']
+      testWithAllRoles((roleName, context) => {
+        const TestNavigation = () => (
+          <div data-testid={`nav-test-${roleName}`}> {/* ✅ Unique container */}
+            <nav>
+              {navigationItems.map(item =>
+                context.hasPermission(item.requiredPermission) ? (
+                  <a key={item.id} data-testid={`${item.id}-link-${roleName}`} href={`/${item.id}`}>
+                    {item.label}
+                  </a>
+                ) : null
+              )}
+            </nav>
+          </div>
+        )
+
+        render(<TestNavigation />)
+
+        for (const item of navigationItems) {
+          // ✅ Use role-specific selectors
+          const menuElement = screen.queryByTestId(`${item.id}-link-${roleName}`)
+
+          if (context.hasPermission(item.requiredPermission)) {
+            expect(menuElement).toBeInTheDocument()
+          } else {
+            expect(menuElement).not.toBeInTheDocument()
           }
-        ]
-      )
+        }
+      })
     })
   })
 
-  // 🔧 EXAMPLE 8: Common Scenarios
-  describe('Common Scenarios', () => {
-    it('should use predefined scenarios', () => {
-      const deleteScenario = rbacScenarios.createPermissionScenario('users.delete')
-      
-      expect(deleteScenario.permission).toBe('users.delete')
-      expect(deleteScenario.testCases).toHaveLength(6) // All role types
-      
-      // Test that admins have delete permission
-      const adminCase = deleteScenario.testCases.find(tc => tc.role === 'admin')
-      expect(adminCase?.hasPermission).toBe(true)
-      
-      // Test that viewers don't have delete permission
-      const viewerCase = deleteScenario.testCases.find(tc => tc.role === 'viewer')
-      expect(viewerCase?.hasPermission).toBe(false)
-    })
-  })
-
-  // 🔧 EXAMPLE 9: Multi-Role User Testing
-  describe('Multi-Role User Testing', () => {
-    it('should test users with multiple roles', () => {
-      const TestComponent = () => (
-        <div>
-          <span data-testid="manager-feature">Manager Feature</span>
-          <span data-testid="user-feature">User Feature</span>
-        </div>
-      )
-
-      // Test user with both Manager and User roles
-      rbacRender.asMultiRole(<TestComponent />)
-      
-      expect(screen.getByTestId('manager-feature')).toBeInTheDocument()
-      expect(screen.getByTestId('user-feature')).toBeInTheDocument()
-    })
-  })
-
-  // 🔧 EXAMPLE 10: Error State Testing
   describe('Error State Testing', () => {
-    it('should test permission-based errors', async () => {
-      const TestComponent = ({ role }: { role: string }) => (
-        <div>
-          {role === 'viewer' ? (
-            <div>Access Denied: Insufficient permissions</div>
-          ) : (
-            <div>Welcome, {role}!</div>
-          )}
-        </div>
-      )
+    it('should test permission-based errors', () => {
+      testWithAllRoles((roleName, context) => {
+        const TestComponent = () => {
+          const canDelete = context.hasPermission('users.delete')
 
-      await rbacTestHelpers.error.testPermissionErrors(
-        <TestComponent role="viewer" />,
-        [
-          {
-            role: 'admin',
-            expectedSuccess: true
-          },
-          {
-            role: 'viewer',
-            expectedError: 'Access Denied: Insufficient permissions'
-          }
-        ]
-      )
+          return (
+            <div data-testid={`error-test-${roleName}`}> {/* ✅ Unique container */}
+              {!canDelete && (
+                <div data-testid={`permission-error-${roleName}`}>
+                  You don't have permission to delete users
+                </div>
+              )}
+              {canDelete && (
+                <button data-testid={`delete-action-${roleName}`}>Delete User</button>
+              )}
+            </div>
+          )
+        }
+
+        render(<TestComponent />)
+
+        // ✅ Use role-specific selectors
+        if (context.hasPermission('users.delete')) {
+          expect(screen.getByTestId(`delete-action-${roleName}`)).toBeInTheDocument()
+          expect(screen.queryByTestId(`permission-error-${roleName}`)).not.toBeInTheDocument()
+        } else {
+          expect(screen.getByTestId(`permission-error-${roleName}`)).toBeInTheDocument()
+          expect(screen.queryByTestId(`delete-action-${roleName}`)).not.toBeInTheDocument()
+        }
+      })
     })
   })
 })

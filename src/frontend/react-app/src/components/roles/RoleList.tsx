@@ -14,14 +14,15 @@ import {
   Chip,
   Box,
   Typography,
-  CircularProgress
+  CircularProgress,
+  Tooltip
 } from '@mui/material';
 import { Search, Edit, Delete } from '@mui/icons-material';
-import type { RoleDto } from '../../types'; // Add type keyword
-import { roleService } from '../../services/role.service'; // Use instance
+import type { RoleDto } from '../../types';
+import { roleService } from '../../services/role.service';
 
 interface RoleListProps {
-  onEditRole?: (role: RoleDto) => void;
+  onEditRole?: (roleId: number) => void;
   onDeleteRole?: (roleId: number) => void;
 }
 
@@ -29,13 +30,12 @@ export const RoleList: React.FC<RoleListProps> = ({
   onEditRole,
   onDeleteRole
 }) => {
-  // State to handle pagination
   const [roles, setRoles] = useState<RoleDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // Pagination state
+
+  // Fix: Initialize with default values
   const [pagination, setPagination] = useState({
     totalCount: 0,
     pageNumber: 1,
@@ -43,52 +43,56 @@ export const RoleList: React.FC<RoleListProps> = ({
     totalPages: 0
   });
 
-  // Fetch roles with pagination
   const fetchRoles = async (page = 1, pageSize = 10, search = '') => {
     try {
       setLoading(true);
       setError(null);
 
-      // Use roleService instance instead of RoleService class
       const result = await roleService.getRoles({
         page,
         pageSize,
         searchTerm: search || undefined
       });
 
-      setRoles(result.roles);
-      setPagination(result.pagination);
+      // Fix: Handle response structure safely
+      if (result) {
+        setRoles(result.items || []);
+        setPagination({
+          totalCount: result.totalCount || 0,
+          pageNumber: result.pageNumber || page,
+          pageSize: result.pageSize || pageSize,
+          totalPages: result.totalPages || 0
+        });
+      }
     } catch (err) {
+      console.error('Failed to fetch roles:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch roles');
+      setRoles([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Initial load
   useEffect(() => {
-    fetchRoles(pagination.pageNumber, pagination.pageSize, searchTerm);
+    fetchRoles(1, 10, '');
   }, []);
 
-  // Search handler with debounce
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      fetchRoles(1, pagination.pageSize, searchTerm); // Reset to page 1 on search
+      fetchRoles(1, pagination?.pageSize || 10, searchTerm);
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, pagination.pageSize]);
+  }, [searchTerm, pagination?.pageSize]);
 
-  // Page change handler - prefix unused parameter with underscore
   const handlePageChange = (_event: unknown, newPage: number) => {
-    const pageNumber = newPage + 1; // MUI uses 0-based indexing
-    fetchRoles(pageNumber, pagination.pageSize, searchTerm);
+    const pageNumber = newPage + 1;
+    fetchRoles(pageNumber, pagination?.pageSize || 10, searchTerm);
   };
 
-  // Page size change handler
   const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newPageSize = parseInt(event.target.value, 10);
-    fetchRoles(1, newPageSize, searchTerm); // Reset to page 1
+    fetchRoles(1, newPageSize, searchTerm);
   };
 
   if (loading) {
@@ -102,14 +106,13 @@ export const RoleList: React.FC<RoleListProps> = ({
   if (error) {
     return (
       <Box p={2}>
-        <Typography color="error">{error}</Typography>
+        <Typography color="error">Failed to fetch roles</Typography>
       </Box>
     );
   }
 
   return (
     <Box>
-      {/* Search field */}
       <Box mb={2}>
         <TextField
           fullWidth
@@ -126,7 +129,6 @@ export const RoleList: React.FC<RoleListProps> = ({
         />
       </Box>
 
-      {/* Table */}
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -145,27 +147,40 @@ export const RoleList: React.FC<RoleListProps> = ({
                 <TableCell>{role.name}</TableCell>
                 <TableCell>{role.description}</TableCell>
                 <TableCell>
-                  <Chip 
+                  <Chip
                     label={role.isSystemRole ? 'System' : 'Custom'}
                     color={role.isSystemRole ? 'primary' : 'default'}
                     size="small"
                   />
                 </TableCell>
-                <TableCell>{role.permissions.length}</TableCell>
+                <TableCell>{role.permissions?.length || 0}</TableCell>
                 <TableCell>{role.userCount || 0}</TableCell>
                 <TableCell>
-                  <IconButton 
-                    onClick={() => onEditRole?.(role)}
-                    disabled={role.isSystemRole}
-                  >
-                    <Edit />
-                  </IconButton>
-                  <IconButton 
-                    onClick={() => onDeleteRole?.(role.id)}
-                    disabled={role.isSystemRole}
-                  >
-                    <Delete />
-                  </IconButton>
+                  {/* Fix: Add proper accessibility labels and tooltip wrappers */}
+                  <Tooltip title={role.isSystemRole ? "Cannot edit system roles" : "Edit role"}>
+                    <span>
+                      <IconButton
+                        onClick={() => onEditRole?.(role.id)}
+                        disabled={role.isSystemRole}
+                        aria-label={`Edit ${role.name} role`}
+                        data-testid="edit-button"
+                      >
+                        <Edit />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                  <Tooltip title={role.isSystemRole ? "Cannot delete system roles" : "Delete role"}>
+                    <span>
+                      <IconButton
+                        onClick={() => onDeleteRole?.(role.id)}
+                        disabled={role.isSystemRole}
+                        aria-label={`Delete ${role.name} role`}
+                        data-testid="delete-button"
+                      >
+                        <Delete />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
                 </TableCell>
               </TableRow>
             ))}
@@ -173,13 +188,12 @@ export const RoleList: React.FC<RoleListProps> = ({
         </Table>
       </TableContainer>
 
-      {/* Pagination component */}
       <TablePagination
         component="div"
-        count={pagination.totalCount}
-        page={pagination.pageNumber - 1} // MUI uses 0-based indexing
+        count={pagination?.totalCount || 0}
+        page={Math.max(0, (pagination?.pageNumber || 1) - 1)}
         onPageChange={handlePageChange}
-        rowsPerPage={pagination.pageSize}
+        rowsPerPage={pagination?.pageSize || 10}
         onRowsPerPageChange={handlePageSizeChange}
         rowsPerPageOptions={[5, 10, 25, 50]}
         showFirstButton

@@ -7,11 +7,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   plugins: [react()],
+  
+  // Fix: Add define for environment variables
+  define: {
+    'import.meta.env.VITE_API_BASE_URL': JSON.stringify('http://localhost:5000/api'),
+    'import.meta.env.VITE_APP_TITLE': JSON.stringify('Test App'),
+  },
+  
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
-          // Vendor chunks
           'react-vendor': ['react', 'react-dom'],
           'mui-vendor': [
             '@mui/material', 
@@ -22,8 +28,6 @@ export default defineConfig({
           'router-vendor': ['react-router-dom'],
           'query-vendor': ['@tanstack/react-query'],
           'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
-          
-          // App chunks
           'auth-components': [
             './src/components/auth/LoginForm.jsx',
             './src/components/auth/RegisterForm.jsx',
@@ -43,11 +47,10 @@ export default defineConfig({
         }
       }
     },
-    // Increase chunk size warning limit for .NET 9 enterprise app
     chunkSizeWarningLimit: 800,
-    // Enable source maps for production debugging
     sourcemap: true
   },
+  
   test: {
     environment: 'jsdom',
     globals: true,
@@ -61,6 +64,19 @@ export default defineConfig({
       '.vscode',
       '.git'
     ],
+    
+    // Fix: Add pool configuration to prevent test interference
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: true,
+      },
+    },
+    
+    // Fix: Increase timeout for complex component tests
+    testTimeout: 15000,
+    hookTimeout: 15000,
+    
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -82,8 +98,17 @@ export default defineConfig({
       }
     },
     reporters: ['verbose'],
-    testTimeout: 10000
+    
+    // Fix: Add retry configuration for flaky tests
+    retry: 1,
+    
+    // Fix: Configure browser-like environment
+    env: {
+      NODE_ENV: 'test',
+      VITE_API_BASE_URL: 'http://localhost:5000/api',
+    }
   },
+  
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src')

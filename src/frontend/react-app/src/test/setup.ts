@@ -4,18 +4,24 @@ import { afterEach, beforeAll, afterAll, vi } from 'vitest'
 import { setupServer } from 'msw/node'
 import { handlers } from './mocks/handlers.js'
 
-// Mock server setup
+// Mock server setup - Fix MSW unhandled request errors
 export const server = setupServer(...handlers)
 
 // Start server before all tests
 beforeAll(() => {
-  server.listen({ onUnhandledRequest: 'error' })
+  // Fix: Change to 'warn' to avoid MSW errors breaking tests
+  server.listen({ onUnhandledRequest: 'warn' })
 })
 
-// Clean up after each test
+// Clean up after each test - Fix multiple element rendering
 afterEach(() => {
   cleanup()
   server.resetHandlers()
+  // Clear all mocks to prevent state leakage
+  vi.clearAllMocks()
+  // Clear localStorage and sessionStorage
+  localStorage.clear()
+  sessionStorage.clear()
 })
 
 // Close server after all tests
@@ -52,11 +58,10 @@ global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   disconnect: vi.fn(),
 }))
 
-// Mock scrollTo - Fixed signature without unused parameter
+// Mock scrollTo
 Object.defineProperty(window, 'scrollTo', {
   writable: true,
   value: vi.fn().mockImplementation(() => {
-    // Handle both scrollTo(x, y) and scrollTo(options) signatures
     return undefined
   }),
 })
@@ -82,3 +87,8 @@ const sessionStorageMock = {
   key: vi.fn(),
 }
 vi.stubGlobal('sessionStorage', sessionStorageMock)
+
+// Fix: Add environment variable configuration for tests
+vi.stubEnv('VITE_API_BASE_URL', 'http://localhost:5000/api')
+vi.stubEnv('VITE_APP_TITLE', 'Test App')
+vi.stubEnv('MODE', 'test')

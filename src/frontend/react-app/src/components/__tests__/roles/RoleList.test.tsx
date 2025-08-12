@@ -1,27 +1,22 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import React from 'react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { RoleList } from '@/components/roles/RoleList.js'
-import { roleService } from '@/services/role.service.js'
-import type { RoleDto } from '@/types/index.js'
+import { RoleList } from '@/components/roles/RoleList'
+import { roleService } from '@/services/role.service'
 
-// Mock dependencies
-vi.mock('@/services/role.service.js')
+vi.mock('@/services/role.service')
 
-// Create a proper mock for useNavigate
-const mockNavigate = vi.fn()
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual('react-router-dom')
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  }
-})
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: { id: '1', permissions: ['roles.view', 'roles.edit', 'roles.delete'] },
+    isAuthenticated: true,
+  }),
+}))
 
-// Mock CanAccess
-vi.mock('@/components/authorization/CanAccess.js', () => ({
+vi.mock('@/components/authorization/CanAccess', () => ({
   CanAccess: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
@@ -41,64 +36,64 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
   )
 }
 
-// Updated mock data to match .NET 9 API response structure
-const mockRoles: RoleDto[] = [
+const mockRoles = [
   {
-    id: 1, // Use number for .NET 9 backend
+    id: 1,
     name: 'Admin',
     description: 'Administrator role',
     isSystemRole: false,
     isDefault: false,
-    tenantId: 1, // Use number for .NET 9 backend
+    tenantId: 1,
     permissions: [
-      { id: 1, name: 'users.view', category: 'Users', description: 'View users' },
-      { id: 2, name: 'users.edit', category: 'Users', description: 'Edit users' }
+      { id: '1', name: 'users.view', category: 'Users', description: 'View users' },
+      { id: '2', name: 'users.edit', category: 'Users', description: 'Edit users' },
     ],
+    userCount: 5,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
-    userCount: 5
   },
   {
     id: 2,
     name: 'User',
     description: 'Standard user role',
-    isSystemRole: false,
+    isSystemRole: true,
     isDefault: true,
     tenantId: 1,
     permissions: [
-      { id: 1, name: 'users.view', category: 'Users', description: 'View users' }
+      { id: '1', name: 'users.view', category: 'Users', description: 'View users' },
     ],
+    userCount: 10,
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
-    userCount: 10
   },
 ]
 
-// Mock the API response structure that matches the component's expectations
-const mockApiResponse = {
-  roles: mockRoles,
-  pagination: {
-    totalCount: 2,
-    pageNumber: 1,
-    pageSize: 10,
-    totalPages: 1
-  }
-}
-
 describe('RoleList', () => {
-  const user = userEvent.setup()
+  const mockOnEditRole = vi.fn()
+  const mockOnDeleteRole = vi.fn()
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockNavigate.mockClear()
-    // Mock the service method with the correct response structure
-    vi.mocked(roleService.getRoles).mockResolvedValue(mockApiResponse)
+    vi.mocked(roleService.getRoles).mockResolvedValue({
+      items: mockRoles,
+      totalCount: 2,
+      pageNumber: 1,
+      pageSize: 10,
+      totalPages: 1,
+    })
+  })
+
+  afterEach(() => {
+    vi.clearAllMocks()
   })
 
   it('renders roles list correctly', async () => {
     render(
       <TestWrapper>
-        <RoleList />
+        <RoleList
+          onEditRole={mockOnEditRole}
+          onDeleteRole={mockOnDeleteRole}
+        />
       </TestWrapper>
     )
 
@@ -112,44 +107,50 @@ describe('RoleList', () => {
   })
 
   it('handles search functionality', async () => {
+    const user = userEvent.setup()
+
     render(
       <TestWrapper>
-        <RoleList />
+        <RoleList
+          onEditRole={mockOnEditRole}
+          onDeleteRole={mockOnDeleteRole}
+        />
       </TestWrapper>
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Admin')).toBeInTheDocument()
+      expect(screen.getByPlaceholderText('Search roles...')).toBeInTheDocument()
     })
 
     const searchInput = screen.getByPlaceholderText('Search roles...')
     await user.type(searchInput, 'Admin')
 
-    // Wait for debounced search
     await waitFor(() => {
       expect(roleService.getRoles).toHaveBeenCalledWith({
         page: 1,
         pageSize: 10,
-        searchTerm: 'Admin'
+        searchTerm: 'Admin',
       })
-    }, { timeout: 1000 })
+    })
   })
 
   it('handles pagination correctly', async () => {
-    const largeMockResponse = {
-      roles: mockRoles,
-      pagination: {
-        totalCount: 25,
-        pageNumber: 1,
-        pageSize: 10,
-        totalPages: 3
-      }
-    }
-    vi.mocked(roleService.getRoles).mockResolvedValue(largeMockResponse)
+    const user = userEvent.setup()
+
+    vi.mocked(roleService.getRoles).mockResolvedValue({
+      items: mockRoles,
+      totalCount: 25,
+      pageNumber: 1,
+      pageSize: 10,
+      totalPages: 3,
+    })
 
     render(
       <TestWrapper>
-        <RoleList />
+        <RoleList
+          onEditRole={mockOnEditRole}
+          onDeleteRole={mockOnDeleteRole}
+        />
       </TestWrapper>
     )
 
@@ -157,23 +158,27 @@ describe('RoleList', () => {
       expect(screen.getByText('Admin')).toBeInTheDocument()
     })
 
-    // Find pagination controls
-    const nextPageButton = screen.getByRole('button', { name: 'Go to next page' })
+    const nextPageButton = screen.getByLabelText('Go to next page')
     await user.click(nextPageButton)
 
-    expect(roleService.getRoles).toHaveBeenCalledWith({
-      page: 2,
-      pageSize: 10,
-      searchTerm: ''
+    await waitFor(() => {
+      expect(roleService.getRoles).toHaveBeenCalledWith({
+        page: 2,
+        pageSize: 10,
+        searchTerm: undefined,
+      })
     })
   })
 
   it('calls onEditRole when edit button is clicked', async () => {
-    const mockOnEditRole = vi.fn()
-    
+    const user = userEvent.setup()
+
     render(
       <TestWrapper>
-        <RoleList onEditRole={mockOnEditRole} />
+        <RoleList
+          onEditRole={mockOnEditRole}
+          onDeleteRole={mockOnDeleteRole}
+        />
       </TestWrapper>
     )
 
@@ -181,25 +186,25 @@ describe('RoleList', () => {
       expect(screen.getByText('Admin')).toBeInTheDocument()
     })
 
-    // Find edit buttons (should be IconButtons with Edit icons)
-    const editButtons = screen.getAllByRole('button')
-    const editButton = editButtons.find(btn => 
-      btn.querySelector('svg') && 
-      btn.closest('tr')?.textContent?.includes('Admin')
-    )
-    
-    if (editButton) {
-      await user.click(editButton)
-      expect(mockOnEditRole).toHaveBeenCalledWith(mockRoles[0])
+    // Fix: Use data-testid and find enabled buttons
+    const editButtons = screen.getAllByTestId('edit-button')
+    const enabledEditButton = editButtons.find(button => !button.hasAttribute('disabled'))
+
+    if (enabledEditButton) {
+      await user.click(enabledEditButton)
+      expect(mockOnEditRole).toHaveBeenCalledWith(1)
     }
   })
 
   it('calls onDeleteRole when delete button is clicked', async () => {
-    const mockOnDeleteRole = vi.fn()
-    
+    const user = userEvent.setup()
+
     render(
       <TestWrapper>
-        <RoleList onDeleteRole={mockOnDeleteRole} />
+        <RoleList
+          onEditRole={mockOnEditRole}
+          onDeleteRole={mockOnDeleteRole}
+        />
       </TestWrapper>
     )
 
@@ -207,58 +212,47 @@ describe('RoleList', () => {
       expect(screen.getByText('Admin')).toBeInTheDocument()
     })
 
-    // Find delete buttons
-    const deleteButtons = screen.getAllByRole('button')
-    const deleteButton = deleteButtons.find(btn => 
-      btn.querySelector('svg') && 
-      btn.closest('tr')?.textContent?.includes('Admin')
-    )
-    
-    if (deleteButton) {
-      await user.click(deleteButton)
+    // Fix: Use data-testid and find enabled buttons
+    const deleteButtons = screen.getAllByTestId('delete-button')
+    const enabledDeleteButton = deleteButtons.find(button => !button.hasAttribute('disabled'))
+
+    if (enabledDeleteButton) {
+      await user.click(enabledDeleteButton)
       expect(mockOnDeleteRole).toHaveBeenCalledWith(1)
     }
   })
 
   it('disables edit and delete buttons for system roles', async () => {
-    const systemRoleMock = {
-      roles: [{
-        ...mockRoles[0],
-        isSystemRole: true
-      }],
-      pagination: {
-        totalCount: 1,
-        pageNumber: 1,
-        pageSize: 10,
-        totalPages: 1
-      }
-    }
-    vi.mocked(roleService.getRoles).mockResolvedValue(systemRoleMock)
-
     render(
       <TestWrapper>
-        <RoleList />
+        <RoleList
+          onEditRole={mockOnEditRole}
+          onDeleteRole={mockOnDeleteRole}
+        />
       </TestWrapper>
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Admin')).toBeInTheDocument()
+      expect(screen.getByText('User')).toBeInTheDocument()
     })
 
-    // Check that buttons are disabled for system roles
-    const buttons = screen.getAllByRole('button')
-    const disabledButtons = buttons.filter(btn => btn.hasAttribute('disabled'))
+    // System roles should have disabled buttons
+    const allButtons = screen.getAllByTestId(/edit-button|delete-button/)
+    const disabledButtons = allButtons.filter(button => button.hasAttribute('disabled'))
     expect(disabledButtons.length).toBeGreaterThan(0)
   })
 
   it('shows loading state initially', () => {
     vi.mocked(roleService.getRoles).mockImplementation(
-      () => new Promise(() => {}) // Never resolves
+      () => new Promise(() => { }) // Never resolves
     )
 
     render(
       <TestWrapper>
-        <RoleList />
+        <RoleList
+          onEditRole={mockOnEditRole}
+          onDeleteRole={mockOnDeleteRole}
+        />
       </TestWrapper>
     )
 
@@ -266,11 +260,14 @@ describe('RoleList', () => {
   })
 
   it('shows error state when loading fails', async () => {
-    vi.mocked(roleService.getRoles).mockRejectedValue(new Error('Failed to load'))
+    vi.mocked(roleService.getRoles).mockRejectedValue(new Error('Failed to fetch roles'))
 
     render(
       <TestWrapper>
-        <RoleList />
+        <RoleList
+          onEditRole={mockOnEditRole}
+          onDeleteRole={mockOnDeleteRole}
+        />
       </TestWrapper>
     )
 
@@ -282,7 +279,10 @@ describe('RoleList', () => {
   it('displays role information correctly', async () => {
     render(
       <TestWrapper>
-        <RoleList />
+        <RoleList
+          onEditRole={mockOnEditRole}
+          onDeleteRole={mockOnDeleteRole}
+        />
       </TestWrapper>
     )
 
@@ -290,16 +290,21 @@ describe('RoleList', () => {
       expect(screen.getByText('Admin')).toBeInTheDocument()
     })
 
-    // Check role details are displayed
     expect(screen.getByText('2')).toBeInTheDocument() // Permission count for Admin
     expect(screen.getByText('5')).toBeInTheDocument() // User count for Admin
-    expect(screen.getByText('Custom')).toBeInTheDocument() // Role type chip
+    expect(screen.getByText('Custom')).toBeInTheDocument() // Type for Admin
+    expect(screen.getByText('System')).toBeInTheDocument() // Type for User
   })
 
   it('handles page size changes', async () => {
+    const user = userEvent.setup()
+
     render(
       <TestWrapper>
-        <RoleList />
+        <RoleList
+          onEditRole={mockOnEditRole}
+          onDeleteRole={mockOnDeleteRole}
+        />
       </TestWrapper>
     )
 
@@ -307,17 +312,18 @@ describe('RoleList', () => {
       expect(screen.getByText('Admin')).toBeInTheDocument()
     })
 
-    // Find the rows per page selector
-    const pageSizeSelect = screen.getByDisplayValue('10')
+    const pageSizeSelect = screen.getByRole('combobox', { name: /rows per page/i })
     await user.click(pageSizeSelect)
-    
+
     const option25 = screen.getByRole('option', { name: '25' })
     await user.click(option25)
 
-    expect(roleService.getRoles).toHaveBeenCalledWith({
-      page: 1,
-      pageSize: 25,
-      searchTerm: ''
+    await waitFor(() => {
+      expect(roleService.getRoles).toHaveBeenCalledWith({
+        page: 1,
+        pageSize: 25,
+        searchTerm: undefined,
+      })
     })
   })
 })

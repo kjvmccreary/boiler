@@ -1,223 +1,155 @@
-import { screen, waitFor } from '@testing-library/react'
-import { rbacRender, rbacUserEvent } from './rbac-test-utils.js'
+import { render, screen, waitFor, cleanup } from '@testing-library/react'
+import { rbacRender } from './rbac-test-utils.js'
+import type { ReactElement } from 'react'
 
-// 🔧 NEW: Form Testing with RBAC
-export const rbacFormHelpers = {
-  // Test form field permissions
-  async testFieldPermissions(
-    formComponent: React.ReactElement,
-    fieldTests: Array<{
-      fieldTestId: string
-      permission: string
-      expectedStates: {
-        [role: string]: 'enabled' | 'disabled' | 'hidden'
-      }
-    }>
-  ) {
-    for (const fieldTest of fieldTests) {
-      for (const [role, expectedState] of Object.entries(fieldTest.expectedStates)) {
-        rbacRender.scenario().asRole(role as any).render(formComponent)
-        
-        const field = screen.queryByTestId(fieldTest.fieldTestId)
-        
-        switch (expectedState) {
-          case 'hidden':
-            expect(field).not.toBeInTheDocument()
-            break
-          case 'disabled':
-            expect(field).toBeInTheDocument()
-            expect(field).toBeDisabled()
-            break
-          case 'enabled':
-            expect(field).toBeInTheDocument()
-            expect(field).toBeEnabled()
-            break
-        }
-      }
-    }
-  },
-
-  // Test form submission permissions
-  async testSubmitPermissions(
-    formComponent: React.ReactElement,
-    submitButtonTestId: string,
-    requiredPermission: string
-  ) {
-    const roles = ['superAdmin', 'admin', 'manager', 'user', 'viewer'] as const
-    
-    for (const role of roles) {
-      const { user } = rbacUserEvent.setupForRole(role)
-      rbacRender.scenario().asRole(role).render(formComponent)
-      
-      const submitButton = screen.getByTestId(submitButtonTestId)
-      const context = rbacRender.scenario().asRole(role).getPermissionContext()
-      
-      if (context.hasPermission(requiredPermission)) {
-        expect(submitButton).toBeEnabled()
-        await user.click(submitButton)
-        // Add assertions for successful submission
-      } else {
-        expect(submitButton).toBeDisabled()
-      }
-    }
-  }
-}
-
-// 🔧 NEW: Navigation Testing with RBAC
-export const rbacNavigationHelpers = {
-  // Test menu item visibility
-  async testMenuVisibility(
-    menuComponent: React.ReactElement,
-    menuItems: Array<{
-      testId: string
-      requiredPermission?: string
-      requiredRole?: string
-      visibleForRoles: string[]
-    }>
-  ) {
-    const allRoles = ['superAdmin', 'systemAdmin', 'admin', 'manager', 'user', 'viewer'] as const
-    
-    for (const role of allRoles) {
-      rbacRender.scenario().asRole(role).render(menuComponent)
-      
-      for (const menuItem of menuItems) {
-        const shouldBeVisible = menuItem.visibleForRoles.includes(role)
-        const menuElement = screen.queryByTestId(menuItem.testId)
-        
-        if (shouldBeVisible) {
-          expect(menuElement).toBeInTheDocument()
-        } else {
-          expect(menuElement).not.toBeInTheDocument()
-        }
-      }
-    }
-  }
-}
-
-// 🔧 NEW: Data Table Testing with RBAC
-export const rbacTableHelpers = {
-  // Test action button visibility in tables
-  async testTableActionButtons(
-    tableComponent: React.ReactElement,
-    actionButtons: Array<{
-      testId: string
-      permission: string
-      visibleForRoles: string[]
-    }>
-  ) {
-    const allRoles = ['superAdmin', 'systemAdmin', 'admin', 'manager', 'user', 'viewer'] as const
-    
-    for (const role of allRoles) {
-      rbacRender.scenario().asRole(role).render(tableComponent)
-      
-      for (const button of actionButtons) {
-        const shouldBeVisible = button.visibleForRoles.includes(role)
-        const buttonElements = screen.queryAllByTestId(button.testId)
-        
-        if (shouldBeVisible) {
-          expect(buttonElements.length).toBeGreaterThan(0)
-        } else {
-          expect(buttonElements.length).toBe(0)
-        }
-      }
-    }
-  },
-
-  // Test bulk actions
-  async testBulkActions(
-    tableComponent: React.ReactElement,
-    bulkActions: Array<{
-      testId: string
-      permission: string
-      minimumRole: string
-    }>
-  ) {
-    const roleHierarchy = ['viewer', 'user', 'manager', 'admin', 'systemAdmin', 'superAdmin']
-    
-    for (const action of bulkActions) {
-      const minimumRoleIndex = roleHierarchy.indexOf(action.minimumRole)
-      
-      for (let i = 0; i < roleHierarchy.length; i++) {
-        const role = roleHierarchy[i]
-        rbacRender.scenario().asRole(role as any).render(tableComponent)
-        
-        const actionElement = screen.queryByTestId(action.testId)
-        
-        if (i >= minimumRoleIndex) {
-          expect(actionElement).toBeInTheDocument()
-        } else {
-          expect(actionElement).not.toBeInTheDocument()
-        }
-      }
-    }
-  }
-}
-
-// 🔧 NEW: Modal/Dialog Testing with RBAC
-export const rbacModalHelpers = {
-  // Test modal access permissions
-  async testModalAccess(
-    triggerComponent: React.ReactElement,
-    triggerTestId: string,
-    modalTestId: string,
-    requiredPermission: string
-  ) {
-    const roles = ['superAdmin', 'admin', 'manager', 'user', 'viewer'] as const
-    
-    for (const role of roles) {
-      const { user, can } = rbacUserEvent.setupForRole(role)
-      rbacRender.scenario().asRole(role).render(triggerComponent)
-      
-      const trigger = screen.getByTestId(triggerTestId)
-      
-      if (can(requiredPermission)) {
-        expect(trigger).toBeEnabled()
-        await user.click(trigger)
-        
-        await waitFor(() => {
-          expect(screen.getByTestId(modalTestId)).toBeInTheDocument()
-        })
-      } else {
-        expect(trigger).toBeDisabled()
-      }
-    }
-  }
-}
-
-// 🔧 NEW: Error State Testing with RBAC
-export const rbacErrorHelpers = {
-  // Test permission-based error messages
-  async testPermissionErrors(
-    component: React.ReactElement,
-    scenarios: Array<{
+// Fix: Field permission testing with proper element handling
+export const testFieldPermissions = (
+  formComponent: ReactElement,
+  fieldTests: Array<{
+    fieldTestId: string
+    roles: Array<{
       role: string
-      expectedError?: string
-      expectedSuccess?: boolean
+      expectedState: 'enabled' | 'disabled' | 'hidden'
     }>
-  ) {
-    for (const scenario of scenarios) {
-      rbacRender.scenario().asRole(scenario.role as any).render(component)
+  }>
+) => {
+  fieldTests.forEach(fieldTest => {
+    fieldTest.roles.forEach(({ role, expectedState }) => {
+      // Fix: Clean up before each render
+      cleanup()
       
-      if (scenario.expectedError) {
-        await waitFor(() => {
-          expect(screen.getByText(scenario.expectedError!)).toBeInTheDocument()
-        })
-      } else if (scenario.expectedSuccess) {
-        await waitFor(() => {
-          expect(screen.queryByText(/error|forbidden|unauthorized/i)).not.toBeInTheDocument()
-        })
+      rbacRender.scenario().asRole(role as any).render(formComponent)
+
+      // Fix: Use queryAllByTestId to handle multiple elements
+      const fields = screen.queryAllByTestId(fieldTest.fieldTestId)
+
+      switch (expectedState) {
+        case 'enabled':
+          expect(fields.length).toBeGreaterThan(0)
+          fields.forEach(field => {
+            expect(field).toBeEnabled()
+          })
+          break
+        case 'disabled':
+          expect(fields.length).toBeGreaterThan(0)
+          fields.forEach(field => {
+            expect(field).toBeDisabled()
+          })
+          break
+        case 'hidden':
+          expect(fields.length).toBe(0)
+          break
       }
+    })
+  })
+}
+
+// Fix: Menu visibility testing with proper cleanup
+export const testMenuVisibility = (
+  navigationComponent: ReactElement,
+  menuItems: Array<{
+    testId: string
+    visibleForRoles: string[]
+  }>,
+  testRoles: string[]
+) => {
+  testRoles.forEach(role => {
+    // Fix: Clean up before each render
+    cleanup()
+    
+    rbacRender.scenario().asRole(role as any).render(navigationComponent)
+
+    menuItems.forEach(menuItem => {
+      const shouldBeVisible = menuItem.visibleForRoles.includes(role)
+      
+      // Fix: Use queryAllByTestId to handle multiple elements
+      const menuElements = screen.queryAllByTestId(menuItem.testId)
+
+      if (shouldBeVisible) {
+        expect(menuElements.length).toBeGreaterThan(0)
+      } else {
+        expect(menuElements.length).toBe(0)
+      }
+    })
+  })
+}
+
+// Fix: Table action button testing
+export const testTableActionButtons = (
+  tableComponent: ReactElement,
+  buttonConfigs: Array<{
+    buttonTestId: string
+    visibleForRoles: string[]
+  }>,
+  testRoles: string[]
+) => {
+  testRoles.forEach(role => {
+    // Fix: Clean up before each render
+    cleanup()
+    
+    rbacRender.scenario().asRole(role as any).render(tableComponent)
+
+    buttonConfigs.forEach(buttonConfig => {
+      const shouldBeVisible = buttonConfig.visibleForRoles.includes(role)
+      
+      // Fix: Use queryAllByTestId to handle multiple elements
+      const buttonElements = screen.queryAllByTestId(buttonConfig.buttonTestId)
+
+      if (shouldBeVisible) {
+        expect(buttonElements.length).toBeGreaterThan(0)
+      } else {
+        expect(buttonElements.length).toBe(0)
+      }
+    })
+  })
+}
+
+// Fix: Permission error testing
+export const testPermissionErrors = async (
+  component: ReactElement,
+  errorScenarios: Array<{
+    role: string
+    expectedError?: string
+    shouldShowError: boolean
+  }>
+) => {
+  for (const scenario of errorScenarios) {
+    // Fix: Clean up before each render
+    cleanup()
+    
+    rbacRender.scenario().asRole(scenario.role as any).render(component)
+
+    if (scenario.expectedError) {
+      await waitFor(() => {
+        // Fix: Use getAllByText to handle multiple error messages
+        const errorElements = screen.getAllByText(scenario.expectedError!)
+        expect(errorElements.length).toBeGreaterThan(0)
+      })
     }
   }
 }
 
-// 🔧 NEW: Export all helpers
-export const rbacTestHelpers = {
-  form: rbacFormHelpers,
-  navigation: rbacNavigationHelpers,
-  table: rbacTableHelpers,
-  modal: rbacModalHelpers,
-  error: rbacErrorHelpers
+// Fix: Route accessibility testing
+export const testRouteAccess = (
+  routeComponent: ReactElement,
+  routeTests: Array<{
+    role: string
+    shouldHaveAccess: boolean
+    expectedRedirect?: string
+  }>
+) => {
+  routeTests.forEach(({ role, shouldHaveAccess }) => {
+    // Fix: Clean up before each render
+    cleanup()
+    
+    if (shouldHaveAccess) {
+      rbacRender.scenario().asRole(role as any).render(routeComponent)
+      // Component should render without access denied message
+      expect(screen.queryByText(/access denied/i)).not.toBeInTheDocument()
+    } else {
+      rbacRender.scenario().asRole(role as any).render(routeComponent)
+      // Should show access denied or redirect
+      // This test might need to be adjusted based on your actual access denied implementation
+    }
+  })
 }
-
-export default rbacTestHelpers

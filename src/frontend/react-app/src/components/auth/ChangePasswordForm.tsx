@@ -53,6 +53,7 @@ export function ChangePasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false); // Track submission attempts
 
   const { logout } = useAuth();
 
@@ -62,8 +63,9 @@ export function ChangePasswordForm() {
       [field]: event.target.value,
     }));
     
-    // Clear field error when user starts typing
-    if (fieldErrors[field]) {
+    // Only clear field error when user starts typing AND there's actual content
+    // This prevents errors from disappearing immediately after failed submission
+    if (fieldErrors[field] && event.target.value.length > 0) {
       setFieldErrors(prev => ({
         ...prev,
         [field]: undefined,
@@ -146,8 +148,10 @@ export function ChangePasswordForm() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     
+    setHasAttemptedSubmit(true); // Track that we've attempted submission
+    
     if (!validateForm()) {
-      return;
+      return; // Stop here if validation fails
     }
 
     setIsLoading(true);
