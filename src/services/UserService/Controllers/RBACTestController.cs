@@ -855,7 +855,8 @@ public class RBACTestController : ControllerBase
                     p.Category == "Users" || 
                     p.Category == "Roles" || 
                     p.Category == "Reports" ||
-                    p.Category == "Tenants").ToList();
+                    p.Category == "Tenants" ||
+                    p.Category == "Permissions").ToList(); // Admin gets comprehensive permissions including new Permissions category
 
                 foreach (var permission in adminPermissions)
                 {
@@ -1105,6 +1106,166 @@ public class RBACTestController : ControllerBase
             return StatusCode(500, new
             {
                 Message = "Force Assign Permissions Failed",
+                Error = ex.Message
+            });
+        }
+    }
+
+    /// <summary>
+    /// Force seed missing permissions from constants (tests Option 3 logic)
+    /// </summary>
+    [HttpPost("force-seed-missing-permissions")]
+    public async Task<IActionResult> ForceSeedMissingPermissions()
+    {
+        try
+        {
+            // Get all permissions from constants (same logic as Option 3)
+            var allConstantPermissions = Permissions.GetAllPermissions();
+            
+            // Get existing permissions from database
+            var existingPermissions = await _permissionRepository.GetAllAsync();
+            var existingPermissionNames = existingPermissions.Select(p => p.Name).ToList();
+            
+            // Find missing permissions (same logic as your Option 3 fix)
+            var missingPermissions = allConstantPermissions
+                .Except(existingPermissionNames)
+                .Select(permissionName =>
+                {
+                    var parts = permissionName.Split('.');
+                    var category = parts.Length > 1 ? parts[0] : "General";
+                    
+                    return new Permission
+                    {
+                        Name = permissionName,
+                        Category = char.ToUpper(category[0]) + category.Substring(1),
+                        Description = $"Permission to {permissionName.Replace('.', ' ')}",
+                        IsActive = true
+                    };
+                })
+                .ToList();
+
+            if (missingPermissions.Any())
+            {
+                foreach (var permission in missingPermissions)
+                {
+                    await _permissionRepository.AddAsync(permission);
+                }
+                
+                return Ok(new
+                {
+                    Message = "Missing Permissions Added Successfully",
+                    Status = "✅ SUCCESS",
+                    TotalConstantPermissions = allConstantPermissions.Count,
+                    ExistingInDatabase = existingPermissionNames.Count,
+                    NewlyAdded = missingPermissions.Count,
+                    AddedPermissions = missingPermissions.Select(p => new { p.Name, p.Category }).ToList(),
+                    Note = "This tests your Option 3 logic!"
+                });
+            }
+            else
+            {
+                return Ok(new
+                {
+                    Message = "All Permissions Already Exist",
+                    Status = "ℹ️ UP TO DATE",
+                    TotalConstantPermissions = allConstantPermissions.Count,
+                    ExistingInDatabase = existingPermissionNames.Count
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error seeding missing permissions");
+            return StatusCode(500, new
+            {
+                Message = "Force Seed Missing Permissions Failed",
+                Error = ex.Message,
+                Timestamp = DateTime.UtcNow
+            });
+        }
+    }
+
+    /// <summary>
+    /// Add missing Permissions category to Admin role
+    /// </summary>
+    [HttpPost("add-missing-permissions-category-to-admin")]
+    public async Task<IActionResult> AddMissingPermissionsCategoryToAdmin()
+    {
+        try
+        {
+            var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!tenantId.HasValue)
+            {
+                return BadRequest("No tenant context available");
+            }
+
+            // Find Admin role for current tenant
+            var roles = await _roleRepository.GetTenantRolesAsync(tenantId.Value);
+            var adminRole = roles.FirstOrDefault(r => r.Name == "Admin" && r.TenantId == tenantId.Value);
+            if (adminRole == null)
+            {
+                return BadRequest("Admin role not found in current tenant");
+            }
+
+            // Get all permissions in Permissions category
+            var allPermissions = await _permissionRepository.GetAllAsync();
+            var permissionsCategory = allPermissions.Where(p => p.Category == "Permissions").ToList();
+            
+            if (!permissionsCategory.Any())
+            {
+                return BadRequest("No permissions found in 'Permissions' category");
+            }
+
+            // Check which permissions are already assigned
+            var existingRolePermissions = await _context.RolePermissions
+                .Where(rp => rp.RoleId == adminRole.Id)
+                .Select(rp => rp.PermissionId)
+                .ToListAsync();
+
+            var missingPermissions = permissionsCategory
+                .Where(p => !existingRolePermissions.Contains(p.Id))
+                .ToList();
+
+            if (!missingPermissions.Any())
+            {
+                return Ok(new
+                {
+                    Message = "Admin already has all Permissions category permissions",
+                    RoleName = adminRole.Name,
+                    PermissionsCategory = permissionsCategory.Select(p => p.Name),
+                    Status = "ℹ️ ALREADY COMPLETE"
+                });
+            }
+
+            // Add missing permissions
+            var newRolePermissions = missingPermissions.Select(p => new RolePermission
+            {
+                RoleId = adminRole.Id,
+                PermissionId = p.Id,
+                GrantedAt = DateTime.UtcNow,
+                GrantedBy = "Missing Category Fix"
+            }).ToList();
+
+            _context.RolePermissions.AddRange(newRolePermissions);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                Message = "Missing Permissions category added to Admin role",
+                RoleName = adminRole.Name,
+                RoleId = adminRole.Id,
+                TenantId = tenantId.Value,
+                AddedPermissions = missingPermissions.Select(p => new { p.Name, p.Category }),
+                NewPermissionCount = newRolePermissions.Count,
+                Status = "✅ SUCCESS"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error adding Permissions category to Admin role");
+            return StatusCode(500, new
+            {
+                Message = "Add Missing Permissions Category Failed",
                 Error = ex.Message
             });
         }

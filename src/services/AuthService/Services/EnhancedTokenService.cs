@@ -101,14 +101,15 @@ public class EnhancedTokenService : ITokenService
         // Include user permissions in JWT claims for better performance
         try
         {
-            var userPermissions = await _permissionService.GetUserPermissionsAsync(user.Id);
+            // 🔧 FIX: Use tenant-specific permission method instead of HTTP context-dependent one
+            var userPermissions = await _permissionService.GetUserPermissionsForTenantAsync(user.Id, tenant.Id);
             foreach (var permission in userPermissions)
             {
                 claims.Add(new Claim("permission", permission));
             }
             
-            _logger.LogDebug("🔍 JWT: Added {PermissionCount} permissions to JWT for user {UserId}", 
-                userPermissions.Count(), user.Id);
+            _logger.LogInformation("🔍 JWT: Added {PermissionCount} permissions to JWT for user {UserId} in tenant {TenantId}", 
+                userPermissions.Count(), user.Id, tenant.Id);
         }
         catch (Exception ex)
         {

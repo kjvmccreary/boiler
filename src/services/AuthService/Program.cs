@@ -150,6 +150,9 @@ try
     Log.Information("Starting AuthService");
     Console.WriteLine("=== AuthService Starting ===");
     
+    // 🔧 ADD: Automatic database seeding on startup
+    await app.Services.SeedDatabaseAsync();
+    
     app.Run();
 }
 catch (Exception ex)

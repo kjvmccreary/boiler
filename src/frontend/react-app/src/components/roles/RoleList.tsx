@@ -44,6 +44,8 @@ export const RoleList: React.FC<RoleListProps> = ({
   });
 
   const fetchRoles = async (page = 1, pageSize = 10, search = '') => {
+    console.log('🔍 RoleList: fetchRoles called', { page, pageSize, search });
+    
     try {
       setLoading(true);
       setError(null);
@@ -54,18 +56,19 @@ export const RoleList: React.FC<RoleListProps> = ({
         searchTerm: search || undefined
       });
 
-      // Fix: Handle response structure safely
-      if (result) {
-        setRoles(result.items || []);
-        setPagination({
-          totalCount: result.totalCount || 0,
-          pageNumber: result.pageNumber || page,
-          pageSize: result.pageSize || pageSize,
-          totalPages: result.totalPages || 0
-        });
-      }
+      console.log('✅ RoleList: fetchRoles result:', result);
+
+      // ✅ FIX: Handle the corrected response structure
+      setRoles(result.roles || []);
+      setPagination(result.pagination || {
+        totalCount: 0,
+        pageNumber: page,
+        pageSize: pageSize,
+        totalPages: 0
+      });
+      
     } catch (err) {
-      console.error('Failed to fetch roles:', err);
+      console.error('❌ RoleList: Failed to fetch roles:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch roles');
       setRoles([]);
     } finally {
@@ -74,24 +77,28 @@ export const RoleList: React.FC<RoleListProps> = ({
   };
 
   useEffect(() => {
+    console.log('🔍 RoleList: Initial load');
     fetchRoles(1, 10, '');
   }, []);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
+      console.log('🔍 RoleList: Search term changed:', searchTerm);
       fetchRoles(1, pagination?.pageSize || 10, searchTerm);
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, pagination?.pageSize]);
+  }, [searchTerm]);
 
   const handlePageChange = (_event: unknown, newPage: number) => {
     const pageNumber = newPage + 1;
+    console.log('🔍 RoleList: Page change to:', pageNumber);
     fetchRoles(pageNumber, pagination?.pageSize || 10, searchTerm);
   };
 
   const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newPageSize = parseInt(event.target.value, 10);
+    console.log('🔍 RoleList: Page size change to:', newPageSize);
     fetchRoles(1, newPageSize, searchTerm);
   };
 
@@ -99,6 +106,7 @@ export const RoleList: React.FC<RoleListProps> = ({
     return (
       <Box display="flex" justifyContent="center" p={4}>
         <CircularProgress />
+        <Typography sx={{ ml: 2 }}>Loading roles...</Typography>
       </Box>
     );
   }
@@ -106,7 +114,15 @@ export const RoleList: React.FC<RoleListProps> = ({
   if (error) {
     return (
       <Box p={2}>
-        <Typography color="error">Failed to fetch roles</Typography>
+        <Typography color="error" variant="h6">
+          Failed to fetch roles
+        </Typography>
+        <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+          {error}
+        </Typography>
+        <Typography variant="body2" sx={{ mt: 2 }}>
+          Please check the console for more details.
+        </Typography>
       </Box>
     );
   }
@@ -142,48 +158,57 @@ export const RoleList: React.FC<RoleListProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {roles.map((role) => (
-              <TableRow key={role.id}>
-                <TableCell>{role.name}</TableCell>
-                <TableCell>{role.description}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={role.isSystemRole ? 'System' : 'Custom'}
-                    color={role.isSystemRole ? 'primary' : 'default'}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>{role.permissions?.length || 0}</TableCell>
-                <TableCell>{role.userCount || 0}</TableCell>
-                <TableCell>
-                  {/* Fix: Add proper accessibility labels and tooltip wrappers */}
-                  <Tooltip title={role.isSystemRole ? "Cannot edit system roles" : "Edit role"}>
-                    <span>
-                      <IconButton
-                        onClick={() => onEditRole?.(role.id)}
-                        disabled={role.isSystemRole}
-                        aria-label={`Edit ${role.name} role`}
-                        data-testid="edit-button"
-                      >
-                        <Edit />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                  <Tooltip title={role.isSystemRole ? "Cannot delete system roles" : "Delete role"}>
-                    <span>
-                      <IconButton
-                        onClick={() => onDeleteRole?.(role.id)}
-                        disabled={role.isSystemRole}
-                        aria-label={`Delete ${role.name} role`}
-                        data-testid="delete-button"
-                      >
-                        <Delete />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
+            {roles.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} align="center">
+                  <Typography color="text.secondary" sx={{ py: 4 }}>
+                    No roles found
+                  </Typography>
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              roles.map((role) => (
+                <TableRow key={role.id} hover>
+                  <TableCell>{role.name}</TableCell>
+                  <TableCell>{role.description || 'No description'}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={role.isSystemRole ? 'System' : 'Custom'}
+                      color={role.isSystemRole ? 'primary' : 'default'}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>{role.permissions?.length || 0}</TableCell>
+                  <TableCell>{role.userCount || 0}</TableCell>
+                  <TableCell>
+                    <Tooltip title={role.isSystemRole ? "Cannot edit system roles" : "Edit role"}>
+                      <span>
+                        <IconButton
+                          onClick={() => onEditRole?.(role.id)}
+                          disabled={role.isSystemRole}
+                          aria-label={`Edit ${role.name} role`}
+                          data-testid="edit-button"
+                        >
+                          <Edit />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title={role.isSystemRole ? "Cannot delete system roles" : "Delete role"}>
+                      <span>
+                        <IconButton
+                          onClick={() => onDeleteRole?.(role.id)}
+                          disabled={role.isSystemRole}
+                          aria-label={`Delete ${role.name} role`}
+                          data-testid="delete-button"
+                        >
+                          <Delete />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </TableContainer>

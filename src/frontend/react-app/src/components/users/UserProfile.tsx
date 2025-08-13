@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react'; // ✅ ADD useCallback import
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -33,6 +33,20 @@ import { normalizeRoles } from '@/utils/role.utils.js';
 export function UserProfile() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  
+  // Redirect if trying to access "new" user route
+  useEffect(() => {
+    if (userId === 'new') {
+      navigate('/users/new', { replace: true });
+      return;
+    }
+  }, [userId, navigate]);
+
+  // If userId is 'new', don't render anything (redirect handles it)
+  if (userId === 'new') {
+    return null;
+  }
+
   const { isAdmin, getUserRoles } = usePermission(); // Removed unused hasRole
   
   // 🔧 .NET 9 FIX: Properly determine if this is own profile
@@ -52,7 +66,7 @@ export function UserProfile() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Load user data function
-  const loadUser = async () => {
+  const loadUser = useCallback(async () => {
     console.log('🔍 UserProfile: loadUser called', { 
       isOwnProfile, 
       userId,
@@ -98,7 +112,7 @@ export function UserProfile() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [isOwnProfile, userId]); // ✅ SIMPLIFIED: Only include essential dependencies
 
   // 🔧 .NET 9 FIX: Determine if this is own profile and edit permissions
   useEffect(() => {
@@ -140,12 +154,13 @@ export function UserProfile() {
     }
   }, [userId, isAdmin]);
 
+  // ✅ FIX: Simplified useEffect
   useEffect(() => {
-    console.log('🔍 UserProfile: useEffect triggered', { userId, isOwnProfile, canEditProfile });
-    if (currentUserId !== null) {
+    console.log('🔍 UserProfile: useEffect triggered', { userId, currentUserId });
+    if (currentUserId !== null && userId && userId !== 'new') {
       loadUser();
     }
-  }, [userId, currentUserId, isOwnProfile, canEditProfile, loadUser]); // Added missing dependencies
+  }, [userId, currentUserId, loadUser]); // ✅ Now loadUser is stable
 
   const handleRetry = () => {
     console.log('🔍 UserProfile: Retry button clicked');
@@ -202,6 +217,21 @@ export function UserProfile() {
         updatedUser = await userService.updateUser(userId!, updateData);
       }
 
+      // ✅ ADD: Debug the response and ensure we have valid data
+      console.log('🔍 UserProfile: API response:', updatedUser);
+      console.log('🔍 UserProfile: firstName:', updatedUser.firstName, 'lastName:', updatedUser.lastName);
+
+      // ✅ ADD: Safety check - ensure we have required fields
+      if (!updatedUser.firstName || !updatedUser.lastName) {
+        console.warn('⚠️ UserProfile: API returned user with missing firstName/lastName');
+        // Use formData as fallback
+        updatedUser = {
+          ...updatedUser,
+          firstName: updatedUser.firstName || formData.firstName,
+          lastName: updatedUser.lastName || formData.lastName,
+        };
+      }
+
       setUser(updatedUser);
       setEditing(false);
       toast.success('Profile updated successfully');
@@ -249,8 +279,11 @@ export function UserProfile() {
     }
   };
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  // ✅ FIX: Make getInitials safe for undefined values
+  const getInitials = (firstName?: string, lastName?: string) => {
+    const first = firstName?.charAt(0)?.toUpperCase() || '?';
+    const last = lastName?.charAt(0)?.toUpperCase() || '?';
+    return `${first}${last}`;
   };
 
   if (loading) {

@@ -211,6 +211,7 @@ public class UserService : IUserService
             user.PhoneNumber = updateUserDto.PhoneNumber;
             user.TimeZone = updateUserDto.TimeZone;
             user.Language = updateUserDto.Language;
+            user.IsActive = updateUserDto.IsActive;
             user.UpdatedAt = DateTime.UtcNow;
 
             // 🔧 .NET 9 FIX: Handle optional Email updates safely

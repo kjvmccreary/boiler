@@ -11,14 +11,13 @@ export default defineConfig({
   
   server: {
     port: 3000,
-    // 🔧 USE MKCERT CERTIFICATES: Browser-trusted SSL for .NET 9
     https: {
       key: fs.readFileSync(path.resolve(__dirname, 'certs/localhost-key.pem')),
       cert: fs.readFileSync(path.resolve(__dirname, 'certs/localhost.pem'))
     },
     proxy: {
       '/api': {
-        target: 'https://localhost:7000',
+        target: 'https://localhost:7002', // ✅ FIXED: Changed from 7000 to 7002 (UserService port)
         changeOrigin: true,
         secure: false,
         configure: (proxy, _options) => {

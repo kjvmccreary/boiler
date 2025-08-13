@@ -14,7 +14,8 @@ public class MappingProfile : Profile
         CreateMap<User, UserDto>()
             .ForMember(dest => dest.TenantId, opt => opt.MapFrom(src => src.TenantId ?? 0)) // Handle nullable int
             .ForMember(dest => dest.Roles, opt => opt.MapFrom(src =>
-                src.TenantUsers.Where(tu => tu.IsActive).Select(tu => tu.Role).ToList()));
+                // 🔧 FIX: Use RBAC UserRoles instead of legacy TenantUsers
+                src.UserRoles.Where(ur => ur.IsActive).Select(ur => ur.Role.Name).ToList()));
 
         // Tenant mappings
         CreateMap<Tenant, TenantDto>()

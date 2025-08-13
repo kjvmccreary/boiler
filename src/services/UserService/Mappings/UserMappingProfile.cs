@@ -17,8 +17,7 @@ public class UserMappingProfile : Profile
         // User → UserDto (Main user representation)
         CreateMap<User, UserDto>()
             .ForMember(dest => dest.TenantId, opt => opt.MapFrom(src => src.TenantId ?? 0)) // Handle nullable TenantId
-            .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => 
-                src.TenantUsers.Where(tu => tu.IsActive).Select(tu => tu.Role).ToList()))
+            .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => GetUserRoles(src)))
             .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
             .ForMember(dest => dest.TimeZone, opt => opt.MapFrom(src => src.TimeZone))
             .ForMember(dest => dest.Language, opt => opt.MapFrom(src => src.Language))
@@ -29,15 +28,13 @@ public class UserMappingProfile : Profile
 
         // User → UserSummaryDto (Lightweight for lists)
         CreateMap<User, UserSummaryDto>()
-            .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => 
-                src.TenantUsers.Where(tu => tu.IsActive).Select(tu => tu.Role).ToList()));
+            .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => GetUserRoles(src)));
 
         // User → UserDetailDto (Comprehensive admin view)
         CreateMap<User, UserDetailDto>()
             .ForMember(dest => dest.TenantId, opt => opt.MapFrom(src => src.TenantId ?? 0))
             .ForMember(dest => dest.LockedUntil, opt => opt.MapFrom(src => src.LockedOutUntil))
-            .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => 
-                src.TenantUsers.Where(tu => tu.IsActive).Select(tu => tu.Role).ToList()))
+            .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => GetUserRoles(src)))
             .ForMember(dest => dest.Preferences, opt => opt.MapFrom(src => 
                 DeserializeUserPreferences(src.Preferences)));
 
@@ -123,6 +120,30 @@ public class UserMappingProfile : Profile
             // If deserialization fails, return default preferences
             return new UserPreferencesDto();
         }
+    }
+
+    // Helper method to prioritize RBAC roles over legacy roles
+    private static List<string> GetUserRoles(User user)
+    {
+        // 🔧 FIX: Prefer RBAC UserRoles over legacy TenantUsers
+        if (user.UserRoles != null && user.UserRoles.Any(ur => ur.IsActive))
+        {
+            return user.UserRoles
+                .Where(ur => ur.IsActive && ur.Role != null)
+                .Select(ur => ur.Role.Name)
+                .ToList();
+        }
+
+        // Fallback to legacy TenantUsers if no RBAC roles found
+        if (user.TenantUsers != null && user.TenantUsers.Any(tu => tu.IsActive))
+        {
+            return user.TenantUsers
+                .Where(tu => tu.IsActive)
+                .Select(tu => tu.Role)
+                .ToList();
+        }
+
+        return new List<string>();
     }
 
     #endregion

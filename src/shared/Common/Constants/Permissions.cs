@@ -82,6 +82,18 @@ public static class Permissions
     }
 
     /// <summary>
+    /// Permission entity management permissions
+    /// </summary>
+    public static class PermissionManagement
+    {
+        public const string View = "permissions.view";
+        public const string Create = "permissions.create";
+        public const string Edit = "permissions.edit";
+        public const string Delete = "permissions.delete";
+        public const string Manage = "permissions.manage";
+    }
+
+    /// <summary>
     /// Get all permission values as a list for seeding database
     /// </summary>
     public static List<string> GetAllPermissions()

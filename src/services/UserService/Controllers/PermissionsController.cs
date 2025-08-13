@@ -40,7 +40,7 @@ public class PermissionsController : ControllerBase
             {
                 _logger.LogWarning("User {UserId} attempted to view permissions without permissions.view permission", 
                     GetCurrentUserId());
-                return Forbid("You don't have permission to view permissions");
+                return StatusCode(403, ApiResponseDto<List<PermissionDto>>.ErrorResult("You don't have permission to view permissions"));
             }
 
             var permissions = await _permissionService.GetAllAvailablePermissionsAsync();
@@ -82,7 +82,7 @@ public class PermissionsController : ControllerBase
             {
                 _logger.LogWarning("User {UserId} attempted to view permission categories without permissions.view permission", 
                     GetCurrentUserId());
-                return Forbid("You don't have permission to view permission categories");
+                return StatusCode(403, ApiResponseDto<List<string>>.ErrorResult("You don't have permission to view permission categories"));
             }
 
             var categories = await _permissionService.GetPermissionCategoriesAsync();
@@ -113,7 +113,7 @@ public class PermissionsController : ControllerBase
             {
                 _logger.LogWarning("User {UserId} attempted to view permissions by category without permissions.view permission", 
                     GetCurrentUserId());
-                return Forbid("You don't have permission to view permissions");
+                return StatusCode(403, ApiResponseDto<List<PermissionDto>>.ErrorResult("You don't have permission to view permissions"));
             }
 
             var permissions = await _permissionService.GetPermissionsForCategoryAsync(category);
@@ -155,7 +155,7 @@ public class PermissionsController : ControllerBase
             {
                 _logger.LogWarning("User {UserId} attempted to view grouped permissions without permissions.view permission", 
                     GetCurrentUserId());
-                return Forbid("You don't have permission to view permissions");
+                return StatusCode(403, ApiResponseDto<Dictionary<string, List<PermissionDto>>>.ErrorResult("You don't have permission to view permissions"));
             }
 
             var permissions = await _permissionService.GetPermissionsByCategoryAsync();

@@ -157,6 +157,9 @@ try
     Log.Information("Starting UserService");
     Console.WriteLine("=== UserService Starting ===");
     
+    // 🔧 ADD: Automatic database seeding on startup
+    await app.Services.SeedDatabaseAsync();
+    
     app.Run();
 }
 catch (Exception ex)

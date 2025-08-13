@@ -49,7 +49,9 @@ public class UserServiceImplementation : Contracts.User.IUserService
 
             var user = await _userRepository.Query()
                 .Where(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value)
-                .Include(u => u.TenantUsers)
+                .Include(u => u.UserRoles.Where(ur => ur.IsActive))
+                    .ThenInclude(ur => ur.Role)
+                .Include(u => u.TenantUsers) // Keep for fallback compatibility
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)
@@ -80,7 +82,9 @@ public class UserServiceImplementation : Contracts.User.IUserService
 
             var user = await _userRepository.Query()
                 .Where(u => u.Email.ToLower() == email.ToLower() && u.IsActive && u.TenantId == currentTenantId.Value)
-                .Include(u => u.TenantUsers)
+                .Include(u => u.UserRoles.Where(ur => ur.IsActive))
+                    .ThenInclude(ur => ur.Role)
+                .Include(u => u.TenantUsers) // Keep for fallback compatibility
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)
@@ -130,7 +134,9 @@ public class UserServiceImplementation : Contracts.User.IUserService
 
             // Apply pagination and Include
             var users = await query
-                .Include(u => u.TenantUsers)
+                .Include(u => u.UserRoles.Where(ur => ur.IsActive))
+                    .ThenInclude(ur => ur.Role)
+                .Include(u => u.TenantUsers) // Keep for fallback compatibility
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
@@ -213,6 +219,22 @@ public class UserServiceImplementation : Contracts.User.IUserService
             if (user == null)
             {
                 return ApiResponseDto<UserDto>.ErrorResult("User not found");
+            }
+
+            // ✅ ADD: Handle email updates with validation
+            if (!string.IsNullOrEmpty(request.Email) && request.Email.ToLower() != user.Email.ToLower())
+            {
+                // Check if email is already taken
+                var emailExists = await _userRepository.Query()
+                    .AnyAsync(u => u.Email.ToLower() == request.Email.ToLower() && u.Id != userId && u.TenantId == currentTenantId.Value, cancellationToken);
+                    
+                if (emailExists)
+                {
+                    return ApiResponseDto<UserDto>.ErrorResult("Email address is already in use");
+                }
+                
+                user.Email = request.Email.ToLower();
+                // Note: You might want to set EmailConfirmed = false and send confirmation email
             }
 
             // Update user fields
@@ -336,7 +358,9 @@ public class UserServiceImplementation : Contracts.User.IUserService
 
             // Apply pagination and Include
             var users = await query
-                .Include(u => u.TenantUsers)
+                .Include(u => u.UserRoles.Where(ur => ur.IsActive))
+                    .ThenInclude(ur => ur.Role)
+                .Include(u => u.TenantUsers) // Keep for fallback compatibility
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
@@ -360,7 +384,9 @@ public class UserServiceImplementation : Contracts.User.IUserService
         {
             var user = await _userRepository.Query()
                 .Where(u => u.Id == userId && u.TenantId == tenantId && u.IsActive)
-                .Include(u => u.TenantUsers)
+                .Include(u => u.UserRoles.Where(ur => ur.IsActive))
+                    .ThenInclude(ur => ur.Role)
+                .Include(u => u.TenantUsers) // Keep for fallback compatibility
                 .Include(u => u.RefreshTokens)
                 .FirstOrDefaultAsync(cancellationToken);
 

@@ -119,11 +119,17 @@ public static class DatabaseExtensions
 
     private static async Task SeedPermissionsAsync(ApplicationDbContext context)
     {
-        // Check if permissions already exist
-        if (await context.Permissions.AnyAsync())
-            return;
-
-        var permissions = Common.Constants.Permissions.GetAllPermissions()
+        // Get all permissions from constants
+        var allConstantPermissions = Common.Constants.Permissions.GetAllPermissions();
+        
+        // Get existing permissions from database
+        var existingPermissionNames = await context.Permissions
+            .Select(p => p.Name)
+            .ToListAsync();
+        
+        // Find missing permissions
+        var missingPermissions = allConstantPermissions
+            .Except(existingPermissionNames)
             .Select(permissionName =>
             {
                 var parts = permissionName.Split('.');
@@ -132,15 +138,19 @@ public static class DatabaseExtensions
                 return new Permission
                 {
                     Name = permissionName,
-                    Category = char.ToUpper(category[0]) + category.Substring(1), // Capitalize
+                    Category = char.ToUpper(category[0]) + category.Substring(1),
                     Description = $"Permission to {permissionName.Replace('.', ' ')}",
                     IsActive = true
                 };
             })
             .ToList();
 
-        context.Permissions.AddRange(permissions);
-        await context.SaveChangesAsync();
+        // Add only missing permissions
+        if (missingPermissions.Any())
+        {
+            context.Permissions.AddRange(missingPermissions);
+            await context.SaveChangesAsync();
+        }
     }
 
     private static async Task SeedDefaultRolesAsync(ApplicationDbContext context, int tenantId)
