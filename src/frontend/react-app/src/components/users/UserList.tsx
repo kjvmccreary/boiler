@@ -23,6 +23,13 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Popover,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
+  CircularProgress,
+  Tooltip,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -31,10 +38,13 @@ import {
   Delete as DeleteIcon,
   PersonAdd as PersonAddIcon,
   Security as SecurityIcon,
+  Close as CloseIcon,
+  LockOpen as LockOpenIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { CanAccess } from '@/components/authorization/CanAccess.js';
 import { userService } from '@/services/user.service.js';
+import { roleService } from '@/services/role.service.js'; // ✅ ADD: Import role service
 import { PERMISSIONS } from '@/utils/api.constants.js';
 import type { User } from '@/types/index.js';
 import toast from 'react-hot-toast';
@@ -51,6 +61,19 @@ export function UserList() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+
+  // ✅ NEW: State for permissions popover
+  const [permissionsPopover, setPermissionsPopover] = useState<{
+    anchorEl: HTMLElement | null;
+    roleName: string | null;
+    permissions: string[];
+    loading: boolean;
+  }>({
+    anchorEl: null,
+    roleName: null,
+    permissions: [],
+    loading: false
+  });
 
   const navigate = useNavigate();
 
@@ -128,6 +151,70 @@ export function UserList() {
     }
   };
 
+  // ✅ NEW: Handle role chip hover to show permissions
+  const handleRoleHover = async (event: React.MouseEvent<HTMLElement>, roleName: string) => {
+    console.log('🔍 UserList: Role hovered:', roleName);
+    
+    setPermissionsPopover({
+      anchorEl: event.currentTarget,
+      roleName,
+      permissions: [],
+      loading: true
+    });
+
+    try {
+      // First get the role by name to get its ID
+      const role = await roleService.getRoleByName(roleName);
+      if (!role) {
+        throw new Error(`Role "${roleName}" not found`);
+      }
+
+      // Then get permissions for the role
+      const permissions = await roleService.getRolePermissions(role.id);
+      console.log('✅ UserList: Permissions loaded for role:', roleName, permissions);
+      
+      setPermissionsPopover(prev => ({
+        ...prev,
+        permissions,
+        loading: false
+      }));
+    } catch (error) {
+      console.error('❌ UserList: Failed to load permissions for role:', roleName, error);
+      setPermissionsPopover(prev => ({
+        ...prev,
+        permissions: [],
+        loading: false
+      }));
+      toast.error(`Could not load permissions for role "${roleName}"`);
+    }
+  };
+
+  // ✅ NEW: Handle permissions popover close
+  const handlePermissionsPopoverClose = () => {
+    console.log('🔍 UserList: Closing permissions popover');
+    setPermissionsPopover({
+      anchorEl: null,
+      roleName: null,
+      permissions: [],
+      loading: false
+    });
+  };
+
+  // ✅ NEW: Group permissions by category for better display
+  const groupPermissionsByCategory = (permissions: string[]) => {
+    return permissions.reduce((groups, permission) => {
+      const parts = permission.split('.');
+      const category = parts.length > 1 ? parts[0] : 'General';
+      const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+      
+      if (!groups[categoryName]) {
+        groups[categoryName] = [];
+      }
+      groups[categoryName].push(permission);
+      return groups;
+    }, {} as Record<string, string[]>);
+  };
+
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
@@ -135,6 +222,8 @@ export function UserList() {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
   };
+
+  const isPermissionsPopoverOpen = Boolean(permissionsPopover.anchorEl);
 
   return (
     <Box>
@@ -222,7 +311,7 @@ export function UserList() {
                       
                       <TableCell>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {/* 🔧 .NET 9 FIX: Handle string roles from backend */}
+                          {/* ✅ ENHANCED: Role chips with hover for permissions */}
                           {normalizeRoles(user.roles).slice(0, 2).map((role: string, index: number) => (
                             <Chip
                               key={`${role}-${index}`}
@@ -230,7 +319,18 @@ export function UserList() {
                               size="small"
                               color="primary"
                               variant="outlined"
-                              sx={{ mr: 0.5, mb: 0.5 }}
+                              onMouseEnter={(e) => handleRoleHover(e, role)}
+                              sx={{ 
+                                mr: 0.5, 
+                                mb: 0.5,
+                                cursor: 'pointer',
+                                '&:hover': {
+                                  transform: 'scale(1.05)',
+                                  transition: 'transform 0.2s ease-in-out',
+                                  backgroundColor: 'primary.light',
+                                  color: 'primary.contrastText'
+                                }
+                              }}
                             />
                           ))}
                           {normalizeRoles(user.roles).length > 2 && (
@@ -313,6 +413,123 @@ export function UserList() {
           </MenuItem>
         </CanAccess>
       </Menu>
+
+      {/* ✅ NEW: Permissions Popover */}
+      <Popover
+        open={isPermissionsPopoverOpen}
+        anchorEl={permissionsPopover.anchorEl}
+        onClose={handlePermissionsPopoverClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+        slotProps={{
+          paper: {
+            sx: {
+              maxWidth: 350,
+              maxHeight: 400,
+              overflow: 'auto',
+              mt: 1
+            }
+          }
+        }}
+        disableRestoreFocus
+        disableAutoFocus
+        disableEnforceFocus
+      >
+        <Box sx={{ p: 2 }}>
+          {/* Header with close button */}
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            mb: 1 
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <LockOpenIcon sx={{ mr: 1, color: 'primary.main' }} />
+              <Typography variant="h6" component="div">
+                Role Permissions
+              </Typography>
+            </Box>
+            <Tooltip title="Close">
+              <IconButton
+                onClick={handlePermissionsPopoverClose}
+                size="small"
+                sx={{ 
+                  ml: 1,
+                  color: 'text.secondary',
+                  '&:hover': {
+                    color: 'text.primary',
+                    backgroundColor: 'action.hover'
+                  }
+                }}
+                aria-label="Close permissions list"
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
+
+          {/* Role name */}
+          <Typography variant="subtitle1" fontWeight="medium" sx={{ mb: 1 }}>
+            {permissionsPopover.roleName}
+          </Typography>
+          
+          {permissionsPopover.loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+              <CircularProgress size={24} />
+              <Typography sx={{ ml: 1 }}>Loading permissions...</Typography>
+            </Box>
+          ) : permissionsPopover.permissions.length === 0 ? (
+            <Typography color="text.secondary" sx={{ p: 2, textAlign: 'center' }}>
+              No permissions found for this role
+            </Typography>
+          ) : (
+            <>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                {permissionsPopover.permissions.length} permission{permissionsPopover.permissions.length === 1 ? '' : 's'} assigned
+              </Typography>
+              <Divider sx={{ mb: 1 }} />
+              
+              {/* Group permissions by category */}
+              {Object.entries(groupPermissionsByCategory(permissionsPopover.permissions)).map(([category, permissions]) => (
+                <Box key={category} sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" fontWeight="medium" color="primary.main" sx={{ mb: 1 }}>
+                    {category} ({permissions.length})
+                  </Typography>
+                  <List dense sx={{ pl: 1 }}>
+                    {permissions.map((permission, index) => (
+                      <ListItem 
+                        key={permission} 
+                        divider={index < permissions.length - 1}
+                        sx={{ px: 0, py: 0.5 }}
+                      >
+                        <ListItemText
+                          primary={
+                            <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                              {permission}
+                            </Typography>
+                          }
+                        />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Box>
+              ))}
+              
+              <Box sx={{ mt: 1, p: 1, bgcolor: 'background.default', borderRadius: 1 }}>
+                <Typography variant="caption" color="text.secondary">
+                  💡 Tip: Click "Manage Roles" to modify user role assignments
+                </Typography>
+              </Box>
+            </>
+          )}
+        </Box>
+      </Popover>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>

@@ -78,6 +78,16 @@ export interface User {
   preferences?: UserPreferences;
 }
 
+// Add this interface after the User interface
+export interface UserInfo {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  isActive: boolean;
+}
+
 // Permission interface
 export interface Permission {
   id: string;

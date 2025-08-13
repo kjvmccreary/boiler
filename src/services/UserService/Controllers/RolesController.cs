@@ -4,6 +4,8 @@ using Contracts.Services;
 using DTOs.Common;
 using DTOs.Auth;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using Common.Data; // Add this using
 
 namespace UserService.Controllers;
 
@@ -14,13 +16,19 @@ public class RolesController : ControllerBase
 {
     private readonly IRoleService _roleService;
     private readonly ILogger<RolesController> _logger;
+    private readonly ApplicationDbContext _context; // ✅ ADD: DbContext for efficient queries
+    private readonly ITenantProvider _tenantProvider; // ✅ ADD: Tenant provider
 
     public RolesController(
         IRoleService roleService,
-        ILogger<RolesController> logger)
+        ILogger<RolesController> logger,
+        ApplicationDbContext context, // ✅ ADD: Inject DbContext
+        ITenantProvider tenantProvider) // ✅ ADD: Inject tenant provider
     {
         _roleService = roleService;
         _logger = logger;
+        _context = context; // ✅ ADD: Assign DbContext
+        _tenantProvider = tenantProvider; // ✅ ADD: Assign tenant provider
     }
 
     /// <summary>
@@ -64,9 +72,16 @@ public class RolesController : ControllerBase
                                         r.Description.Contains(searchTerm, StringComparison.OrdinalIgnoreCase));
             }
 
-            var roleDtos = roles.Select(MapToRoleDto).ToList();
+            // ✅ FIXED: Get user counts efficiently
+            var roleIds = roles.Select(r => r.Id).ToList();
+            var userCounts = await GetUserCountsForRoles(roleIds);
+
+            var roleDtos = roles.Select(role => {
+                var roleDto = MapToRoleDto(role);
+                roleDto.UserCount = userCounts.GetValueOrDefault(role.Id, 0);
+                return roleDto;
+            }).ToList();
             
-            // ✅ FIX: Use constructor instead of property assignment
             var totalCount = roleDtos.Count;
             var pagedItems = roleDtos.Skip((page - 1) * pageSize).Take(pageSize).ToList();
             
@@ -448,20 +463,47 @@ public class RolesController : ControllerBase
         throw new UnauthorizedAccessException("User ID not found in token");
     }
 
+    // ✅ NEW: Efficient method to get user counts for multiple roles
+    private async Task<Dictionary<int, int>> GetUserCountsForRoles(List<int> roleIds)
+    {
+        try
+        {
+            var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!tenantId.HasValue)
+            {
+                return new Dictionary<int, int>();
+            }
+
+            // Single efficient query to get user counts for all roles
+            var userCounts = await _context.UserRoles
+                .Where(ur => roleIds.Contains(ur.RoleId) && ur.TenantId == tenantId.Value && ur.IsActive)
+                .GroupBy(ur => ur.RoleId)
+                .Select(g => new { RoleId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.RoleId, x => x.Count);
+
+            return userCounts;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user counts for roles");
+            return new Dictionary<int, int>();
+        }
+    }
+
     private static RoleDto MapToRoleDto(RoleInfo role)
     {
         return new RoleDto
         {
-            Id = role.Id, // 🔧 .NET 9 FIX: Use int directly, not ToString()
+            Id = role.Id,
             Name = role.Name,
             Description = role.Description,
             IsSystemRole = role.IsSystemRole,
             IsDefault = role.IsDefault,
-            TenantId = role.TenantId, // 🔧 .NET 9 FIX: Use int? directly, not ToString()
+            TenantId = role.TenantId,
             Permissions = role.Permissions.ToList(),
-            CreatedAt = role.CreatedAt, // 🔧 .NET 9 FIX: Use DateTime directly, not ToString()
-            UpdatedAt = role.UpdatedAt, // 🔧 .NET 9 FIX: Use DateTime directly, not ToString()
-            UserCount = 0 // TODO: Calculate actual user count if needed
+            CreatedAt = role.CreatedAt,
+            UpdatedAt = role.UpdatedAt,
+            UserCount = 0 // ✅ Will be set after DTO creation
         };
     }
 

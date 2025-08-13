@@ -11,14 +11,26 @@ import {
   Divider,
   Alert,
   CircularProgress,
+  List,
+  ListItem,
+  ListItemText,
+  Avatar,
+  Chip,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import {
   Save as SaveIcon,
   Cancel as CancelIcon,
+  People as PeopleIcon,
+  ExpandMore as ExpandMoreIcon,
+  AccountCircle as AccountCircleIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import { PermissionSelector } from './PermissionSelector.js';
 import { roleService, type RoleCreateRequest, type RoleUpdateRequest } from '@/services/role.service.js';
-import type { Role } from '@/types/index.js';
+import type { Role, UserInfo } from '@/types/index.js';
 import toast from 'react-hot-toast';
 
 export function RoleEditor() {
@@ -27,6 +39,8 @@ export function RoleEditor() {
   const isEditing = Boolean(id && id !== 'new');
 
   const [role, setRole] = useState<Role | null>(null);
+  const [users, setUsers] = useState<UserInfo[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -46,6 +60,23 @@ export function RoleEditor() {
         description: roleData.description || '',
         permissions: roleData.permissions.map((p: any) => typeof p === 'string' ? p : p.name),
       });
+
+      // Load users assigned to this role
+      setUsersLoading(true);
+      try {
+        console.log('🔍 RoleEditor: Loading users for role:', parseInt(roleId));
+        const usersData = await roleService.getRoleUsers(parseInt(roleId));
+        console.log('🔍 RoleEditor: Users data received:', usersData);
+        setUsers(usersData);
+      } catch (error) {
+        console.error('❌ RoleEditor: Failed to load role users:', error);
+        // Don't fail the whole component if users can't be loaded
+        toast.error('Could not load users for this role');
+        setUsers([]);
+      } finally {
+        setUsersLoading(false);
+      }
+
     } catch (error) {
       console.error('Failed to load role:', error);
       toast.error('Failed to load role');
@@ -82,6 +113,12 @@ export function RoleEditor() {
     event.preventDefault();
 
     if (!validateForm()) {
+      return;
+    }
+
+    // Check if trying to delete permissions when users are assigned
+    if (isEditing && users.length > 0 && formData.permissions.length === 0) {
+      toast.error('Cannot remove all permissions from a role that has users assigned');
       return;
     }
 
@@ -143,6 +180,10 @@ export function RoleEditor() {
         permissions: '',
       }));
     }
+  };
+
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
   if (loading) {
@@ -212,6 +253,14 @@ export function RoleEditor() {
                   </Alert>
                 )}
 
+                {users.length > 0 && formData.permissions.length === 0 && (
+                  <Alert severity="warning" sx={{ mb: 2 }}>
+                    <Typography variant="body2">
+                      This role has {users.length} user(s) assigned. Removing all permissions may affect their access.
+                    </Typography>
+                  </Alert>
+                )}
+
                 <PermissionSelector
                   value={formData.permissions}
                   onChange={handlePermissionsChange}
@@ -220,6 +269,85 @@ export function RoleEditor() {
               </CardContent>
             </Card>
           </Grid>
+
+          {/* Assigned Users Section - Only show when editing */}
+          {isEditing && (
+            <Grid size={{ xs: 12 }}>
+              <Card>
+                <CardContent>
+                  <Accordion defaultExpanded={users.length > 0}>
+                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <PeopleIcon />
+                        <Typography variant="h6">
+                          Assigned Users ({users.length})
+                        </Typography>
+                        {users.length > 0 && (
+                          <Chip 
+                            label={`${users.length} users`}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                        )}
+                      </Box>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      {usersLoading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                          <CircularProgress size={24} />
+                        </Box>
+                      ) : users.length === 0 ? (
+                        <Alert severity="info">
+                          No users are currently assigned to this role.
+                        </Alert>
+                      ) : (
+                        <>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            The following users have this role assigned and will be affected by any permission changes:
+                          </Typography>
+                          
+                          <List dense>
+                            {users.slice(0, 10).map((user) => (
+                              <ListItem key={user.id} divider>
+                                <Avatar sx={{ mr: 2, bgcolor: 'primary.main', width: 32, height: 32 }}>
+                                  {getInitials(user.firstName, user.lastName)}
+                                </Avatar>
+                                <ListItemText
+                                  primary={user.fullName}
+                                  secondary={user.email}
+                                />
+                                <Chip
+                                  label={user.isActive ? 'Active' : 'Inactive'}
+                                  color={user.isActive ? 'success' : 'warning'}
+                                  size="small"
+                                />
+                              </ListItem>
+                            ))}
+                            {users.length > 10 && (
+                              <ListItem>
+                                <AccountCircleIcon sx={{ mr: 2, color: 'text.secondary' }} />
+                                <Typography variant="body2" color="text.secondary">
+                                  ... and {users.length - 10} more users
+                                </Typography>
+                              </ListItem>
+                            )}
+                          </List>
+
+                          <Box sx={{ mt: 2, p: 1, bgcolor: 'background.default', borderRadius: 1 }}>
+                            <Typography variant="caption" color="text.secondary">
+                              <InfoIcon fontSize="small" sx={{ mr: 0.5, verticalAlign: 'middle' }} />
+                              Changes to this role's permissions will immediately affect all assigned users' access.
+                            </Typography>
+                          </Box>
+                        </>
+                      )}
+                    </AccordionDetails>
+                  </Accordion>
+                </CardContent>
+              </Card>
+            </Grid>
+          )}
         </Grid>
 
         <Divider sx={{ my: 3 }} />

@@ -15,10 +15,22 @@ import {
   Box,
   Typography,
   CircularProgress,
-  Tooltip
+  Tooltip,
+  Popover,
+  List,
+  ListItem,
+  ListItemText,
+  Avatar,
+  Divider
 } from '@mui/material';
-import { Search, Edit, Delete } from '@mui/icons-material';
-import type { RoleDto } from '../../types';
+import { 
+  Search, 
+  Edit, 
+  Delete, 
+  People as PeopleIcon,
+  Close as CloseIcon // ✅ ADD: Close icon for the popover
+} from '@mui/icons-material';
+import type { RoleDto, UserInfo } from '../../types';
 import { roleService } from '../../services/role.service';
 
 interface RoleListProps {
@@ -34,8 +46,20 @@ export const RoleList: React.FC<RoleListProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // ✅ SIMPLIFIED: Basic popover state
+  const [userPopover, setUserPopover] = useState<{
+    anchorEl: HTMLElement | null;
+    roleId: number | null;
+    users: UserInfo[];
+    loading: boolean;
+  }>({
+    anchorEl: null,
+    roleId: null,
+    users: [],
+    loading: false
+  });
 
-  // Fix: Initialize with default values
   const [pagination, setPagination] = useState({
     totalCount: 0,
     pageNumber: 1,
@@ -58,7 +82,6 @@ export const RoleList: React.FC<RoleListProps> = ({
 
       console.log('✅ RoleList: fetchRoles result:', result);
 
-      // ✅ FIX: Handle the corrected response structure
       setRoles(result.roles || []);
       setPagination(result.pagination || {
         totalCount: 0,
@@ -102,6 +125,67 @@ export const RoleList: React.FC<RoleListProps> = ({
     fetchRoles(1, newPageSize, searchTerm);
   };
 
+  const canDeleteRole = (role: RoleDto): boolean => {
+    return !role.isSystemRole && (role.userCount || 0) === 0;
+  };
+
+  const getDeleteTooltipText = (role: RoleDto): string => {
+    if (role.isSystemRole) {
+      return "Cannot delete system roles";
+    }
+    if ((role.userCount || 0) > 0) {
+      return `Cannot delete role with ${role.userCount} assigned user${role.userCount === 1 ? '' : 's'}`;
+    }
+    return "Delete role";
+  };
+
+  // ✅ SIMPLE: Show popup on hover
+  const handleUserCountHover = async (event: React.MouseEvent<HTMLElement>, roleId: number, userCount: number) => {
+    if (userCount === 0) return;
+
+    console.log('🔍 RoleList: User count hovered for role:', roleId);
+    
+    setUserPopover({
+      anchorEl: event.currentTarget,
+      roleId,
+      users: [],
+      loading: true
+    });
+
+    try {
+      const users = await roleService.getRoleUsers(roleId);
+      console.log('✅ RoleList: Users loaded for role:', roleId, users);
+      
+      setUserPopover(prev => ({
+        ...prev,
+        users,
+        loading: false
+      }));
+    } catch (error) {
+      console.error('❌ RoleList: Failed to load users for role:', roleId, error);
+      setUserPopover(prev => ({
+        ...prev,
+        users: [],
+        loading: false
+      }));
+    }
+  };
+
+  // ✅ SIMPLE: Close popup
+  const handleUserPopoverClose = () => {
+    console.log('🔍 RoleList: Closing popover');
+    setUserPopover({
+      anchorEl: null,
+      roleId: null,
+      users: [],
+      loading: false
+    });
+  };
+
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" p={4}>
@@ -126,6 +210,8 @@ export const RoleList: React.FC<RoleListProps> = ({
       </Box>
     );
   }
+
+  const isPopoverOpen = Boolean(userPopover.anchorEl);
 
   return (
     <Box>
@@ -179,7 +265,30 @@ export const RoleList: React.FC<RoleListProps> = ({
                     />
                   </TableCell>
                   <TableCell>{role.permissions?.length || 0}</TableCell>
-                  <TableCell>{role.userCount || 0}</TableCell>
+                  <TableCell>
+                    {/* ✅ SIMPLIFIED: Just hover to show, click outside to hide */}
+                    <Box
+                      onMouseEnter={(role.userCount || 0) > 0 ? 
+                        (e) => handleUserCountHover(e, role.id, role.userCount || 0) : 
+                        undefined
+                      }
+                      sx={{ display: 'inline-block' }}
+                    >
+                      <Chip
+                        label={role.userCount || 0}
+                        size="small"
+                        color={(role.userCount || 0) > 0 ? 'primary' : 'default'}
+                        variant={(role.userCount || 0) > 0 ? 'filled' : 'outlined'}
+                        sx={{
+                          cursor: (role.userCount || 0) > 0 ? 'pointer' : 'default',
+                          '&:hover': (role.userCount || 0) > 0 ? {
+                            transform: 'scale(1.05)',
+                            transition: 'transform 0.2s ease-in-out'
+                          } : undefined
+                        }}
+                      />
+                    </Box>
+                  </TableCell>
                   <TableCell>
                     <Tooltip title={role.isSystemRole ? "Cannot edit system roles" : "Edit role"}>
                       <span>
@@ -193,13 +302,15 @@ export const RoleList: React.FC<RoleListProps> = ({
                         </IconButton>
                       </span>
                     </Tooltip>
-                    <Tooltip title={role.isSystemRole ? "Cannot delete system roles" : "Delete role"}>
+                    
+                    <Tooltip title={getDeleteTooltipText(role)}>
                       <span>
                         <IconButton
                           onClick={() => onDeleteRole?.(role.id)}
-                          disabled={role.isSystemRole}
+                          disabled={!canDeleteRole(role)}
                           aria-label={`Delete ${role.name} role`}
                           data-testid="delete-button"
+                          color={!canDeleteRole(role) ? 'default' : 'error'}
                         >
                           <Delete />
                         </IconButton>
@@ -224,6 +335,128 @@ export const RoleList: React.FC<RoleListProps> = ({
         showFirstButton
         showLastButton
       />
+
+      {/* ✅ ENHANCED: Popover with close button in header */}
+      <Popover
+        open={isPopoverOpen}
+        anchorEl={userPopover.anchorEl}
+        onClose={handleUserPopoverClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+        slotProps={{
+          paper: {
+            sx: {
+              maxWidth: 320,
+              maxHeight: 400,
+              overflow: 'auto',
+              mt: 1
+            }
+          }
+        }}
+        disableRestoreFocus
+        disableAutoFocus
+        disableEnforceFocus
+      >
+        <Box sx={{ p: 2 }}>
+          {/* ✅ NEW: Header with close button */}
+          <Box sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            mb: 1 
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <PeopleIcon sx={{ mr: 1, color: 'primary.main' }} />
+              <Typography variant="h6" component="div">
+                Assigned Users
+              </Typography>
+            </Box>
+            {/* ✅ NEW: Close button */}
+            <Tooltip title="Close">
+              <IconButton
+                onClick={handleUserPopoverClose}
+                size="small"
+                sx={{ 
+                  ml: 1,
+                  color: 'text.secondary',
+                  '&:hover': {
+                    color: 'text.primary',
+                    backgroundColor: 'action.hover'
+                  }
+                }}
+                aria-label="Close user list"
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
+          
+          {userPopover.loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+              <CircularProgress size={24} />
+              <Typography sx={{ ml: 1 }}>Loading users...</Typography>
+            </Box>
+          ) : userPopover.users.length === 0 ? (
+            <Typography color="text.secondary" sx={{ p: 2, textAlign: 'center' }}>
+              No users found
+            </Typography>
+          ) : (
+            <>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                {userPopover.users.length} user{userPopover.users.length === 1 ? '' : 's'} assigned to this role
+              </Typography>
+              <Divider sx={{ mb: 1 }} />
+              <List dense sx={{ maxHeight: 280, overflow: 'auto' }}>
+                {userPopover.users.map((user, index) => (
+                  <ListItem 
+                    key={user.id} 
+                    divider={index < userPopover.users.length - 1}
+                    sx={{ px: 0 }}
+                  >
+                    <Avatar sx={{ mr: 2, bgcolor: 'primary.main', width: 32, height: 32 }}>
+                      {getInitials(user.firstName, user.lastName)}
+                    </Avatar>
+                    <ListItemText
+                      primary={
+                        <Typography variant="body2" fontWeight="medium">
+                          {user.fullName}
+                        </Typography>
+                      }
+                      secondary={
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            {user.email}
+                          </Typography>
+                          <Chip
+                            label={user.isActive ? 'Active' : 'Inactive'}
+                            size="small"
+                            color={user.isActive ? 'success' : 'warning'}
+                            sx={{ ml: 1, height: 16, fontSize: '0.65rem' }}
+                          />
+                        </Box>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+              
+              {userPopover.users.length > 5 && (
+                <Box sx={{ mt: 1, p: 1, bgcolor: 'background.default', borderRadius: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    💡 Tip: Click "Edit Role" to manage user assignments
+                  </Typography>
+                </Box>
+              )}
+            </>
+          )}
+        </Box>
+      </Popover>
     </Box>
   );
 };

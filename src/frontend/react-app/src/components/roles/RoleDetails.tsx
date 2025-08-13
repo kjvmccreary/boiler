@@ -29,11 +29,12 @@ import {
   Lock as LockIcon,
   ExpandMore as ExpandMoreIcon,
   Info as InfoIcon,
+  AccountCircle as AccountCircleIcon,
 } from '@mui/icons-material';
 import { roleService } from '@/services/role.service.js';
 import { CanAccess } from '@/components/authorization/CanAccess.js';
 import { PERMISSIONS } from '@/utils/api.constants.js';
-import type { Role, User, Permission } from '@/types/index.js';
+import type { Role, UserInfo, Permission } from '@/types/index.js';
 import toast from 'react-hot-toast';
 
 export function RoleDetails() {
@@ -41,15 +42,17 @@ export function RoleDetails() {
   const navigate = useNavigate();
 
   const [role, setRole] = useState<Role | null>(null);
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadRoleDetails = async () => {
     if (!id) return;
 
     try {
       setLoading(true);
+      setError(null);
       
       // Convert string ID to number for API call
       const roleId = parseInt(id, 10);
@@ -57,26 +60,39 @@ export function RoleDetails() {
         throw new Error('Invalid role ID');
       }
       
-      // Load role details - USE roleId not id
+      console.log('🔍 RoleDetails: Loading role details for ID:', roleId);
+      
+      // Load role details
       const roleData = await roleService.getRoleById(roleId);
+      console.log('🔍 RoleDetails: Role data received:', roleData);
       setRole(roleData);
 
-      // Load users with this role - USE roleId not id
+      // Load users with this role
       setUsersLoading(true);
       try {
+        console.log('🔍 RoleDetails: Loading users for role:', roleId);
         const usersData = await roleService.getRoleUsers(roleId);
+        console.log('🔍 RoleDetails: Users data received:', usersData);
         setUsers(usersData);
       } catch (error) {
-        console.error('Failed to load role users:', error);
-        // Don't fail the whole component if users can't be loaded
+        console.error('❌ RoleDetails: Failed to load role users:', error);
+        // Show a warning but don't fail the whole component
+        toast.error('Could not load users for this role');
+        setUsers([]);
       } finally {
         setUsersLoading(false);
       }
 
     } catch (error) {
-      console.error('Failed to load role details:', error);
-      toast.error('Failed to load role details');
-      navigate('/roles');
+      console.error('❌ RoleDetails: Failed to load role details:', error);
+      let errorMessage = 'Failed to load role details';
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -97,14 +113,29 @@ export function RoleDetails() {
   const handleDeleteRole = async () => {
     if (!role || role.isSystemRole) return;
 
+    if (users.length > 0) {
+      toast.error(`Cannot delete role "${role.name}" because it has ${users.length} user(s) assigned to it. Remove all users from this role first.`);
+      return;
+    }
+
     if (window.confirm(`Are you sure you want to delete the role "${role.name}"? This action cannot be undone.`)) {
       try {
         await roleService.deleteRole(role.id);
         toast.success('Role deleted successfully');
         navigate('/roles');
       } catch (error) {
-        console.error('Failed to delete role:', error);
-        toast.error('Failed to delete role');
+        console.error('❌ RoleDetails: Failed to delete role:', error);
+        let errorMessage = 'Failed to delete role';
+        
+        if (error instanceof Error) {
+          if (error.message.includes('users assigned')) {
+            errorMessage = 'Cannot delete role that has users assigned to it';
+          } else {
+            errorMessage = error.message;
+          }
+        }
+        
+        toast.error(errorMessage);
       }
     }
   };
@@ -142,10 +173,10 @@ export function RoleDetails() {
     );
   }
 
-  if (!role) {
+  if (error || !role) {
     return (
       <Box sx={{ p: 3 }}>
-        <Alert severity="error">Role not found</Alert>
+        <Alert severity="error">{error || 'Role not found'}</Alert>
         <Button 
           startIcon={<ArrowBackIcon />}
           onClick={() => navigate('/roles')}
@@ -194,7 +225,7 @@ export function RoleDetails() {
               color="error"
               startIcon={<DeleteIcon />}
               onClick={handleDeleteRole}
-              disabled={role.isSystemRole}
+              disabled={role.isSystemRole || users.length > 0}
             >
               Delete
             </Button>
@@ -283,7 +314,7 @@ export function RoleDetails() {
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <PeopleIcon sx={{ mr: 1 }} />
                 <Typography variant="h6">
-                  Users ({users.length})
+                  Assigned Users ({users.length})
                 </Typography>
               </Box>
 
@@ -292,35 +323,50 @@ export function RoleDetails() {
                   <CircularProgress size={24} />
                 </Box>
               ) : users.length === 0 ? (
-                <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 3 }}>
-                  No users assigned to this role
-                </Typography>
+                <Alert severity="info" sx={{ mt: 1 }}>
+                  No users are currently assigned to this role.
+                </Alert>
               ) : (
                 <List dense>
-                  {users.slice(0, 5).map((user) => (
+                  {users.slice(0, 10).map((user) => (
                     <ListItem key={user.id} divider>
                       <Avatar sx={{ mr: 2, bgcolor: 'primary.main', width: 32, height: 32 }}>
                         {getInitials(user.firstName, user.lastName)}
                       </Avatar>
                       <ListItemText
-                        primary={`${user.firstName} ${user.lastName}`}
+                        primary={user.fullName}
                         secondary={user.email}
                       />
                       <Chip
-                        label={user.emailConfirmed ? 'Active' : 'Pending'}
-                        color={user.emailConfirmed ? 'success' : 'warning'}
+                        label={user.isActive ? 'Active' : 'Inactive'}
+                        color={user.isActive ? 'success' : 'warning'}
                         size="small"
                       />
                     </ListItem>
                   ))}
-                  {users.length > 5 && (
+                  {users.length > 10 && (
                     <ListItem>
+                      <AccountCircleIcon sx={{ mr: 2, color: 'text.secondary' }} />
                       <Typography variant="body2" color="text.secondary">
-                        ... and {users.length - 5} more users
+                        ... and {users.length - 10} more users
                       </Typography>
                     </ListItem>
                   )}
                 </List>
+              )}
+
+              {users.length > 0 && (
+                <Box sx={{ mt: 2, p: 1, bgcolor: 'background.default', borderRadius: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    <InfoIcon fontSize="small" sx={{ mr: 0.5, verticalAlign: 'middle' }} />
+                    {users.length > 0 && role.isSystemRole ? 
+                      'This system role cannot be deleted while users are assigned.' :
+                      users.length > 0 ? 
+                      'Remove all users before deleting this role.' :
+                      'This role can be safely deleted.'
+                    }
+                  </Typography>
+                </Box>
               )}
             </CardContent>
           </Card>

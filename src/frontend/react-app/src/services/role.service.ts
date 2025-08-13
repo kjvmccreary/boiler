@@ -4,7 +4,8 @@ import type {
   ApiResponseDto,
   PaginationParams,
   CreateRoleRequest,
-  UpdateRoleRequest
+  UpdateRoleRequest,
+  UserInfo // ✅ ADD: Import UserInfo type
 } from '../types';
 
 export class RoleService {
@@ -153,6 +154,36 @@ export class RoleService {
     }
   }
 
+  // ✅ NEW: Get permissions for a specific role
+  async getRolePermissions(roleId: number): Promise<string[]> {
+    console.log('🔍 RoleService: getRolePermissions called with roleId:', roleId);
+    try {
+      const response = await apiClient.get<any>(`/api/roles/${roleId}/permissions`);
+      console.log('🔍 RoleService: getRolePermissions response:', response.data);
+      
+      // ✅ FIXED: Don't manually unwrap - ApiClient already did it
+      console.log('✅ RoleService: Role permissions retrieved successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ RoleService: getRolePermissions failed:', error);
+      throw error;
+    }
+  }
+
+  // ✅ NEW: Get role by name (helper method for permission lookup)
+  async getRoleByName(roleName: string): Promise<RoleDto | null> {
+    console.log('🔍 RoleService: getRoleByName called with roleName:', roleName);
+    try {
+      // Get all roles and find by name
+      const result = await this.getRoles({ page: 1, pageSize: 100 });
+      const role = result.roles.find(r => r.name === roleName);
+      return role || null;
+    } catch (error) {
+      console.error('❌ RoleService: getRoleByName failed:', error);
+      return null;
+    }
+  }
+
   async createRole(roleData: CreateRoleRequest): Promise<RoleDto> {
     const response = await apiClient.post<any>('/api/roles', roleData);
     
@@ -222,18 +253,19 @@ export class RoleService {
     }
   }
 
-  async getRoleUsers(roleId: number): Promise<any[]> {
-    const response = await apiClient.get<any>(`/api/roles/${roleId}/users`);
-    
-    // Handle wrapped response
-    if (response.data && 'success' in response.data) {
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to fetch role users');
-      }
-      return response.data.data;
+  async getRoleUsers(roleId: number): Promise<UserInfo[]> {
+    console.log('🔍 RoleService: getRoleUsers called with roleId:', roleId);
+    try {
+      const response = await apiClient.get<any>(`/api/roles/${roleId}/users`);
+      console.log('🔍 RoleService: getRoleUsers response:', response.data);
+      
+      // ✅ FIXED: Don't manually unwrap - ApiClient already did it
+      console.log('✅ RoleService: Role users retrieved successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ RoleService: getRoleUsers failed:', error);
+      throw error;
     }
-    
-    return response.data;
   }
 
   async assignRoleToUser(userId: number, roleId: number): Promise<void> {
