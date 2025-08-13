@@ -16,19 +16,37 @@ export default defineConfig({
       cert: fs.readFileSync(path.resolve(__dirname, 'certs/localhost.pem'))
     },
     proxy: {
-      '/api': {
-        target: 'https://localhost:7002', // ✅ FIXED: Changed from 7000 to 7002 (UserService port)
+      // ✅ FIXED: Route auth requests to AuthService
+      '/api/auth': {
+        target: 'https://localhost:7001', // AuthService port
         changeOrigin: true,
         secure: false,
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {
-            console.log('🚨 Proxy error:', err);
+            console.log('🚨 Auth Proxy error:', err);
           });
           proxy.on('proxyReq', (proxyReq, req, _res) => {
-            console.log('🔍 Proxying request:', req.method, req.url, '→', proxyReq.path);
+            console.log('🔍 Auth Proxying request:', req.method, req.url, '→', proxyReq.path);
           });
           proxy.on('proxyRes', (proxyRes, req, _res) => {
-            console.log('✅ Proxy response:', req.method, req.url, '→', proxyRes.statusCode);
+            console.log('✅ Auth Proxy response:', req.method, req.url, '→', proxyRes.statusCode);
+          });
+        },
+      },
+      // ✅ Route everything else to UserService  
+      '/api': {
+        target: 'https://localhost:7002', // UserService port
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('🚨 User Proxy error:', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('🔍 User Proxying request:', req.method, req.url, '→', proxyReq.path);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('✅ User Proxy response:', req.method, req.url, '→', proxyRes.statusCode);
           });
         },
       },

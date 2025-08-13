@@ -59,6 +59,8 @@ export function UserRoleAssignment() {
   const [selectedRole, setSelectedRole] = useState<{ id: number; name: string } | null>(null);
   const [removing, setRemoving] = useState<number | null>(null);
   const [assigning, setAssigning] = useState(false);
+  // Add state for user permissions
+  const [userPermissions, setUserPermissions] = useState<string[]>([]);
 
   useEffect(() => {
     if (userId) {
@@ -73,11 +75,15 @@ export function UserRoleAssignment() {
       setLoading(true);
       setError(null);
       
-      const [userRolesResponse, allRolesResponse] = await Promise.all([
-        roleService.getUserRoles(userId), // Returns Role[]
-        roleService.getRoles({ pageSize: 100 }) // Returns { roles: Role[], pagination: {...} }
+      const [userRolesResponse, allRolesResponse, userPermissionsResponse] = await Promise.all([
+        roleService.getUserRoles(userId), // Returns RoleDto[]
+        roleService.getRoles({ pageSize: 100 }),
+        roleService.getUserPermissions(userId) // New method for permissions
       ]);
 
+      setUserRoles(userRolesResponse);
+      setUserPermissions(userPermissionsResponse);
+      
       // Set the actual roles
       setUserRoles(userRolesResponse);
       
@@ -110,14 +116,39 @@ export function UserRoleAssignment() {
 
     try {
       setAssigning(true);
+      console.log('🔍 UserRoleAssignment: Assigning role:', { userId, roleId: selectedRole.id, roleName: selectedRole.name });
+      
       await roleService.assignRoleToUser(parseInt(userId), selectedRole.id);
+      
+      console.log('✅ UserRoleAssignment: Role assigned, reloading data...');
+      
       setSelectedRole(null);
       setAssignDialogOpen(false);
+      
+      // ✅ FIXED: Reload data first, then show success
       await loadUserData();
       toast.success(`Role "${selectedRole.name}" assigned successfully`);
+      
     } catch (error) {
-      console.error('Failed to assign role:', error);
-      toast.error('Failed to assign role');
+      console.error('❌ UserRoleAssignment: Failed to assign role:', error);
+      
+      // ✅ ENHANCED: Show specific error messages
+      let errorMessage = 'Failed to assign role';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as any;
+        if (axiosError.response?.status === 401) {
+          errorMessage = 'Session expired. Please log in again.';
+        } else if (axiosError.response?.status === 403) {
+          errorMessage = 'You do not have permission to assign roles.';
+        } else if (axiosError.response?.data?.message) {
+          errorMessage = axiosError.response.data.message;
+        }
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setAssigning(false);
     }
@@ -147,17 +178,7 @@ export function UserRoleAssignment() {
   };
 
   const getUserEffectivePermissions = (): string[] => {
-    const allPermissions = new Set<string>();
-    
-    userRoles.forEach(role => {
-      if (role.permissions && Array.isArray(role.permissions)) {
-        role.permissions.forEach(permission => {
-          allPermissions.add(permission.name);
-        });
-      }
-    });
-
-    return Array.from(allPermissions).sort();
+    return userPermissions.sort();
   };
 
   if (loading) {

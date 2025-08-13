@@ -201,17 +201,25 @@ export class RoleService {
   }
 
   async getUserRoles(userId: string): Promise<RoleDto[]> {
-    const response = await apiClient.get<any>(`/api/users/${userId}/roles`);
-    
-    // Handle wrapped response
-    if (response.data && 'success' in response.data) {
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to fetch user roles');
+    console.log('🔍 RoleService: getUserRoles called with userId:', userId);
+    try {
+      // ✅ FIXED: Use the correct endpoint that returns full RoleDto objects
+      const response = await apiClient.get<any>(`/api/roles/users/${userId}`);
+      console.log('🔍 RoleService: getUserRoles response:', response.data);
+      
+      // Handle wrapped response
+      if (response.data && 'success' in response.data) {
+        if (!response.data.success) {
+          throw new Error(response.data.message || 'Failed to fetch user roles');
+        }
+        return response.data.data;
       }
-      return response.data.data;
+      
+      return response.data;
+    } catch (error) {
+      console.error('❌ RoleService: getUserRoles failed:', error);
+      throw error;
     }
-    
-    return response.data;
   }
 
   async getRoleUsers(roleId: number): Promise<any[]> {
@@ -229,27 +237,79 @@ export class RoleService {
   }
 
   async assignRoleToUser(userId: number, roleId: number): Promise<void> {
-    const response = await apiClient.post<any>('/api/roles/assign', {
-      userId: userId.toString(),
-      roleId
-    });
-    
-    // Handle wrapped response
-    if (response.data && 'success' in response.data) {
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to assign role');
+    console.log('🔍 RoleService: assignRoleToUser called with:', { userId, roleId });
+    try {
+      const response = await apiClient.post<any>('/api/roles/assign', {
+        userId: userId, // ✅ FIXED: Send as number, not string
+        roleId
+      });
+      
+      console.log('🔍 RoleService: assignRoleToUser response:', response.data);
+      
+      // ✅ FIXED: Don't manually unwrap - ApiClient already did it
+      console.log('✅ RoleService: Role assigned successfully');
+    } catch (error) {
+      console.error('❌ RoleService: assignRoleToUser failed:', error);
+      
+      // Enhanced error logging for role assignment
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as any;
+        console.error('❌ Role assignment error details:', {
+          status: axiosError.response?.status,
+          statusText: axiosError.response?.statusText,
+          data: axiosError.response?.data,
+          headers: axiosError.response?.headers
+        });
       }
+      
+      throw error;
     }
   }
 
   async removeRoleFromUser(roleId: number, userId: string): Promise<void> {
-    const response = await apiClient.delete<any>(`/api/roles/${roleId}/users/${userId}`);
-    
-    // Handle wrapped response
-    if (response.data && 'success' in response.data) {
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to remove role');
+    console.log('🔍 RoleService: removeRoleFromUser called with:', { roleId, userId });
+    try {
+      const response = await apiClient.delete<any>(`/api/roles/${roleId}/users/${userId}`);
+      console.log('🔍 RoleService: removeRoleFromUser response:', response.data);
+      
+      // ✅ FIXED: Don't manually unwrap - ApiClient already did it
+      console.log('✅ RoleService: Role removed successfully');
+    } catch (error) {
+      console.error('❌ RoleService: removeRoleFromUser failed:', error);
+      
+      // Enhanced error logging for role removal
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as any;
+        console.error('❌ Role removal error details:', {
+          status: axiosError.response?.status,
+          statusText: axiosError.response?.statusText,
+          data: axiosError.response?.data,
+          headers: axiosError.response?.headers
+        });
       }
+      
+      throw error;
+    }
+  }
+
+  async getUserPermissions(userId: string): Promise<string[]> {
+    console.log('🔍 RoleService: getUserPermissions called with userId:', userId);
+    try {
+      const response = await apiClient.get<any>(`/api/users/${userId}/permissions`);
+      console.log('🔍 RoleService: getUserPermissions response:', response.data);
+      
+      // Handle wrapped response
+      if (response.data && 'success' in response.data) {
+        if (!response.data.success) {
+          throw new Error(response.data.message || 'Failed to fetch user permissions');
+        }
+        return response.data.data;
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('❌ RoleService: getUserPermissions failed:', error);
+      throw error;
     }
   }
 }

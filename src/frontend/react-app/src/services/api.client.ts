@@ -43,44 +43,43 @@ export class ApiClient {
     // Response interceptor - Handle auth errors
     this.instance.interceptors.response.use(
       (response: AxiosResponse) => {
-        console.log('✅ API RESPONSE:', response.config.url, response.status)
-        return response
+        console.log('✅ API RESPONSE:', response.config.url, response.status);
+        return response;
       },
       async (error) => {
-        console.error('🚨 API ERROR:', error.config?.url, error.response?.status, error.message)
+        console.error('🚨 API ERROR:', error.config?.url, error.response?.status, error.message);
         
-        const originalRequest = error.config
+        const originalRequest = error.config;
 
         if (error.response?.status === 401 && !originalRequest._retry) {
-          originalRequest._retry = true
+          originalRequest._retry = true;
 
           try {
-            // ✅ FIX: Use correct key for refresh token too
-            const refreshToken = localStorage.getItem('refresh_token') // Changed from 'refreshToken' to 'refresh_token'
+            const refreshToken = localStorage.getItem('refresh_token');
             if (refreshToken) {
-              const response = await this.post('/api/auth/refresh', { refreshToken })
-              const { accessToken } = response.data
+              console.log('🔄 Attempting token refresh...');
+              const response = await this.post('/api/auth/refresh', { refreshToken });
+              const { accessToken } = response.data;
 
-              // ✅ FIX: Store with correct key
-              localStorage.setItem('auth_token', accessToken) // Changed from 'authToken' to 'auth_token'
-              originalRequest.headers.Authorization = `Bearer ${accessToken}`
+              localStorage.setItem('auth_token', accessToken);
+              originalRequest.headers.Authorization = `Bearer ${accessToken}`;
 
-              return this.instance(originalRequest)
+              console.log('✅ Token refreshed, retrying original request');
+              return this.instance(originalRequest);
             }
           } catch (refreshError) {
-            console.error('🚨 Token refresh failed:', refreshError)
-            // ✅ FIX: Clear with correct keys
-            localStorage.removeItem('auth_token')
-            localStorage.removeItem('refresh_token')
+            console.error('🚨 Token refresh failed:', refreshError);
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('refresh_token');
             
-            // Dispatch custom event for auth logout
+            // ✅ ENHANCED: Give user feedback before redirecting
             window.dispatchEvent(new CustomEvent('auth:logout', { 
-              detail: { reason: 'refresh_failed' } 
-            }))
+              detail: { reason: 'refresh_failed', message: 'Session expired. Please log in again.' } 
+            }));
           }
         }
 
-        return Promise.reject(error)
+        return Promise.reject(error);
       }
     )
   }
