@@ -59,7 +59,7 @@ Write-Host ""
 Write-Host "  Redis: localhost:6379" -ForegroundColor White
 Write-Host ""
 Write-Host "  PgAdmin: http://localhost:8080" -ForegroundColor White
-Write-Host "  Email: admin@boiler.local" -ForegroundColor White
+Write-Host "  Email: admin@example.com" -ForegroundColor White
 Write-Host "  Password: admin123" -ForegroundColor White
 Write-Host ""
 Write-Host "✅ Boiler infrastructure started successfully!" -ForegroundColor Green

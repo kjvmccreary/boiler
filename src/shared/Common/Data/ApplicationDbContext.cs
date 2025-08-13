@@ -236,9 +236,9 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();
 
-            // Relationships
+            // 🔧 FIX: Specify the navigation property to avoid UserId1 shadow property
             entity.HasOne(e => e.User)
-                  .WithMany()
+                  .WithMany(u => u.UserRoles)  // ← ADD this navigation property reference
                   .HasForeignKey(e => e.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
 

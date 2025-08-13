@@ -76,22 +76,15 @@ builder.Services.AddCommonServices(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddDynamicAuthorization();
 
-// Add Entity Framework
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+// FIX: Use AddDatabase extension which includes all RBAC repositories and services
+builder.Services.AddDatabase(builder.Configuration);
 
-// FIXED: Use Common extension for AutoMapper
+// 🔧 ADD: AutoMapper registration (this line is missing!)
 builder.Services.AddAutoMapperProfiles(typeof(MappingProfile));
 
-// FIXED: Repository registrations - Simplified approach
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<ITenantManagementRepository, TenantManagementRepository>();
-builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-
-// Add services
-builder.Services.AddScoped<ITenantProvider, TenantProvider>();
+// Add AuthService-specific services
 builder.Services.AddScoped<IPasswordService, PasswordService>();
-builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<ITokenService, EnhancedTokenService>(); // ← Use EnhancedTokenService
 builder.Services.AddScoped<IAuthService, AuthServiceImplementation>();
 
 // Add FluentValidation
