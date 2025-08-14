@@ -30,7 +30,7 @@ public abstract class TestBase : IClassFixture<WebApplicationTestFixture>, IAsyn
     {
         try 
         {
-            // ✅ FIX: Initialize database directly since each fixture has unique database
+            // ✅ FIX: Initialize database with clean seeding
             await InitializeDatabaseAsync();
             
             // Verify data was seeded correctly with detailed logging
@@ -51,14 +51,8 @@ public abstract class TestBase : IClassFixture<WebApplicationTestFixture>, IAsyn
 
     private async Task InitializeDatabaseAsync()
     {
-        // Ensure database is created and seeded
-        await _dbContext.Database.EnsureCreatedAsync();
-        
-        // Only seed if not already seeded (check if any tenants exist)
-        if (!await _dbContext.Tenants.AnyAsync())
-        {
-            await TestDataSeeder.SeedTestDataAsync(_dbContext);
-        }
+        // ✅ CRITICAL FIX: Let TestDataSeeder handle complete database recreation
+        await TestDataSeeder.SeedTestDataAsync(_dbContext);
     }
 
     private async Task LogTestDataStatus()

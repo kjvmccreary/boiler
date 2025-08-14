@@ -4,6 +4,7 @@ using System.Net.Http.Json;
 using DTOs.Common;
 using DTOs.Auth;
 using DTOs.User;
+using Contracts.Services; // ✅ ADD: This line to import UserInfo
 using UserService.IntegrationTests.Fixtures;
 using Xunit;
 using Microsoft.Extensions.Logging;
