@@ -55,6 +55,9 @@ public class UserInfo
     public string LastName { get; set; } = string.Empty;
     public string FullName => $"{FirstName} {LastName}".Trim();
     public bool IsActive { get; set; }
+    
+    // 🔧 FIX: Add TenantId property
+    public int TenantId { get; set; }
 }
 
 public class PagedResult<T>

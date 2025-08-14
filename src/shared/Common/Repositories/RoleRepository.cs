@@ -17,17 +17,18 @@ public class RoleRepository : TenantRepository<Role>, IRoleRepository
     {
     }
 
+    // Ensure all queries are tenant-filtered:
     public override IQueryable<Role> Query()
     {
-        // For roles, we include both tenant-specific roles and system roles
         var tenantId = GetCurrentTenantIdSync();
         if (tenantId.HasValue)
         {
+            // Include both tenant roles AND system roles
             return _dbSet.Where(r => r.TenantId == tenantId.Value || r.TenantId == null);
         }
-
-        // If no tenant context, return all (for system admin scenarios)
-        return _dbSet;
+        
+        // If no tenant context, only return system roles
+        return _dbSet.Where(r => r.TenantId == null);
     }
 
     /// <summary>

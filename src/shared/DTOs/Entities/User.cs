@@ -1,39 +1,114 @@
 // FILE: src/shared/DTOs/Entities/User.cs
-namespace DTOs.Entities;
+using System.ComponentModel.DataAnnotations;
 
-public class User : BaseEntity
+namespace DTOs.Entities
 {
-    // Primary tenant - the "home" tenant for this user
-    public int? TenantId { get; set; }
+    /// <summary>
+    /// Represents a user in the system who can belong to multiple tenants
+    /// </summary>
+    public class User : BaseEntity
+    {
+        /// <summary>
+        /// User's email address (unique across the entire system)
+        /// </summary>
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
 
-    public string Email { get; set; } = string.Empty;
-    public string PasswordHash { get; set; } = string.Empty;
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
+        /// <summary>
+        /// Hashed password
+        /// </summary>
+        [Required]
+        public string PasswordHash { get; set; } = string.Empty;
 
-    // ➕ ADD THESE MISSING PROPERTIES:
-    public string? PhoneNumber { get; set; }
-    public string? TimeZone { get; set; }
-    public string? Language { get; set; }
-    public string? Preferences { get; set; } // JSON string for UserPreferencesDto
+        /// <summary>
+        /// User's first name
+        /// </summary>
+        [Required]
+        public string FirstName { get; set; } = string.Empty;
 
-    public bool IsActive { get; set; } = true;
-    public bool EmailConfirmed { get; set; } = false;
-    public string? EmailConfirmationToken { get; set; }
-    public DateTime? EmailConfirmationTokenExpiry { get; set; }
-    public string? PasswordResetToken { get; set; }
-    public DateTime? PasswordResetTokenExpiry { get; set; }
-    public int FailedLoginAttempts { get; set; } = 0;
-    public DateTime? LockedOutUntil { get; set; }
-    public DateTime? LastLoginAt { get; set; }
+        /// <summary>
+        /// User's last name
+        /// </summary>
+        [Required]
+        public string LastName { get; set; } = string.Empty;
 
-    public string FullName => $"{FirstName} {LastName}".Trim();
+        /// <summary>
+        /// Phone number (optional)
+        /// </summary>
+        public string? PhoneNumber { get; set; }
 
-    // Navigation properties
-    public Tenant? PrimaryTenant { get; set; } // The user's primary/home tenant
-    public ICollection<TenantUser> TenantUsers { get; set; } = new List<TenantUser>(); // All tenant associations
-    public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
-    
-    // 🔧 .NET 9 FIX: Add missing UserRoles navigation property
-    public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>(); // User role assignments
+        /// <summary>
+        /// User's timezone
+        /// </summary>
+        public string? TimeZone { get; set; }
+
+        /// <summary>
+        /// User's preferred language
+        /// </summary>
+        public string? Language { get; set; }
+
+        /// <summary>
+        /// JSON field for storing user preferences
+        /// </summary>
+        public string? Preferences { get; set; }
+
+        /// <summary>
+        /// Whether the user's email is confirmed
+        /// </summary>
+        public bool EmailConfirmed { get; set; } = false;
+
+        /// <summary>
+        /// Token for email confirmation
+        /// </summary>
+        public string? EmailConfirmationToken { get; set; }
+
+        /// <summary>
+        /// When the email confirmation token expires
+        /// </summary>
+        public DateTime? EmailConfirmationTokenExpiry { get; set; }
+
+        /// <summary>
+        /// Token for password reset
+        /// </summary>
+        public string? PasswordResetToken { get; set; }
+
+        /// <summary>
+        /// When the password reset token expires
+        /// </summary>
+        public DateTime? PasswordResetTokenExpiry { get; set; }
+
+        /// <summary>
+        /// Last time the user logged in
+        /// </summary>
+        public DateTime? LastLoginAt { get; set; }
+
+        /// <summary>
+        /// Whether the user account is active
+        /// </summary>
+        public bool IsActive { get; set; } = true;
+
+        /// <summary>
+        /// Primary tenant ID (for default tenant assignment)
+        /// </summary>
+        public int? TenantId { get; set; }
+
+        /// <summary>
+        /// Number of failed login attempts
+        /// </summary>
+        public int FailedLoginAttempts { get; set; } = 0;
+
+        /// <summary>
+        /// When the user is locked out until (null = not locked out)
+        /// </summary>
+        public DateTime? LockedOutUntil { get; set; }
+
+        // Navigation properties
+        public Tenant? PrimaryTenant { get; set; }
+        public ICollection<TenantUser> TenantUsers { get; set; } = new List<TenantUser>();
+        public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+        
+        // 🔧 FIX: Add explicit UserRoles navigation property to prevent EF Core shadow property issues
+        public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    }
 }

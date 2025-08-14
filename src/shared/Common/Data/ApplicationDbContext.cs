@@ -3,6 +3,7 @@ using Contracts.Services;
 using DTOs.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Common.Services; // Add this for AuditEntry
 
 namespace Common.Data;
 
@@ -26,11 +27,14 @@ public class ApplicationDbContext : DbContext
     public DbSet<TenantUser> TenantUsers { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
 
-    // NEW: RBAC entities
+    // RBAC entities
     public DbSet<Role> Roles { get; set; }
     public DbSet<Permission> Permissions { get; set; }
     public DbSet<RolePermission> RolePermissions { get; set; }
     public DbSet<UserRole> UserRoles { get; set; }
+
+    // 🔧 ADD: Audit table
+    public DbSet<AuditEntry> AuditEntries { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -40,13 +44,37 @@ public class ApplicationDbContext : DbContext
         ConfigureTenantUser(modelBuilder);
         ConfigureRefreshToken(modelBuilder);
 
-        // NEW: RBAC configurations
+        // RBAC configurations
         ConfigureRole(modelBuilder);
         ConfigurePermission(modelBuilder);
         ConfigureRolePermission(modelBuilder);
         ConfigureUserRole(modelBuilder);
 
+        // 🔧 ADD: Audit configuration
+        ConfigureAuditEntry(modelBuilder);
+
         base.OnModelCreating(modelBuilder);
+    }
+
+    // 🔧 ADD: Audit Entry configuration
+    private void ConfigureAuditEntry(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<AuditEntry>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => new { e.TenantId, e.Timestamp });
+            entity.HasIndex(e => new { e.UserId, e.Timestamp });
+            entity.HasIndex(e => e.Action);
+            
+            entity.Property(e => e.TenantId).IsRequired();
+            entity.Property(e => e.Action).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Resource).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Details).HasColumnType("jsonb");
+            entity.Property(e => e.IpAddress).HasMaxLength(50);
+            entity.Property(e => e.UserAgent).HasMaxLength(500);
+            entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
+            entity.Property(e => e.Timestamp).IsRequired();
+        });
     }
 
     // Existing configuration methods...
@@ -152,7 +180,7 @@ public class ApplicationDbContext : DbContext
         });
     }
 
-    // NEW: RBAC entity configurations
+    // RBAC entity configurations
     private void ConfigureRole(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Role>(entity =>

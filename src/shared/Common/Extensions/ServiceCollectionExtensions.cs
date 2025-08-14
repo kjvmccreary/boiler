@@ -8,6 +8,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using FluentValidation;
 using DTOs.Validators;
+using Common.Services; // 🔧 ADD: For AuditService
+using Contracts.Services; // 🔧 ADD: For IAuditService
 
 namespace Common.Extensions;
 
@@ -21,6 +23,9 @@ public static class ServiceCollectionExtensions
 
         // HTTP Context Accessor
         services.AddHttpContextAccessor();
+
+        // 🔧 ADD: Register audit service
+        services.AddScoped<IAuditService, AuditService>();
 
         return services;
     }

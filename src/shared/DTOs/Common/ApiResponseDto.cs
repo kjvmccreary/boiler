@@ -6,9 +6,8 @@ public class ApiResponseDto<T>
     public bool Success { get; set; }
     public T? Data { get; set; }
     public string Message { get; set; } = string.Empty;
-    public List<ErrorDto> Errors { get; set; } = new();
-    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-    public string? TraceId { get; set; }
+    public List<ErrorDto> Errors { get; set; } = new(); // Always initialize as empty list
+    public string? TraceId { get; set; } // 🔧 ADD: Missing TraceId property
 
     public static ApiResponseDto<T> SuccessResult(T data, string message = "")
     {
@@ -26,7 +25,7 @@ public class ApiResponseDto<T>
         {
             Success = false,
             Message = message,
-            Errors = errors ?? new List<ErrorDto>()
+            Errors = errors ?? new List<ErrorDto>() // Always ensure it's a list
         };
     }
 

@@ -48,6 +48,7 @@ public static class DatabaseExtensions
         
         // ADD: RBAC Service registrations
         services.AddScoped<IRoleService, RoleService>();
+        services.AddScoped<IAuditService, AuditService>();
         
         return services;
     }

@@ -345,14 +345,28 @@ public class RoleAssignmentLoadTests : TestBase
         {
             Email = $"loadtest.user.{Guid.NewGuid():N}@tenant1.com",
             FirstName = "Load",
-            LastName = "Test"
+            LastName = "Test",
+            // 🔧 FIX: Add required password fields
+            Password = "TestPassword123!",
+            ConfirmPassword = "TestPassword123!"
         };
 
         var response = await _client.PostAsJsonAsync("/api/users", createRequest);
-        var result = await response.Content.ReadFromJsonAsync<ApiResponseDto<UserDto>>();
-        response.Dispose();
+        
+        // 🔧 FIX: Better error handling
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            throw new InvalidOperationException($"Failed to create test user. Status: {response.StatusCode}, Content: {errorContent}");
+        }
 
-        return result!.Data!;
+        var result = await response.Content.ReadFromJsonAsync<ApiResponseDto<UserDto>>();
+        if (result?.Success != true || result.Data == null)
+        {
+            throw new InvalidOperationException($"User creation returned unsuccessful result: {result?.Message}");
+        }
+
+        return result.Data;
     }
 
     private async Task<List<UserDto>> CreateMultipleTestUsers(int count)
