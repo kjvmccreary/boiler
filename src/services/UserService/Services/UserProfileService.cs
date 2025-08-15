@@ -44,7 +44,9 @@ public class UserProfileService : IUserProfileService
 
             var user = await _userRepository.Query()
                 .Where(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value)
-                .Include(u => u.TenantUsers)
+                .Include(u => u.UserRoles.Where(ur => ur.IsActive)) // ✅ ADD: Include RBAC roles
+                    .ThenInclude(ur => ur.Role) // ✅ ADD: Include Role details
+                .Include(u => u.TenantUsers) // Keep for fallback
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)

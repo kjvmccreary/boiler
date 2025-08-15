@@ -21,10 +21,11 @@ public class UserServiceTests : IDisposable
     private readonly Mock<IUserRepository> _mockUserRepository;
     private readonly Mock<ITenantProvider> _mockTenantProvider;
     private readonly Mock<IMapper> _mockMapper;
-    private readonly Mock<ILogger<UserService.Services.UserService>> _mockLogger;
+    private readonly Mock<ILogger<UserService.Services.UserServiceImplementation>> _mockLogger; // ✅ FIXED: Use correct type
     private readonly Mock<IRoleService> _mockRoleService;
     private readonly Mock<IPermissionService> _mockPermissionService;
-    private readonly UserService.Services.UserService _userService;
+    private readonly Mock<IPasswordService> _mockPasswordService; // ✅ NEW: Mock password service
+    private readonly UserService.Services.UserServiceImplementation _userService; // ✅ FIXED: Use correct type
 
     public UserServiceTests()
     {
@@ -36,17 +37,19 @@ public class UserServiceTests : IDisposable
         _mockUserRepository = new Mock<IUserRepository>();
         _mockTenantProvider = new Mock<ITenantProvider>();
         _mockMapper = new Mock<IMapper>();
-        _mockLogger = new Mock<ILogger<UserService.Services.UserService>>();
+        _mockLogger = new Mock<ILogger<UserService.Services.UserServiceImplementation>>(); // ✅ FIXED
         _mockRoleService = new Mock<IRoleService>();
         _mockPermissionService = new Mock<IPermissionService>();
+        _mockPasswordService = new Mock<IPasswordService>(); // ✅ NEW: Initialize mock password service
 
-        _userService = new UserService.Services.UserService(
+        _userService = new UserService.Services.UserServiceImplementation( // ✅ UPDATED: Use correct class name
             _mockUserRepository.Object,
             _mockTenantProvider.Object,
             _mockMapper.Object,
             _mockLogger.Object,
             _mockRoleService.Object,
-            _mockPermissionService.Object
+            _mockPermissionService.Object,
+            _mockPasswordService.Object // ✅ ADD: Include password service
         );
     }
 
@@ -200,6 +203,111 @@ public class UserServiceTests : IDisposable
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         result.Data.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task CreateUserAsync_WithValidData_ShouldCreateActiveUser()
+    {
+        // Arrange
+        const int tenantId = 1;
+        var createRequest = new CreateUserDto
+        {
+            Email = "newuser@example.com",
+            FirstName = "New",
+            LastName = "User", 
+            Password = "Password123!"
+        };
+
+        var expectedUser = new User
+        {
+            Id = 1,
+            Email = "newuser@example.com",
+            FirstName = "New",
+            LastName = "User",
+            TenantId = tenantId,
+            IsActive = true,
+            EmailConfirmed = true, // ✅ UPDATED: Should be true for admin-created users
+            PasswordHash = "hashed_password_123"
+        };
+
+        var userDto = new UserDto
+        {
+            Id = 1,
+            Email = "newuser@example.com",
+            FirstName = "New",
+            LastName = "User",
+            IsActive = true,
+            EmailConfirmed = true // ✅ UPDATED: Expect true
+        };
+
+        _mockTenantProvider.Setup(x => x.GetCurrentTenantIdAsync())
+            .ReturnsAsync(tenantId);
+
+        // ✅ NEW: Mock password service
+        _mockPasswordService.Setup(x => x.HashPassword("Password123!"))
+            .Returns("hashed_password_123");
+
+        // Empty list for existing user check
+        var emptyUsers = new List<User>().AsQueryable().BuildMockDbSet();
+        _mockUserRepository.Setup(x => x.Query()).Returns(emptyUsers.Object);
+
+        _mockUserRepository.Setup(x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((User user, CancellationToken ct) => user); // Return the user
+
+        _mockMapper.Setup(x => x.Map<UserDto>(It.IsAny<User>()))
+            .Returns(userDto);
+
+        // Act
+        var result = await _userService.CreateUserAsync(createRequest);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.EmailConfirmed.Should().BeTrue(); // ✅ VERIFY: Email should be confirmed
+        
+        // Verify password was hashed
+        _mockPasswordService.Verify(x => x.HashPassword("Password123!"), Times.Once);
+        
+        // Verify user was added with correct properties
+        _mockUserRepository.Verify(x => x.AddAsync(
+            It.Is<User>(u => u.EmailConfirmed == true && u.IsActive == true), 
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateUserAsync_WithDuplicateEmail_ShouldReturnError()
+    {
+        // Arrange
+        const int tenantId = 1;
+        var createRequest = new CreateUserDto
+        {
+            Email = "existing@example.com",
+            FirstName = "New",
+            LastName = "User",
+            Password = "Password123!"
+        };
+
+        var existingUser = new User 
+        { 
+            Id = 1, 
+            Email = "existing@example.com", 
+            TenantId = tenantId 
+        };
+
+        _mockTenantProvider.Setup(x => x.GetCurrentTenantIdAsync())
+            .ReturnsAsync(tenantId);
+
+        var existingUsers = new List<User> { existingUser }.AsQueryable().BuildMockDbSet();
+        _mockUserRepository.Setup(x => x.Query()).Returns(existingUsers.Object);
+
+        // Act
+        var result = await _userService.CreateUserAsync(createRequest);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeFalse();
+        result.Message.Should().Contain("already exists");
     }
 
     public void Dispose()

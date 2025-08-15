@@ -27,6 +27,15 @@ export interface CreateUserRequest {
   confirmPassword: string;
 }
 
+// ✅ ADD: Type for backend's PagedResultDto
+interface PagedResultDto<T> {
+  items: T[];
+  totalCount: number;
+  pageNumber: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 export class UserService {
   async getCurrentUserProfile(): Promise<User> {
     console.log('🔍 UserService: getCurrentUserProfile called');
@@ -60,70 +69,18 @@ export class UserService {
       const url = `${API_ENDPOINTS.USERS.BASE}?${queryParams.toString()}`;
       console.log('🔍 UserService: Making request to:', url);
       
-      const response = await apiClient.get<any>(url);
-      console.log('🔍 UserService: Raw response:', response);
+      // ✅ SIMPLIFIED: ApiClient now handles unwrapping automatically
+      const response = await apiClient.get<PagedResultDto<User>>(url);
+      console.log('🔍 UserService: Processed response:', response.data);
       
-      // Handle .NET 9 API response structure
-      let responseData = response.data;
-      
-      // If response has success/data structure, unwrap it
-      if (responseData && typeof responseData === 'object' && 'success' in responseData) {
-        console.log('🔍 UserService: Detected wrapped response structure');
-        if (!responseData.success) {
-          throw new Error(responseData.message || 'Failed to fetch users');
-        }
-        responseData = responseData.data;
-      }
-      
-      console.log('🔍 UserService: Processed response data:', responseData);
-      
-      // Handle both PagedResult and direct array responses
-      if (responseData && typeof responseData === 'object') {
-        // Check if it's a PagedResult structure
-        if ('items' in responseData && Array.isArray(responseData.items)) {
-          console.log('✅ UserService: Found PagedResult structure');
-          return {
-            data: responseData.items,
-            totalCount: responseData.totalCount || 0,
-            pageNumber: responseData.pageNumber || 1,
-            pageSize: responseData.pageSize || 10,
-            totalPages: responseData.totalPages || 0
-          };
-        }
-        
-        // Check if it's a direct array
-        if (Array.isArray(responseData)) {
-          console.log('✅ UserService: Found direct array structure');
-          return {
-            data: responseData,
-            totalCount: responseData.length,
-            pageNumber: 1,
-            pageSize: responseData.length,
-            totalPages: 1
-          };
-        }
-        
-        // Check if it has other pagination properties
-        if ('data' in responseData && Array.isArray(responseData.data)) {
-          console.log('✅ UserService: Found nested data array structure');
-          return {
-            data: responseData.data,
-            totalCount: responseData.totalCount || responseData.data.length,
-            pageNumber: responseData.pageNumber || responseData.page || 1,
-            pageSize: responseData.pageSize || responseData.data.length,
-            totalPages: responseData.totalPages || 1
-          };
-        }
-      }
-      
-      // Fallback - treat as empty result
-      console.log('⚠️ UserService: Unexpected response structure, returning empty result');
+      // Convert backend PagedResultDto to frontend PaginatedResponse
+      const backendData = response.data;
       return {
-        data: [],
-        totalCount: 0,
-        pageNumber: 1,
-        pageSize: 10,
-        totalPages: 0
+        data: backendData.items,
+        totalCount: backendData.totalCount,
+        pageNumber: backendData.pageNumber,
+        pageSize: backendData.pageSize,
+        totalPages: backendData.totalPages
       };
       
     } catch (error) {
@@ -133,29 +90,17 @@ export class UserService {
       if (error instanceof Error) {
         console.error('❌ Error details:', {
           message: error.message,
-          stack: error.stack,
           name: error.name
         });
-      }
-      
-      // Check if it's an axios error with response data
-      if (error && typeof error === 'object' && 'response' in error) {
-        const axiosError = error as any;
-        console.error('❌ Axios error details:', {
-          status: axiosError.response?.status,
-          statusText: axiosError.response?.statusText,
-          data: axiosError.response?.data,
-          headers: axiosError.response?.headers
-        });
         
-        // Handle specific HTTP errors
-        if (axiosError.response?.status === 403) {
+        // Handle specific HTTP errors with user-friendly messages
+        if ((error as any).status === 403) {
           throw new Error('You do not have permission to view users');
-        } else if (axiosError.response?.status === 401) {
+        } else if ((error as any).status === 401) {
           throw new Error('Please log in to view users');
-        } else if (axiosError.response?.status === 404) {
+        } else if ((error as any).status === 404) {
           throw new Error('User service not found');
-        } else if (axiosError.response?.status >= 500) {
+        } else if ((error as any).status >= 500) {
           throw new Error('Server error - please try again later');
         }
       }
@@ -189,23 +134,10 @@ export class UserService {
   async updateUser(id: string, userData: UserUpdateRequest): Promise<User> {
     console.log('🔍 UserService: updateUser called with id:', id, 'data:', userData);
     try {
-      const response = await apiClient.put<any>(API_ENDPOINTS.USERS.BY_ID(id), userData);
-      console.log('✅ UserService: updateUser raw response:', response.data);
-      
-      // ✅ Handle .NET 9 API response structure
-      let responseData = response.data;
-      
-      // If response has success/data structure, unwrap it
-      if (responseData && typeof responseData === 'object' && 'success' in responseData) {
-        console.log('🔍 UserService: Detected wrapped response structure');
-        if (!responseData.success) {
-          throw new Error(responseData.message || 'Failed to update user');
-        }
-        responseData = responseData.data;
-      }
-      
-      console.log('✅ UserService: updateUser processed response:', responseData);
-      return responseData;
+      // ✅ SIMPLIFIED: ApiClient handles unwrapping
+      const response = await apiClient.put<User>(API_ENDPOINTS.USERS.BY_ID(id), userData);
+      console.log('✅ UserService: updateUser response:', response.data);
+      return response.data;
     } catch (error) {
       console.error('❌ UserService: updateUser failed:', error);
       throw error;

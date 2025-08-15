@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using System.Security.Claims;
 using AuthService.Controllers;
-using AuthService.Services; // ➕ ADD: For IPasswordService
+using Contracts.Services; // ✅ FIXED: Use shared contract instead of local service
 using Contracts.Auth;
 using DTOs.Auth;
 using DTOs.Common;
@@ -17,7 +17,7 @@ public class AuthControllerTests
     private readonly AuthController _controller;
     private readonly Mock<IAuthService> _mockAuthService;
     private readonly Mock<ILogger<AuthController>> _mockLogger;
-    private readonly Mock<IPasswordService> _mockPasswordService; // ➕ ADD: Mock password service
+    private readonly Mock<IPasswordService> _mockPasswordService; // ✅ Now uses Contracts.Services.IPasswordService
 
     public AuthControllerTests()
     {

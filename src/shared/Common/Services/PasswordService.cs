@@ -1,8 +1,8 @@
-// FILE: src/services/AuthService/Services/PasswordService.cs
 using BCrypt.Net;
-using Contracts.Services; // ✅ ADD: Use shared interface
+using Contracts.Services;
+using Microsoft.Extensions.Logging;
 
-namespace AuthService.Services;
+namespace Common.Services;
 
 public class PasswordService : IPasswordService
 {
@@ -15,13 +15,11 @@ public class PasswordService : IPasswordService
 
     public string HashPassword(string password)
     {
-        // Add input validation to match test expectations
         if (string.IsNullOrWhiteSpace(password))
             throw new ArgumentException("Password cannot be null or empty.", nameof(password));
 
         try
         {
-            // Correct BCrypt API usage
             return BCrypt.Net.BCrypt.HashPassword(password, BCrypt.Net.BCrypt.GenerateSalt(12));
         }
         catch (Exception ex)
@@ -35,11 +33,9 @@ public class PasswordService : IPasswordService
     {
         try
         {
-            // Handle invalid inputs gracefully - return false instead of throwing
             if (string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(hash))
                 return false;
 
-            // Correct BCrypt API usage
             return BCrypt.Net.BCrypt.Verify(password, hash);
         }
         catch (Exception ex)
@@ -57,21 +53,6 @@ public class PasswordService : IPasswordService
         if (password.Length < 8)
             return false;
 
-        // Add additional password complexity rules as needed
         return true;
-    }
-
-    // Quick test method - add this temporarily
-    public void TestBCryptHash()
-    {
-        var testPassword = "password";
-        var seedHash = "$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LeKMVTcOoqc8WITq2";
-
-        bool result = BCrypt.Net.BCrypt.Verify(testPassword, seedHash);
-        Console.WriteLine($"BCrypt verification result for 'password': {result}");
-
-        // Test what the actual hash should be
-        var newHash = BCrypt.Net.BCrypt.HashPassword("password", 12);
-        Console.WriteLine($"New hash for 'password': {newHash}");
     }
 }

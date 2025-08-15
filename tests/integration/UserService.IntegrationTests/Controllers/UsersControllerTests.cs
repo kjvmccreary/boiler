@@ -6,9 +6,11 @@ using System.Text;
 using System.Text.Json;
 using DTOs.Common;
 using DTOs.User;
+using DTOs.Auth; // ✅ ADD: This line for LoginRequestDto
 using UserService.IntegrationTests.Fixtures;
 using Xunit;
 using Microsoft.Extensions.Logging; // ✅ ADD: This line for LogWarning extension method
+using Microsoft.EntityFrameworkCore; // ✅ ADD: This line for FirstOrDefaultAsync and EF Core extensions
 
 namespace UserService.IntegrationTests.Controllers;
 
@@ -98,6 +100,30 @@ public class UsersControllerTests : TestBase
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task GetUserProfile_WithRBACRoles_ReturnsCorrectRoles()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@tenant1.com");
+        _client.DefaultRequestHeaders.Authorization = new("Bearer", token);
+
+        // Act
+        var response = await _client.GetAsync("/api/users/profile");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        
+        var result = await response.Content.ReadFromJsonAsync<ApiResponseDto<UserDto>>();
+        result.Should().NotBeNull();
+        result!.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        
+        // ✅ NEW: Verify RBAC roles are returned instead of legacy roles
+        result.Data!.Roles.Should().NotBeNull();
+        result.Data.Roles.Should().Contain("Admin", "User profile should return RBAC Admin role");
+        result.Data.Roles.Should().NotContain("User", "Should not return legacy User role when RBAC roles exist");
     }
 
     #endregion
@@ -633,6 +659,54 @@ public class UsersControllerTests : TestBase
         var result = await response.Content.ReadFromJsonAsync<ApiResponseDto<bool>>();
         result!.Success.Should().BeTrue();
         result.Data.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CreateUser_ViaAPI_ShouldCreateActiveUser()
+    {
+        // Arrange
+        var token = await GetAuthTokenAsync();
+        _client.DefaultRequestHeaders.Authorization = new("Bearer", token);
+
+        var createRequest = new CreateUserDto
+        {
+            Email = "newuser@example.com",
+            FirstName = "New",
+            LastName = "User",
+            Password = "Password123!",
+            ConfirmPassword = "Password123!" // ✅ FIXED: Added missing field
+        };
+
+        // Act
+        var response = await _client.PostAsJsonAsync("/api/users", createRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        
+        var result = await response.Content.ReadFromJsonAsync<ApiResponseDto<UserDto>>();
+        result.Should().NotBeNull();
+        result!.Success.Should().BeTrue();
+        result.Data.Should().NotBeNull();
+        result.Data!.EmailConfirmed.Should().BeTrue(); // ✅ VERIFY: Should be true for admin-created users
+        result.Data.IsActive.Should().BeTrue();
+        result.Data.Email.Should().Be("newuser@example.com");
+        result.Data.FirstName.Should().Be("New");
+        result.Data.LastName.Should().Be("User");
+        
+        // ✅ ADDITIONAL VERIFICATION: Check that the user was actually saved to the database
+        var createdUser = await _dbContext.Users
+            .FirstOrDefaultAsync(u => u.Email == "newuser@example.com");
+        
+        createdUser.Should().NotBeNull();
+        createdUser!.EmailConfirmed.Should().BeTrue();
+        createdUser.IsActive.Should().BeTrue();
+        createdUser.PasswordHash.Should().NotBeNullOrEmpty(); // Password should be hashed
+
+        // ❌ REMOVED: Login verification - this tests cross-service functionality
+        // which is not appropriate for UserService integration tests
+        
+        // ✅ ALTERNATIVE: If you want to test login, create a separate end-to-end test
+        // that tests both AuthService AND UserService together
     }
 
     #endregion

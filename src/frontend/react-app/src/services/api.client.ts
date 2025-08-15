@@ -1,5 +1,14 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 
+// ✅ ADD: Type for .NET 9 API Response structure
+interface DotNetApiResponse<T = any> {
+  success: boolean;
+  data: T;
+  message: string;
+  errors: any[];
+  traceId?: string;
+}
+
 export class ApiClient {
   private instance: AxiosInstance
   private baseURL: string
@@ -26,7 +35,7 @@ export class ApiClient {
     this.instance.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
         // ✅ FIX: Use the same key as TokenManager
-        const token = localStorage.getItem('auth_token') // Changed from 'authToken' to 'auth_token'
+        const token = localStorage.getItem('auth_token')
         
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
@@ -40,14 +49,37 @@ export class ApiClient {
       (error) => Promise.reject(error)
     )
 
-    // Response interceptor - Handle auth errors
+    // Response interceptor - Handle auth errors and API response unwrapping
     this.instance.interceptors.response.use(
       (response: AxiosResponse) => {
         console.log('✅ API RESPONSE:', response.config.url, response.status);
-        return response;
+        
+        // ✅ FIXED: Handle .NET 9 ApiResponseDto structure automatically
+        const unwrapped = this.unwrapDotNetApiResponse(response);
+        console.log('🔍 API CLIENT: Unwrapped response for', response.config.url, ':', unwrapped.data);
+        return unwrapped;
       },
       async (error) => {
         console.error('🚨 API ERROR:', error.config?.url, error.response?.status, error.message);
+        
+        // ✅ Handle wrapped error responses from .NET 9
+        if (error.response?.data && typeof error.response.data === 'object' && 'success' in error.response.data) {
+          const apiError = error.response.data as DotNetApiResponse;
+          if (!apiError.success) {
+            // Create a more meaningful error with the backend's error message
+            const enhancedError = new Error(apiError.message || 'API request failed');
+            enhancedError.name = 'ApiError';
+            (enhancedError as any).response = error.response;
+            (enhancedError as any).status = error.response?.status;
+            (enhancedError as any).errors = apiError.errors;
+            console.error('🚨 API Error Details:', {
+              message: apiError.message,
+              errors: apiError.errors,
+              traceId: apiError.traceId
+            });
+            throw enhancedError;
+          }
+        }
         
         const originalRequest = error.config;
 
@@ -84,37 +116,58 @@ export class ApiClient {
     )
   }
 
-  // Add this method to the ApiClient class
-  private unwrapApiResponse<T>(response: AxiosResponse): AxiosResponse<T> {
-    // If backend returns { success: true, data: {...} }, unwrap the data
-    if (response.data && typeof response.data === 'object' && 'data' in response.data) {
-      return {
-        ...response,
-        data: response.data.data
-      };
+  // ✅ FIXED: Properly handle .NET 9 ApiResponseDto<T> structure
+  private unwrapDotNetApiResponse<T>(response: AxiosResponse): AxiosResponse<T> {
+    const data = response.data;
+    
+    // Check if it's a .NET 9 ApiResponseDto structure
+    if (data && typeof data === 'object' && 'success' in data && 'data' in data) {
+      const apiResponse = data as DotNetApiResponse<T>;
+      
+      console.log('🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure:', {
+        success: apiResponse.success,
+        message: apiResponse.message,
+        hasData: !!apiResponse.data,
+        errors: apiResponse.errors?.length || 0
+      });
+      
+      // If the API call was successful, unwrap the data
+      if (apiResponse.success) {
+        return {
+          ...response,
+          data: apiResponse.data
+        };
+      } else {
+        // If API call failed, throw an error with the backend's message
+        const error = new Error(apiResponse.message || 'API request failed');
+        error.name = 'ApiError';
+        (error as any).response = response;
+        (error as any).status = response.status;
+        (error as any).errors = apiResponse.errors;
+        throw error;
+      }
     }
+    
+    // Return as-is if not a wrapped response
+    console.log('🔍 API CLIENT: Response not wrapped, returning as-is');
     return response;
   }
 
   // HTTP Methods
   async get<T>(url: string, config?: any): Promise<AxiosResponse<T>> {
-    const response = await this.instance.get(url, config);
-    return this.unwrapApiResponse<T>(response);
+    return await this.instance.get(url, config);
   }
 
   async post<T>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
-    const response = await this.instance.post(url, data, config);
-    return this.unwrapApiResponse<T>(response);
+    return await this.instance.post(url, data, config);
   }
 
   async put<T>(url: string, data?: any, config?: any): Promise<AxiosResponse<T>> {
-    const response = await this.instance.put(url, data, config);
-    return this.unwrapApiResponse<T>(response); // ✅ ADD THIS
+    return await this.instance.put(url, data, config);
   }
 
   async delete<T>(url: string, config?: any): Promise<AxiosResponse<T>> {
-    const response = await this.instance.delete(url, config);
-    return this.unwrapApiResponse<T>(response); // ✅ ADD THIS
+    return await this.instance.delete(url, config);
   }
 }
 

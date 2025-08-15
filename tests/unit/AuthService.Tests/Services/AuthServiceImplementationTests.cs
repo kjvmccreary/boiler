@@ -225,6 +225,98 @@ public class AuthServiceImplementationTests : TestBase
     }
 
     [Fact]
+    public async Task RegisterAsync_WithValidData_ShouldCreateConfirmedUser()
+    {
+        // Arrange
+        var request = new RegisterRequestDto
+        {
+            Email = "newuser@test.com",
+            FirstName = "New",
+            LastName = "User",
+            Password = "Password123!",
+            ConfirmPassword = "Password123!",
+            TenantName = "New Tenant"
+        };
+
+        const string hashedPassword = "hashed_password";
+        const string accessToken = "access_token";
+        var refreshTokenEntity = new RefreshToken
+        {
+            Token = "refresh_token",
+            ExpiryDate = DateTime.UtcNow.AddDays(7),
+            TenantId = 2,
+            UserId = 0, // Will be set after user creation
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            CreatedByIp = "127.0.0.1",
+            IsRevoked = false
+        };
+        var newTenant = new Tenant 
+        { 
+            Id = 2, 
+            Name = "New Tenant",
+            IsActive = true,
+            SubscriptionPlan = "Basic",
+            Settings = "{}",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _mockPasswordService
+            .Setup(x => x.HashPassword(request.Password))
+            .Returns(hashedPassword);
+
+        _mockTokenService
+            .Setup(x => x.GenerateAccessTokenAsync(It.IsAny<User>(), It.IsAny<Tenant>()))
+            .ReturnsAsync(accessToken);
+
+        _mockTokenService
+            .Setup(x => x.CreateRefreshTokenAsync(It.IsAny<User>()))
+            .ReturnsAsync(refreshTokenEntity);
+
+        _mockTenantRepository
+            .Setup(x => x.GetTenantByNameAsync(request.TenantName, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Tenant?)null);
+
+        _mockTenantRepository
+            .Setup(x => x.CreateTenantAsync(It.IsAny<Tenant>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(newTenant);
+
+        // Act
+        var result = await _authService.RegisterAsync(request);
+
+        // Assert
+        result.Should().NotBeNull();
+        
+        // IMPROVED: More detailed debugging
+        if (!result.Success)
+        {
+            Console.WriteLine($"Registration failed with message: '{result.Message}'");
+            if (result.Errors?.Any() == true)
+            {
+                Console.WriteLine($"Error details:");
+                foreach (var error in result.Errors)
+                {
+                    Console.WriteLine($"  Code: {error.Code}, Message: {error.Message}, Field: {error.Field}");
+                }
+            }
+            
+            // Check if any mocks were called as expected
+            _mockPasswordService.Verify(x => x.HashPassword(It.IsAny<string>()), Times.AtLeastOnce, "Password hashing should have been called");
+            _mockTenantRepository.Verify(x => x.GetTenantByNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce, "Tenant lookup should have been called");
+        }
+        
+        result.Success.Should().BeTrue($"Registration should succeed but failed with: {result.Message}");
+        result.Data.Should().NotBeNull();
+        result.Data!.AccessToken.Should().Be(accessToken);
+        result.Data.RefreshToken.Should().Be(refreshTokenEntity.Token);
+
+        // ✅ VERIFY: Registration should also create confirmed users
+        var createdUser = Context.Users.First(u => u.Email == request.Email);
+        createdUser.EmailConfirmed.Should().BeTrue(); // Both registration and admin creation should be consistent
+    }
+
+    [Fact]
     public async Task ChangePasswordAsync_WithValidData_ShouldReturnSuccess()
     {
         // Arrange

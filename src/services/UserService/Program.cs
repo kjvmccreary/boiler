@@ -101,6 +101,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Add this line to register the password service
+builder.Services.AddScoped<IPasswordService, Common.Services.PasswordService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline

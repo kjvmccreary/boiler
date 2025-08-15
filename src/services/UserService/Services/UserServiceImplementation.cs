@@ -19,6 +19,7 @@ public class UserServiceImplementation : Contracts.User.IUserService
     // 🔧 .NET 9 FIX: Add dependencies for role/permission functionality
     private readonly IRoleService _roleService;
     private readonly IPermissionService _permissionService;
+    private readonly IPasswordService _passwordService; // ✅ ADD: Password service
 
     public UserServiceImplementation(
         IUserRepository userRepository,
@@ -26,7 +27,8 @@ public class UserServiceImplementation : Contracts.User.IUserService
         IMapper mapper,
         ILogger<UserServiceImplementation> logger,
         IRoleService roleService,
-        IPermissionService permissionService)
+        IPermissionService permissionService,
+        IPasswordService passwordService) // ✅ ADD: Password service parameter
     {
         _userRepository = userRepository;
         _tenantProvider = tenantProvider;
@@ -34,6 +36,7 @@ public class UserServiceImplementation : Contracts.User.IUserService
         _logger = logger;
         _roleService = roleService;
         _permissionService = permissionService;
+        _passwordService = passwordService; // ✅ ADD: Initialize password service
     }
 
     public async Task<ApiResponseDto<UserDto>> GetUserByIdAsync(int userId, CancellationToken cancellationToken = default)
@@ -181,10 +184,10 @@ public class UserServiceImplementation : Contracts.User.IUserService
                 Email = request.Email.ToLower(),
                 FirstName = request.FirstName,
                 LastName = request.LastName,
-                PasswordHash = request.Password, // Note: Should be hashed by calling service
+                PasswordHash = _passwordService.HashPassword(request.Password), // ✅ FIX: Hash password
                 TenantId = currentTenantId.Value,
                 IsActive = true,
-                EmailConfirmed = false,
+                EmailConfirmed = true, // ✅ FIX: Set to true for admin-created users
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };

@@ -429,17 +429,15 @@ export const RoleList: React.FC<RoleListProps> = ({
                         </Typography>
                       }
                       secondary={
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
-                            {user.email}
-                          </Typography>
+                        <Typography variant="caption" color="text.secondary" component="div">
+                          {user.email}
                           <Chip
                             label={user.isActive ? 'Active' : 'Inactive'}
                             size="small"
                             color={user.isActive ? 'success' : 'warning'}
                             sx={{ ml: 1, height: 16, fontSize: '0.65rem' }}
                           />
-                        </Box>
+                        </Typography>
                       }
                     />
                   </ListItem>

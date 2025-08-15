@@ -83,7 +83,7 @@ builder.Services.AddDatabase(builder.Configuration);
 builder.Services.AddAutoMapperProfiles(typeof(MappingProfile));
 
 // Add AuthService-specific services
-builder.Services.AddScoped<IPasswordService, PasswordService>();
+builder.Services.AddScoped<IPasswordService, Common.Services.PasswordService>();
 builder.Services.AddScoped<ITokenService, EnhancedTokenService>(); // ← Use EnhancedTokenService
 builder.Services.AddScoped<IAuthService, AuthServiceImplementation>();
 

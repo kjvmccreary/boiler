@@ -1,11 +1,12 @@
 // FILE: src/services/AuthService/Controllers/AuthController.cs
 using System.Security.Claims;
 using Contracts.Auth;
+using Contracts.Services; // ✅ ADD: For IPasswordService from shared contracts
 using DTOs.Auth;
 using DTOs.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using AuthService.Services; // ➕ ADD: For IPasswordService
+// using AuthService.Services; // ❌ REMOVE: Don't use local namespace for IPasswordService
 
 namespace AuthService.Controllers;
 
@@ -15,7 +16,7 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly ILogger<AuthController> _logger;
-    private readonly IPasswordService _passwordService; // ➕ ADD: Password service
+    private readonly IPasswordService _passwordService; // ✅ This will now use Contracts.Services.IPasswordService
 
     public AuthController(
         IAuthService authService, 
