@@ -1,0 +1,51 @@
+# Build output
+**/bin/
+**/obj/
+**/out/
+
+# Package directories
+**/node_modules/
+**/dist/
+**/.vite/
+
+# IDE and editor files
+**/.vs/
+**/.vscode/
+**/.idea/
+**/*.sln.docstates
+**/*.userprefs
+**/*.suo
+**/*.user
+**/*.cache
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker
+**/Dockerfile*
+**/docker-compose*
+
+# Logs
+**/logs/
+**/*.log
+
+# Temporary files
+**/tmp/
+**/temp/
+**/.tmp/
+**/.temp/
+
+# Test results
+**/TestResults/
+**/test-results/
+**/coverage/
+
+# Documentation
+**/docs/
+**/*.md
+!**/README.md

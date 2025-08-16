@@ -1,0 +1,142 @@
+services:
+  # Infrastructure Services (from your existing infrastructure file)
+  postgres:
+    image: postgres:15-alpine
+    container_name: boiler-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-boiler_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-boiler_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_password123}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-boiler_app} -d ${POSTGRES_DB:-boiler_dev}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - boiler-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: boiler-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - boiler-network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: boiler-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGLADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "8080:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - boiler-network
+
+  # Application Services (your new HTTPS-enabled containers)
+  auth-service:
+    build:
+      context: ..
+      dockerfile: docker/services/AuthService.Dockerfile
+    container_name: boiler-auth
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=${POSTGRES_DB:-boiler_dev};Username=${POSTGRES_USER:-boiler_app};Password=${POSTGRES_PASSWORD:-dev_password123}"
+      JwtSettings__SecretKey: ${JWT_SECRET_KEY:-super-secret-jwt-key-for-testing-that-is-at-least-256-bits-long-for-security-purposes}
+      Redis__ConnectionString: "redis:6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "5001:5001"  # HTTP
+      - "7001:7001"  # HTTPS
+    networks:
+      - boiler-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f -k https://localhost:7001/health || curl -f http://localhost:5001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  user-service:
+    build:
+      context: ..
+      dockerfile: docker/services/UserService.Dockerfile
+    container_name: boiler-user
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=${POSTGRES_DB:-boiler_dev};Username=${POSTGRES_USER:-boiler_app};Password=${POSTGRES_PASSWORD:-dev_password123}"
+      JwtSettings__SecretKey: ${JWT_SECRET_KEY:-super-secret-jwt-key-for-testing-that-is-at-least-256-bits-long-for-security-purposes}
+      Redis__ConnectionString: "redis:6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "5002:5002"  # HTTP
+      - "7002:7002"  # HTTPS
+    networks:
+      - boiler-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f -k https://localhost:7002/health || curl -f http://localhost:5002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  api-gateway:
+    build:
+      context: ..
+      dockerfile: docker/services/ApiGateway.Dockerfile
+    container_name: boiler-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      JwtSettings__SecretKey: ${JWT_SECRET_KEY:-super-secret-jwt-key-for-testing-that-is-at-least-256-bits-long-for-security-purposes}
+      Services__AuthService: "https://auth-service:7001"
+      Services__UserService: "https://user-service:7002"
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+    ports:
+      - "5000:5000"  # HTTP
+      - "7000:7000"  # HTTPS
+    networks:
+      - boiler-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f -k https://localhost:7000/health || curl -f http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data:
+  redis_data:
+  pgadmin_data:
+
+networks:
+  boiler-network:
+    driver: bridge
