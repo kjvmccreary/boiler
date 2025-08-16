@@ -91,7 +91,13 @@ export class ApiClient {
             if (refreshToken) {
               console.log('🔄 Attempting token refresh...');
               const response = await this.post('/api/auth/refresh', { refreshToken });
-              const { accessToken } = response.data;
+              //const { accessToken } = response.data;
+              interface RefreshTokenResponse {
+                accessToken: string;
+              }
+
+              // Then use:
+              const { accessToken } = response.data as RefreshTokenResponse;
 
               localStorage.setItem('auth_token', accessToken);
               originalRequest.headers.Authorization = `Bearer ${accessToken}`;

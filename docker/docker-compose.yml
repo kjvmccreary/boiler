@@ -132,6 +132,28 @@ services:
       retries: 3
       start_period: 40s
 
+  # Add this frontend service to your existing docker-compose.yml
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/services/Frontend.Dockerfile
+    container_name: boiler-frontend
+    ports:
+      - "3000:443"  # HTTPS port
+      - "3080:80"   # HTTP redirect port
+    depends_on:
+      - api-gateway
+    networks:
+      - boiler-network
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f -k https://localhost:443/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
 volumes:
   postgres_data:
   redis_data:

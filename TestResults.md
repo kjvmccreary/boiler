@@ -1,400 +1,86 @@
 
- RERUN  src/contexts/__tests__/PermissionContext.test.tsx x4
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
-🔍 API CLIENT: Creating axios instance with baseURL: empty (using proxy)
-
- ❯ src/contexts/__tests__/PermissionContext.test.tsx (60) 315ms
-   ❯ PermissionContext (60) 314ms
-     ❯ PermissionProvider (3)
-       ✓ should render children without permission context
-       × should provide permission context with authenticated user (retry x1)
-       ✓ should use mock context in test mode
-     ✓ usePermission hook (2)
-       ✓ should throw error when used outside PermissionProvider
-       ✓ should return permission context when used within provider
-     ❯ Permission checking methods (9)
-       ❯ hasPermission (5)
-         ✓ should return false when user is not authenticated
-         × should return true when user has the permission via JWT token (retry x1)
-         ✓ should return false when user does not have the permission
-         × should handle string permission format from token (retry x1)
-         ✓ should handle empty permissions gracefully
-       ❯ hasAnyPermission (2)
-         × should return true when user has at least one permission (retry x1)
-         ✓ should return false when user has none of the permissions
-       ❯ hasAllPermissions (2)
-         × should return true when user has all required permissions (retry x1)
-         ✓ should return false when user is missing some permissions
-     ✓ Role checking methods (9)
-       ✓ hasRole (4)
-         ✓ should return false when user is not authenticated
-         ✓ should return true when user has the role
-         ✓ should return false when user does not have the role
-         ✓ should handle single role string format
-       ✓ hasAnyRole (3)
-         ✓ should return true when user has at least one of the roles
-         ✓ should return false when user has none of the roles
-         ✓ should return false when roles array is empty
-       ✓ hasAllRoles (2)
-         ✓ should return true when user has all required roles
-         ✓ should return false when user is missing some roles
-     ❯ Admin checking methods (16)
-       ❯ isAdmin (4)
-         ✓ should return false when user is not authenticated
-         × should return true when user has admin permissions (retry x1)
-         ✓ should return true when user has admin role
-         ✓ should return false when user has neither admin permissions nor roles
-       ❯ isSuperAdmin (3)
-         ✓ should return true when user has SuperAdmin role
-         × should return true when user has system.admin permission (retry x1)
-         ✓ should return false when user is not SuperAdmin
-       ✓ isSystemAdmin (3)
-         ✓ should return true when user has SuperAdmin role
-         ✓ should return true when user has SystemAdmin role
-         ✓ should return false when user has neither role
-       ❯ isTenantAdmin (2)
-         ✓ should return true when user has Admin role
-         × should return true when user has tenants.manage permission (retry x1)
-       ❯ canManageUsers (2)
-         × should return true when user has user management permissions (retry x1)
-         ✓ should return false when user has no user management permissions
-       ❯ canManageRoles (2)
-         × should return true when user has role management permissions (retry x1)
-         ✓ should return false when user has no role management permissions
-     ❯ Data retrieval methods (14)
-       ❯ getUserRoles (6)
-         × should return roles from JWT token when available (retry x1)
-         × should handle Microsoft role claim format (retry x1)
-         × should handle comma-separated role string (retry x1)
-         ✓ should fallback to user object roles when no token roles
-         ✓ should handle single role string from user object
-         ✓ should return empty array when no roles available
-       ❯ getUserPermissions (3)
-         × should return permissions from JWT token (retry x1)
-         × should handle string permission format (retry x1)
-         ✓ should return empty array when no permissions
-       ✓ getEffectivePermissions (1)
-         ✓ should return same as getUserPermissions
-       ✓ getRoleHierarchy (4)
-         ✓ should return correct hierarchy level for SuperAdmin
-         ✓ should return correct hierarchy level for Admin
-         ✓ should return highest role level when user has multiple roles
-         ✓ should return maximum level for unknown roles
-     ❯ Error handling and edge cases (4)
-       ✓ should handle token manager errors gracefully
-       × should handle malformed JWT claims gracefully (retry x1)
-       ✓ should handle null user gracefully
-       ✓ should handle complex role object arrays from API
-     ✓ Console logging (3)
-       ✓ should log permission checks for debugging
-       ✓ should log role extraction process
-       ✓ should log admin checks
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
-
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > PermissionProvider > should provide permission context with authenticated user
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > PermissionProvider > should provide permission context with authenticated user
-Error: expect(element).toHaveTextContent()
-
-Expected element to have text content:
-  true
-Received:
-  false
- ❯ src/contexts/__tests__/PermissionContext.test.tsx:149:52
-    147|       )
-    148|
-    149|       expect(screen.getByTestId('has-users-read')).toHaveTextContent('true')
-       |                                                    ^
-    150|       expect(screen.getByTestId('user-roles')).toHaveTextContent('User')
-    151|     })
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/32]⎯
-
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Permission checking methods > hasPermission > should return true when user has the permission via JWT token
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Permission checking methods > hasPermission > should return true when user has the permission via JWT token
-Error: expect(element).toHaveTextContent()
-
-Expected element to have text content:
-  true
-Received:
-  false
- ❯ src/contexts/__tests__/PermissionContext.test.tsx:242:54
-    240|         )
-    241|
-    242|         expect(screen.getByTestId('has-users-read')).toHaveTextContent('true')
-       |                                                      ^
-    243|       })
-    244|
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/32]⎯
-
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Permission checking methods > hasPermission > should handle string permission format from token
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Permission checking methods > hasPermission > should handle string permission format from token
-Error: expect(element).toHaveTextContent()
-
-Expected element to have text content:
-  true
-Received:
-  false
- ❯ src/contexts/__tests__/PermissionContext.test.tsx:272:54
-    270|         )
-    271|
-    272|         expect(screen.getByTestId('has-users-read')).toHaveTextContent('true')
-       |                                                      ^
-    273|       })
-    274|
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/32]⎯
-
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Permission checking methods > hasAnyPermission > should return true when user has at least one permission
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Permission checking methods > hasAnyPermission > should return true when user has at least one permission
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ src/contexts/__tests__/PermissionContext.test.tsx:308:24
-    306|
-    307|         const hasAny = permissionContext?.hasAnyPermission(['users.read', 'admin.access'])
-    308|         expect(hasAny).toBe(true)
-       |                        ^
-    309|       })
-    310|
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/32]⎯
-
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Permission checking methods > hasAllPermissions > should return true when user has all required permissions
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Permission checking methods > hasAllPermissions > should return true when user has all required permissions
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ src/contexts/__tests__/PermissionContext.test.tsx:348:24
-    346|
-    347|         const hasAll = permissionContext?.hasAllPermissions(['users.read', 'users.edit'])
-    348|         expect(hasAll).toBe(true)
-       |                        ^
-    349|       })
-    350|
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/32]⎯
-
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > isAdmin > should return true when user has admin permissions
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > isAdmin > should return true when user has admin permissions
-Error: expect(element).toHaveTextContent()
-
-Expected element to have text content:
-  true
-Received:
-  false
- ❯ src/contexts/__tests__/PermissionContext.test.tsx:520:48
-    518|         )
-    519|
-    520|         expect(screen.getByTestId('is-admin')).toHaveTextContent('true')
-       |                                                ^
-    521|       })
-    522|
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/32]⎯
-
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > isSuperAdmin > should return true when user has system.admin permission
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > isSuperAdmin > should return true when user has system.admin permission
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ src/contexts/__tests__/PermissionContext.test.tsx:578:51
-    576|         )
-    577|
-    578|         expect(permissionContext?.isSuperAdmin()).toBe(true)
-       |                                                   ^
-    579|       })
-    580|
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/32]⎯
-
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > isTenantAdmin > should return true when user has tenants.manage permission
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > isTenantAdmin > should return true when user has tenants.manage permission
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ src/contexts/__tests__/PermissionContext.test.tsx:665:52
-    663|         )
-    664|
-    665|         expect(permissionContext?.isTenantAdmin()).toBe(true)
-       |                                                    ^
-    666|       })
-    667|     })
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/32]⎯
-
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > canManageUsers > should return true when user has user management permissions
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > canManageUsers > should return true when user has user management permissions
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ src/contexts/__tests__/PermissionContext.test.tsx:685:53
-    683|         )
-    684|
-    685|         expect(permissionContext?.canManageUsers()).toBe(true)
-       |                                                     ^
-    686|       })
-    687|
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/32]⎯
-
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > canManageRoles > should return true when user has role management permissions
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > canManageRoles > should return true when user has role management permissions
-AssertionError: expected false to be true // Object.is equality
-
-- Expected
-+ Received
-
-- true
-+ false
-
- ❯ src/contexts/__tests__/PermissionContext.test.tsx:723:53
-    721|         )
-    722|
-    723|         expect(permissionContext?.canManageRoles()).toBe(true)
-       |                                                     ^
-    724|       })
-    725|
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/32]⎯
-
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserRoles > should return roles from JWT token when available
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserRoles > should return roles from JWT token when available
-Error: expect(element).toHaveTextContent()
-
-Expected element to have text content:
-  Admin,Manager
-Received:
-  User
- ❯ src/contexts/__tests__/PermissionContext.test.tsx:762:50
-    760|
-    761|         // Should show JWT token roles, not user object roles
-    762|         expect(screen.getByTestId('user-roles')).toHaveTextContent('Admin,Manager')
-       |                                                  ^
-    763|       })
-    764|
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/32]⎯
-
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserRoles > should handle Microsoft role claim format
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserRoles > should handle Microsoft role claim format
-Error: expect(element).toHaveTextContent()
-
-Expected element to have text content:
-  Admin
-Received:
-  User
- ❯ src/contexts/__tests__/PermissionContext.test.tsx:777:50
-    775|         )
-    776|
-    777|         expect(screen.getByTestId('user-roles')).toHaveTextContent('Admin')
-       |                                                  ^
-    778|       })
-    779|
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/32]⎯
-
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserRoles > should handle comma-separated role string
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserRoles > should handle comma-separated role string
-Error: expect(element).toHaveTextContent()
-
-Expected element to have text content:
-  Admin,Manager,SuperAdmin
-Received:
-  User
- ❯ src/contexts/__tests__/PermissionContext.test.tsx:792:50
-    790|         )
-    791|
-    792|         expect(screen.getByTestId('user-roles')).toHaveTextContent('Admin,Manager,SuperAdmin')
-       |                                                  ^
-    793|       })
-    794|
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/32]⎯
-
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserPermissions > should return permissions from JWT token
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserPermissions > should return permissions from JWT token
-AssertionError: expected '' to contain 'users.read'
-
-- Expected
-+ Received
-
-- users.read
-
- ❯ src/contexts/__tests__/PermissionContext.test.tsx:849:29
-    847|
-    848|         const permissions = screen.getByTestId('user-permissions').textContent
-    849|         expect(permissions).toContain('users.read')
-       |                             ^
-    850|         expect(permissions).toContain('users.edit')
-    851|         expect(permissions).toContain('profile.read')
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/32]⎯
-
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserPermissions > should handle string permission format
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserPermissions > should handle string permission format
-AssertionError: expected '' to contain 'users.read'
-
-- Expected
-+ Received
-
-- users.read
-
- ❯ src/contexts/__tests__/PermissionContext.test.tsx:867:29
-    865|
-    866|         const permissions = screen.getByTestId('user-permissions').textContent
-    867|         expect(permissions).toContain('users.read')
-       |                             ^
-    868|         expect(permissions).toContain('users.edit')
-    869|       })
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/32]⎯
-
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Error handling and edge cases > should handle malformed JWT claims gracefully
- FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Error handling and edge cases > should handle malformed JWT claims gracefully
-Error: expect(element).toBeEmptyDOMElement()
-
-Received:
-  "User"
- ❯ src/contexts/__tests__/PermissionContext.test.tsx:991:48
-    989|
-    990|       expect(screen.getByTestId('user-permissions')).toBeEmptyDOMElement()
-    991|       expect(screen.getByTestId('user-roles')).toBeEmptyDOMElement()
-       |                                                ^
-    992|     })
-    993|
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/32]⎯
-
- Test Files  1 failed (1)
-      Tests  16 failed | 44 passed (60)
-   Start at  20:35:47
-   Duration  1.01s
-
+PS C:\Users\mccre\dev\boiler> docker-compose -f docker/docker-compose.yml ps
+>>
+NAME              IMAGE                   COMMAND                  SERVICE        CREATED         STATUS                   PORTS
+boiler-auth       docker-auth-service     "dotnet AuthService.…"   auth-service   4 minutes ago   Up 4 minutes (healthy)   0.0.0.0:5001->5001/tcp, [::]:5001->5001/tcp, 0.0.0.0:7001->7001/tcp, [::]:7001->7001/tcp
+boiler-frontend   docker-frontend         "/docker-entrypoint.…"   frontend       4 minutes ago   Up 4 minutes (healthy)   0.0.0.0:3080->80/tcp, [::]:3080->80/tcp, 0.0.0.0:3000->443/tcp, [::]:3000->443/tcp
+boiler-gateway    docker-api-gateway      "dotnet ApiGateway.d…"   api-gateway    4 minutes ago   Up 4 minutes (healthy)   0.0.0.0:5000->5000/tcp, [::]:5000->5000/tcp, 0.0.0.0:7000->7000/tcp, [::]:7000->7000/tcp
+boiler-pgadmin    dpage/pgadmin4:latest   "/entrypoint.sh"         pgadmin        4 minutes ago   Up 4 minutes             0.0.0.0:8080->80/tcp, [::]:8080->80/tcp
+boiler-postgres   postgres:15-alpine      "docker-entrypoint.s…"   postgres       4 minutes ago   Up 4 minutes (healthy)   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+boiler-redis      redis:7-alpine          "docker-entrypoint.s…"   redis          4 minutes ago   Up 4 minutes (healthy)   0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp
+boiler-user       docker-user-service     "dotnet UserService.…"   user-service   4 minutes ago   Up 4 minutes (healthy)   0.0.0.0:5002->5002/tcp, [::]:5002->5002/tcp, 0.0.0.0:7002->7002/tcp, [::]:7002->7002/tcp
+
+C:\Users\mccre\dev\boiler\src\frontend\react-app>docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+NAMES             STATUS                   PORTS
+boiler-frontend   Up 4 minutes (healthy)   0.0.0.0:3080->80/tcp, [::]:3080->80/tcp, 0.0.0.0:3000->443/tcp, [::]:3000->443/tcp
+boiler-gateway    Up 4 minutes (healthy)   0.0.0.0:5000->5000/tcp, [::]:5000->5000/tcp, 0.0.0.0:7000->7000/tcp, [::]:7000->7000/tcp
+boiler-pgadmin    Up 4 minutes             0.0.0.0:8080->80/tcp, [::]:8080->80/tcp
+boiler-auth       Up 4 minutes (healthy)   0.0.0.0:5001->5001/tcp, [::]:5001->5001/tcp, 0.0.0.0:7001->7001/tcp, [::]:7001->7001/tcp
+boiler-user       Up 4 minutes (healthy)   0.0.0.0:5002->5002/tcp, [::]:5002->5002/tcp, 0.0.0.0:7002->7002/tcp, [::]:7002->7002/tcp
+boiler-redis      Up 4 minutes (healthy)   0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp
+boiler-postgres   Up 4 minutes (healthy)   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp
+
+C:\Users\mccre\dev\boiler>docker-compose -f docker/docker-compose.yml logs auth-service
+boiler-auth  | [20:37:54 INF] Starting AuthService {}
+boiler-auth  | === AuthService Starting ===
+boiler-auth  | [20:37:54 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId": {"Id": 10400, "Name": "Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
+boiler-auth  | [20:37:54 WRN] Using an in-memory repository. Keys will not be persisted to storage. {"EventId": {"Id": 50, "Name": "UsingInMemoryRepository"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.Repositories.EphemeralXmlRepository"}
+boiler-auth  | [20:37:54 WRN] Neither user profile nor HKLM registry available. Using an ephemeral key repository. Protected data will be unavailable when application exits. {"EventId": {"Id": 59, "Name": "UsingEphemeralKeyRepository"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"}
+boiler-auth  | [20:37:54 WRN] No XML encryptor configured. Key {fa54ec12-5899-4489-a71a-884a574e7747} may be persisted to storage in unencrypted form. {"EventId": {"Id": 35, "Name": "NoXMLEncryptorConfiguredKeyMayBePersistedToStorageInUnencryptedForm"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"}
+boiler-auth  | [20:37:54 WRN] Overriding HTTP_PORTS '8080' and HTTPS_PORTS ''. Binding to values defined by URLS instead 'http://0.0.0.0:5001;https://0.0.0.0:7001'. {"EventId": {"Id": 15}, "SourceContext": "Microsoft.AspNetCore.Hosting.Diagnostics"}
+boiler-auth  | Now listening on: http://0.0.0.0:5001
+boiler-auth  | [20:37:55 INF] Now listening on: http://0.0.0.0:5001 {}
+boiler-auth  | Now listening on: https://0.0.0.0:7001
+boiler-auth  | [20:37:55 INF] Now listening on: https://0.0.0.0:7001 {}
+boiler-auth  | [20:37:59 INF] HTTP GET /health responded 200 in 21.3794 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:38:29 INF] HTTP GET /health responded 200 in 2.2555 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:38:59 INF] HTTP GET /health responded 200 in 11.3222 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:39:29 INF] HTTP GET /health responded 200 in 0.4303 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:39:59 INF] HTTP GET /health responded 200 in 0.3264 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:40:29 INF] HTTP GET /health responded 200 in 0.3261 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:40:59 INF] HTTP GET /health responded 200 in 0.2155 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:41:30 INF] HTTP GET /health responded 200 in 0.2090 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:42:00 INF] HTTP GET /health responded 200 in 0.1945 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:42:30 INF] HTTP GET /health responded 200 in 0.1828 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:43:00 INF] HTTP GET /health responded 200 in 0.3023 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:43:30 INF] HTTP GET /health responded 200 in 0.2008 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+
+C:\Users\mccre\dev\boiler>docker-compose -f docker/docker-compose.yml logs --tail 20 auth-service
+boiler-auth  | [20:37:54 WRN] Neither user profile nor HKLM registry available. Using an ephemeral key repository. Protected data will be unavailable when application exits. {"EventId": {"Id": 59, "Name": "UsingEphemeralKeyRepository"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"}
+boiler-auth  | [20:37:54 WRN] No XML encryptor configured. Key {fa54ec12-5899-4489-a71a-884a574e7747} may be persisted to storage in unencrypted form. {"EventId": {"Id": 35, "Name": "NoXMLEncryptorConfiguredKeyMayBePersistedToStorageInUnencryptedForm"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"}
+boiler-auth  | [20:37:54 WRN] Overriding HTTP_PORTS '8080' and HTTPS_PORTS ''. Binding to values defined by URLS instead 'http://0.0.0.0:5001;https://0.0.0.0:7001'. {"EventId": {"Id": 15}, "SourceContext": "Microsoft.AspNetCore.Hosting.Diagnostics"}
+boiler-auth  | Now listening on: http://0.0.0.0:5001
+boiler-auth  | [20:37:55 INF] Now listening on: http://0.0.0.0:5001 {}
+boiler-auth  | Now listening on: https://0.0.0.0:7001
+boiler-auth  | [20:37:55 INF] Now listening on: https://0.0.0.0:7001 {}
+boiler-auth  | [20:37:59 INF] HTTP GET /health responded 200 in 21.3794 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:38:29 INF] HTTP GET /health responded 200 in 2.2555 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:38:59 INF] HTTP GET /health responded 200 in 11.3222 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:39:29 INF] HTTP GET /health responded 200 in 0.4303 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:39:59 INF] HTTP GET /health responded 200 in 0.3264 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:40:29 INF] HTTP GET /health responded 200 in 0.3261 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:40:59 INF] HTTP GET /health responded 200 in 0.2155 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:41:30 INF] HTTP GET /health responded 200 in 0.2090 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:42:00 INF] HTTP GET /health responded 200 in 0.1945 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:42:30 INF] HTTP GET /health responded 200 in 0.1828 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:43:00 INF] HTTP GET /health responded 200 in 0.3023 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:43:30 INF] HTTP GET /health responded 200 in 0.2008 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth  | [20:44:00 INF] HTTP GET /health responded 200 in 0.2732 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+
+C:\Users\mccre\dev\boiler>docker-compose -f docker/docker-compose.yml logs postgres
+boiler-postgres  |
+boiler-postgres  | PostgreSQL Database directory appears to contain a database; Skipping initialization
+boiler-postgres  |
+boiler-postgres  | 2025-08-16 20:37:43.192 UTC [1] LOG:  starting PostgreSQL 15.14 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+boiler-postgres  | 2025-08-16 20:37:43.192 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+boiler-postgres  | 2025-08-16 20:37:43.192 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+boiler-postgres  | 2025-08-16 20:37:43.197 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+boiler-postgres  | 2025-08-16 20:37:43.205 UTC [30] LOG:  database system was shut down at 2025-08-16 20:37:19 UTC
+boiler-postgres  | 2025-08-16 20:37:43.212 UTC [1] LOG:  database system is ready to accept connections
+boiler-postgres  | 2025-08-16 20:42:43.273 UTC [28] LOG:  checkpoint starting: time
+boiler-postgres  | 2025-08-16 20:42:43.299 UTC [28] LOG:  checkpoint complete: wrote 3 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.006 s, sync=0.003 s, total=0.026 s; sync files=2, longest=0.002 s, average=0.002 s; distance=0 kB, estimate=0 kB
+
+C:\Users\mccre\dev\boiler>docker exec boiler-auth curl -f http://localhost:5001/health
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0

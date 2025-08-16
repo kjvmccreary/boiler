@@ -89,12 +89,10 @@ export function CreateUser() {
 
       console.log('🔍 CreateUser: Creating new user:', { ...createData, password: '[HIDDEN]', confirmPassword: '[HIDDEN]' });
 
-      // Note: You'll need to add this method to your userService
       const createdUser = await userService.createUser(createData);
       
       toast.success('User created successfully');
       
-      // Navigate to the new user's profile
       navigate(`/users/${createdUser.id}`);
       
     } catch (error) {
@@ -120,7 +118,6 @@ export function CreateUser() {
       [field]: event.target.value,
     }));
 
-    // Clear error when user starts typing
     if (errors[field]) {
       setErrors(prev => ({
         ...prev,
@@ -151,7 +148,7 @@ export function CreateUser() {
           </Typography>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="First Name"
@@ -164,7 +161,7 @@ export function CreateUser() {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="Last Name"
@@ -177,7 +174,7 @@ export function CreateUser() {
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="Email"
@@ -191,7 +188,7 @@ export function CreateUser() {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="Password"
@@ -205,7 +202,7 @@ export function CreateUser() {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 fullWidth
                 label="Confirm Password"

@@ -64,7 +64,7 @@ function TestWrapper({
   testMode = false
 }: TestWrapperProps) {
   return (
-    <AuthProvider testMode mockUser={mockUser} mockAuthState="authenticated">
+    <AuthProvider testMode mockUser={mockUser || undefined} mockAuthState="authenticated">
       <PermissionProvider testMode={testMode} mockContext={mockPermissionContext}>
         {children}
       </PermissionProvider>

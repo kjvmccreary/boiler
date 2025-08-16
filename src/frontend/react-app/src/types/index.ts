@@ -85,7 +85,12 @@ export interface UserInfo {
   firstName: string;
   lastName: string;
   fullName: string;
+  emailConfirmed: boolean;
   isActive: boolean;
+  roles: string[];
+  tenantId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Permission interface

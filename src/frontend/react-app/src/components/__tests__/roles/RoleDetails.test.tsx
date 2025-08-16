@@ -97,7 +97,7 @@ const mockRole: RoleDto = {
 
 const mockUsers: UserInfo[] = [
   {
-    id: '1',
+    id: 1,
     firstName: 'John',
     lastName: 'Doe',
     fullName: 'John Doe',
@@ -110,7 +110,7 @@ const mockUsers: UserInfo[] = [
     updatedAt: '2024-01-01T00:00:00Z',
   },
   {
-    id: '2',
+    id: 2,
     firstName: 'Jane',
     lastName: 'Smith',
     fullName: 'Jane Smith',

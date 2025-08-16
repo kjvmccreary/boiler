@@ -23,6 +23,5 @@
     "moduleDetection": "force",
     "types": [ "vitest/globals", "@testing-library/jest-dom" ]
   },
-  "include": [ "src", "src/test/setup.ts" ],
-  "references": [ { "path": "./tsconfig.node.json" } ]
+  "include": [ "src", "src/test/setup.ts" ]
 }
