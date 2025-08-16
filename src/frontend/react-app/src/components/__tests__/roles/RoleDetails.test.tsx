@@ -1,12 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RoleDetails } from '@/components/roles/RoleDetails'
 import { roleService } from '@/services/role.service'
 import toast from 'react-hot-toast'
-import type { Role, User } from '@/types/index'
+import type { RoleDto, UserInfo } from '@/types/index'
 
 // Mock dependencies
 vi.mock('@/services/role.service.js')
@@ -37,6 +37,14 @@ vi.mock('@/components/authorization/CanAccess.js', () => ({
   CanAccess: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
+// Mock constants
+vi.mock('@/utils/api.constants.js', () => ({
+  PERMISSIONS: {
+    ROLES_EDIT: 'roles.edit',
+    ROLES_DELETE: 'roles.delete',
+  }
+}))
+
 // Test wrapper
 function TestWrapper({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({
@@ -54,14 +62,14 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
   )
 }
 
-// Mock data with correct types
-const mockRole: Role = {
-  id: '1',
+// Mock data with correct types matching the actual component structure
+const mockRole: RoleDto = {
+  id: 1,
   name: 'Admin',
   description: 'Administrator role with full access',
   isSystemRole: false,
   isDefault: false,
-  tenantId: 'tenant-1',
+  tenantId: 1,
   permissions: [
     {
       id: '1',
@@ -82,11 +90,12 @@ const mockRole: Role = {
       description: 'View roles',
     },
   ],
+  userCount: 2,
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',
 }
 
-const mockUsers: User[] = [
+const mockUsers: UserInfo[] = [
   {
     id: '1',
     firstName: 'John',
@@ -107,7 +116,7 @@ const mockUsers: User[] = [
     fullName: 'Jane Smith',
     email: 'jane@example.com',
     emailConfirmed: false,
-    isActive: true,
+    isActive: false,
     roles: [],
     tenantId: 'tenant-1',
     createdAt: '2024-01-01T00:00:00Z',
@@ -116,8 +125,6 @@ const mockUsers: User[] = [
 ]
 
 describe('RoleDetails', () => {
-  const user = userEvent.setup()
-
   beforeEach(() => {
     vi.clearAllMocks()
     mockNavigate.mockClear()
@@ -127,11 +134,13 @@ describe('RoleDetails', () => {
     vi.mocked(roleService.getRoleById).mockResolvedValue(mockRole)
     vi.mocked(roleService.getRoleUsers).mockResolvedValue(mockUsers)
 
-    render(
-      <TestWrapper>
-        <RoleDetails />
-      </TestWrapper>
-    )
+    await act(async () => {
+      render(
+        <TestWrapper>
+          <RoleDetails />
+        </TestWrapper>
+      )
+    })
 
     await waitFor(() => {
       expect(screen.getByText('Admin')).toBeInTheDocument()
@@ -139,18 +148,21 @@ describe('RoleDetails', () => {
 
     expect(screen.getByText('Administrator role with full access')).toBeInTheDocument()
     expect(screen.getByText('3 Permissions')).toBeInTheDocument()
-    expect(screen.getByText('Users (2)')).toBeInTheDocument()
+    // Fix: Looking for the correct text pattern
+    expect(screen.getByText('Assigned Users (2)')).toBeInTheDocument()
   })
 
   it('displays permissions grouped by category', async () => {
     vi.mocked(roleService.getRoleById).mockResolvedValue(mockRole)
     vi.mocked(roleService.getRoleUsers).mockResolvedValue([])
 
-    render(
-      <TestWrapper>
-        <RoleDetails />
-      </TestWrapper>
-    )
+    await act(async () => {
+      render(
+        <TestWrapper>
+          <RoleDetails />
+        </TestWrapper>
+      )
+    })
 
     await waitFor(() => {
       expect(screen.getByText('Users')).toBeInTheDocument()
@@ -166,11 +178,13 @@ describe('RoleDetails', () => {
     vi.mocked(roleService.getRoleById).mockResolvedValue(mockRole)
     vi.mocked(roleService.getRoleUsers).mockResolvedValue(mockUsers)
 
-    render(
-      <TestWrapper>
-        <RoleDetails />
-      </TestWrapper>
-    )
+    await act(async () => {
+      render(
+        <TestWrapper>
+          <RoleDetails />
+        </TestWrapper>
+      )
+    })
 
     await waitFor(() => {
       expect(screen.getByText('John Doe')).toBeInTheDocument()
@@ -180,43 +194,51 @@ describe('RoleDetails', () => {
     expect(screen.getByText('john@example.com')).toBeInTheDocument()
     expect(screen.getByText('jane@example.com')).toBeInTheDocument()
 
-    // Check status chips
+    // Check status chips - Active and Inactive (not Pending)
     const activeChips = screen.getAllByText('Active')
-    const pendingChips = screen.getAllByText('Pending')
+    const inactiveChips = screen.getAllByText('Inactive')
     expect(activeChips).toHaveLength(1)
-    expect(pendingChips).toHaveLength(1)
+    expect(inactiveChips).toHaveLength(1)
   })
 
   it('handles edit button click for non-system roles', async () => {
+    const user = userEvent.setup()
     vi.mocked(roleService.getRoleById).mockResolvedValue(mockRole)
     vi.mocked(roleService.getRoleUsers).mockResolvedValue([])
 
-    render(
-      <TestWrapper>
-        <RoleDetails />
-      </TestWrapper>
-    )
+    await act(async () => {
+      render(
+        <TestWrapper>
+          <RoleDetails />
+        </TestWrapper>
+      )
+    })
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /edit/i })).toBeInTheDocument()
     })
 
     const editButton = screen.getByRole('button', { name: /edit/i })
-    await user.click(editButton)
+    
+    await act(async () => {
+      await user.click(editButton)
+    })
 
     expect(mockNavigate).toHaveBeenCalledWith('/roles/1/edit')
   })
 
   it('disables edit and delete buttons for system roles', async () => {
-    const systemRole: Role = { ...mockRole, isSystemRole: true }
+    const systemRole: RoleDto = { ...mockRole, isSystemRole: true }
     vi.mocked(roleService.getRoleById).mockResolvedValue(systemRole)
     vi.mocked(roleService.getRoleUsers).mockResolvedValue([])
 
-    render(
-      <TestWrapper>
-        <RoleDetails />
-      </TestWrapper>
-    )
+    await act(async () => {
+      render(
+        <TestWrapper>
+          <RoleDetails />
+        </TestWrapper>
+      )
+    })
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /edit/i })).toBeDisabled()
@@ -227,30 +249,36 @@ describe('RoleDetails', () => {
   })
 
   it('handles delete role with confirmation', async () => {
+    const user = userEvent.setup()
     vi.mocked(roleService.getRoleById).mockResolvedValue(mockRole)
     vi.mocked(roleService.getRoleUsers).mockResolvedValue([])
-    vi.mocked(roleService.deleteRole).mockResolvedValue(true)
+    vi.mocked(roleService.deleteRole).mockResolvedValue(undefined)
 
     // Mock window.confirm
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
 
-    render(
-      <TestWrapper>
-        <RoleDetails />
-      </TestWrapper>
-    )
+    await act(async () => {
+      render(
+        <TestWrapper>
+          <RoleDetails />
+        </TestWrapper>
+      )
+    })
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /delete/i })).toBeInTheDocument()
     })
 
     const deleteButton = screen.getByRole('button', { name: /delete/i })
-    await user.click(deleteButton)
+    
+    await act(async () => {
+      await user.click(deleteButton)
+    })
 
     expect(confirmSpy).toHaveBeenCalledWith(
       'Are you sure you want to delete the role "Admin"? This action cannot be undone.'
     )
-    expect(roleService.deleteRole).toHaveBeenCalledWith('1')
+    expect(roleService.deleteRole).toHaveBeenCalledWith(1)
     expect(toast.success).toHaveBeenCalledWith('Role deleted successfully')
     expect(mockNavigate).toHaveBeenCalledWith('/roles')
 
@@ -260,11 +288,13 @@ describe('RoleDetails', () => {
   it('handles role not found error', async () => {
     vi.mocked(roleService.getRoleById).mockRejectedValue(new Error('Role not found'))
 
-    render(
-      <TestWrapper>
-        <RoleDetails />
-      </TestWrapper>
-    )
+    await act(async () => {
+      render(
+        <TestWrapper>
+          <RoleDetails />
+        </TestWrapper>
+      )
+    })
 
     await waitFor(() => {
       expect(screen.getByText('Role not found')).toBeInTheDocument()
@@ -288,15 +318,17 @@ describe('RoleDetails', () => {
   })
 
   it('handles empty permissions list', async () => {
-    const roleWithoutPermissions: Role = { ...mockRole, permissions: [] }
+    const roleWithoutPermissions: RoleDto = { ...mockRole, permissions: [] }
     vi.mocked(roleService.getRoleById).mockResolvedValue(roleWithoutPermissions)
     vi.mocked(roleService.getRoleUsers).mockResolvedValue([])
 
-    render(
-      <TestWrapper>
-        <RoleDetails />
-      </TestWrapper>
-    )
+    await act(async () => {
+      render(
+        <TestWrapper>
+          <RoleDetails />
+        </TestWrapper>
+      )
+    })
 
     await waitFor(() => {
       expect(screen.getByText('This role has no permissions assigned.')).toBeInTheDocument()
@@ -307,14 +339,16 @@ describe('RoleDetails', () => {
     vi.mocked(roleService.getRoleById).mockResolvedValue(mockRole)
     vi.mocked(roleService.getRoleUsers).mockResolvedValue([])
 
-    render(
-      <TestWrapper>
-        <RoleDetails />
-      </TestWrapper>
-    )
+    await act(async () => {
+      render(
+        <TestWrapper>
+          <RoleDetails />
+        </TestWrapper>
+      )
+    })
 
     await waitFor(() => {
-      expect(screen.getByText('No users assigned to this role')).toBeInTheDocument()
+      expect(screen.getByText('No users are currently assigned to this role.')).toBeInTheDocument()
     })
   })
 })

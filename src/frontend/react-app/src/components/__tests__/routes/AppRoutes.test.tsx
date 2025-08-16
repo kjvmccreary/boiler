@@ -50,6 +50,21 @@ vi.mock('@/contexts/AuthContext.js', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
+// Mock permission context
+vi.mock('@/contexts/PermissionContext.js', () => ({
+  usePermission: () => ({
+    hasPermission: () => true,
+    hasAnyPermission: () => true,
+    hasAllPermissions: () => true,
+  }),
+  PermissionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}))
+
+// Mock CanAccess component
+vi.mock('@/components/authorization/CanAccess.js', () => ({
+  CanAccess: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}))
+
 // Test wrapper that provides router and query client
 function TestWrapper({ children, initialEntries }: { children: React.ReactNode; initialEntries: string[] }) {
   const queryClient = new QueryClient({

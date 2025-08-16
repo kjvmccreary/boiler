@@ -1,183 +1,400 @@
-Building Test Projects
-========== Starting test run ==========
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.05]   Starting:    UserService.IntegrationTests
-[17:57:30 INF] Starting UserService {}
-[17:57:30 INF] Starting UserService {}
-=== UserService Starting ===
-=== UserService Starting ===
-[17:57:31 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId": {"Id": 10400, "Name": "Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
-?? Ensuring clean database state...
-?? Ensuring clean database state...
-? Database recreated with clean state
-?? TestDataSeeder: Starting test data seeding
-? Database recreated with clean state
-?? TestDataSeeder: Starting test data seeding
-?? Creating tenants...
-?? Creating tenants...
-? Created 2 tenants
-? Created 2 tenants
-?? Creating permissions...
-?? Creating permissions...
-? Created 20 permissions
-? Created 20 permissions
-?? Creating roles...
-?? Creating roles...
-? Created 8 roles
-? Created 8 roles
-?? Creating role permissions...
-?? Creating role permissions...
-? Created 64 role permissions
-? Created 64 role permissions
-?? Creating users...
-?? Creating users...
-?? Found Tenant 1: ID=1, Name=Test Tenant 1
-?? Found Tenant 2: ID=2, Name=Test Tenant 2
-?? Found Tenant 1: ID=1, Name=Test Tenant 1
-?? Found Tenant 2: ID=2, Name=Test Tenant 2
-?? Adding 7 users to database...
-?? Adding 7 users to database...
-?? Saving users to database...
-?? Saving users to database...
-? Created 7 users
-? Created 7 users
-?? Tenant 1 users: 5
-?? Tenant 2 users: 2
-?? Tenant 1 users: 5
-?? Tenant 2 users: 2
-?? Creating user role assignments...
-?? Creating user role assignments...
-?? Found 7 users and 8 roles for assignment
-?? Found 7 users and 8 roles for assignment
-?? Adding 8 user role assignments...
-?? Adding 8 user role assignments...
-? Created 8 user role assignments
-? Created 8 user role assignments
-?? Creating legacy tenant users...
-?? Creating legacy tenant users...
-? Created 7 legacy tenant users
-? Created 7 legacy tenant users
-?? Verifying test data...
-?? Verifying test data...
-?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=20, UserRoles=8, RolePermissions=64
-?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=20, UserRoles=8, RolePermissions=64
-? Verified user: admin@tenant1.com (ID: 1, TenantId: 1)
-? Verified user: admin@tenant1.com (ID: 1, TenantId: 1)
-? Verified user: user@tenant1.com (ID: 2, TenantId: 1)
-? Verified user: user@tenant1.com (ID: 2, TenantId: 1)
-? Verified user: admin@tenant2.com (ID: 6, TenantId: 2)
-? Verified user: admin@tenant2.com (ID: 6, TenantId: 2)
-? admin@tenant1.com has 1 role assignments
-? admin@tenant1.com has 1 role assignments
-? TestDataSeeder: Test data seeding completed successfully
-? TestDataSeeder: Test data seeding completed successfully
-[17:57:31 INF] ?? Test Data Status: Tenants=2, Users=7, Roles=8, Permissions=20, UserRoles=8, RolePermissions=64 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF] ?? Test Data Status: Tenants=2, Users=7, Roles=8, Permissions=20, UserRoles=8, RolePermissions=64 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF] ?? Tenant IDs: Tenant1=1, Tenant2=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF] ?? Tenant IDs: Tenant1=1, Tenant2=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF] ?? User IDs: Admin=1, User=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF] ?? User IDs: Admin=1, User=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF] ?? Admin user analysis: {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF] ?? Admin user analysis: {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF]    - Email: admin@tenant1.com {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF]    - Email: admin@tenant1.com {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF]    - TenantId: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF]    - TenantId: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF]    - PrimaryTenant: Test Tenant 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF]    - UserRoles count: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF]    - Active UserRoles: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF]    - Permissions: 18 [users.edit, users.view, users.create, users.delete, users.manage, users.manage_roles, roles.view, roles.create, roles.edit, roles.delete, roles.manage_permissions, tenants.view, tenants.edit, reports.view, reports.create, reports.export, permissions.view, permissions.manage] {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF]    - PrimaryTenant: Test Tenant 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF]    - UserRoles count: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF]    - Active UserRoles: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[17:57:31 INF]    - Permissions: 18 [users.edit, users.view, users.create, users.delete, users.manage, users.manage_roles, roles.view, roles.create, roles.edit, roles.delete, roles.manage_permissions, tenants.view, tenants.edit, reports.view, reports.create, reports.export, permissions.view, permissions.manage] {"SourceContext": "UserService.IntegrationTests.TestBase"}
-?? DEBUGGING UserRole Query for admin@tenant1.com:
-   - Total UserRoles in DB: 8
-   - UserRoles for this email: 1
-   - Active UserRoles for this email: 1
-?? DEBUGGING UserRole Query for admin@tenant1.com:
-   - Total UserRoles in DB: 8
-   - UserRoles for this email: 1
-   - Active UserRoles for this email: 1
-?? USER ENTITY DEBUG for admin@tenant1.com:
-?? USER ENTITY DEBUG for admin@tenant1.com:
-   - User ID: 1
-   - User ID: 1
-   - User TenantId: 1
-   - Separately loaded UserRoles count: 1
-   - User TenantId: 1
-   - Separately loaded UserRoles count: 1
-   - UserRoles details: RoleId=2, TenantId=1, Active=True
-   - UserRoles details: RoleId=2, TenantId=1, Active=True
-?? TENANT DEBUG:
-?? TENANT DEBUG:
-   - Tenant ID: 1
-   - Tenant ID: 1
-   - Tenant Name: Test Tenant 1
-   - Tenant Name: Test Tenant 1
-?? FILTERING DEBUG:
-?? FILTERING DEBUG:
-   - Total loaded UserRoles: 1
-   - UserRoles after TenantId filter: 1
-   - Total loaded UserRoles: 1
-   - UserRoles after TenantId filter: 1
-   - Relevant UserRoles: RoleId=2, RoleName=Admin
-   - Relevant UserRoles: RoleId=2, RoleName=Admin
-?? USER admin@tenant1.com in TENANT 1:
-   - UserRoles: 1
-?? USER admin@tenant1.com in TENANT 1:
-   - UserRoles: 1
-   - Permissions: 18 [users.edit, users.view, users.create, users.delete, users.manage, users.manage_roles, roles.view, roles.create, roles.edit, roles.delete, roles.manage_permissions, tenants.view, tenants.edit, reports.view, reports.create, reports.export, permissions.view, permissions.manage]
-   - Permissions: 18 [users.edit, users.view, users.create, users.delete, users.manage, users.manage_roles, roles.view, roles.create, roles.edit, roles.delete, roles.manage_permissions, tenants.view, tenants.edit, reports.view, reports.create, reports.export, permissions.view, permissions.manage]
-?? JWT CLAIMS for admin@tenant1.com:
-?? JWT CLAIMS for admin@tenant1.com:
-   - Role: Admin (Actual: Admin)
-   - Role: Admin (Actual: Admin)
-   - Tenant: Test Tenant 1 (ID: 1)
-   - Permissions: 18
-   - Tenant: Test Tenant 1 (ID: 1)
-   - Permissions: 18
-?? JWT CLAIMS for admin@tenant1.com:
-   - Role: Admin
-   - Tenant: Test Tenant 1 (ID: 1)
-   - Permissions: 18
-?? JWT CLAIMS for admin@tenant1.com:
-   - Role: Admin
-   - Tenant: Test Tenant 1 (ID: 1)
-   - Permissions: 18
-[17:57:31 WRN] Failed to determine the https port for redirect. {"EventId": {"Id": 3, "Name": "FailedToDeterminePort"}, "SourceContext": "Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware", "RequestId": "0HNERGNPL22R2", "RequestPath": "/api/roles/7/users/2"}
-[17:57:31 WRN] Failed to determine the https port for redirect. {"EventId": {"Id": 3, "Name": "FailedToDeterminePort"}, "SourceContext": "Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware", "RequestId": "0HNERGNPL22R1", "RequestPath": "/api/roles/5"}
-[17:57:31 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNERGNPL22R2", "RequestPath": "/api/roles/7/users/2"}
-[17:57:31 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNERGNPL22R1", "RequestPath": "/api/roles/5"}
-[17:57:31 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNERGNPL22R1", "RequestPath": "/api/roles/5"}
-[17:57:31 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNERGNPL22R2", "RequestPath": "/api/roles/7/users/2"}
-[17:57:31 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNERGNPL22R2", "RequestPath": "/api/roles/7/users/2"}
-[17:57:31 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNERGNPL22R1", "RequestPath": "/api/roles/5"}
-[17:57:31 INF] HTTP GET /api/roles/5 responded 200 in 59.3676 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[17:57:31 INF] HTTP DELETE /api/roles/7/users/2 responded 200 in 59.2106 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[xUnit.net 00:00:01.09]     UserService.IntegrationTests.Security.CrossTenantSecurityTests.RemoveRoleFromUser_CrossTenantRole_ShouldFail [FAIL]
-[xUnit.net 00:00:01.09]       Expected response.StatusCode to be HttpStatusCode.InternalServerError {value: 500}, but found HttpStatusCode.OK {value: 200}.
-[xUnit.net 00:00:01.09]       Stack Trace:
-[xUnit.net 00:00:01.09]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:01.09]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:01.09]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:01.09]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:01.09]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:01.09]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[xUnit.net 00:00:01.09]            at FluentAssertions.Primitives.EnumAssertions`2.Be(TEnum expected, String because, Object[] becauseArgs)
-[xUnit.net 00:00:01.09]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Security\CrossTenantSecurityTests.cs(194,0): at UserService.IntegrationTests.Security.CrossTenantSecurityTests.RemoveRoleFromUser_CrossTenantRole_ShouldFail()
-[xUnit.net 00:00:01.09]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:01.10]     UserService.IntegrationTests.Auditing.AuditLoggingVerificationTests.CrossTenantAccess_ShouldLogSecurityViolations [FAIL]
-[xUnit.net 00:00:01.10]       Expected response.StatusCode to be HttpStatusCode.NotFound {value: 404}, but found HttpStatusCode.OK {value: 200}.
-[xUnit.net 00:00:01.10]       Stack Trace:
-[xUnit.net 00:00:01.10]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:01.10]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:01.10]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:01.10]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:01.10]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:01.10]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[xUnit.net 00:00:01.10]            at FluentAssertions.Primitives.EnumAssertions`2.Be(TEnum expected, String because, Object[] becauseArgs)
-[xUnit.net 00:00:01.10]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Auditing\AuditLoggingVerificationTests.cs(328,0): at UserService.IntegrationTests.Auditing.AuditLoggingVerificationTests.CrossTenantAccess_ShouldLogSecurityViolations()
-[xUnit.net 00:00:01.10]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:01.11]   Finished:    UserService.IntegrationTests
-========== Test run finished: 2 Tests (0 Passed, 2 Failed, 0 Skipped) run in 1.1 sec ==========
+
+ RERUN  src/contexts/__tests__/PermissionContext.test.tsx x4
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
+🔍 API CLIENT: Creating axios instance with baseURL: empty (using proxy)
+
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx (60) 315ms
+   ❯ PermissionContext (60) 314ms
+     ❯ PermissionProvider (3)
+       ✓ should render children without permission context
+       × should provide permission context with authenticated user (retry x1)
+       ✓ should use mock context in test mode
+     ✓ usePermission hook (2)
+       ✓ should throw error when used outside PermissionProvider
+       ✓ should return permission context when used within provider
+     ❯ Permission checking methods (9)
+       ❯ hasPermission (5)
+         ✓ should return false when user is not authenticated
+         × should return true when user has the permission via JWT token (retry x1)
+         ✓ should return false when user does not have the permission
+         × should handle string permission format from token (retry x1)
+         ✓ should handle empty permissions gracefully
+       ❯ hasAnyPermission (2)
+         × should return true when user has at least one permission (retry x1)
+         ✓ should return false when user has none of the permissions
+       ❯ hasAllPermissions (2)
+         × should return true when user has all required permissions (retry x1)
+         ✓ should return false when user is missing some permissions
+     ✓ Role checking methods (9)
+       ✓ hasRole (4)
+         ✓ should return false when user is not authenticated
+         ✓ should return true when user has the role
+         ✓ should return false when user does not have the role
+         ✓ should handle single role string format
+       ✓ hasAnyRole (3)
+         ✓ should return true when user has at least one of the roles
+         ✓ should return false when user has none of the roles
+         ✓ should return false when roles array is empty
+       ✓ hasAllRoles (2)
+         ✓ should return true when user has all required roles
+         ✓ should return false when user is missing some roles
+     ❯ Admin checking methods (16)
+       ❯ isAdmin (4)
+         ✓ should return false when user is not authenticated
+         × should return true when user has admin permissions (retry x1)
+         ✓ should return true when user has admin role
+         ✓ should return false when user has neither admin permissions nor roles
+       ❯ isSuperAdmin (3)
+         ✓ should return true when user has SuperAdmin role
+         × should return true when user has system.admin permission (retry x1)
+         ✓ should return false when user is not SuperAdmin
+       ✓ isSystemAdmin (3)
+         ✓ should return true when user has SuperAdmin role
+         ✓ should return true when user has SystemAdmin role
+         ✓ should return false when user has neither role
+       ❯ isTenantAdmin (2)
+         ✓ should return true when user has Admin role
+         × should return true when user has tenants.manage permission (retry x1)
+       ❯ canManageUsers (2)
+         × should return true when user has user management permissions (retry x1)
+         ✓ should return false when user has no user management permissions
+       ❯ canManageRoles (2)
+         × should return true when user has role management permissions (retry x1)
+         ✓ should return false when user has no role management permissions
+     ❯ Data retrieval methods (14)
+       ❯ getUserRoles (6)
+         × should return roles from JWT token when available (retry x1)
+         × should handle Microsoft role claim format (retry x1)
+         × should handle comma-separated role string (retry x1)
+         ✓ should fallback to user object roles when no token roles
+         ✓ should handle single role string from user object
+         ✓ should return empty array when no roles available
+       ❯ getUserPermissions (3)
+         × should return permissions from JWT token (retry x1)
+         × should handle string permission format (retry x1)
+         ✓ should return empty array when no permissions
+       ✓ getEffectivePermissions (1)
+         ✓ should return same as getUserPermissions
+       ✓ getRoleHierarchy (4)
+         ✓ should return correct hierarchy level for SuperAdmin
+         ✓ should return correct hierarchy level for Admin
+         ✓ should return highest role level when user has multiple roles
+         ✓ should return maximum level for unknown roles
+     ❯ Error handling and edge cases (4)
+       ✓ should handle token manager errors gracefully
+       × should handle malformed JWT claims gracefully (retry x1)
+       ✓ should handle null user gracefully
+       ✓ should handle complex role object arrays from API
+     ✓ Console logging (3)
+       ✓ should log permission checks for debugging
+       ✓ should log role extraction process
+       ✓ should log admin checks
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ Failed Tests 16 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > PermissionProvider > should provide permission context with authenticated user
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > PermissionProvider > should provide permission context with authenticated user
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  true
+Received:
+  false
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx:149:52
+    147|       )
+    148|
+    149|       expect(screen.getByTestId('has-users-read')).toHaveTextContent('true')
+       |                                                    ^
+    150|       expect(screen.getByTestId('user-roles')).toHaveTextContent('User')
+    151|     })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/32]⎯
+
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Permission checking methods > hasPermission > should return true when user has the permission via JWT token
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Permission checking methods > hasPermission > should return true when user has the permission via JWT token
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  true
+Received:
+  false
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx:242:54
+    240|         )
+    241|
+    242|         expect(screen.getByTestId('has-users-read')).toHaveTextContent('true')
+       |                                                      ^
+    243|       })
+    244|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/32]⎯
+
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Permission checking methods > hasPermission > should handle string permission format from token
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Permission checking methods > hasPermission > should handle string permission format from token
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  true
+Received:
+  false
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx:272:54
+    270|         )
+    271|
+    272|         expect(screen.getByTestId('has-users-read')).toHaveTextContent('true')
+       |                                                      ^
+    273|       })
+    274|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/32]⎯
+
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Permission checking methods > hasAnyPermission > should return true when user has at least one permission
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Permission checking methods > hasAnyPermission > should return true when user has at least one permission
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx:308:24
+    306|
+    307|         const hasAny = permissionContext?.hasAnyPermission(['users.read', 'admin.access'])
+    308|         expect(hasAny).toBe(true)
+       |                        ^
+    309|       })
+    310|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/32]⎯
+
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Permission checking methods > hasAllPermissions > should return true when user has all required permissions
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Permission checking methods > hasAllPermissions > should return true when user has all required permissions
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx:348:24
+    346|
+    347|         const hasAll = permissionContext?.hasAllPermissions(['users.read', 'users.edit'])
+    348|         expect(hasAll).toBe(true)
+       |                        ^
+    349|       })
+    350|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/32]⎯
+
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > isAdmin > should return true when user has admin permissions
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > isAdmin > should return true when user has admin permissions
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  true
+Received:
+  false
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx:520:48
+    518|         )
+    519|
+    520|         expect(screen.getByTestId('is-admin')).toHaveTextContent('true')
+       |                                                ^
+    521|       })
+    522|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/32]⎯
+
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > isSuperAdmin > should return true when user has system.admin permission
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > isSuperAdmin > should return true when user has system.admin permission
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx:578:51
+    576|         )
+    577|
+    578|         expect(permissionContext?.isSuperAdmin()).toBe(true)
+       |                                                   ^
+    579|       })
+    580|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/32]⎯
+
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > isTenantAdmin > should return true when user has tenants.manage permission
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > isTenantAdmin > should return true when user has tenants.manage permission
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx:665:52
+    663|         )
+    664|
+    665|         expect(permissionContext?.isTenantAdmin()).toBe(true)
+       |                                                    ^
+    666|       })
+    667|     })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/32]⎯
+
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > canManageUsers > should return true when user has user management permissions
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > canManageUsers > should return true when user has user management permissions
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx:685:53
+    683|         )
+    684|
+    685|         expect(permissionContext?.canManageUsers()).toBe(true)
+       |                                                     ^
+    686|       })
+    687|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/32]⎯
+
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > canManageRoles > should return true when user has role management permissions
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Admin checking methods > canManageRoles > should return true when user has role management permissions
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx:723:53
+    721|         )
+    722|
+    723|         expect(permissionContext?.canManageRoles()).toBe(true)
+       |                                                     ^
+    724|       })
+    725|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/32]⎯
+
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserRoles > should return roles from JWT token when available
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserRoles > should return roles from JWT token when available
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  Admin,Manager
+Received:
+  User
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx:762:50
+    760|
+    761|         // Should show JWT token roles, not user object roles
+    762|         expect(screen.getByTestId('user-roles')).toHaveTextContent('Admin,Manager')
+       |                                                  ^
+    763|       })
+    764|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/32]⎯
+
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserRoles > should handle Microsoft role claim format
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserRoles > should handle Microsoft role claim format
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  Admin
+Received:
+  User
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx:777:50
+    775|         )
+    776|
+    777|         expect(screen.getByTestId('user-roles')).toHaveTextContent('Admin')
+       |                                                  ^
+    778|       })
+    779|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/32]⎯
+
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserRoles > should handle comma-separated role string
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserRoles > should handle comma-separated role string
+Error: expect(element).toHaveTextContent()
+
+Expected element to have text content:
+  Admin,Manager,SuperAdmin
+Received:
+  User
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx:792:50
+    790|         )
+    791|
+    792|         expect(screen.getByTestId('user-roles')).toHaveTextContent('Admin,Manager,SuperAdmin')
+       |                                                  ^
+    793|       })
+    794|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/32]⎯
+
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserPermissions > should return permissions from JWT token
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserPermissions > should return permissions from JWT token
+AssertionError: expected '' to contain 'users.read'
+
+- Expected
++ Received
+
+- users.read
+
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx:849:29
+    847|
+    848|         const permissions = screen.getByTestId('user-permissions').textContent
+    849|         expect(permissions).toContain('users.read')
+       |                             ^
+    850|         expect(permissions).toContain('users.edit')
+    851|         expect(permissions).toContain('profile.read')
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/32]⎯
+
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserPermissions > should handle string permission format
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Data retrieval methods > getUserPermissions > should handle string permission format
+AssertionError: expected '' to contain 'users.read'
+
+- Expected
++ Received
+
+- users.read
+
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx:867:29
+    865|
+    866|         const permissions = screen.getByTestId('user-permissions').textContent
+    867|         expect(permissions).toContain('users.read')
+       |                             ^
+    868|         expect(permissions).toContain('users.edit')
+    869|       })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/32]⎯
+
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Error handling and edge cases > should handle malformed JWT claims gracefully
+ FAIL  src/contexts/__tests__/PermissionContext.test.tsx > PermissionContext > Error handling and edge cases > should handle malformed JWT claims gracefully
+Error: expect(element).toBeEmptyDOMElement()
+
+Received:
+  "User"
+ ❯ src/contexts/__tests__/PermissionContext.test.tsx:991:48
+    989|
+    990|       expect(screen.getByTestId('user-permissions')).toBeEmptyDOMElement()
+    991|       expect(screen.getByTestId('user-roles')).toBeEmptyDOMElement()
+       |                                                ^
+    992|     })
+    993|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/32]⎯
+
+ Test Files  1 failed (1)
+      Tests  16 failed | 44 passed (60)
+   Start at  20:35:47
+   Duration  1.01s
+

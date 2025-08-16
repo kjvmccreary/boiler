@@ -19,12 +19,20 @@ interface LocationState {
   };
 }
 
+interface FormErrors {
+  email: string;
+  password: string;
+}
+
 function LoginForm() {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<FormErrors>({
+    email: '',
+    password: '',
+  });
   
   const { login, isLoading, error, clearError } = useAuth();
   const navigate = useNavigate();
@@ -33,15 +41,15 @@ function LoginForm() {
   const state = location.state as LocationState;
   const from = state?.from?.pathname || '/dashboard';
 
-  const handleInputChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (field: 'email' | 'password') => (event: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
       [field]: event.target.value,
     }));
     
     // Clear field error when user starts typing
-    if (fieldErrors[field]) {
-      setFieldErrors(prev => ({
+    if (errors[field]) {
+      setErrors(prev => ({
         ...prev,
         [field]: '',
       }));
@@ -53,27 +61,32 @@ function LoginForm() {
     }
   };
 
-  const validateForm = (): boolean => {
-    const errors: Record<string, string> = {};
-    
-    if (!formData.email) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Please enter a valid email address';
-    }
-    
-    if (!formData.password) {
-      errors.password = 'Password is required';
-    }
-    
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     
-    if (!validateForm()) {
+    // Create a fresh errors object
+    const newErrors: FormErrors = {
+      email: '',
+      password: '',
+    };
+    
+    // Validate email
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email.trim())) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+    
+    // Validate password
+    if (!formData.password.trim()) {
+      newErrors.password = 'Password is required';
+    }
+    
+    // Check if there are any errors
+    const hasErrors = newErrors.email !== '' || newErrors.password !== '';
+    
+    if (hasErrors) {
+      setErrors(newErrors);
       return;
     }
 
@@ -120,8 +133,8 @@ function LoginForm() {
                 autoFocus
                 value={formData.email}
                 onChange={handleInputChange('email')}
-                error={!!fieldErrors.email}
-                helperText={fieldErrors.email}
+                error={!!errors.email}
+                helperText={errors.email}
                 disabled={isLoading}
               />
               
@@ -136,8 +149,8 @@ function LoginForm() {
                 autoComplete="current-password"
                 value={formData.password}
                 onChange={handleInputChange('password')}
-                error={!!fieldErrors.password}
-                helperText={fieldErrors.password}
+                error={!!errors.password}
+                helperText={errors.password}
                 disabled={isLoading}
               />
               
