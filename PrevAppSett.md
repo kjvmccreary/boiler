@@ -28,14 +28,13 @@
     "ResolutionStrategy": "Header",
     "EnableRowLevelSecurity": true,
     "AllowCrossTenantQueries": false,
-    "TenantHeaderName": "X-Tenant-ID",
-    "RequireTenantContext": false
+    "TenantHeaderName": "X-Tenant-ID"
   },
   "ServiceSettings": {
     "ServiceName": "UserService",
     "Version": "1.0.0",
     "Environment": "Development",
-    "Port": 5002,
+    "Port": 5001,
     "HealthCheckPath": "/health"
   },
   "CorsSettings": {

@@ -1,5 +1,6 @@
 // FILE: src/shared/Common/Entities/RefreshToken.cs
 namespace DTOs.Entities;
+
 public class RefreshToken : TenantEntity
 {
     public int UserId { get; set; }
@@ -17,5 +18,4 @@ public class RefreshToken : TenantEntity
 
     // Navigation properties
     public User User { get; set; } = null!;
-    public Tenant Tenant { get; set; } = null!;
 }

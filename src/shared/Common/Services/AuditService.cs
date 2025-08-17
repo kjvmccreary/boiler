@@ -28,20 +28,7 @@ namespace Common.Services
         SecurityViolation
     }
 
-    public class AuditEntry
-    {
-        public int Id { get; set; }
-        public int TenantId { get; set; }
-        public int? UserId { get; set; }
-        public string Action { get; set; } = string.Empty;
-        public string Resource { get; set; } = string.Empty;
-        public string? Details { get; set; }
-        public string IpAddress { get; set; } = string.Empty;
-        public string UserAgent { get; set; } = string.Empty;
-        public bool Success { get; set; }
-        public string? ErrorMessage { get; set; }
-        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-    }
+    // ✅ GOOD: AuditEntry class is now properly located in DTOs/Entities/AuditEntry.cs
 
     public interface IAuditService
     {

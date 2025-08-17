@@ -4,4 +4,7 @@ namespace DTOs.Entities;
 public abstract class TenantEntity : BaseEntity
 {
     public int TenantId { get; set; } // Changed from Guid to int
+
+    // Navigation property
+    public virtual Tenant? Tenant { get; set; }
 }

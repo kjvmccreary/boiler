@@ -38,5 +38,4 @@ public class UserRole : TenantEntity
     // Navigation properties
     public User User { get; set; } = null!;
     public Role Role { get; set; } = null!;
-    public Tenant Tenant { get; set; } = null!;
 }

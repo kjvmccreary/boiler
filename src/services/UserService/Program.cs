@@ -127,13 +127,16 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
 
-app.UseAuthentication();
-
-// Add DevelopmentTenantMiddleware in Development environment
+// 🔧 FIX: DevelopmentTenantMiddleware FIRST (adds X-Tenant-ID header in development)
 if (app.Environment.IsDevelopment())
 {
     app.UseMiddleware<DevelopmentTenantMiddleware>();
 }
+
+// 🔧 FIX: TenantMiddleware SECOND (processes the tenant header)
+app.UseTenantResolution();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

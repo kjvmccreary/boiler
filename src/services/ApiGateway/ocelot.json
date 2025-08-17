@@ -232,6 +232,29 @@
         "Limit": 100
       },
       "Key": "auth-service-protected"
+    },
+    {
+      "DownstreamPathTemplate": "/api/permissions/{everything}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "boiler-user",
+          "Port": 7002
+        }
+      ],
+      "UpstreamPathTemplate": "/api/permissions/{everything}",
+      "UpstreamHttpMethod": ["GET", "POST", "PUT", "DELETE"],
+      "DangerousAcceptAnyServerCertificateValidator": true,
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 30
+      },
+      "Key": "permission-service"
     }
   ],
   "GlobalConfiguration": {

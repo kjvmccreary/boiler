@@ -38,6 +38,9 @@ public class ApplicationDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Apply global query filters for tenant isolation
+        ApplyTenantQueryFilters(modelBuilder);
+
         // Existing configurations
         ConfigureTenant(modelBuilder);
         ConfigureUser(modelBuilder);
@@ -54,6 +57,132 @@ public class ApplicationDbContext : DbContext
         ConfigureAuditEntry(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
+    }
+
+    // 🆕 NEW: Apply global query filters for tenant isolation
+    private void ApplyTenantQueryFilters(ModelBuilder modelBuilder)
+    {
+        // Get current tenant ID for filtering (synchronous for query compilation)
+        var tenantId = GetCurrentTenantIdSync();
+
+        // Apply tenant filter to User entities
+        modelBuilder.Entity<User>().HasQueryFilter(u => 
+            u.TenantId == null || tenantId == null || u.TenantId == tenantId);
+
+        // Apply tenant filter to TenantUser junction table
+        modelBuilder.Entity<TenantUser>().HasQueryFilter(tu => 
+            tenantId == null || tu.TenantId == tenantId);
+
+        // Apply tenant filter to RefreshToken
+        modelBuilder.Entity<RefreshToken>().HasQueryFilter(rt => 
+            tenantId == null || rt.TenantId == tenantId);
+
+        // 🔧 FIX: Apply tenant filter to RolePermission as well to prevent orphaned relationships
+        modelBuilder.Entity<RolePermission>().HasQueryFilter(rp => 
+            tenantId == null || rp.Role.TenantId == null || rp.Role.TenantId == tenantId);
+
+        // Apply tenant filter to Roles (excluding system roles)
+        modelBuilder.Entity<Role>().HasQueryFilter(r => 
+            r.TenantId == null || tenantId == null || r.TenantId == tenantId);
+
+        // Apply tenant filter to UserRoles
+        modelBuilder.Entity<UserRole>().HasQueryFilter(ur => 
+            tenantId == null || ur.TenantId == tenantId);
+
+        // Apply tenant filter to AuditEntries
+        modelBuilder.Entity<AuditEntry>().HasQueryFilter(ae => 
+            tenantId == null || ae.TenantId == tenantId);
+
+        // Note: Permissions are global (no tenant filter)
+        // Note: Tenants are global for tenant management (no tenant filter)
+    }
+
+    // 🆕 NEW: Get current tenant ID synchronously for query filters
+    private int? GetCurrentTenantIdSync()
+    {
+        try
+        {
+            // First try HTTP context items (set by middleware)
+            var context = _httpContextAccessor.HttpContext;
+            if (context?.Items.TryGetValue("TenantId", out var tenantIdObj) == true)
+            {
+                return tenantIdObj as int?;
+            }
+
+            // Fallback to tenant provider (may be slower)
+            return _tenantProvider.GetCurrentTenantIdAsync().GetAwaiter().GetResult();
+        }
+        catch
+        {
+            // Return null to disable filtering (useful for system operations)
+            return null;
+        }
+    }
+
+    // 🆕 NEW: Override SaveChanges to set tenant context and auto-populate TenantId
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        // Set database tenant context for RLS
+        var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+        if (tenantId.HasValue)
+        {
+            try
+            {
+                await Database.ExecuteSqlRawAsync(
+                    "SELECT set_config('app.tenant_id', {0}, false)", 
+                    tenantId.ToString(), 
+                    cancellationToken);
+            }
+            catch
+            {
+                // Continue if RLS context setting fails (it's defense in depth)
+            }
+
+            // Auto-populate TenantId for new tenant entities
+            SetTenantIdForNewEntities(tenantId.Value);
+        }
+
+        // Update timestamps
+        UpdateTimestamps();
+
+        return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    // 🆕 NEW: Auto-populate TenantId for new entities
+    private void SetTenantIdForNewEntities(int tenantId)
+    {
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.State == EntityState.Added)
+            {
+                // Set TenantId for entities that have it and don't already have a value
+                if (entry.Entity is TenantEntity tenantEntity && tenantEntity.TenantId == 0)
+                {
+                    tenantEntity.TenantId = tenantId;
+                }
+            }
+        }
+    }
+
+    // 🆕 NEW: Update timestamps for all entities
+    private void UpdateTimestamps()
+    {
+        var now = DateTime.UtcNow;
+
+        foreach (var entry in ChangeTracker.Entries<BaseEntity>())
+        {
+            switch (entry.State)
+            {
+                case EntityState.Added:
+                    entry.Entity.CreatedAt = now;
+                    entry.Entity.UpdatedAt = now;
+                    break;
+                
+                case EntityState.Modified:
+                    entry.Entity.UpdatedAt = now;
+                    break;
+            }
+        }
     }
 
     // 🔧 ADD: Audit Entry configuration
