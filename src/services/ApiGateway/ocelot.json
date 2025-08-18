@@ -255,6 +255,29 @@
         "Limit": 30
       },
       "Key": "permission-service"
+    },
+    {
+      "DownstreamPathTemplate": "/api/tenants/{everything}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "boiler-user",
+          "Port": 7002
+        }
+      ],
+      "UpstreamPathTemplate": "/api/tenants/{everything}",
+      "UpstreamHttpMethod": ["GET", "POST", "PUT", "DELETE"],
+      "DangerousAcceptAnyServerCertificateValidator": true,
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 20
+      },
+      "Key": "tenant-service"
     }
   ],
   "GlobalConfiguration": {

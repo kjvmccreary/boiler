@@ -147,9 +147,20 @@ public class TenantMiddleware
     {
         try
         {
-            // Set PostgreSQL session variable for Row Level Security
+            // ✅ FIX: Check if using InMemory database provider
+            if (dbContext.Database.ProviderName?.Contains("InMemory") == true)
+            {
+                // For InMemory database, we don't need to set session variables
+                // Tenant isolation is handled by EF Core global query filters
+                _logger.LogDebug("Skipping database session context for InMemory provider, using EF query filters");
+                return;
+            }
+
+            // Set PostgreSQL session variable for Row Level Security (only for real databases)
             await dbContext.Database.ExecuteSqlRawAsync(
                 "SELECT set_config('app.tenant_id', {0}, false)", tenantId.ToString());
+                
+            _logger.LogDebug("Set database tenant context for tenant {TenantId}", tenantId);
         }
         catch (Exception ex)
         {

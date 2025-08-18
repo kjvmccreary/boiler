@@ -15,5 +15,5 @@ public class AuditEntry : TenantEntity
 
     // Navigation properties
     public User? User { get; set; }
-    public Tenant? Tenant { get; set; }
+    public override Tenant? Tenant { get; set; }
 }

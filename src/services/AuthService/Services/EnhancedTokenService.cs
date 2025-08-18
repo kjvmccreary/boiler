@@ -53,6 +53,7 @@ public class EnhancedTokenService : ITokenService
         try
         {
             var userRoles = await _context.UserRoles
+                .IgnoreQueryFilters() // ✅ ADD: Bypass global query filters
                 .Where(ur => ur.UserId == user.Id && ur.TenantId == tenant.Id && ur.IsActive)
                 .Include(ur => ur.Role)
                 .ToListAsync();

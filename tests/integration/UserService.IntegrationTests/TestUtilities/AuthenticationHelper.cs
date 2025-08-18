@@ -22,11 +22,13 @@ public static class AuthenticationHelper
         string? overrideRole = null) // ✅ RBAC FIX: Make role optional
     {
         // ✅ CRITICAL DEBUGGING: First check if UserRoles exist at all
-        var totalUserRoles = await dbContext.UserRoles.CountAsync();
+        var totalUserRoles = await dbContext.UserRoles.IgnoreQueryFilters().CountAsync(); // ✅ FIXED
         var userRolesForEmail = await dbContext.UserRoles
+            .IgnoreQueryFilters() // ✅ FIXED
             .Where(ur => ur.User.Email == email)
             .CountAsync();
         var activeUserRolesForEmail = await dbContext.UserRoles
+            .IgnoreQueryFilters() // ✅ FIXED
             .Where(ur => ur.User.Email == email && ur.IsActive)
             .CountAsync();
 
@@ -35,19 +37,23 @@ public static class AuthenticationHelper
         Console.WriteLine($"   - UserRoles for this email: {userRolesForEmail}");
         Console.WriteLine($"   - Active UserRoles for this email: {activeUserRolesForEmail}");
 
-        // ✅ CRITICAL FIX: Load user first, then load UserRoles separately to avoid Include() filtering issues
+        // ✅ CRITICAL FIX: Use IgnoreQueryFilters to access ALL users regardless of tenant context
         var user = await dbContext.Users
+            .IgnoreQueryFilters() // ✅ CRITICAL FIX
             .Include(u => u.PrimaryTenant)
             .FirstOrDefaultAsync(u => u.Email == email);
 
         if (user == null)
         {
-            var availableUsers = await dbContext.Users.Select(u => u.Email).ToListAsync();
+            var availableUsers = await dbContext.Users
+                .IgnoreQueryFilters() // ✅ CRITICAL FIX
+                .Select(u => u.Email).ToListAsync();
             throw new InvalidOperationException($"Test user with email {email} not found. Available users: {string.Join(", ", availableUsers)}");
         }
 
-        // ✅ CRITICAL FIX: Load UserRoles separately to avoid EF Core Include filtering issues
+        // ✅ CRITICAL FIX: Use IgnoreQueryFilters for UserRoles lookup
         var userRoles = await dbContext.UserRoles
+            .IgnoreQueryFilters() // ✅ CRITICAL FIX
             .Include(ur => ur.Role)
                 .ThenInclude(r => r.RolePermissions)
                     .ThenInclude(rp => rp.Permission)
@@ -60,11 +66,12 @@ public static class AuthenticationHelper
         Console.WriteLine($"   - Separately loaded UserRoles count: {userRoles.Count}");
         Console.WriteLine($"   - UserRoles details: {string.Join(", ", userRoles.Select(ur => $"RoleId={ur.RoleId}, TenantId={ur.TenantId}, Active={ur.IsActive}"))}");
 
-        // ✅ CRITICAL FIX: Ensure tenant is properly loaded
+        // ✅ CRITICAL FIX: Use IgnoreQueryFilters for tenant lookup
         var tenant = user.PrimaryTenant;
         if (tenant == null && user.TenantId.HasValue)
         {
             tenant = await dbContext.Tenants
+                .IgnoreQueryFilters() // ✅ CRITICAL FIX (though Tenants probably don't have query filters)
                 .FirstOrDefaultAsync(t => t.Id == user.TenantId.Value);
         }
         
@@ -77,7 +84,7 @@ public static class AuthenticationHelper
         Console.WriteLine($"   - Tenant ID: {tenant.Id}");
         Console.WriteLine($"   - Tenant Name: {tenant.Name}");
 
-        // ✅ CRITICAL FIX: Filter UserRoles by tenant
+        // ✅ CRITICAL FIX: Filter UserRoles by tenant (but we now have access to all user roles)
         var relevantUserRoles = userRoles
             .Where(ur => ur.TenantId == tenant.Id)
             .ToList();
@@ -115,6 +122,57 @@ public static class AuthenticationHelper
         Console.WriteLine($"   - Tenant: {tenant.Name} (ID: {tenant.Id})");
         Console.WriteLine($"   - Permissions: {permissions.Count}");
 
+        // ✅ ENHANCED DEBUG: Special logging for Tenant 2 Admin
+        if (email == "admin@tenant2.com")
+        {
+            Console.WriteLine($"🔍🔍🔍 SPECIAL DEBUG FOR TENANT 2 ADMIN 🔍🔍🔍");
+            
+            // Check if Tenant 2 Admin user exists
+            var t2Admin = await dbContext.Users
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Email == "admin@tenant2.com");
+            Console.WriteLine($"   - Tenant 2 Admin User Exists: {t2Admin != null}");
+            Console.WriteLine($"   - User TenantId: {t2Admin?.TenantId}");
+            
+            // Check Tenant 2 Admin role assignments
+            var t2AdminRoles = await dbContext.UserRoles
+                .IgnoreQueryFilters()
+                .Include(ur => ur.Role)
+                .Where(ur => ur.UserId == t2Admin.Id)
+                .ToListAsync();
+            Console.WriteLine($"   - Total UserRole assignments: {t2AdminRoles.Count}");
+            foreach (var ur in t2AdminRoles)
+            {
+                Console.WriteLine($"     * RoleId={ur.RoleId}, RoleName={ur.Role?.Name}, TenantId={ur.TenantId}, IsActive={ur.IsActive}");
+            }
+            
+            // Check Tenant 2 Admin role permissions
+            var t2AdminRolePermissions = await dbContext.RolePermissions
+                .IgnoreQueryFilters()
+                .Include(rp => rp.Permission)
+                .Include(rp => rp.Role)
+                .Where(rp => t2AdminRoles.Select(ur => ur.RoleId).Contains(rp.RoleId))
+                .ToListAsync();
+            Console.WriteLine($"   - Total Role Permissions: {t2AdminRolePermissions.Count}");
+            foreach (var rp in t2AdminRolePermissions.Take(10)) // Only show first 10 to avoid spam
+            {
+                Console.WriteLine($"     * Permission: {rp.Permission.Name}, Role: {rp.Role.Name}");
+            }
+        }
+
+        // ✅ ENHANCED DEBUG: After generating permissions list
+        if (email == "admin@tenant2.com")
+        {
+            Console.WriteLine($"🔑 FINAL TENANT 2 ADMIN TOKEN CLAIMS:");
+            Console.WriteLine($"   - Final Role: {roleToUse}");
+            Console.WriteLine($"   - Final Tenant: {tenant.Name} (ID: {tenant.Id})");
+            Console.WriteLine($"   - Final Permissions ({permissions.Count}): [{string.Join(", ", permissions)}]");
+            Console.WriteLine($"   - Has 'roles.view': {permissions.Contains("roles.view")}");
+            Console.WriteLine($"   - Has 'users.view': {permissions.Contains("users.view")}");
+            Console.WriteLine($"   - Has 'tenants.initialize': {permissions.Contains("tenants.initialize")}");
+            Console.WriteLine($"🔍🔍🔍 END TENANT 2 ADMIN DEBUG 🔍🔍🔍");
+        }
+        
         return GenerateJwtToken(user, tenant, roleToUse, permissions);
     }
 

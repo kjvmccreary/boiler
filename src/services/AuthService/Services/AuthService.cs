@@ -54,7 +54,7 @@ public class AuthServiceImplementation : IAuthService
         try
         {
             // Check if user already exists
-            if (await _context.Users.AnyAsync(u => u.Email == request.Email, cancellationToken))
+            if (await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == request.Email, cancellationToken))
             {
                 return ApiResponseDto<TokenResponseDto>.ErrorResult("User with this email already exists.");
             }
@@ -131,9 +131,15 @@ public class AuthServiceImplementation : IAuthService
             // ➕ ADD: Debug logging
             _logger.LogWarning("🔍 LOGIN DEBUG: Starting login for {Email}", request.Email);
             
+            // ✅ CRITICAL FIX: Use IgnoreQueryFilters() for login to bypass tenant isolation
+            // During login, we don't have tenant context yet, so we need to find the user first
+            // ✅ CRITICAL FIX: Load UserRoles collection for RBAC system
             var user = await _context.Users
+                .IgnoreQueryFilters() // ✅ BYPASS tenant filtering during login
                 .Include(u => u.PrimaryTenant)
-                .Include(u => u.TenantUsers)  // ➕ ADD: Load role information
+                .Include(u => u.TenantUsers)  // Legacy roles (fallback)
+                .Include(u => u.UserRoles)    // ✅ ADD: Modern RBAC roles
+                    .ThenInclude(ur => ur.Role) // ✅ ADD: Include role details
                 .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
 
             // ➕ ADD: Debug user lookup
@@ -385,7 +391,7 @@ public class AuthServiceImplementation : IAuthService
     {
         try
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
+            var user = await _context.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
             if (user == null)
             {
                 // Don't reveal if user exists for security
@@ -416,9 +422,8 @@ public class AuthServiceImplementation : IAuthService
     {
         try
         {
-            var user = await _context.Users.FirstOrDefaultAsync(
-                u => u.Email == email && u.EmailConfirmationToken == token,
-                cancellationToken);
+            var user = await _context.Users.IgnoreQueryFilters().FirstOrDefaultAsync(
+                u => u.Email == email && u.EmailConfirmationToken == token, cancellationToken);
 
             if (user == null || user.EmailConfirmationTokenExpiry < DateTime.UtcNow)
             {

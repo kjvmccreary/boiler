@@ -44,6 +44,7 @@ public static class Permissions
         public const string Create = "tenants.create";
         public const string Edit = "tenants.edit";
         public const string Delete = "tenants.delete";
+        public const string Initialize = "tenants.initialize";  // ✅ ADD THIS LINE
         public const string ViewAll = "tenants.view_all";
         public const string ManageSettings = "tenants.manage_settings";
     }

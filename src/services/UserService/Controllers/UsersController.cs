@@ -461,27 +461,27 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Enable or disable user account (requires users.manage permission)
+    /// Enable or disable user account (requires users.edit permission)
     /// </summary>
     [HttpPut("{id:int}/status")]
-    [Authorize] // 🔧 .NET 9 FIX: Remove role requirement, use permission check
+    [Authorize]
     public async Task<ActionResult<ApiResponseDto<bool>>> UpdateUserStatus(int id, [FromBody] UpdateUserStatusDto statusDto)
     {
         try
         {
-            // 🔧 .NET 9 FIX: Check for users.manage permission instead of Admin role
-            var hasUsersManagePermission = User.Claims.Any(c => 
-                c.Type == "permission" && c.Value == "users.manage");
-                
-            if (!hasUsersManagePermission)
+            // ✅ FIX: Check for users.edit permission instead of users.manage
+            var hasUsersEditPermission = User.Claims.Any(c => 
+                c.Type == "permission" && c.Value == "users.edit");
+            
+            if (!hasUsersEditPermission)
             {
-                _logger.LogWarning("User {UserId} attempted to update status for user {TargetUserId} without users.manage permission", 
+                _logger.LogWarning("User {UserId} attempted to update status for user {TargetUserId} without users.edit permission", 
                     GetCurrentUserId(), id);
-                return StatusCode(403, ApiResponseDto<bool>.ErrorResult("You don't have permission to manage user status"));
+                return StatusCode(403, ApiResponseDto<bool>.ErrorResult("You don't have permission to edit users"));
             }
 
             var currentUserId = GetCurrentUserId();
-            
+
             // Prevent users from disabling themselves
             if (id == currentUserId && !statusDto.IsActive)
             {
@@ -489,12 +489,12 @@ public class UsersController : ControllerBase
             }
 
             var result = await _userService.UpdateUserStatusAsync(id, statusDto.IsActive);
-            
+
             if (!result.Success)
             {
                 return BadRequest(result);
             }
-            
+
             return Ok(result);
         }
         catch (Exception ex)

@@ -2,7 +2,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Common.Data;
+using Microsoft.AspNetCore.Http;
+using Contracts.Services;
+using Common.Configuration;
 
 namespace UserService.IntegrationTests.Fixtures;
 
@@ -12,7 +16,6 @@ public class WebApplicationTestFixture : WebApplicationFactory<Program>
     
     public WebApplicationTestFixture()
     {
-        // ✅ FIX: Create unique database per test run to prevent data mutation
         _databaseName = $"IntegrationTestDb_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}_{Guid.NewGuid():N}";
     }
     
@@ -32,7 +35,35 @@ public class WebApplicationTestFixture : WebApplicationFactory<Program>
                 services.Remove(descriptor);
             }
 
-            // ✅ FIX: Use completely unique database per fixture
+            // ✅ Mock IHttpContextAccessor 
+            services.RemoveAll<IHttpContextAccessor>();
+            services.AddSingleton<IHttpContextAccessor>(provider =>
+            {
+                var accessor = new HttpContextAccessor();
+                return accessor;
+            });
+            
+            // ✅ CRITICAL FIX: Use dynamic TestTenantProvider that reads from JWT claims
+            services.RemoveAll<ITenantProvider>();
+            services.AddSingleton<ITenantProvider>(provider =>
+            {
+                var httpContextAccessor = provider.GetRequiredService<IHttpContextAccessor>();
+                return new TestTenantProvider(httpContextAccessor);
+            });
+
+            // ✅ CRITICAL: Add TenantSettings that completely disables tenant requirements
+            services.RemoveAll<TenantSettings>();
+            services.AddSingleton<TenantSettings>(new TenantSettings 
+            {
+                RequireTenantContext = false, // ✅ Don't require tenant context in tests
+                ResolutionStrategy = TenantResolutionStrategy.Header,
+                DefaultTenantId = "1",  // ✅ Default to tenant 1
+                TenantHeaderName = "X-Tenant-ID",
+                EnableRowLevelSecurity = false, // ✅ Disable RLS in tests
+                AllowCrossTenantQueries = true // ✅ Allow cross-tenant queries in tests
+            });
+
+            // ✅ Use regular ApplicationDbContext with proper test configuration
             services.AddDbContext<ApplicationDbContext>(options =>
             {
                 options.UseInMemoryDatabase(_databaseName);
@@ -46,6 +77,7 @@ public class WebApplicationTestFixture : WebApplicationFactory<Program>
             });
         });
 
+        // ✅ CRITICAL: Use Testing environment
         builder.UseEnvironment("Testing");
     }
 
@@ -65,5 +97,64 @@ public class WebApplicationTestFixture : WebApplicationFactory<Program>
             }
         }
         base.Dispose(disposing);
+    }
+}
+
+// ✅ CRITICAL FIX: Dynamic Test TenantProvider that reads tenant from JWT claims
+public class TestTenantProvider : ITenantProvider
+{
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    
+    public TestTenantProvider(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    public Task<int?> GetCurrentTenantIdAsync()
+    {
+        // ✅ CRITICAL: Read tenant from JWT claims if available
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext?.User?.Identity?.IsAuthenticated == true)
+        {
+            var tenantClaim = httpContext.User.FindFirst("tenant_id");
+            if (tenantClaim != null && int.TryParse(tenantClaim.Value, out var tenantId))
+            {
+                return Task.FromResult<int?>(tenantId);
+            }
+        }
+        
+        // ✅ Fallback to tenant 1 if no claims found (for data seeding)
+        return Task.FromResult<int?>(1);
+    }
+    
+    public Task<string?> GetCurrentTenantIdentifierAsync()
+    {
+        // ✅ Read from claims or fallback
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext?.User?.Identity?.IsAuthenticated == true)
+        {
+            var tenantClaim = httpContext.User.FindFirst("tenant_id");
+            if (tenantClaim != null)
+            {
+                return Task.FromResult<string?>(tenantClaim.Value);
+            }
+        }
+        
+        return Task.FromResult<string?>("1");
+    }
+    
+    public Task SetCurrentTenantAsync(int tenantId) => Task.CompletedTask;
+    public Task SetCurrentTenantAsync(string tenantIdentifier) => Task.CompletedTask;
+    public Task ClearCurrentTenantAsync() => Task.CompletedTask;
+    
+    // ✅ Return true if we have tenant context from JWT or fallback
+    public bool HasTenantContext
+    {
+        get
+        {
+            var httpContext = _httpContextAccessor.HttpContext;
+            return httpContext?.User?.Identity?.IsAuthenticated == true ||
+                   httpContext?.Request != null; // Always have context during tests
+        }
     }
 }

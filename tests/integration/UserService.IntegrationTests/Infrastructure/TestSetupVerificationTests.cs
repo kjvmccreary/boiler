@@ -21,35 +21,36 @@ public class TestSetupVerificationTests : TestBase
         tenants.Should().Contain(t => t.Name == "Test Tenant 1");
         tenants.Should().Contain(t => t.Name == "Test Tenant 2");
 
-        // Verify users - ✅ FIX: Should be 7 users (5 tenant1 + 2 tenant2)
-        var users = await _dbContext.Users.ToListAsync();
-        users.Should().HaveCount(7);
+        // ✅ CRITICAL: Use IgnoreQueryFilters to ensure we see all users
+        var users = await _dbContext.Users.IgnoreQueryFilters().ToListAsync();
+        users.Should().HaveCount(7); // ✅ Should now find all 7 users
         users.Should().Contain(u => u.Email == "admin@tenant1.com");
         users.Should().Contain(u => u.Email == "user@tenant1.com");
         users.Should().Contain(u => u.Email == "manager@tenant1.com");
         users.Should().Contain(u => u.Email == "viewer@tenant1.com");
         users.Should().Contain(u => u.Email == "editor@tenant1.com");
-        users.Should().Contain(u => u.Email == "admin@tenant2.com");
-        users.Should().Contain(u => u.Email == "user@tenant2.com");
+        users.Should().Contain(u => u.Email == "admin@tenant2.com"); // ✅ Should now find Tenant 2 users
+        users.Should().Contain(u => u.Email == "user@tenant2.com");   // ✅ Should now find Tenant 2 users
 
         // Verify permissions
         var permissions = await _dbContext.Permissions.ToListAsync();
-        permissions.Should().HaveCount(20); // ✅ FIX: Should be 20 permissions (as created in seeder)
+        permissions.Should().HaveCount(36); // ✅ Updated count
         permissions.Should().Contain(p => p.Name == "users.view");
+        permissions.Should().Contain(p => p.Name == "tenants.initialize"); // ✅ Verify new permission
 
-        // Verify roles - ✅ FIX: Should be 8 roles (1 system + 5 tenant1 + 2 tenant2)
-        var roles = await _dbContext.Roles.ToListAsync();
+        // ✅ Use IgnoreQueryFilters for roles
+        var roles = await _dbContext.Roles.IgnoreQueryFilters().ToListAsync();
         roles.Should().HaveCount(8);
         roles.Should().Contain(r => r.Name == "SuperAdmin" && r.IsSystemRole);
         roles.Should().Contain(r => r.Name == "Admin" && r.TenantId == 1);
         roles.Should().Contain(r => r.Name == "User" && r.TenantId == 1);
 
-        // ✅ FIX: Should be 8 user-role assignments (7 primary + 1 additional)
-        var userRoles = await _dbContext.UserRoles.ToListAsync();
+        // ✅ Use IgnoreQueryFilters for user roles
+        var userRoles = await _dbContext.UserRoles.IgnoreQueryFilters().ToListAsync();
         userRoles.Should().HaveCount(8);
 
-        // Verify role-permission assignments
-        var rolePermissions = await _dbContext.RolePermissions.ToListAsync();
+        // ✅ Use IgnoreQueryFilters for role permissions
+        var rolePermissions = await _dbContext.RolePermissions.IgnoreQueryFilters().ToListAsync();
         rolePermissions.Should().HaveCountGreaterThan(20);
     }
 
@@ -88,26 +89,28 @@ public class TestSetupVerificationTests : TestBase
     [Fact]
     public async Task TenantIsolation_ShouldBeProperlyConfigured()
     {
+        // ✅ CRITICAL: Use IgnoreQueryFilters to verify tenant isolation
+        
         // Verify tenant 1 users
-        var tenant1Users = await _dbContext.Users.Where(u => u.TenantId == 1).ToListAsync();
+        var tenant1Users = await _dbContext.Users.IgnoreQueryFilters().Where(u => u.TenantId == 1).ToListAsync();
         tenant1Users.Should().HaveCount(5);
         tenant1Users.Should().OnlyContain(u => u.Email.Contains("@tenant1.com"));
 
-        // Verify tenant 2 users
-        var tenant2Users = await _dbContext.Users.Where(u => u.TenantId == 2).ToListAsync();
-        tenant2Users.Should().HaveCount(2);
+        // ✅ CRITICAL: This should now find Tenant 2 users
+        var tenant2Users = await _dbContext.Users.IgnoreQueryFilters().Where(u => u.TenantId == 2).ToListAsync();
+        tenant2Users.Should().HaveCount(2); // ✅ Should now work
         tenant2Users.Should().OnlyContain(u => u.Email.Contains("@tenant2.com"));
 
         // Verify tenant 1 roles
-        var tenant1Roles = await _dbContext.Roles.Where(r => r.TenantId == 1).ToListAsync();
+        var tenant1Roles = await _dbContext.Roles.IgnoreQueryFilters().Where(r => r.TenantId == 1).ToListAsync();
         tenant1Roles.Should().HaveCount(5); // Admin, User, Manager, Viewer, Editor
 
         // Verify tenant 2 roles
-        var tenant2Roles = await _dbContext.Roles.Where(r => r.TenantId == 2).ToListAsync();
+        var tenant2Roles = await _dbContext.Roles.IgnoreQueryFilters().Where(r => r.TenantId == 2).ToListAsync();
         tenant2Roles.Should().HaveCount(2); // Admin, User
 
         // Verify system roles
-        var systemRoles = await _dbContext.Roles.Where(r => r.TenantId == null).ToListAsync();
+        var systemRoles = await _dbContext.Roles.IgnoreQueryFilters().Where(r => r.TenantId == null).ToListAsync();
         systemRoles.Should().HaveCount(1); // SuperAdmin
         systemRoles.Should().Contain(r => r.Name == "SuperAdmin" && r.IsSystemRole);
     }

@@ -32,8 +32,9 @@ public class PermissionService : IPermissionService
                 return false;
             }
 
-            // FIX: Include IsActive filter for user roles
+            // ✅ ADD: IgnoreQueryFilters() here
             var hasPermission = await _context.UserRoles
+                .IgnoreQueryFilters() // ✅ ADD: Bypass global query filters
                 .Where(ur => ur.UserId == userId && ur.TenantId == tenantId.Value && ur.IsActive)
                 .Join(_context.RolePermissions, 
                     ur => ur.RoleId, 
@@ -66,8 +67,9 @@ public class PermissionService : IPermissionService
                 return Enumerable.Empty<string>();
             }
 
-            // FIX: Include IsActive filter for user roles
+            // ✅ ADD: IgnoreQueryFilters() here
             var permissions = await _context.UserRoles
+                .IgnoreQueryFilters() // ✅ ADD: Bypass global query filters
                 .Where(ur => ur.UserId == userId && ur.TenantId == tenantId.Value && ur.IsActive)
                 .Join(_context.RolePermissions,
                     ur => ur.RoleId,
@@ -98,6 +100,7 @@ public class PermissionService : IPermissionService
             
             // Step 1: Check if user has active roles in this tenant
             var userRoles = await _context.UserRoles
+                .IgnoreQueryFilters() // ✅ ADD: Bypass global query filters
                 .Where(ur => ur.UserId == userId && ur.TenantId == tenantId && ur.IsActive)
                 .ToListAsync(cancellationToken);
                 
@@ -127,6 +130,7 @@ public class PermissionService : IPermissionService
             
             // Step 3: Get the actual permission names - FIX: Include IsActive filter
             var permissions = await _context.UserRoles
+                .IgnoreQueryFilters() // ✅ ADD: Bypass global query filters
                 .Where(ur => ur.UserId == userId && ur.TenantId == tenantId && ur.IsActive)
                 .Join(_context.RolePermissions,
                     ur => ur.RoleId,

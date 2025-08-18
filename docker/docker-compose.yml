@@ -88,6 +88,9 @@ services:
       ConnectionStrings__DefaultConnection: "Host=postgres;Database=${POSTGRES_DB:-boiler_dev};Username=${POSTGRES_USER:-boiler_app};Password=${POSTGRES_PASSWORD:-dev_password123}"
       JwtSettings__SecretKey: ${JWT_SECRET_KEY:-super-secret-jwt-key-for-testing-that-is-at-least-256-bits-long-for-security-purposes}
       Redis__ConnectionString: "redis:6379"
+      TenantSettings__DefaultTenantId: "1"
+      TenantSettings__RequireTenantContext: "false"
+      TenantSettings__EnableRowLevelSecurity: "true"
     depends_on:
       postgres:
         condition: service_healthy

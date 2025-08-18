@@ -8,6 +8,7 @@ public class PermissionPolicyProvider : IAuthorizationPolicyProvider
 {
     private readonly AuthorizationOptions _options;
     private readonly ILogger<PermissionPolicyProvider> _logger;
+    private const string RequiresPermissionPrefix = "RequiresPermission:";
 
     public PermissionPolicyProvider(IOptions<AuthorizationOptions> options, ILogger<PermissionPolicyProvider> logger)
     {
@@ -21,8 +22,28 @@ public class PermissionPolicyProvider : IAuthorizationPolicyProvider
 
     public Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
     {
-        // Check if this is a permission-based policy
-        if (Permissions.IsValidPermission(policyName))
+        // ✅ CRITICAL FIX: Handle RequiresPermission: prefixed policy names
+        if (policyName.StartsWith(RequiresPermissionPrefix))
+        {
+            var permission = policyName.Substring(RequiresPermissionPrefix.Length);
+            
+            // Check if this is a valid permission
+            if (Permissions.IsValidPermission(permission))
+            {
+                var policy = new AuthorizationPolicyBuilder()
+                    .AddRequirements(new PermissionRequirement(permission))
+                    .Build();
+
+                _logger.LogDebug("Created dynamic permission policy for: {PolicyName} (permission: {Permission})", policyName, permission);
+                return Task.FromResult<AuthorizationPolicy?>(policy);
+            }
+            else
+            {
+                _logger.LogWarning("Invalid permission requested in policy: {PolicyName} (permission: {Permission})", policyName, permission);
+            }
+        }
+        // ✅ Also handle plain permission names (for backward compatibility)
+        else if (Permissions.IsValidPermission(policyName))
         {
             var policy = new AuthorizationPolicyBuilder()
                 .AddRequirements(new PermissionRequirement(policyName))
@@ -34,6 +55,11 @@ public class PermissionPolicyProvider : IAuthorizationPolicyProvider
 
         // Fall back to configured policies
         var configuredPolicy = _options.GetPolicy(policyName);
+        if (configuredPolicy == null)
+        {
+            _logger.LogWarning("No policy found for: {PolicyName}", policyName);
+        }
+        
         return Task.FromResult(configuredPolicy);
     }
 }

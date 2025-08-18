@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using UserService.Mappings;
 using UserService.Services;
-using UserService.Middleware; // 🔧 FIX: Add missing using directive
+using UserService.Middleware;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -62,6 +62,9 @@ builder.Services.AddSwaggerGen(c =>
 builder.Services.AddCommonServices(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
+// ✅ CRITICAL FIX: Add dynamic authorization for permission-based policies
+builder.Services.AddDynamicAuthorization();
+
 // USE DATABASE EXTENSION (includes DbContext + Repositories)
 builder.Services.AddDatabase(builder.Configuration);
 
@@ -71,6 +74,10 @@ builder.Services.AddAutoMapperProfiles(typeof(UserMappingProfile));
 // Add your service implementations
 builder.Services.AddScoped<Contracts.User.IUserService, UserServiceImplementation>();
 builder.Services.AddScoped<Contracts.User.IUserProfileService, UserProfileService>();
+
+// Register tenant services
+builder.Services.AddScoped<ITenantService, UserService.Services.TenantService>();
+builder.Services.AddScoped<IRoleTemplateService, RoleTemplateService>();
 
 // Add FluentValidation
 builder.Services.AddFluentValidation();
