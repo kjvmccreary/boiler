@@ -38,7 +38,7 @@ public class EnhancedTokenService : ITokenService
             new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.GivenName, user.FirstName),
             new(ClaimTypes.Surname, user.LastName),
-            new("tenant_id", user.TenantId?.ToString() ?? tenant.Id.ToString()),
+            new("tenant_id", tenant.Id.ToString()), // 🔧 FIX: Always use the target tenant ID, not user.TenantId
             new("tenant_name", tenant.Name),
             new("tenant_domain", tenant.Domain ?? string.Empty),
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),

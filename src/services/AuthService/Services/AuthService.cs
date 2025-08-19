@@ -53,16 +53,33 @@ public class AuthServiceImplementation : IAuthService
     {
         try
         {
-            // Check if user already exists
-            if (await _context.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == request.Email, cancellationToken))
+            var existingUser = await _context.Users.IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
+
+            // 🔧 NEW: Handle existing user creating new tenant (consultant scenario)
+            if (existingUser != null && !string.IsNullOrEmpty(request.TenantName))
             {
-                return ApiResponseDto<TokenResponseDto>.ErrorResult("User with this email already exists.");
+                _logger.LogInformation("Existing user {Email} creating new tenant {TenantName}. " +
+                    "Form data: {FormFirstName} {FormLastName}, " +
+                    "Existing data: {ExistingFirstName} {ExistingLastName}",
+                    request.Email, request.TenantName,
+                    request.FirstName, request.LastName,
+                    existingUser.FirstName, existingUser.LastName);
+
+                return await HandleConsultantTenantCreation(existingUser, request, cancellationToken);
+            }
+            
+            // 🔧 EXISTING: Handle duplicate user without tenant creation
+            if (existingUser != null)
+            {
+                return ApiResponseDto<TokenResponseDto>.ErrorResult(
+                    "An account with this email already exists. Please sign in instead."
+                );
             }
 
-            // Handle tenant - for now, create a default tenant or use an existing one
+            // 🔧 EXISTING: Continue with normal new user registration...
             var tenant = await GetTenantForRegistrationAsync(request, cancellationToken);
-
-            // Create user
+            
             var user = new User
             {
                 TenantId = tenant.Id,
@@ -77,31 +94,27 @@ public class AuthServiceImplementation : IAuthService
             _context.Users.Add(user);
             await _context.SaveChangesAsync(cancellationToken);
 
-            // Create tenant-user relationship
+            // Create TenantAdmin relationship for new tenant creator
             var tenantUser = new TenantUser
             {
                 TenantId = tenant.Id,
                 UserId = user.Id,
-                Role = "User",
+                Role = string.IsNullOrEmpty(request.TenantName) ? "User" : "TenantAdmin", 
                 IsActive = true
             };
 
             _context.TenantUsers.Add(tenantUser);
 
-            // Generate tokens
+            // Generate tokens and return success...
             var accessToken = await _tokenService.GenerateAccessTokenAsync(user, tenant);
             var refreshTokenEntity = await _tokenService.CreateRefreshTokenAsync(user);
-
-            // Set additional properties for RefreshToken
             refreshTokenEntity.TenantId = tenant.Id;
             refreshTokenEntity.CreatedByIp = GetClientIpAddress();
 
             _context.RefreshTokens.Add(refreshTokenEntity);
             await _context.SaveChangesAsync(cancellationToken);
 
-            // Map to DTOs
             var userDto = _mapper.Map<DTOs.User.UserDto>(user);
-            userDto.TenantId = tenant.Id; // Ensure TenantId is set
             var tenantDto = _mapper.Map<DTOs.Tenant.TenantDto>(tenant);
 
             var response = new TokenResponseDto
@@ -114,13 +127,130 @@ public class AuthServiceImplementation : IAuthService
                 Tenant = tenantDto
             };
 
-            _logger.LogInformation("User {Email} registered successfully", request.Email);
+            _logger.LogInformation("User {Email} registered successfully for tenant {TenantName}", 
+                request.Email, tenant.Name);
             return ApiResponseDto<TokenResponseDto>.SuccessResult(response, "Registration successful");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during user registration for {Email}", request.Email);
             return ApiResponseDto<TokenResponseDto>.ErrorResult("Registration failed. Please try again.");
+        }
+    }
+
+    // 🔧 NEW: Handle consultant creating multiple tenants with same email
+    private async Task<ApiResponseDto<TokenResponseDto>> HandleConsultantTenantCreation(
+        User existingUser, 
+        RegisterRequestDto request, 
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            // 1. Create the new tenant
+            var existingTenant = await _tenantRepository.GetTenantByNameAsync(request.TenantName, cancellationToken);
+            if (existingTenant != null)
+            {
+                return ApiResponseDto<TokenResponseDto>.ErrorResult(
+                    $"An organization named '{request.TenantName}' already exists."
+                );
+            }
+
+            var newTenant = new Tenant
+            {
+                Name = request.TenantName,
+                Domain = request.TenantDomain,
+                SubscriptionPlan = "Basic",
+                IsActive = true,
+                Settings = "{}"
+            };
+
+            var createdTenant = await _tenantRepository.CreateTenantAsync(newTenant, cancellationToken);
+
+            // 2. Check if user already has access to this tenant (shouldn't happen, but safety check)
+            var existingTenantUser = await _context.TenantUsers
+                .FirstOrDefaultAsync(tu => tu.UserId == existingUser.Id && tu.TenantId == createdTenant.Id, cancellationToken);
+
+            if (existingTenantUser != null)
+            {
+                return ApiResponseDto<TokenResponseDto>.ErrorResult(
+                    "You already have access to this organization."
+                );
+            }
+
+            // 3. Add existing user to new tenant as TenantAdmin
+            var tenantUser = new TenantUser
+            {
+                TenantId = createdTenant.Id,
+                UserId = existingUser.Id,
+                Role = "TenantAdmin", // Consultant gets admin access to client tenant
+                IsActive = true,
+                JoinedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.TenantUsers.Add(tenantUser);
+
+            // 4. Set up RBAC roles for the consultant in new tenant
+            var adminRole = await _context.Roles
+                .FirstOrDefaultAsync(r => r.Name == "Admin" && r.TenantId == createdTenant.Id, cancellationToken);
+
+            if (adminRole != null)
+            {
+                var userRole = new UserRole
+                {
+                    UserId = existingUser.Id,
+                    RoleId = adminRole.Id,
+                    TenantId = createdTenant.Id,
+                    IsActive = true,
+                    AssignedAt = DateTime.UtcNow,
+                    AssignedBy = "System",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _context.UserRoles.Add(userRole);
+            }
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            // 5. Generate tokens for this specific tenant context
+            var accessToken = await _tokenService.GenerateAccessTokenAsync(existingUser, createdTenant);
+            var refreshTokenEntity = await _tokenService.CreateRefreshTokenAsync(existingUser);
+
+            refreshTokenEntity.TenantId = createdTenant.Id;
+            refreshTokenEntity.CreatedByIp = GetClientIpAddress();
+
+            _context.RefreshTokens.Add(refreshTokenEntity);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            // 6. Return success response with new tenant context
+            var userDto = _mapper.Map<DTOs.User.UserDto>(existingUser);
+            userDto.TenantId = createdTenant.Id;
+            var tenantDto = _mapper.Map<DTOs.Tenant.TenantDto>(createdTenant);
+
+            var response = new TokenResponseDto
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshTokenEntity.Token,
+                ExpiresAt = refreshTokenEntity.ExpiryDate,
+                TokenType = "Bearer",
+                User = userDto,
+                Tenant = tenantDto
+            };
+
+            _logger.LogInformation("Consultant {Email} created new tenant {TenantName} and granted admin access", 
+                existingUser.Email, createdTenant.Name);
+
+            return ApiResponseDto<TokenResponseDto>.SuccessResult(response, 
+                $"Welcome to {createdTenant.Name}! You've been added as administrator. " +
+                "Note: Your existing account information was used.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating tenant for consultant {Email}", existingUser.Email);
+            return ApiResponseDto<TokenResponseDto>.ErrorResult(
+                "Failed to create organization. Please try again.");
         }
     }
 
@@ -466,7 +596,7 @@ public class AuthServiceImplementation : IAuthService
         }
     }
 
-    // NEW: Enhanced Phase 4 RBAC methods
+    // NEW: RBAC-related methods for Enhanced Phase 4
     public async Task<List<string>> GetUserPermissionsAsync(int userId, CancellationToken cancellationToken = default)
     {
         try
@@ -505,6 +635,120 @@ public class AuthServiceImplementation : IAuthService
         {
             _logger.LogError(ex, "Error getting roles for user {UserId}", userId);
             return new List<string>();
+        }
+    }
+
+    // 🔧 NEW: Tenant switching with new JWT issuance
+    public async Task<ApiResponseDto<TokenResponseDto>> SwitchTenantAsync(int userId, int tenantId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogWarning("🔍 TENANT SWITCH DEBUG: User {UserId} requesting to switch to tenant {TenantId}", userId, tenantId);
+
+            // Load user with tenant relationships - bypass global query filters
+            var user = await _context.Users
+                .IgnoreQueryFilters() // Bypass tenant filtering to load user
+                .Include(u => u.TenantUsers.Where(tu => tu.IsActive))
+                .Include(u => u.UserRoles.Where(ur => ur.IsActive))
+                    .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+            if (user == null)
+            {
+                _logger.LogWarning("User {UserId} not found during tenant switch", userId);
+                return ApiResponseDto<TokenResponseDto>.ErrorResult("User not found");
+            }
+
+            _logger.LogWarning("🔍 TENANT SWITCH DEBUG: User loaded. TenantUsers count: {Count}", user.TenantUsers?.Count ?? 0);
+
+            // Verify user has access to target tenant
+            var hasAccess = user.TenantUsers.Any(tu => tu.TenantId == tenantId && tu.IsActive);
+            
+            _logger.LogWarning("🔍 TENANT SWITCH DEBUG: User has access to tenant {TenantId}: {HasAccess}", tenantId, hasAccess);
+            
+            if (!hasAccess)
+            {
+                _logger.LogWarning("User {UserId} attempted to switch to unauthorized tenant {TenantId}", 
+                    userId, tenantId);
+                return ApiResponseDto<TokenResponseDto>.ErrorResult("Access denied to tenant");
+            }
+
+            // Load target tenant
+            _logger.LogWarning("🔍 TENANT SWITCH DEBUG: Loading tenant {TenantId} from repository", tenantId);
+            var tenant = await _tenantRepository.GetTenantByIdAsync(tenantId, cancellationToken);
+            
+            if (tenant == null)
+            {
+                _logger.LogWarning("🔍 TENANT SWITCH DEBUG: Tenant {TenantId} not found in repository", tenantId);
+                return ApiResponseDto<TokenResponseDto>.ErrorResult("Tenant not found");
+            }
+
+            _logger.LogWarning("🔍 TENANT SWITCH DEBUG: Tenant loaded - ID: {ActualId}, Name: {Name}, IsActive: {IsActive}", 
+                tenant.Id, tenant.Name, tenant.IsActive);
+
+            if (!tenant.IsActive)
+            {
+                _logger.LogWarning("Tenant {TenantId} is inactive", tenantId);
+                return ApiResponseDto<TokenResponseDto>.ErrorResult("Tenant not found or inactive");
+            }
+
+            // Revoke existing refresh tokens for security (optional but recommended)
+            var existingTokens = await _context.RefreshTokens
+                .Where(rt => rt.UserId == userId && !rt.IsRevoked)
+                .ToListAsync(cancellationToken);
+
+            foreach (var existingToken in existingTokens)
+            {
+                existingToken.IsRevoked = true;
+                existingToken.RevokedAt = DateTime.UtcNow;
+                existingToken.RevokedByIp = GetClientIpAddress();
+            }
+
+            // 🔧 CRITICAL DEBUG: Log what we're passing to token generation
+            _logger.LogWarning("🔍 TENANT SWITCH DEBUG: About to generate token with - User ID: {UserId}, Tenant ID: {TenantId}, Tenant Name: {TenantName}", 
+                user.Id, tenant.Id, tenant.Name);
+
+            // Generate new JWT for the target tenant with tenant-specific permissions
+            var accessToken = await _tokenService.GenerateAccessTokenAsync(user, tenant);
+            var refreshToken = await _tokenService.CreateRefreshTokenAsync(user);
+            
+            // Set tenant context for refresh token
+            refreshToken.TenantId = tenant.Id;
+            refreshToken.CreatedByIp = GetClientIpAddress();
+
+            _context.RefreshTokens.Add(refreshToken);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            // Create response DTOs
+            var userDto = _mapper.Map<DTOs.User.UserDto>(user);
+            userDto.TenantId = tenant.Id; // Ensure correct tenant ID in response
+
+            var tenantDto = _mapper.Map<DTOs.Tenant.TenantDto>(tenant);
+
+            _logger.LogWarning("🔍 TENANT SWITCH DEBUG: Response DTOs created - UserDto.TenantId: {UserTenantId}, TenantDto.Id: {TenantDtoId}, TenantDto.Name: {TenantDtoName}", 
+                userDto.TenantId, tenantDto.Id, tenantDto.Name);
+
+            var response = new TokenResponseDto
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken.Token,
+                ExpiresAt = refreshToken.ExpiryDate,
+                TokenType = "Bearer",
+                User = userDto,
+                Tenant = tenantDto
+            };
+
+            _logger.LogInformation("User {UserId} successfully switched to tenant {TenantId} ({TenantName})", 
+                userId, tenant.Id, tenant.Name);
+
+            return ApiResponseDto<TokenResponseDto>.SuccessResult(response, 
+                $"Successfully switched to {tenant.Name}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error switching tenant for user {UserId} to tenant {TenantId}", 
+                userId, tenantId);
+            return ApiResponseDto<TokenResponseDto>.ErrorResult("Tenant switch failed");
         }
     }
 

@@ -5,6 +5,9 @@ using Contracts.User;
 using DTOs.Common;
 using DTOs.User;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using Common.Data;
+using DTOs.Tenant;
 
 namespace UserService.Controllers;
 
@@ -16,15 +19,18 @@ public class UsersController : ControllerBase
     private readonly IUserService _userService;
     private readonly IUserProfileService _userProfileService;
     private readonly ILogger<UsersController> _logger;
+    private readonly ApplicationDbContext _context;  // Add this
 
     public UsersController(
         IUserService userService,
         IUserProfileService userProfileService,
-        ILogger<UsersController> logger)
+        ILogger<UsersController> logger,
+        ApplicationDbContext context)  // Add this parameter
     {
         _userService = userService;
         _userProfileService = userProfileService;
         _logger = logger;
+        _context = context;  // Add this
     }
 
     /// <summary>
@@ -501,6 +507,57 @@ public class UsersController : ControllerBase
         {
             _logger.LogError(ex, "Error updating status for user {UserId}", id);
             return StatusCode(500, ApiResponseDto<bool>.ErrorResult("An error occurred while updating user status"));
+        }
+    }
+
+    /// <summary>
+    /// Get tenants that a user has access to (requires users.view permission or own user)
+    /// </summary>
+    [HttpGet("{id:int}/tenants")]
+    public async Task<ActionResult<ApiResponseDto<List<TenantDto>>>> GetUserTenants(int id)
+    {
+        try
+        {
+            var currentUserId = GetCurrentUserId();
+            
+            // Users can view their own tenants, users with users.view permission can view any user's tenants
+            var hasUsersViewPermission = User.Claims.Any(c => 
+                c.Type == "permission" && c.Value == "users.view");
+
+            if (id != currentUserId && !hasUsersViewPermission)
+            {
+                _logger.LogWarning("User {UserId} attempted to view tenants for user {TargetUserId} without users.view permission", 
+                    currentUserId, id);
+                return StatusCode(403, ApiResponseDto<List<TenantDto>>.ErrorResult("You don't have permission to view user tenants"));
+            }
+
+            // 🔧 CRITICAL FIX: Use IgnoreQueryFilters() to bypass global tenant filtering
+            // We want ALL tenants this user has access to, not just current tenant
+            var userTenants = await _context.TenantUsers
+                .IgnoreQueryFilters() // 🔧 ADD: This bypasses the global tenant filter
+                .Where(tu => tu.UserId == id && tu.IsActive)
+                .Include(tu => tu.Tenant)
+                .Where(tu => tu.Tenant.IsActive)
+                .Select(tu => new TenantDto
+                {
+                    Id = tu.Tenant.Id,
+                    Name = tu.Tenant.Name,
+                    Domain = tu.Tenant.Domain,
+                    SubscriptionPlan = tu.Tenant.SubscriptionPlan,
+                    IsActive = tu.Tenant.IsActive,
+                    CreatedAt = tu.Tenant.CreatedAt,
+                    UpdatedAt = tu.Tenant.UpdatedAt
+                })
+                .ToListAsync();
+
+            _logger.LogInformation("Found {Count} tenants for user {UserId} (unfiltered by tenant context)", userTenants.Count, id);
+
+            return Ok(ApiResponseDto<List<TenantDto>>.SuccessResult(userTenants, "User tenants retrieved successfully"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving tenants for user {UserId}", id);
+            return StatusCode(500, ApiResponseDto<List<TenantDto>>.ErrorResult("An error occurred while retrieving user tenants"));
         }
     }
 

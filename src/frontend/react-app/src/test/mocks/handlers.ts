@@ -37,6 +37,32 @@ const enhancedMockUsers = Object.values(mockUsers).map(user => ({
 
 const enhancedMockRoles = Object.values(mockRoles)
 
+// 🔧 NEW: Mock tenant data
+const mockTenants = [
+  {
+    id: '1',
+    name: 'Default Tenant',
+    domain: 'localhost',
+    subscriptionPlan: 'Development',
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }
+]
+
+const mockTenantSettings = {
+  theme: {
+    primaryColor: '#1976d2',
+    companyName: 'Default Tenant'
+  },
+  features: {
+    multiUser: true,
+    reports: true,
+    analytics: false
+  },
+  subscriptionPlan: 'Development'
+}
+
 export const handlers = [
 
   // ========================================
@@ -185,7 +211,7 @@ export const handlers = [
       emailConfirmed: false,
       isActive: true,
       roles: body.roles || ['User'],
-      tenantId: 'tenant-1',
+      tenantId: '1', // 🔧 FIX: Use string ID
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }
@@ -213,6 +239,30 @@ export const handlers = [
       createApiResponse(null, false, 'User not found'),
       { status: 404 }
     )
+  }),
+
+  // 🔧 NEW: Add tenant endpoints for tests
+  // ========================================
+  // 🏢 TENANT MANAGEMENT ENDPOINTS
+  // ========================================
+
+  http.get(`${API_BASE_URL}/users/:userId/tenants`, ({ params }) => {
+    const userId = params.userId as string
+    
+    // Return mock tenant data for any user
+    return HttpResponse.json(createApiResponse(mockTenants))
+  }),
+
+  http.get(`${API_BASE_URL}/tenants/:tenantId/settings`, ({ params }) => {
+    const tenantId = params.tenantId as string
+    
+    return HttpResponse.json(createApiResponse(mockTenantSettings))
+  }),
+
+  http.post(`${API_BASE_URL}/auth/switch-tenant`, async ({ request }) => {
+    const body = await request.json() as { tenantId: string }
+    
+    return HttpResponse.json(createApiResponse(true, true, 'Tenant switched successfully'))
   }),
 
   // ========================================
@@ -331,5 +381,91 @@ export const handlers = [
       createApiResponse(null, false, 'Simulated server error'),
       { status: 500 }
     )
-  })
+  }),
+
+  // Replace the registration handler around line 420:
+  http.post(`${API_BASE_URL}/auth/register`, async ({ request }) => {
+    const body = await request.json() as {
+      email: string;
+      password: string;
+      confirmPassword: string;
+      firstName: string;
+      lastName: string;
+      tenantName?: string;
+    }
+
+    // Validate request
+    if (body.password !== body.confirmPassword) {
+      return HttpResponse.json(
+        createApiResponse(null, false, 'Passwords do not match'),
+        { status: 400 }
+      )
+    }
+
+    // Check if user already exists
+    const existingUser = enhancedMockUsers.find(user => user.email === body.email)
+    
+    // 🔧 NEW: Handle existing user creating new tenant (consultant use case)
+    if (existingUser && body.tenantName) {
+      console.log(`🏢 CONSULTANT FLOW: ${body.email} creating tenant "${body.tenantName}"`)
+      
+      // Check if tenant already exists
+      const existingTenant = mockTenants.find(t => t.name === body.tenantName)
+      if (existingTenant) {
+        return HttpResponse.json(
+          createApiResponse(null, false, `Organization "${body.tenantName}" already exists`),
+          { status: 400 }
+        )
+      }
+      
+      // Create new tenant
+      const newTenantId = (mockTenants.length + 1).toString()
+      const newTenant = {
+        id: newTenantId,
+        name: body.tenantName,
+        domain: `${body.tenantName.toLowerCase().replace(/\s+/g, '')}.local`,
+        subscriptionPlan: 'Basic',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      
+      mockTenants.push(newTenant)
+      
+      // 🔧 DECISION POINT: What to do with different personal info?
+      
+      // Option A: Keep existing user info (recommended)
+      console.log(`📝 KEEPING existing user info: ${existingUser.firstName} ${existingUser.lastName}`)
+      console.log(`📝 IGNORING form input: ${body.firstName} ${body.lastName}`)
+      
+      // Option B: Update user info (alternative)
+      // existingUser.firstName = body.firstName
+      // existingUser.lastName = body.lastName
+      // existingUser.fullName = `${body.firstName} ${body.lastName}`
+      // console.log(`📝 UPDATED user info to: ${body.firstName} ${body.lastName}`)
+      
+      // 🔧 NOTE: Password is NOT updated - existing user keeps their original password
+      
+      // Return success with existing user + new tenant
+      return HttpResponse.json(createApiResponse({
+        accessToken: `mock-consultant-token-${existingUser.id}-${newTenantId}`,
+        refreshToken: `mock-refresh-${existingUser.id}-${newTenantId}`,
+        expiresAt: new Date(Date.now() + 3600000).toISOString(),
+        tokenType: 'Bearer',
+        user: existingUser, // Using existing user info
+        tenant: newTenant
+      }), { status: 201 })
+    }
+    
+    // 🔧 EXISTING: Handle existing user without tenant creation
+    if (existingUser) {
+      return HttpResponse.json(
+        createApiResponse(null, false, 'User with this email already exists. Please sign in instead.'),
+        { status: 400 }
+      )
+    }
+
+    // 🔧 EXISTING: Continue with new user registration...
+    // ... rest of existing code for new users
+  }),
 ]

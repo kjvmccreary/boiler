@@ -49,6 +49,7 @@ import { PERMISSIONS } from '@/utils/api.constants.js';
 import type { User } from '@/types/index.js';
 import toast from 'react-hot-toast';
 import { normalizeRoles } from '@/utils/role.utils.js';
+import { ROUTES } from '@/routes/route.constants.js'; // Add this import at the top (after other imports)
 
 export function UserList() {
   const [users, setUsers] = useState<User[]>([]);
@@ -117,14 +118,14 @@ export function UserList() {
 
   const handleEditUser = () => {
     if (selectedUser) {
-      navigate(`/users/${selectedUser.id}`);
+      navigate(`${ROUTES.USERS}/${selectedUser.id}`); // 🔧 FIX: Use constant instead of '/users/${selectedUser.id}'
     }
     handleMenuClose();
   };
 
   const handleManageRoles = () => {
     if (selectedUser) {
-      navigate(`/users/${selectedUser.id}/roles`);
+      navigate(`${ROUTES.USERS}/${selectedUser.id}/roles`); // 🔧 FIX: Use constant instead of '/users/${selectedUser.id}/roles'
     }
     handleMenuClose();
   };
@@ -236,7 +237,7 @@ export function UserList() {
           <Button
             variant="contained"
             startIcon={<PersonAddIcon />}
-            onClick={() => navigate('/users/new')}
+            onClick={() => navigate(ROUTES.USER_NEW)} // 🔧 FIX: Use constant instead of '/users/new'
           >
             Add User
           </Button>

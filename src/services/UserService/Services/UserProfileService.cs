@@ -42,11 +42,14 @@ public class UserProfileService : IUserProfileService
                 return ApiResponseDto<UserDto>.ErrorResult("Tenant context not found");
             }
 
+            // 🔧 FIX: Use IgnoreQueryFilters and verify tenant access via TenantUsers table
+            // This allows users to access their profile when switching between tenants they have access to
             var user = await _userRepository.Query()
-                .Where(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value)
-                .Include(u => u.UserRoles.Where(ur => ur.IsActive)) // ✅ ADD: Include RBAC roles
-                    .ThenInclude(ur => ur.Role) // ✅ ADD: Include Role details
-                .Include(u => u.TenantUsers) // Keep for fallback
+                .IgnoreQueryFilters() // 🔧 CRITICAL: Bypass global tenant filtering
+                .Where(u => u.Id == userId && u.IsActive)
+                .Include(u => u.UserRoles.Where(ur => ur.IsActive && ur.TenantId == currentTenantId.Value))
+                    .ThenInclude(ur => ur.Role)
+                .Include(u => u.TenantUsers.Where(tu => tu.IsActive)) // Load all tenant access
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)
@@ -54,12 +57,29 @@ public class UserProfileService : IUserProfileService
                 return ApiResponseDto<UserDto>.ErrorResult("User profile not found");
             }
 
+            // 🔧 CRITICAL: Verify user has access to current tenant via TenantUsers table
+            var hasAccessToCurrentTenant = user.TenantUsers.Any(tu => 
+                tu.TenantId == currentTenantId.Value && tu.IsActive);
+                
+            if (!hasAccessToCurrentTenant)
+            {
+                _logger.LogWarning("User {UserId} attempted to access profile in tenant {TenantId} without TenantUsers access. Available tenants: {AvailableTenants}", 
+                    userId, currentTenantId.Value, string.Join(", ", user.TenantUsers.Where(tu => tu.IsActive).Select(tu => tu.TenantId)));
+                return ApiResponseDto<UserDto>.ErrorResult("Access denied to current tenant");
+            }
+
             var userDto = _mapper.Map<UserDto>(user);
+            
+            // 🔧 IMPORTANT: Set the current tenant context, not the user's primary tenant
+            userDto.TenantId = currentTenantId.Value;
+            
+            _logger.LogInformation("User {UserId} successfully accessed profile in tenant {TenantId}", userId, currentTenantId.Value);
+            
             return ApiResponseDto<UserDto>.SuccessResult(userDto);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving profile for user {UserId}", userId);
+            _logger.LogError(ex, "Error retrieving profile for user {UserId} in tenant context", userId);
             return ApiResponseDto<UserDto>.ErrorResult("An error occurred while retrieving your profile");
         }
     }

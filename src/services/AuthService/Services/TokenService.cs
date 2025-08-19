@@ -41,26 +41,13 @@ public class TokenService : ITokenService
     {
         _logger.LogInformation("🔍 TOKEN DEBUG: Starting token generation for user {UserId} in tenant {TenantId}", user.Id, tenant.Id);
         
-        // 🔧 .NET 9 FIX: Enhanced debugging for role loading
-        _logger.LogInformation("🔍 TOKEN DEBUG: User.TenantUsers collection status: Count={Count}, IsNull={IsNull}", 
-            user.TenantUsers?.Count ?? -1, user.TenantUsers == null);
-        
-        if (user.TenantUsers != null)
-        {
-            foreach (var tu in user.TenantUsers)
-            {
-                _logger.LogInformation("🔍 TOKEN DEBUG: TenantUser found: TenantId={TenantId}, Role={Role}, IsActive={IsActive}", 
-                    tu.TenantId, tu.Role, tu.IsActive);
-            }
-        }
-        
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.GivenName, user.FirstName),
             new(ClaimTypes.Surname, user.LastName),
-            new("tenant_id", user.TenantId?.ToString() ?? tenant.Id.ToString()),
+            new("tenant_id", tenant.Id.ToString()), // 🔧 FIX: Always use the passed tenant ID
             new("tenant_name", tenant.Name),
             new("tenant_domain", tenant.Domain ?? string.Empty),
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),

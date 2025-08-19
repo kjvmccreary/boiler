@@ -32,6 +32,7 @@ import { PermissionSelector } from './PermissionSelector.js';
 import { roleService, type RoleCreateRequest, type RoleUpdateRequest } from '@/services/role.service.js';
 import type { Role, UserInfo } from '@/types/index.js';
 import toast from 'react-hot-toast';
+import { ROUTES } from '@/routes/route.constants.js';
 
 export function RoleEditor() {
   const { id } = useParams<{ id: string }>();
@@ -80,7 +81,7 @@ export function RoleEditor() {
     } catch (error) {
       console.error('Failed to load role:', error);
       toast.error('Failed to load role');
-      navigate('/roles');
+      navigate(ROUTES.ROLES); // 🔧 FIX: Was navigate('/roles')
     } finally {
       setLoading(false);
     }
@@ -143,7 +144,7 @@ export function RoleEditor() {
         toast.success('Role created successfully');
       }
 
-      navigate('/roles');
+      navigate(ROUTES.ROLES); // 🔧 FIX: Was navigate('/roles')
     } catch (error) {
       console.error('Failed to save role:', error);
       toast.error(`Failed to ${isEditing ? 'update' : 'create'} role`);
@@ -365,7 +366,7 @@ export function RoleEditor() {
           <Button
             variant="outlined"
             startIcon={<CancelIcon />}
-            onClick={() => navigate('/roles')}
+            onClick={() => navigate(ROUTES.ROLES)} // 🔧 FIX: Was navigate('/roles')
             disabled={saving}
           >
             Cancel

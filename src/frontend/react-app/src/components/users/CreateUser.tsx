@@ -19,6 +19,7 @@ import {
 import { userService } from '@/services/user.service.js';
 import type { User } from '@/types/index.js';
 import toast from 'react-hot-toast';
+import { ROUTES } from '@/routes/route.constants.js';
 
 interface CreateUserFormData {
   firstName: string;
@@ -93,7 +94,7 @@ export function CreateUser() {
       
       toast.success('User created successfully');
       
-      navigate(`/users/${createdUser.id}`);
+      navigate(`${ROUTES.USERS}/${createdUser.id}`);
       
     } catch (error) {
       console.error('Failed to create user:', error);
@@ -109,7 +110,7 @@ export function CreateUser() {
   };
 
   const handleCancel = () => {
-    navigate('/users');
+    navigate(ROUTES.USERS);
   };
 
   const handleInputChange = (field: keyof CreateUserFormData) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,7 +132,7 @@ export function CreateUser() {
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/users')}
+          onClick={() => navigate(ROUTES.USERS)}
           sx={{ mr: 2 }}
         >
           Back to Users

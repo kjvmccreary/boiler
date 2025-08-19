@@ -1,6 +1,7 @@
 export const ROUTES = {
   // Public routes
   HOME: '/',
+  WELCOME: '/welcome',
   LOGIN: '/login',
   REGISTER: '/register',
   FORGOT_PASSWORD: '/forgot-password',
@@ -8,17 +9,22 @@ export const ROUTES = {
   EMAIL_CONFIRMATION: '/confirm-email',
   UNAUTHORIZED: '/unauthorized',
 
-  // Protected routes
-  DASHBOARD: '/dashboard',
-  PROFILE: '/profile',
+  // 🔧 FIX: Add /app prefix to ALL protected routes
+  DASHBOARD: '/app/dashboard',
+  PROFILE: '/app/profile',
+  CHANGE_PASSWORD: '/app/change-password',
   
   // Admin routes
-  USERS: '/users',
-  USER_DETAILS: '/users/:id',
-  ROLES: '/roles',
-  ROLE_DETAILS: '/roles/:id',
-  PERMISSIONS: '/permissions',
-  SETTINGS: '/settings',
+  USERS: '/app/users',
+  USER_DETAILS: '/app/users/:id',
+  USER_NEW: '/app/users/new',
+  USER_ROLES: '/app/users/:id/roles',
+  ROLES: '/app/roles',
+  ROLE_DETAILS: '/app/roles/:id',
+  ROLE_NEW: '/app/roles/new',
+  ROLE_EDIT: '/app/roles/:id/edit',
+  PERMISSIONS: '/app/permissions',
+  SETTINGS: '/app/settings',
 } as const;
 
 export const NAVIGATION_ITEMS = [
@@ -26,7 +32,7 @@ export const NAVIGATION_ITEMS = [
     label: 'Dashboard',
     path: ROUTES.DASHBOARD,
     icon: 'Dashboard',
-    permission: undefined, // Available to all authenticated users
+    permission: undefined,
   },
   {
     label: 'Users',

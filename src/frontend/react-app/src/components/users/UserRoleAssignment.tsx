@@ -32,6 +32,7 @@ import { PERMISSIONS } from '@/utils/api.constants.js';
 import { usePermission } from '@/contexts/PermissionContext.js';
 import type { Role } from '@/types/index.js';
 import toast from 'react-hot-toast';
+import { ROUTES } from '@/routes/route.constants.js';
 
 interface UserData {
   userCurrentRoles: { id: number; name: string }[];
@@ -193,7 +194,7 @@ export function UserRoleAssignment() {
     return (
       <Box sx={{ p: 3 }}>
         <Alert severity="error">{error}</Alert>
-        <Button onClick={() => navigate('/users')} sx={{ mt: 2 }}>
+        <Button onClick={() => navigate(ROUTES.USERS)} sx={{ mt: 2 }}>
           Back to Users
         </Button>
       </Box>
@@ -215,7 +216,7 @@ export function UserRoleAssignment() {
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/users')}
+          onClick={() => navigate(ROUTES.USERS)}
           sx={{ mr: 2 }}
         >
           Back to Users

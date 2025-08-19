@@ -20,6 +20,7 @@ interface AuthContextValue extends AuthState {
     confirmPassword: string;
     firstName: string;
     lastName: string;
+    tenantName?: string; // 🔧 NEW: Optional tenant name for self-serve
   }) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
@@ -286,12 +287,15 @@ export function AuthProvider({
     }
   };
 
+  // Update the register function to accept tenantName
+
   const register = async (userData: {
     email: string;
     password: string;
     confirmPassword: string;
     firstName: string;
     lastName: string;
+    tenantName?: string; // 🔧 NEW: Optional tenant name for self-serve
   }) => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     
@@ -303,13 +307,13 @@ export function AuthProvider({
       
       // Get permissions and roles from token
       const permissions = getPermissionsFromToken(authResponse.accessToken);
-      const roles = getRolesFromToken(authResponse.accessToken); // 🔧 Extract multiple roles
+      const roles = getRolesFromToken(authResponse.accessToken);
       
       setState(prev => ({
         ...prev,
         user: authResponse.user,
         permissions,
-        roles, // 🔧 Set multiple roles
+        roles,
         isAuthenticated: true,
         isLoading: false,
         error: null,

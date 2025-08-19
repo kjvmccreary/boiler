@@ -5,10 +5,11 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using System.Security.Claims;
 using AuthService.Controllers;
-using Contracts.Services; // ✅ FIXED: Use shared contract instead of local service
+using Contracts.Services;
 using Contracts.Auth;
 using DTOs.Auth;
 using DTOs.Common;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AuthService.Tests.Controllers;
 
@@ -17,18 +18,21 @@ public class AuthControllerTests
     private readonly AuthController _controller;
     private readonly Mock<IAuthService> _mockAuthService;
     private readonly Mock<ILogger<AuthController>> _mockLogger;
-    private readonly Mock<IPasswordService> _mockPasswordService; // ✅ Now uses Contracts.Services.IPasswordService
+    private readonly Mock<IPasswordService> _mockPasswordService;
+    private readonly Mock<IServiceProvider> _mockServiceProvider; // ADD: Mock service provider
 
     public AuthControllerTests()
     {
         _mockAuthService = new Mock<IAuthService>();
         _mockLogger = new Mock<ILogger<AuthController>>();
-        _mockPasswordService = new Mock<IPasswordService>(); // ➕ ADD: Initialize mock
+        _mockPasswordService = new Mock<IPasswordService>();
+        _mockServiceProvider = new Mock<IServiceProvider>(); // ADD: Initialize mock service provider
         
         _controller = new AuthController(
             _mockAuthService.Object, 
             _mockLogger.Object,
-            _mockPasswordService.Object); // ➕ ADD: Pass password service mock
+            _mockPasswordService.Object,
+            _mockServiceProvider.Object); // ADD: Pass service provider mock
     }
 
     [Fact]
@@ -229,7 +233,6 @@ public class AuthControllerTests
         response.Message.Should().Be("Token is valid");
     }
 
-    // ➕ ADD: Test for the debug hash generation endpoint
     [Fact]
     public void GenerateHash_WithValidPassword_ShouldReturnHashedPassword()
     {
@@ -249,10 +252,8 @@ public class AuthControllerTests
         var okResult = result.Result as OkObjectResult;
         var response = okResult!.Value;
         
-        // Verify the response contains the expected structure
         response.Should().NotBeNull();
         
-        // Verify the mock was called
         _mockPasswordService.Verify(x => x.HashPassword(password), Times.Once);
     }
 

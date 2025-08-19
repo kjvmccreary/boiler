@@ -100,6 +100,8 @@ public class UserService : IUserService
         try
         {
             var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            _logger.LogInformation("🔍 UserService.GetUsersAsync: Using tenant ID: {TenantId}", currentTenantId);
+            
             if (!currentTenantId.HasValue)
             {
                 return ApiResponseDto<PagedResultDto<UserDto>>.ErrorResult("Tenant context not found");

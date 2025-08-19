@@ -195,17 +195,29 @@ public class TenantProvider : ITenantProvider
 
     private string? ResolveFromHeader(HttpContext context)
     {
-        if (context.Request.Headers.TryGetValue(_tenantSettings.TenantHeaderName, out var headerValue))
+        // 🔧 DEBUG: Log all headers to see what's being sent
+        var allHeaders = context.Request.Headers
+            .Select(h => $"{h.Key}={string.Join(",", h.Value.ToArray())}")  
+            .ToArray();
+        _logger.LogInformation("🔍 All request headers: {Headers}", string.Join("; ", allHeaders.ToArray()));  
+
+        // 🔧 TRY: Multiple header name variations
+        var headerNames = new[] { "X-Tenant-Id", "X-Tenant-ID", _tenantSettings.TenantHeaderName };
+        
+        foreach (var headerName in headerNames)
         {
-            var value = headerValue.FirstOrDefault();
-            if (!string.IsNullOrEmpty(value))
+            if (context.Request.Headers.TryGetValue(headerName, out var headerValue))
             {
-                _logger.LogDebug("Resolved tenant from header: {TenantId}", value);
-                return value;
+                var value = headerValue.FirstOrDefault();
+                if (!string.IsNullOrEmpty(value))
+                {
+                    _logger.LogInformation("🏢 FOUND tenant from header '{HeaderName}': {TenantId}", headerName, value);
+                    return value;
+                }
             }
         }
 
-        _logger.LogDebug("No tenant found in header: {HeaderName}", _tenantSettings.TenantHeaderName);
+        _logger.LogWarning("❌ No tenant found in any headers: {HeaderNames}", string.Join(", ", headerNames.ToArray()));  
         return null;
     }
 
@@ -272,7 +284,7 @@ public class TenantProvider : ITenantProvider
 
             // ✅ DEBUG: Log all claims to help troubleshoot
             var allClaims = context.User.Claims.Select(c => $"{c.Type}={c.Value}").ToArray();
-            _logger.LogDebug("Available claims: {Claims}", string.Join(", ", allClaims));
+            _logger.LogDebug("Available claims: {Claims}", string.Join(", ", allClaims.ToArray()));  // 🔧 FIX: Add .ToArray()
         }
 
         await Task.CompletedTask;

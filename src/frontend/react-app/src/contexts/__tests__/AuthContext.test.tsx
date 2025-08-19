@@ -6,6 +6,8 @@ import { AuthProvider, useAuth } from '../AuthContext'
 import { authService } from '@/services/auth.service'
 import { tokenManager } from '@/utils/token.manager'
 import type { User, AuthResponse } from '@/types/index'
+import { TenantProvider } from '@/contexts/TenantContext.js'
+import { MemoryRouter } from 'react-router-dom' // 🔧 ADD: Missing import
 
 // Mock the services
 vi.mock('@/services/auth.service')
@@ -833,3 +835,15 @@ describe('AuthContext', () => {
     })
   })
 })
+
+function TestWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <MemoryRouter>
+      <AuthProvider testMode>
+        <TenantProvider> {/* 🔧 NEW: Add TenantProvider */}
+          {children}
+        </TenantProvider>
+      </AuthProvider>
+    </MemoryRouter>
+  )
+}

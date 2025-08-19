@@ -25,6 +25,7 @@ export interface RegisterRequest {
   confirmPassword: string;
   firstName: string;
   lastName: string;
+  tenantName?: string; // 🔧 NEW: Optional for self-serve tenant creation
 }
 
 export interface AuthResponse {
@@ -36,13 +37,32 @@ export interface AuthResponse {
   tenant: Tenant;
 }
 
+// 🔧 REVERT: Keep your original Tenant interface that works with tests
 export interface Tenant {
-  id: string;
+  id: string; // ✅ REVERTED: Back to string to match your tests
   name: string;
-  subdomain?: string;
+  domain?: string;
+  subscriptionPlan?: string; // ✅ ADD: This was missing
   isActive: boolean;
+  settings?: TenantSettings; // ✅ ADD: For tenant-specific settings
   createdAt: string;
   updatedAt: string;
+  // Optional display properties
+  userCount?: number;
+  roleCount?: number;
+}
+
+// 🔧 NEW: Tenant settings interface (this was missing)
+export interface TenantSettings {
+  theme?: {
+    primaryColor?: string;
+    logo?: string;
+    companyName?: string;
+  };
+  features?: {
+    [key: string]: boolean;
+  };
+  subscriptionPlan?: string;
 }
 
 // User preferences interface
@@ -58,9 +78,9 @@ export interface UserPreferences {
   [key: string]: unknown;
 }
 
-// 🔧 .NET 9 MULTI-ROLE FIX: Enhanced User type for multiple roles
+// 🔧 REVERT: Keep your original User interface that works with tests
 export interface User {
-  id: string;
+  id: string; // ✅ REVERTED: Back to string to match your tests
   email: string;
   firstName: string;
   lastName: string;
@@ -71,8 +91,8 @@ export interface User {
   lastLoginAt?: string;
   emailConfirmed: boolean;
   isActive: boolean;
-  roles: string | string[];     // 🔧 Handle both single role from JWT and multiple roles from API
-  tenantId: string;
+  roles: string | string[];
+  tenantId: string; // ✅ REVERTED: Back to string to match your tests
   createdAt: string;
   updatedAt: string;
   preferences?: UserPreferences;
@@ -88,7 +108,7 @@ export interface UserInfo {
   emailConfirmed: boolean;
   isActive: boolean;
   roles: string[];
-  tenantId: string;
+  tenantId: string; // ✅ REVERTED: Back to string
   createdAt: string;
   updatedAt: string;
 }
@@ -101,7 +121,7 @@ export interface Permission {
   description?: string;
 }
 
-// 🔧 UNIFIED ROLE TYPE: Use consistent ID type (number) to match backend
+// 🔧 REVERT: Keep number for Role IDs (this part can stay)
 export interface Role {
   id: number;
   name: string;
@@ -115,12 +135,10 @@ export interface Role {
   userCount?: number;
 }
 
-// 🔧 SIMPLIFIED: Use Role for both internal and API responses
 export type RoleDto = Role;
 
-// 🔧 NEW: Separate interface for RBAC role assignments
 export interface UserRoleAssignment {
-  userId: string;
+  userId: string; // ✅ REVERTED: Back to string
   roleId: number;
   roleName: string;
   tenantId: number;
@@ -142,7 +160,7 @@ export interface UpdateRoleRequest {
 }
 
 export interface AssignRoleRequest {
-  userId: string;
+  userId: string; // ✅ REVERTED: Back to string
   roleId: number;
 }
 
@@ -192,5 +210,3 @@ export interface PaginationParams {
   pageSize?: number;
   searchTerm?: string;
 }
-
-// Add the missing types that useRoles hook expects:

@@ -31,15 +31,14 @@ export class ApiClient {
   }
 
   private setupInterceptors() {
-    // Request interceptor - Add auth token
+    // Request interceptor - Add auth token (JWT now contains tenant context)
     this.instance.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
-        // ✅ FIX: Use the same key as TokenManager
         const token = localStorage.getItem('auth_token')
         
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
-          console.log('🔍 API REQUEST (with auth):', config.method?.toUpperCase(), config.url)
+          console.log('🔍 API REQUEST (with JWT):', config.method?.toUpperCase(), config.url)
         } else {
           console.log('🚨 API REQUEST (NO AUTH):', config.method?.toUpperCase(), config.url, '- No token found!')
         }
@@ -91,12 +90,11 @@ export class ApiClient {
             if (refreshToken) {
               console.log('🔄 Attempting token refresh...');
               const response = await this.post('/api/auth/refresh', { refreshToken });
-              //const { accessToken } = response.data;
+              
               interface RefreshTokenResponse {
                 accessToken: string;
               }
 
-              // Then use:
               const { accessToken } = response.data as RefreshTokenResponse;
 
               localStorage.setItem('auth_token', accessToken);
@@ -120,6 +118,15 @@ export class ApiClient {
         return Promise.reject(error);
       }
     )
+  }
+
+  // 🔧 SIMPLIFIED: No longer needed with JWT approach, but keep for compatibility
+  setCurrentTenant(tenantId: string | null): void {
+    if (tenantId) {
+      console.log('🏢 API CLIENT: Tenant context set to:', tenantId, '(using JWT for tenant context)');
+    } else {
+      console.log('🏢 API CLIENT: Tenant context cleared (using JWT for tenant context)');
+    }
   }
 
   // ✅ FIXED: Properly handle .NET 9 ApiResponseDto<T> structure

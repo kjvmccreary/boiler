@@ -2,7 +2,6 @@ import { apiClient } from './api.client.js';
 import { API_ENDPOINTS } from '@/utils/api.constants.js';
 import type { 
   LoginRequest, 
-  RegisterRequest, 
   AuthResponse,
   User
 } from '@/types/index.js';
@@ -33,7 +32,16 @@ export class AuthService {
     return response.data;
   }
 
-  async register(userData: RegisterRequest): Promise<AuthResponse> {
+  async register(userData: {
+    email: string;
+    password: string;
+    confirmPassword: string;
+    firstName: string;
+    lastName: string;
+    tenantName?: string; // 🔧 NEW: Optional tenant name
+  }): Promise<AuthResponse> {
+    console.log('🔍 AuthService: Registering user with tenant:', userData.tenantName || 'no tenant');
+    
     const response = await apiClient.post<AuthResponse>(
       API_ENDPOINTS.AUTH.REGISTER, 
       userData

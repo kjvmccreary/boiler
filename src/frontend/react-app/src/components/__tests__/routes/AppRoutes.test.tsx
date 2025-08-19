@@ -9,6 +9,12 @@ vi.mock('@/components/auth/LoginForm.js', () => ({
   LoginForm: () => <div>Login Form</div>,
 }))
 
+// 🔧 NEW: Mock EnhancedLoginForm which uses useTenant
+vi.mock('@/components/auth/EnhancedLoginForm.js', () => ({
+  EnhancedLoginForm: () => <div>Enhanced Login Form</div>,
+  default: () => <div>Enhanced Login Form</div>,
+}))
+
 vi.mock('@/components/roles/RoleDetails.js', () => ({
   RoleDetails: () => <div>Role Details</div>,
 }))
@@ -48,6 +54,22 @@ vi.mock('@/contexts/AuthContext.js', () => ({
     isAuthenticated: true,
   }),
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}))
+
+// 🔧 NEW: Mock tenant context
+vi.mock('@/contexts/TenantContext.js', () => ({
+  useTenant: () => ({
+    currentTenant: { id: '1', name: 'Test Tenant' },
+    availableTenants: [{ id: '1', name: 'Test Tenant' }],
+    switchTenant: vi.fn(),
+    tenantSettings: {},
+    isLoading: false,
+    error: null,
+    showTenantSelector: false,
+    setShowTenantSelector: vi.fn(),
+    completeTenantSelection: vi.fn(),
+  }),
+  TenantProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
 // Mock permission context
@@ -140,6 +162,6 @@ describe('AppRoutes', () => {
       </TestWrapper>
     )
 
-    expect(screen.getByText('Login Form')).toBeInTheDocument()
+    expect(screen.getByText('Enhanced Login Form')).toBeInTheDocument() // 🔧 FIX: Update expected text
   })
 })

@@ -4,6 +4,7 @@ import { BrowserRouter, MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import userEvent from '@testing-library/user-event'
 import { AuthProvider } from '@/contexts/AuthContext.js'
+import { TenantProvider } from '@/contexts/TenantContext.js'; // 🔧 NEW: Add TenantProvider
 import type { User } from '@/types/index.js'
 import { mockUsers, mockRoles, createMockPermissionContext, type MockRoleType } from './test-utils.js'
 
@@ -128,7 +129,9 @@ function RBACTestWrapper({
           mockAuthState={config.authState}
           testMode={true}
         >
-          {children}
+          <TenantProvider> {/* 🔧 NEW: Add TenantProvider wrapper */}
+            {children}
+          </TenantProvider>
         </AuthProvider>
       </RouterComponent>
     </QueryClientProvider>

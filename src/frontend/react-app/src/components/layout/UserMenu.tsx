@@ -8,27 +8,29 @@ import {
   Box,
   Divider,
   ListItemIcon,
+  Chip,
 } from '@mui/material';
 import {
   AccountCircle,
   Settings as SettingsIcon,
   Logout as LogoutIcon,
+  Business,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext.js';
+import { useTenant } from '@/contexts/TenantContext.js';
 import { LogoutButton } from '@/components/auth/LogoutButton.js';
+import { TenantSwitcher } from './TenantSwitcher.js'; // 🔧 ADD: Import TenantSwitcher
 import { ROUTES } from '@/routes/route.constants.js';
 
 interface UserMenuProps {
-  /**
-   * Use the new LogoutButton component instead of inline logout
-   */
   useLogoutButton?: boolean;
 }
 
 export function UserMenu({ useLogoutButton = false }: UserMenuProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const { user, logout } = useAuth();
+  const { currentTenant, availableTenants } = useTenant();
   const navigate = useNavigate();
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -102,6 +104,17 @@ export function UserMenu({ useLogoutButton = false }: UserMenuProps) {
             <Typography variant="body2" color="text.secondary" noWrap>
               {user.email}
             </Typography>
+            {currentTenant && (
+              <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Business fontSize="small" color="action" />
+                <Chip
+                  label={currentTenant.name}
+                  size="small"
+                  variant="outlined"
+                  color="primary"
+                />
+              </Box>
+            )}
           </Box>
         )}
         <Divider />
@@ -119,6 +132,11 @@ export function UserMenu({ useLogoutButton = false }: UserMenuProps) {
           </ListItemIcon>
           Settings
         </MenuItem>
+        
+        {/* 🔧 REPLACE: Use new TenantSwitcher component */}
+        {availableTenants.length > 1 && (
+          <TenantSwitcher variant="menu-item" onClose={handleClose} />
+        )}
         
         <Divider />
         

@@ -17,6 +17,7 @@ import { CanAccess } from '@/components/authorization/CanAccess.js';
 import { PERMISSIONS } from '@/utils/api.constants.js';
 import { roleService } from '@/services/role.service.js';
 import toast from 'react-hot-toast';
+import { ROUTES } from '@/routes/route.constants.js';
 
 export function RoleManagement() {
   const navigate = useNavigate();
@@ -26,13 +27,13 @@ export function RoleManagement() {
 
   const handleCreateRole = () => {
     console.log('🔍 RoleManagement: Create role clicked');
-    navigate('/roles/new');
+    navigate(ROUTES.ROLE_NEW); // 🔧 FIX: Use constant instead of '/roles/new'
   };
 
   // ✅ FIX: Change function signature to match RoleList expectation
   const handleEditRole = (roleId: number) => {
     console.log('🔍 RoleManagement: Edit role clicked for ID:', roleId);
-    navigate(`/roles/${roleId}/edit`);
+    navigate(`${ROUTES.ROLES}/${roleId}/edit`); // 🔧 FIX: Use constant instead of '/roles/${roleId}/edit'
   };
 
   const handleDeleteRole = (roleId: number) => {

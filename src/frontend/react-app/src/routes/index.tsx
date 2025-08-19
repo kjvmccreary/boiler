@@ -1,29 +1,34 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout.js';
 import { ProtectedRoute } from '@/components/authorization/ProtectedRoute.js';
-import { LoginForm } from '@/components/auth/LoginForm.js';
-import { RegisterForm } from '@/components/auth/RegisterForm.js';
+import { EnhancedLoginForm } from '@/components/auth/EnhancedLoginForm.js';
+import { SelfServeRegisterForm } from '@/components/auth/SelfServeRegisterForm.js';
 import { ChangePasswordForm } from '@/components/auth/ChangePasswordForm.js';
 import { UserList } from '@/components/users/UserList.js';
 import { UserProfile } from '@/components/users/UserProfile.js';
 import { UserRoleAssignment } from '@/components/users/UserRoleAssignment.js';
-import { RoleManagement } from '@/pages/RoleManagement.js'; // ✅ ADD: Import RoleManagement
+import { RoleManagement } from '@/pages/RoleManagement.js';
 import { RoleEditor } from '@/components/roles/RoleEditor.js';
 import { RoleDetails } from '@/components/roles/RoleDetails.js';
 import { Dashboard } from '@/pages/Dashboard.js';
 import { CreateUser } from '@/components/users/CreateUser.js';
+import { LandingPage } from '@/components/landing/LandingPage.js';
 
 // Router-free routes component for testing
 export function AppRoutesConfig() {
   return (
     <Routes>
+      {/* 🔧 FIX: Root path should go to landing page, not AppLayout */}
+      <Route path="/" element={<LandingPage />} />
+      
       {/* Public routes */}
-      <Route path="/login" element={<LoginForm />} />
-      <Route path="/register" element={<RegisterForm />} />
+      <Route path="/welcome" element={<LandingPage />} />
+      <Route path="/login" element={<EnhancedLoginForm />} />
+      <Route path="/register" element={<SelfServeRegisterForm />} />
 
-      {/* Protected routes */}
-      <Route path="/" element={<AppLayout />}>
-        <Route index element={<Navigate to="/dashboard" replace />} />
+      {/* 🔧 FIX: Protected routes now under /app */}
+      <Route path="/app" element={<AppLayout />}>
+        <Route index element={<Navigate to="/app/dashboard" replace />} />
         
         <Route path="dashboard" element={
           <ProtectedRoute>
@@ -56,13 +61,13 @@ export function AppRoutesConfig() {
           </ProtectedRoute>
         } />
 
-        <Route path="/users/new" element={
+        <Route path="users/new" element={
           <ProtectedRoute requirePermission="users.create">
             <CreateUser />
           </ProtectedRoute>
         } />
 
-        {/* ✅ UPDATED: Role management routes */}
+        {/* Role management routes */}
         <Route path="roles" element={
           <ProtectedRoute requirePermission="roles.view">
             <RoleManagement />
@@ -88,8 +93,8 @@ export function AppRoutesConfig() {
         } />
       </Route>
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      {/* Fallback - redirect unknown routes to landing */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

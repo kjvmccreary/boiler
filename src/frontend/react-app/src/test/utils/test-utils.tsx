@@ -354,3 +354,42 @@ export function renderWithProviders(
 
 // Export the test wrapper for direct use
 export const TestWrapper = createTestWrapper()
+
+// Add mock tenant data (already done in our previous fixes)
+
+// 🔧 ADD: Mock tenant context for testing
+export const createMockTenantContext = (tenantId: string = '1') => {
+  return {
+    currentTenant: {
+      id: tenantId,
+      name: `Test Tenant ${tenantId}`,
+      domain: `tenant${tenantId}.test`,
+      subscriptionPlan: 'Development',
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    },
+    availableTenants: [
+      {
+        id: '1',
+        name: 'Test Tenant 1',
+        domain: 'tenant1.test',
+        subscriptionPlan: 'Development',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+    ],
+    switchTenant: vi.fn(),
+    tenantSettings: {
+      theme: { primaryColor: '#1976d2' },
+      features: { multiUser: true },
+      subscriptionPlan: 'Development'
+    },
+    isLoading: false,
+    error: null,
+    showTenantSelector: false,
+    setShowTenantSelector: vi.fn(),
+    completeTenantSelection: vi.fn(),
+  }
+}

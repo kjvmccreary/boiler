@@ -1,12 +1,14 @@
 // FILE: src/services/AuthService/Controllers/AuthController.cs
 using System.Security.Claims;
 using Contracts.Auth;
-using Contracts.Services; // ✅ ADD: For IPasswordService from shared contracts
+using Contracts.Services;
 using DTOs.Auth;
 using DTOs.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-// using AuthService.Services; // ❌ REMOVE: Don't use local namespace for IPasswordService
+using Common.Data;
+using Contracts.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace AuthService.Controllers;
 
@@ -16,16 +18,19 @@ public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
     private readonly ILogger<AuthController> _logger;
-    private readonly IPasswordService _passwordService; // ✅ This will now use Contracts.Services.IPasswordService
+    private readonly IPasswordService _passwordService;
+    private readonly IServiceProvider _serviceProvider;
 
     public AuthController(
         IAuthService authService, 
         ILogger<AuthController> logger,
-        IPasswordService passwordService) // ➕ ADD: Inject password service
+        IPasswordService passwordService,
+        IServiceProvider serviceProvider)
     {
         _authService = authService;
         _logger = logger;
-        _passwordService = passwordService; // ➕ ADD: Assign password service
+        _passwordService = passwordService;
+        _serviceProvider = serviceProvider;
     }
 
     [HttpPost("register")]
@@ -51,52 +56,6 @@ public class AuthController : ControllerBase
         }
     }
 
-    // Add these endpoints to the existing AuthController
-
-    [HttpGet("permissions")]
-    [Authorize]
-    public async Task<ActionResult<ApiResponseDto<List<string>>>> GetMyPermissions()
-    {
-        try
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!int.TryParse(userIdClaim, out var userId))
-            {
-                return BadRequest(ApiResponseDto<List<string>>.ErrorResult("Invalid user"));
-            }
-
-            var permissions = await _authService.GetUserPermissionsAsync(userId);
-            return Ok(ApiResponseDto<List<string>>.SuccessResult(permissions, "Permissions retrieved successfully"));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting user permissions");
-            return StatusCode(500, ApiResponseDto<List<string>>.ErrorResult("Internal server error"));
-        }
-    }
-
-    [HttpGet("roles")]
-    [Authorize]
-    public async Task<ActionResult<ApiResponseDto<List<string>>>> GetMyRoles()
-    {
-        try
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!int.TryParse(userIdClaim, out var userId))
-            {
-                return BadRequest(ApiResponseDto<List<string>>.ErrorResult("Invalid user"));
-            }
-
-            var roles = await _authService.GetUserRolesAsync(userId);
-            return Ok(ApiResponseDto<List<string>>.SuccessResult(roles, "Roles retrieved successfully"));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error getting user roles");
-            return StatusCode(500, ApiResponseDto<List<string>>.ErrorResult("Internal server error"));
-        }
-    }
-
     [HttpPost("login")]
     public async Task<ActionResult<ApiResponseDto<TokenResponseDto>>> Login(
         [FromBody] LoginRequestDto request,
@@ -117,6 +76,35 @@ public class AuthController : ControllerBase
         {
             _logger.LogError(ex, "Error in Login endpoint");
             return StatusCode(500, ApiResponseDto<TokenResponseDto>.ErrorResult("Internal server error"));
+        }
+    }
+
+    /// <summary>
+    /// Switch to a different tenant and issue new JWT tokens
+    /// </summary>
+    [HttpPost("switch-tenant")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponseDto<TokenResponseDto>>> SwitchTenant(
+        [FromBody] SwitchTenantDto request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            var result = await _authService.SwitchTenantAsync(userId, request.TenantId, cancellationToken);
+
+            if (result.Success)
+            {
+                return Ok(result);
+            }
+
+            return BadRequest(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error switching tenant for user {UserId} to tenant {TenantId}", 
+                GetCurrentUserId(), request.TenantId);
+            return StatusCode(500, ApiResponseDto<TokenResponseDto>.ErrorResult("Tenant switch failed"));
         }
     }
 
@@ -151,14 +139,9 @@ public class AuthController : ControllerBase
     {
         try
         {
-            // 🔍 DEBUG: Log what we received
-            _logger.LogWarning("🔍 LOGOUT DEBUG: Received request");
-            _logger.LogWarning("🔍 LOGOUT DEBUG: Content-Type: {ContentType}", Request.ContentType);
-            _logger.LogWarning("🔍 LOGOUT DEBUG: Request body (RefreshToken): {RefreshToken}", request?.RefreshToken);
-            
             if (request == null || string.IsNullOrEmpty(request.RefreshToken))
             {
-                _logger.LogWarning("🚨 LOGOUT ERROR: Invalid request - missing refresh token");
+                _logger.LogWarning("Logout attempt with missing refresh token");
                 return BadRequest(ApiResponseDto<bool>.ErrorResult("Refresh token is required"));
             }
 
@@ -186,12 +169,7 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!int.TryParse(userIdClaim, out var userId))
-            {
-                return BadRequest(ApiResponseDto<bool>.ErrorResult("Invalid user"));
-            }
-
+            var userId = GetCurrentUserId();
             var result = await _authService.ChangePasswordAsync(userId, request, cancellationToken);
 
             if (result.Success)
@@ -277,7 +255,9 @@ public class AuthController : ControllerBase
                 FirstName = User.FindFirst(ClaimTypes.GivenName)?.Value,
                 LastName = User.FindFirst(ClaimTypes.Surname)?.Value,
                 TenantId = User.FindFirst("tenant_id")?.Value,
-                TenantName = User.FindFirst("tenant_name")?.Value
+                TenantName = User.FindFirst("tenant_name")?.Value,
+                Roles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList(),
+                Permissions = User.FindAll("permission").Select(c => c.Value).ToList()
             };
 
             return Ok(ApiResponseDto<object>.SuccessResult(userInfo, "User info retrieved"));
@@ -289,13 +269,62 @@ public class AuthController : ControllerBase
         }
     }
 
-    // ➕ ADD: Temporary hash generation endpoint (REMOVE after testing)
+    [HttpGet("permissions")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponseDto<List<string>>>> GetMyPermissions()
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            var permissions = await _authService.GetUserPermissionsAsync(userId);
+            return Ok(ApiResponseDto<List<string>>.SuccessResult(permissions, "Permissions retrieved successfully"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user permissions");
+            return StatusCode(500, ApiResponseDto<List<string>>.ErrorResult("Internal server error"));
+        }
+    }
+
+    [HttpGet("roles")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponseDto<List<string>>>> GetMyRoles()
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            var roles = await _authService.GetUserRolesAsync(userId);
+            return Ok(ApiResponseDto<List<string>>.SuccessResult(roles, "Roles retrieved successfully"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting user roles");
+            return StatusCode(500, ApiResponseDto<List<string>>.ErrorResult("Internal server error"));
+        }
+    }
+
+    #region Helper Methods
+
+    private int GetCurrentUserId()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(userIdClaim, out var userId))
+        {
+            return userId;
+        }
+        throw new UnauthorizedAccessException("User ID not found in token");
+    }
+
+    #endregion
+
+    #region Debug Endpoints (Remove in Production)
+
     [HttpGet("debug/generate-hash/{password}")]
     public ActionResult<string> GenerateHash(string password)
     {
         try
         {
-            var hash = _passwordService.HashPassword(password); // ✅ NOW WORKS!
+            var hash = _passwordService.HashPassword(password);
             return Ok(new { Password = password, Hash = hash, Message = "Hash generated successfully" });
         }
         catch (Exception ex)
@@ -304,7 +333,6 @@ public class AuthController : ControllerBase
         }
     }
 
-    // 🔍 ADD: Debug endpoint to understand logout request format
     [HttpGet("debug/logout-format")]
     public ActionResult<object> GetLogoutFormat()
     {
@@ -320,7 +348,6 @@ public class AuthController : ControllerBase
         });
     }
 
-    // 🔍 ADD: Simple logout test endpoint that doesn't require auth for debugging
     [HttpPost("debug/logout-test")]
     public ActionResult<object> LogoutTest([FromBody] LogoutRequestDto? request)
     {
@@ -345,4 +372,62 @@ public class AuthController : ControllerBase
             return BadRequest(new { Error = ex.Message });
         }
     }
+
+    [HttpGet("debug/tenant-info/{tenantId}")]
+    [Authorize]
+    public async Task<ActionResult> GetTenantDebugInfo(int tenantId)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            
+            // 🔧 FIX: Use service provider to get dependencies
+            using var scope = _serviceProvider.CreateScope();
+            var tenantRepository = scope.ServiceProvider.GetRequiredService<ITenantManagementRepository>();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            
+            // Direct repository access to see what's being returned
+            var tenant = await tenantRepository.GetTenantByIdAsync(tenantId);
+            
+            // Check user access
+            var userAccess = await context.TenantUsers
+                .Where(tu => tu.UserId == userId && tu.TenantId == tenantId && tu.IsActive)
+                .Select(tu => new { tu.TenantId, tu.Role, tu.IsActive })
+                .FirstOrDefaultAsync();
+
+            // Get all tenants to compare
+            var allTenants = await context.Tenants
+                .Select(t => new { t.Id, t.Name, t.IsActive })
+                .ToListAsync();
+                
+            // Get all user's tenant access
+            var allUserAccess = await context.TenantUsers
+                .Where(tu => tu.UserId == userId && tu.IsActive)
+                .Include(tu => tu.Tenant)
+                .Select(tu => new { tu.TenantId, tu.Role, TenantName = tu.Tenant.Name })
+                .ToListAsync();
+
+            return Ok(new
+            {
+                RequestedTenantId = tenantId,
+                FoundTenant = tenant != null ? new { tenant.Id, tenant.Name, tenant.IsActive } : null,
+                UserAccessToRequestedTenant = userAccess,
+                AllTenants = allTenants,
+                AllUserTenantAccess = allUserAccess,
+                CurrentUserId = userId,
+                DatabaseLooksCorrect = tenant?.Id == tenantId && tenant?.Name != null,
+                ExpectedForTenant6 = "Should return 'My Number Two' if database is correct"
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { 
+                Error = ex.Message, 
+                Stack = ex.StackTrace,
+                Type = ex.GetType().Name 
+            });
+        }
+    }
+
+    #endregion
 }
