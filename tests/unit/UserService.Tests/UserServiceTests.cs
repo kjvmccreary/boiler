@@ -21,11 +21,11 @@ public class UserServiceTests : IDisposable
     private readonly Mock<IUserRepository> _mockUserRepository;
     private readonly Mock<ITenantProvider> _mockTenantProvider;
     private readonly Mock<IMapper> _mockMapper;
-    private readonly Mock<ILogger<UserService.Services.UserServiceImplementation>> _mockLogger; // ✅ FIXED: Use correct type
+    private readonly Mock<ILogger<UserService.Services.UserServiceImplementation>> _mockLogger;
     private readonly Mock<IRoleService> _mockRoleService;
     private readonly Mock<IPermissionService> _mockPermissionService;
-    private readonly Mock<IPasswordService> _mockPasswordService; // ✅ NEW: Mock password service
-    private readonly UserService.Services.UserServiceImplementation _userService; // ✅ FIXED: Use correct type
+    private readonly Mock<IPasswordService> _mockPasswordService;
+    private readonly UserService.Services.UserServiceImplementation _userService;
 
     public UserServiceTests()
     {
@@ -37,19 +37,21 @@ public class UserServiceTests : IDisposable
         _mockUserRepository = new Mock<IUserRepository>();
         _mockTenantProvider = new Mock<ITenantProvider>();
         _mockMapper = new Mock<IMapper>();
-        _mockLogger = new Mock<ILogger<UserService.Services.UserServiceImplementation>>(); // ✅ FIXED
+        _mockLogger = new Mock<ILogger<UserService.Services.UserServiceImplementation>>();
         _mockRoleService = new Mock<IRoleService>();
         _mockPermissionService = new Mock<IPermissionService>();
-        _mockPasswordService = new Mock<IPasswordService>(); // ✅ NEW: Initialize mock password service
+        _mockPasswordService = new Mock<IPasswordService>();
 
-        _userService = new UserService.Services.UserServiceImplementation( // ✅ UPDATED: Use correct class name
+        // 🔧 FIX: Add the missing ApplicationDbContext parameter
+        _userService = new UserService.Services.UserServiceImplementation(
             _mockUserRepository.Object,
             _mockTenantProvider.Object,
             _mockMapper.Object,
             _mockLogger.Object,
             _mockRoleService.Object,
             _mockPermissionService.Object,
-            _mockPasswordService.Object // ✅ ADD: Include password service
+            _mockPasswordService.Object,
+            _context // 🔧 ADD: Include the ApplicationDbContext
         );
     }
 
@@ -215,7 +217,8 @@ public class UserServiceTests : IDisposable
             Email = "newuser@example.com",
             FirstName = "New",
             LastName = "User", 
-            Password = "Password123!"
+            Password = "Password123!",
+            ConfirmPassword = "Password123!" // 🔧 ADD: Required field
         };
 
         var expectedUser = new User
@@ -226,7 +229,7 @@ public class UserServiceTests : IDisposable
             LastName = "User",
             TenantId = tenantId,
             IsActive = true,
-            EmailConfirmed = true, // ✅ UPDATED: Should be true for admin-created users
+            EmailConfirmed = true,
             PasswordHash = "hashed_password_123"
         };
 
@@ -237,13 +240,12 @@ public class UserServiceTests : IDisposable
             FirstName = "New",
             LastName = "User",
             IsActive = true,
-            EmailConfirmed = true // ✅ UPDATED: Expect true
+            EmailConfirmed = true
         };
 
         _mockTenantProvider.Setup(x => x.GetCurrentTenantIdAsync())
             .ReturnsAsync(tenantId);
 
-        // ✅ NEW: Mock password service
         _mockPasswordService.Setup(x => x.HashPassword("Password123!"))
             .Returns("hashed_password_123");
 
@@ -252,7 +254,7 @@ public class UserServiceTests : IDisposable
         _mockUserRepository.Setup(x => x.Query()).Returns(emptyUsers.Object);
 
         _mockUserRepository.Setup(x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((User user, CancellationToken ct) => user); // Return the user
+            .ReturnsAsync((User user, CancellationToken ct) => user);
 
         _mockMapper.Setup(x => x.Map<UserDto>(It.IsAny<User>()))
             .Returns(userDto);
@@ -264,7 +266,7 @@ public class UserServiceTests : IDisposable
         result.Should().NotBeNull();
         result.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
-        result.Data!.EmailConfirmed.Should().BeTrue(); // ✅ VERIFY: Email should be confirmed
+        result.Data!.EmailConfirmed.Should().BeTrue();
         
         // Verify password was hashed
         _mockPasswordService.Verify(x => x.HashPassword("Password123!"), Times.Once);
@@ -285,7 +287,8 @@ public class UserServiceTests : IDisposable
             Email = "existing@example.com",
             FirstName = "New",
             LastName = "User",
-            Password = "Password123!"
+            Password = "Password123!",
+            ConfirmPassword = "Password123!" // 🔧 ADD: Required field
         };
 
         var existingUser = new User 

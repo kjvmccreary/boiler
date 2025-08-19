@@ -82,8 +82,7 @@ public class ApplicationDbContext : DbContext
         
         // Apply tenant filter to User entities  
         modelBuilder.Entity<User>().HasQueryFilter(u => 
-            EF.Property<int?>(u, "TenantId") == null || 
-            EF.Property<int?>(u, "TenantId") == GetCurrentTenantIdFromProvider());
+            u.TenantUsers.Any(tu => tu.TenantId == GetCurrentTenantIdFromProvider() && tu.IsActive));
 
         // Apply tenant filter to TenantUser junction table
         modelBuilder.Entity<TenantUser>().HasQueryFilter(tu => 
