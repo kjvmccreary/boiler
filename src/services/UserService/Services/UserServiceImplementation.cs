@@ -224,10 +224,15 @@ public class UserServiceImplementation : Contracts.User.IUserService
 
                     _logger.LogInformation("Successfully added user {Email} to tenant {TenantId}", request.Email, currentTenantId.Value);
 
-                    // Return existing user with success message
+                    // Return existing user with enhanced success message
                     var addedUserDto = _mapper.Map<UserDto>(existingUser);
-                    return ApiResponseDto<UserDto>.SuccessResult(addedUserDto, 
-                        $"User '{request.Email}' has been successfully added to this organization");
+                    
+                    // 🔧 ENHANCED: More informative message about existing user behavior
+                    var detailedMessage = $"User '{request.Email}' has been successfully added to this organization. " +
+                        $"Note: This user already exists in the system with the name '{existingUser.FirstName} {existingUser.LastName}'. " +
+                        $"Their existing personal information and password have been preserved and were not updated with the form data provided.";
+                    
+                    return ApiResponseDto<UserDto>.SuccessResult(addedUserDto, detailedMessage);
                 }
             }
             else
