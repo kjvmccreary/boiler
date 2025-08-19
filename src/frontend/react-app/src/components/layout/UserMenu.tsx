@@ -15,12 +15,14 @@ import {
   Settings as SettingsIcon,
   Logout as LogoutIcon,
   Business,
+  Add as AddIcon, // 🔧 ADD: Import Add icon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext.js';
 import { useTenant } from '@/contexts/TenantContext.js';
 import { LogoutButton } from '@/components/auth/LogoutButton.js';
-import { TenantSwitcher } from './TenantSwitcher.js'; // 🔧 ADD: Import TenantSwitcher
+import { TenantSwitcher } from './TenantSwitcher.js';
+import { CreateAdditionalTenant } from '@/components/tenant/CreateAdditionalTenant.js'; // 🔧 ADD: Import dialog
 import { ROUTES } from '@/routes/route.constants.js';
 
 interface UserMenuProps {
@@ -29,6 +31,7 @@ interface UserMenuProps {
 
 export function UserMenu({ useLogoutButton = false }: UserMenuProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [showCreateTenant, setShowCreateTenant] = useState(false); // 🔧 ADD: State for dialog
   const { user, logout } = useAuth();
   const { currentTenant, availableTenants } = useTenant();
   const navigate = useNavigate();
@@ -48,6 +51,12 @@ export function UserMenu({ useLogoutButton = false }: UserMenuProps) {
 
   const handleSettings = () => {
     navigate(ROUTES.SETTINGS);
+    handleClose();
+  };
+
+  // 🔧 ADD: Handler for create organization
+  const handleCreateOrganization = () => {
+    setShowCreateTenant(true);
     handleClose();
   };
 
@@ -133,6 +142,14 @@ export function UserMenu({ useLogoutButton = false }: UserMenuProps) {
           Settings
         </MenuItem>
         
+        {/* 🔧 ADD: Create Organization menu item */}
+        <MenuItem onClick={handleCreateOrganization}>
+          <ListItemIcon>
+            <AddIcon fontSize="small" />
+          </ListItemIcon>
+          Create Organization
+        </MenuItem>
+        
         {/* 🔧 REPLACE: Use new TenantSwitcher component */}
         {availableTenants.length > 1 && (
           <TenantSwitcher variant="menu-item" onClose={handleClose} />
@@ -165,6 +182,16 @@ export function UserMenu({ useLogoutButton = false }: UserMenuProps) {
           </MenuItem>
         )}
       </Menu>
+
+      {/* 🔧 ADD: Create Additional Tenant Dialog */}
+      <CreateAdditionalTenant
+        open={showCreateTenant}
+        onClose={() => setShowCreateTenant(false)}
+        onSuccess={(tenant) => {
+          console.log('✅ New organization created:', tenant.name);
+          // Dialog already handles tenant switching
+        }}
+      />
     </Box>
   );
 }

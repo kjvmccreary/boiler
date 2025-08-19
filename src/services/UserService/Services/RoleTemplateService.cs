@@ -162,9 +162,14 @@ public class RoleTemplateService : IRoleTemplateService
             };
 
             _context.Roles.Add(role);
+            
+            // 🔧 CRITICAL FIX: Save changes to get the Role.Id before creating permissions
             await _context.SaveChangesAsync();
 
-            // ✅ FIXED: Handle case where permissions might not be found
+            _logger.LogInformation("Created role '{RoleName}' with ID {RoleId} for tenant {TenantId}", 
+                role.Name, role.Id, tenantId);
+
+            // ✅ Now get permissions (role.Id should be populated)
             var permissions = await _permissionRepository.GetByNamesAsync(template.Permissions);
             var permissionsList = permissions.ToList();
             
@@ -179,7 +184,7 @@ public class RoleTemplateService : IRoleTemplateService
                 {
                     var rolePermission = new RolePermission
                     {
-                        RoleId = role.Id,
+                        RoleId = role.Id, // 🔧 This should now have a valid ID (not 0)
                         PermissionId = permission.Id,
                         GrantedAt = DateTime.UtcNow,
                         GrantedBy = "System",
@@ -190,13 +195,14 @@ public class RoleTemplateService : IRoleTemplateService
                     _context.RolePermissions.Add(rolePermission);
                 }
 
+                // 🔧 Save role permissions
                 await _context.SaveChangesAsync();
             }
 
             _logger.LogInformation("Created role '{RoleName}' for tenant {TenantId} with {PermissionCount} permissions", 
                 role.Name, tenantId, permissionsList.Count);
 
-            // ✅ FIXED: Pass details object instead of string
+            // ✅ Keep the audit logging
             await _auditService.LogAsync(
                 AuditAction.RoleCreated, 
                 $"tenants/{tenantId}/roles/{role.Id}", 
@@ -204,7 +210,8 @@ public class RoleTemplateService : IRoleTemplateService
                     RoleName = role.Name, 
                     TemplateName = templateName, 
                     PermissionCount = permissionsList.Count,
-                    TenantId = tenantId 
+                    TenantId = tenantId,
+                    RoleId = role.Id // 🔧 Include the actual role ID
                 }, 
                 true);
         }

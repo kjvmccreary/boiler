@@ -17,7 +17,10 @@ export class ApiClient {
     // ✅ FIX: Use empty base URL for proxy to handle /api routing
     this.baseURL = ''
     
-    console.log('🔍 API CLIENT: Creating axios instance with baseURL:', this.baseURL || 'empty (using proxy)')
+    console.log('🔍 API CLIENT: Creating axios instance with baseURL:', this.baseURL || 'empty (using Vite proxy)');
+    console.log('🔍 API CLIENT: Expected proxy config:');
+    console.log('  - /api/auth/* → AuthService (port 7001)');
+    console.log('  - /api/* → UserService (port 7002)');
 
     this.instance = axios.create({
       baseURL: this.baseURL,

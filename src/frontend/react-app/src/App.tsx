@@ -1,10 +1,12 @@
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { Toaster } from 'react-hot-toast';
+import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext.js';
 import { PermissionProvider } from '@/contexts/PermissionContext.js';
-import { TenantProvider } from '@/contexts/TenantContext.js'; // 🔧 NEW: Add TenantProvider
-import { AppRoutes } from '@/routes/index.js';
+import { TenantProvider } from '@/contexts/TenantContext.js';
+import { TenantNavigationHandler } from '@/components/navigation/TenantNavigationHandler.js';
+import { AppRoutesConfig } from '@/routes/index.js';
 
 const theme = createTheme({
   palette: {
@@ -22,9 +24,12 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AuthProvider>
-        <TenantProvider> {/* 🔧 NEW: Wrap PermissionProvider with TenantProvider */}
+        <TenantProvider>
           <PermissionProvider>
-            <AppRoutes />
+            <BrowserRouter>
+              <TenantNavigationHandler />
+              <AppRoutesConfig />
+            </BrowserRouter>
             <Toaster
               position="top-right"
               toastOptions={{

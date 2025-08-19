@@ -76,7 +76,11 @@ public class TenantService : ITenantService
 
             _logger.LogInformation("Tenant created with ID: {TenantId}", tenant.Id);
 
-            // Create admin user for the tenant
+            // 🔧 STEP 1: Create default roles FIRST (before admin user)
+            _logger.LogInformation("Creating default roles for tenant {TenantId}", tenant.Id);
+            await _roleTemplateService.CreateDefaultRolesForTenantAsync(tenant.Id);
+
+            // 🔧 STEP 2: Create admin user and assign proper RBAC role
             var adminUser = await CreateTenantAdminUserAsync(tenant.Id, createDto.AdminUser);
             
             if (!adminUser.Success)
@@ -87,15 +91,12 @@ public class TenantService : ITenantService
                 return ApiResponseDto<TenantDto>.ErrorResult($"Failed to create admin user: {adminUser.Message}");
             }
 
-            // Initialize tenant with default roles
-            await _roleTemplateService.CreateDefaultRolesForTenantAsync(tenant.Id);
-
             // Map to DTO
             var tenantDto = _mapper.Map<TenantDto>(tenant);
             
             // Audit the creation
             await _auditService.LogAsync(AuditAction.UserCreated, $"tenants/{tenant.Id}", 
-                $"Tenant '{tenant.Name}' created", true);
+                $"Tenant '{tenant.Name}' created with admin user", true);
 
             return ApiResponseDto<TenantDto>.SuccessResult(tenantDto, "Tenant created successfully");
         }
@@ -333,7 +334,7 @@ public class TenantService : ITenantService
         }
     }
 
-    private async Task<ApiResponseDto<UserDto>> CreateTenantAdminUserAsync(int tenantId, CreateTenantAdminDto adminDto)
+    public async Task<ApiResponseDto<UserDto>> CreateTenantAdminUserAsync(int tenantId, CreateTenantAdminDto adminDto)
     {
         try
         {
@@ -364,12 +365,39 @@ public class TenantService : ITenantService
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // Create TenantUser relationship
+            // 🔧 STEP 3: Find the "Tenant Admin" role that was just created
+            var tenantAdminRole = await _context.Roles
+                .Where(r => r.TenantId == tenantId && r.Name == "Tenant Admin")
+                .FirstOrDefaultAsync();
+
+            if (tenantAdminRole == null)
+            {
+                _logger.LogError("Tenant Admin role not found for tenant {TenantId}. Available roles: {Roles}", 
+                    tenantId, string.Join(", ", await _context.Roles.Where(r => r.TenantId == tenantId).Select(r => r.Name).ToListAsync()));
+                return ApiResponseDto<UserDto>.ErrorResult("Failed to find Tenant Admin role");
+            }
+
+            // 🔧 STEP 4: Create proper RBAC UserRole assignment
+            var userRole = new UserRole
+            {
+                UserId = user.Id,
+                RoleId = tenantAdminRole.Id,
+                TenantId = tenantId,
+                IsActive = true,
+                AssignedAt = DateTime.UtcNow,
+                AssignedBy = "System",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.UserRoles.Add(userRole);
+
+            // 🔧 STEP 5: Create legacy TenantUser relationship (for fallback compatibility)
             var tenantUser = new TenantUser
             {
                 TenantId = tenantId,
                 UserId = user.Id,
-                Role = "TenantAdmin",
+                Role = "TenantAdmin", // Legacy string role for backward compatibility
                 IsActive = true,
                 JoinedAt = DateTime.UtcNow,
                 CreatedAt = DateTime.UtcNow,
@@ -379,13 +407,183 @@ public class TenantService : ITenantService
             _context.TenantUsers.Add(tenantUser);
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation("Created tenant admin user {Email} for tenant {TenantId} with role {RoleId}", 
+                adminDto.Email, tenantId, tenantAdminRole.Id);
+
             var userDto = _mapper.Map<UserDto>(user);
             return ApiResponseDto<UserDto>.SuccessResult(userDto);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating tenant admin user");
+            _logger.LogError(ex, "Error creating tenant admin user for tenant {TenantId}", tenantId);
             return ApiResponseDto<UserDto>.ErrorResult("Failed to create tenant admin user");
+        }
+    }
+
+    /// <summary>
+    /// Create a new tenant and associate it with an existing user as admin
+    /// </summary>
+    public async Task<ApiResponseDto<TenantDto>> CreateTenantForExistingUserAsync(
+        int userId, 
+        string tenantName, 
+        string? tenantDomain = null)
+    {
+        // 🔧 CRITICAL DEBUG: Add extensive logging at method entry
+        _logger.LogWarning("🚀 STARTING CreateTenantForExistingUserAsync - UserId: {UserId}, TenantName: {TenantName}", userId, tenantName);
+        
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        
+        try
+        {
+            _logger.LogWarning("🔍 DEBUG: Transaction started for tenant creation");
+            _logger.LogInformation("Creating additional tenant {TenantName} for user {UserId}", 
+                tenantName, userId);
+
+            // 1. Verify user exists and is active
+            _logger.LogWarning("🔍 DEBUG: Step 1 - Looking for user {UserId}", userId);
+            var user = await _context.Users
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null || !user.IsActive)
+            {
+                _logger.LogError("❌ User {UserId} not found or inactive", userId);
+                return ApiResponseDto<TenantDto>.ErrorResult("User not found or inactive");
+            }
+
+            _logger.LogWarning("✅ User {UserId} found and active: {Email}", userId, user.Email);
+
+            // 2. Check if tenant name already exists
+            _logger.LogWarning("🔍 DEBUG: Step 2 - Checking if tenant name '{TenantName}' already exists", tenantName);
+            var existingTenant = await _context.Tenants
+                .FirstOrDefaultAsync(t => t.Name == tenantName);
+
+            if (existingTenant != null)
+            {
+                _logger.LogError("❌ Tenant name '{TenantName}' already exists with ID {ExistingTenantId}", tenantName, existingTenant.Id);
+                return ApiResponseDto<TenantDto>.ErrorResult(
+                    $"An organization named '{tenantName}' already exists.");
+            }
+
+            _logger.LogWarning("✅ Tenant name '{TenantName}' is available", tenantName);
+
+            // 3. Create new tenant
+            _logger.LogWarning("🔍 DEBUG: Step 3 - Creating new tenant");
+            var tenant = new Tenant
+            {
+                Name = tenantName,
+                Domain = tenantDomain,
+                SubscriptionPlan = "Basic",
+                IsActive = true,
+                Settings = "{}",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Tenants.Add(tenant);
+            await _context.SaveChangesAsync();
+
+            _logger.LogWarning("✅ Created tenant {TenantId}: {TenantName}", tenant.Id, tenant.Name);
+
+            // 4. Create default roles for the tenant and capture the admin role
+            _logger.LogWarning("🔍 DEBUG: Step 4 - Creating default roles for tenant {TenantId}", tenant.Id);
+            Role? tenantAdminRole = null;
+
+            try
+            {
+                await _roleTemplateService.CreateDefaultRolesForTenantAsync(tenant.Id);
+                _logger.LogWarning("✅ Default roles created successfully for tenant {TenantId}", tenant.Id);
+                
+                // 🔧 CRITICAL FIX: Get the Tenant Admin role immediately after creation
+                tenantAdminRole = _context.Roles.Local
+                    .FirstOrDefault(r => r.TenantId == tenant.Id && r.Name == "Tenant Admin");
+                    
+                if (tenantAdminRole == null)
+                {
+                    // Fallback to database query
+                    tenantAdminRole = await _context.Roles
+                        .Where(r => r.TenantId == tenant.Id && r.Name == "Tenant Admin")
+                        .FirstOrDefaultAsync();
+                }
+            }
+            catch (Exception roleEx)
+            {
+                _logger.LogError(roleEx, "❌ FAILED to create default roles for tenant {TenantId}", tenant.Id);
+                await transaction.RollbackAsync();
+                return ApiResponseDto<TenantDto>.ErrorResult("Failed to create default roles for organization");
+            }
+
+            if (tenantAdminRole == null)
+            {
+                _logger.LogError("❌ Tenant Admin role not found immediately after creation for tenant {TenantId}", tenant.Id);
+                await transaction.RollbackAsync();
+                return ApiResponseDto<TenantDto>.ErrorResult("Failed to create admin role for new organization");
+            }
+
+            _logger.LogWarning("✅ Found Tenant Admin role {RoleId} for tenant {TenantId}", 
+                tenantAdminRole.Id, tenant.Id);
+
+            // 6. Create RBAC UserRole assignment
+            _logger.LogWarning("🔍 DEBUG: Step 7 - Creating UserRole assignment");
+            var userRole = new UserRole
+            {
+                UserId = userId,
+                RoleId = tenantAdminRole.Id,
+                TenantId = tenant.Id,
+                IsActive = true,
+                AssignedAt = DateTime.UtcNow,
+                AssignedBy = "System",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.UserRoles.Add(userRole);
+
+            // 7. Create legacy TenantUser relationship (for tenant switcher)
+            _logger.LogWarning("🔍 DEBUG: Step 8 - Creating legacy TenantUser relationship");
+            var tenantUser = new TenantUser
+            {
+                TenantId = tenant.Id,
+                UserId = userId,
+                Role = "TenantAdmin", // Legacy string role for backward compatibility
+                IsActive = true,
+                JoinedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.TenantUsers.Add(tenantUser);
+            
+            _logger.LogWarning("🔍 DEBUG: Step 9 - Final save and commit");
+            await _context.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+
+            _logger.LogWarning("🎉 SUCCESS: User {UserId} created tenant {TenantName} (ID: {TenantId})", 
+                userId, tenant.Name, tenant.Id);
+
+            // 8. Map to DTO and return
+            var tenantDto = _mapper.Map<TenantDto>(tenant);
+            
+            return ApiResponseDto<TenantDto>.SuccessResult(tenantDto, 
+                $"Organization '{tenantName}' created successfully! You have been granted administrator access.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ CRITICAL FAILURE: Failed to create additional tenant {TenantName} for user {UserId}", 
+                tenantName, userId);
+            
+            try
+            {
+                await transaction.RollbackAsync();
+                _logger.LogWarning("✅ Transaction rolled back successfully");
+            }
+            catch (Exception rollbackEx)
+            {
+                _logger.LogError(rollbackEx, "❌ FAILED to rollback transaction during tenant creation");
+            }
+
+            return ApiResponseDto<TenantDto>.ErrorResult("Failed to create organization. Please try again.");
         }
     }
 }

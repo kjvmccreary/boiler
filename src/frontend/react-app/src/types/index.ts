@@ -210,3 +210,13 @@ export interface PaginationParams {
   pageSize?: number;
   searchTerm?: string;
 }
+
+// 🔧 ADD: Export tenant types
+export type {
+  TenantDto,
+  CreateAdditionalTenantDto,
+  CreateTenantDto,
+  CreateTenantAdminDto,
+  UpdateTenantDto,
+  RoleTemplateDto
+} from './tenant.js';

@@ -12,6 +12,8 @@ interface ProtectedRouteProps {
   requireRoles?: string[];
   requireAll?: boolean;
   redirectTo?: string;
+  // 🔧 NEW: Add flag to indicate if this is post-tenant-switch
+  redirectToAccessibleRoute?: boolean;
 }
 
 export function ProtectedRoute({
@@ -22,8 +24,9 @@ export function ProtectedRoute({
   requireRoles,
   requireAll = false,
   redirectTo = '/login',
+  redirectToAccessibleRoute = false, // 🔧 NEW: Default to false for backward compatibility
 }: ProtectedRouteProps) {
-  const { user, isAuthenticated, isLoading } = useAuth(); // ✅ ADD: isLoading
+  const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
   const {
     hasPermission,
@@ -82,8 +85,22 @@ export function ProtectedRoute({
     }
   }
 
-  // Redirect to unauthorized page if no access
+  // 🔧 NEW: Smart redirect logic for tenant switching
   if (!hasAccess) {
+    // Check if this might be a post-tenant-switch scenario
+    const isPostTenantSwitch = sessionStorage.getItem('tenant_switch_in_progress') === 'true';
+    
+    if (isPostTenantSwitch || redirectToAccessibleRoute) {
+      console.log('🔧 ProtectedRoute: Access denied after tenant switch, redirecting to dashboard');
+      
+      // Clear the flag
+      sessionStorage.removeItem('tenant_switch_in_progress');
+      
+      // Redirect to dashboard instead of unauthorized
+      return <Navigate to="/app/dashboard" replace />;
+    }
+    
+    // Normal permission denial - redirect to unauthorized
     return <Navigate to="/unauthorized" replace />;
   }
 

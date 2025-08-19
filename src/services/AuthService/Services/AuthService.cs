@@ -21,9 +21,9 @@ public class AuthServiceImplementation : IAuthService
     private readonly ILogger<AuthServiceImplementation> _logger;
     private readonly JwtSettings _jwtSettings;
     private readonly ITenantManagementRepository _tenantRepository;
-    // NEW: Add missing dependencies for Enhanced Phase 4
     private readonly IPermissionService _permissionService;
     private readonly ITenantProvider _tenantProvider;
+    private readonly IServiceProvider _serviceProvider; // 🔧 ADD: For scoped role template service
 
     public AuthServiceImplementation(
         ApplicationDbContext context,
@@ -33,9 +33,9 @@ public class AuthServiceImplementation : IAuthService
         ILogger<AuthServiceImplementation> logger,
         JwtSettings jwtSettings,
         ITenantManagementRepository tenantRepository,
-        // NEW: Add missing constructor parameters
         IPermissionService permissionService,
-        ITenantProvider tenantProvider)
+        ITenantProvider tenantProvider,
+        IServiceProvider serviceProvider) // 🔧 ADD: Service provider for scoped services
     {
         _context = context;
         _passwordService = passwordService;
@@ -44,9 +44,9 @@ public class AuthServiceImplementation : IAuthService
         _logger = logger;
         _jwtSettings = jwtSettings;
         _tenantRepository = tenantRepository;
-        // NEW: Initialize missing dependencies
         _permissionService = permissionService;
         _tenantProvider = tenantProvider;
+        _serviceProvider = serviceProvider; // 🔧 ADD: Initialize service provider
     }
 
     public async Task<ApiResponseDto<TokenResponseDto>> RegisterAsync(RegisterRequestDto request, CancellationToken cancellationToken = default)
@@ -56,28 +56,15 @@ public class AuthServiceImplementation : IAuthService
             var existingUser = await _context.Users.IgnoreQueryFilters()
                 .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
 
-            // 🔧 NEW: Handle existing user creating new tenant (consultant scenario)
-            if (existingUser != null && !string.IsNullOrEmpty(request.TenantName))
-            {
-                _logger.LogInformation("Existing user {Email} creating new tenant {TenantName}. " +
-                    "Form data: {FormFirstName} {FormLastName}, " +
-                    "Existing data: {ExistingFirstName} {ExistingLastName}",
-                    request.Email, request.TenantName,
-                    request.FirstName, request.LastName,
-                    existingUser.FirstName, existingUser.LastName);
-
-                return await HandleConsultantTenantCreation(existingUser, request, cancellationToken);
-            }
-            
-            // 🔧 EXISTING: Handle duplicate user without tenant creation
+            // 🔧 SIMPLIFIED: If user exists, direct them to login
             if (existingUser != null)
             {
                 return ApiResponseDto<TokenResponseDto>.ErrorResult(
-                    "An account with this email already exists. Please sign in instead."
+                    "An account with this email already exists. Please sign in and create additional organizations from your dashboard."
                 );
             }
 
-            // 🔧 EXISTING: Continue with normal new user registration...
+            // Continue with normal new user registration...
             var tenant = await GetTenantForRegistrationAsync(request, cancellationToken);
             
             var user = new User
@@ -91,166 +78,97 @@ public class AuthServiceImplementation : IAuthService
                 EmailConfirmed = true
             };
 
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync(cancellationToken);
-
-            // Create TenantAdmin relationship for new tenant creator
-            var tenantUser = new TenantUser
+            using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            
+            try
             {
-                TenantId = tenant.Id,
-                UserId = user.Id,
-                Role = string.IsNullOrEmpty(request.TenantName) ? "User" : "TenantAdmin", 
-                IsActive = true
-            };
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync(cancellationToken);
 
-            _context.TenantUsers.Add(tenantUser);
+                // Create default roles for new tenant (if it's new)
+                if (!string.IsNullOrEmpty(request.TenantName))
+                {
+                    using var roleServiceScope = _serviceProvider.CreateScope();
+                    var roleTemplateService = roleServiceScope.ServiceProvider.GetRequiredService<IRoleTemplateService>();
+                    await roleTemplateService.CreateDefaultRolesForTenantAsync(tenant.Id);
 
-            // Generate tokens and return success...
-            var accessToken = await _tokenService.GenerateAccessTokenAsync(user, tenant);
-            var refreshTokenEntity = await _tokenService.CreateRefreshTokenAsync(user);
-            refreshTokenEntity.TenantId = tenant.Id;
-            refreshTokenEntity.CreatedByIp = GetClientIpAddress();
+                    // Find the "Tenant Admin" role
+                    var tenantAdminRole = await _context.Roles
+                        .Where(r => r.TenantId == tenant.Id && r.Name == "Tenant Admin")
+                        .FirstOrDefaultAsync(cancellationToken);
 
-            _context.RefreshTokens.Add(refreshTokenEntity);
-            await _context.SaveChangesAsync(cancellationToken);
+                    if (tenantAdminRole != null)
+                    {
+                        // Create RBAC UserRole assignment
+                        var userRole = new UserRole
+                        {
+                            UserId = user.Id,
+                            RoleId = tenantAdminRole.Id,
+                            TenantId = tenant.Id,
+                            IsActive = true,
+                            AssignedAt = DateTime.UtcNow,
+                            AssignedBy = "System",
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        };
+                        _context.UserRoles.Add(userRole);
+                    }
+                }
 
-            var userDto = _mapper.Map<DTOs.User.UserDto>(user);
-            var tenantDto = _mapper.Map<DTOs.Tenant.TenantDto>(tenant);
+                // Create TenantUser relationship
+                var tenantUser = new TenantUser
+                {
+                    TenantId = tenant.Id,
+                    UserId = user.Id,
+                    Role = string.IsNullOrEmpty(request.TenantName) ? "User" : "TenantAdmin", 
+                    IsActive = true,
+                    JoinedAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _context.TenantUsers.Add(tenantUser);
 
-            var response = new TokenResponseDto
+                // Generate tokens
+                var accessToken = await _tokenService.GenerateAccessTokenAsync(user, tenant);
+                var refreshTokenEntity = await _tokenService.CreateRefreshTokenAsync(user);
+                refreshTokenEntity.TenantId = tenant.Id;
+                refreshTokenEntity.CreatedByIp = GetClientIpAddress();
+
+                _context.RefreshTokens.Add(refreshTokenEntity);
+                await _context.SaveChangesAsync(cancellationToken);
+
+                await transaction.CommitAsync(cancellationToken);
+
+                // Create response
+                var userDto = _mapper.Map<DTOs.User.UserDto>(user);
+                var tenantDto = _mapper.Map<DTOs.Tenant.TenantDto>(tenant);
+
+                var response = new TokenResponseDto
+                {
+                    AccessToken = accessToken,
+                    RefreshToken = refreshTokenEntity.Token,
+                    ExpiresAt = refreshTokenEntity.ExpiryDate,
+                    TokenType = "Bearer",
+                    User = userDto,
+                    Tenant = tenantDto
+                };
+
+                _logger.LogInformation("New user {Email} registered successfully for tenant {TenantName}", 
+                    request.Email, tenant.Name);
+                
+                return ApiResponseDto<TokenResponseDto>.SuccessResult(response, 
+                    $"Welcome to {tenant.Name}! Your account has been created successfully.");
+            }
+            catch (Exception ex)
             {
-                AccessToken = accessToken,
-                RefreshToken = refreshTokenEntity.Token,
-                ExpiresAt = refreshTokenEntity.ExpiryDate,
-                TokenType = "Bearer",
-                User = userDto,
-                Tenant = tenantDto
-            };
-
-            _logger.LogInformation("User {Email} registered successfully for tenant {TenantName}", 
-                request.Email, tenant.Name);
-            return ApiResponseDto<TokenResponseDto>.SuccessResult(response, "Registration successful");
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during user registration for {Email}", request.Email);
             return ApiResponseDto<TokenResponseDto>.ErrorResult("Registration failed. Please try again.");
-        }
-    }
-
-    // 🔧 NEW: Handle consultant creating multiple tenants with same email
-    private async Task<ApiResponseDto<TokenResponseDto>> HandleConsultantTenantCreation(
-        User existingUser, 
-        RegisterRequestDto request, 
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            // 1. Create the new tenant
-            var existingTenant = await _tenantRepository.GetTenantByNameAsync(request.TenantName, cancellationToken);
-            if (existingTenant != null)
-            {
-                return ApiResponseDto<TokenResponseDto>.ErrorResult(
-                    $"An organization named '{request.TenantName}' already exists."
-                );
-            }
-
-            var newTenant = new Tenant
-            {
-                Name = request.TenantName,
-                Domain = request.TenantDomain,
-                SubscriptionPlan = "Basic",
-                IsActive = true,
-                Settings = "{}"
-            };
-
-            var createdTenant = await _tenantRepository.CreateTenantAsync(newTenant, cancellationToken);
-
-            // 2. Check if user already has access to this tenant (shouldn't happen, but safety check)
-            var existingTenantUser = await _context.TenantUsers
-                .FirstOrDefaultAsync(tu => tu.UserId == existingUser.Id && tu.TenantId == createdTenant.Id, cancellationToken);
-
-            if (existingTenantUser != null)
-            {
-                return ApiResponseDto<TokenResponseDto>.ErrorResult(
-                    "You already have access to this organization."
-                );
-            }
-
-            // 3. Add existing user to new tenant as TenantAdmin
-            var tenantUser = new TenantUser
-            {
-                TenantId = createdTenant.Id,
-                UserId = existingUser.Id,
-                Role = "TenantAdmin", // Consultant gets admin access to client tenant
-                IsActive = true,
-                JoinedAt = DateTime.UtcNow,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            _context.TenantUsers.Add(tenantUser);
-
-            // 4. Set up RBAC roles for the consultant in new tenant
-            var adminRole = await _context.Roles
-                .FirstOrDefaultAsync(r => r.Name == "Admin" && r.TenantId == createdTenant.Id, cancellationToken);
-
-            if (adminRole != null)
-            {
-                var userRole = new UserRole
-                {
-                    UserId = existingUser.Id,
-                    RoleId = adminRole.Id,
-                    TenantId = createdTenant.Id,
-                    IsActive = true,
-                    AssignedAt = DateTime.UtcNow,
-                    AssignedBy = "System",
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-
-                _context.UserRoles.Add(userRole);
-            }
-
-            await _context.SaveChangesAsync(cancellationToken);
-
-            // 5. Generate tokens for this specific tenant context
-            var accessToken = await _tokenService.GenerateAccessTokenAsync(existingUser, createdTenant);
-            var refreshTokenEntity = await _tokenService.CreateRefreshTokenAsync(existingUser);
-
-            refreshTokenEntity.TenantId = createdTenant.Id;
-            refreshTokenEntity.CreatedByIp = GetClientIpAddress();
-
-            _context.RefreshTokens.Add(refreshTokenEntity);
-            await _context.SaveChangesAsync(cancellationToken);
-
-            // 6. Return success response with new tenant context
-            var userDto = _mapper.Map<DTOs.User.UserDto>(existingUser);
-            userDto.TenantId = createdTenant.Id;
-            var tenantDto = _mapper.Map<DTOs.Tenant.TenantDto>(createdTenant);
-
-            var response = new TokenResponseDto
-            {
-                AccessToken = accessToken,
-                RefreshToken = refreshTokenEntity.Token,
-                ExpiresAt = refreshTokenEntity.ExpiryDate,
-                TokenType = "Bearer",
-                User = userDto,
-                Tenant = tenantDto
-            };
-
-            _logger.LogInformation("Consultant {Email} created new tenant {TenantName} and granted admin access", 
-                existingUser.Email, createdTenant.Name);
-
-            return ApiResponseDto<TokenResponseDto>.SuccessResult(response, 
-                $"Welcome to {createdTenant.Name}! You've been added as administrator. " +
-                "Note: Your existing account information was used.");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error creating tenant for consultant {Email}", existingUser.Email);
-            return ApiResponseDto<TokenResponseDto>.ErrorResult(
-                "Failed to create organization. Please try again.");
         }
     }
 

@@ -3,6 +3,7 @@ using DTOs.Common;
 using DTOs.Tenant;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace UserService.Controllers;
 
@@ -25,8 +26,59 @@ public class TenantsController : ControllerBase
         _logger = logger;
     }
 
+    // 🔧 NEW: Dedicated endpoint for authenticated users to create additional tenants
     /// <summary>
-    /// Create a new tenant with admin user
+    /// Create additional tenant for current authenticated user (consultant scenario)
+    /// </summary>
+    [HttpPost("create-additional")]
+    [Authorize] // Only requires authentication, not specific permissions
+    public async Task<ActionResult<ApiResponseDto<TenantDto>>> CreateAdditionalTenant(
+        [FromBody] CreateAdditionalTenantDto request)
+    {
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.SelectMany(x => x.Value!.Errors.Select(e => new ErrorDto 
+            { 
+                Field = x.Key, 
+                Message = e.ErrorMessage 
+            })).ToList();
+            
+            return BadRequest(ApiResponseDto<TenantDto>.ErrorResult(errors));
+        }
+
+        try
+        {
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId <= 0)
+            {
+                return Unauthorized(ApiResponseDto<TenantDto>.ErrorResult("User not authenticated"));
+            }
+
+            _logger.LogInformation("User {UserId} creating additional tenant: {TenantName}", 
+                currentUserId, request.TenantName);
+
+            var result = await _tenantService.CreateTenantForExistingUserAsync(
+                currentUserId, 
+                request.TenantName, 
+                request.TenantDomain);
+            
+            if (result.Success)
+            {
+                return CreatedAtAction(nameof(GetTenant), 
+                    new { tenantId = result.Data!.Id }, result);
+            }
+            
+            return BadRequest(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating additional tenant for user {UserId}", GetCurrentUserId());
+            return StatusCode(500, ApiResponseDto<TenantDto>.ErrorResult("Failed to create tenant"));
+        }
+    }
+
+    /// <summary>
+    /// Create a new tenant with admin user (requires admin permissions)
     /// </summary>
     [HttpPost]
     [Authorize(Policy = "RequiresPermission:tenants.create")]
@@ -210,5 +262,20 @@ public class TenantsController : ControllerBase
             return StatusCode(500, ApiResponseDto<List<RoleTemplateDto>>.ErrorResult(
                 "An error occurred while retrieving role templates"));
         }
+    }
+
+    // 🔧 HELPER: Get current user ID from JWT claims
+    private int GetCurrentUserId()
+    {
+        var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value
+                         ?? User.Claims.FirstOrDefault(c => c.Type == "sub")?.Value
+                         ?? User.Claims.FirstOrDefault(c => c.Type == "user_id")?.Value;
+        
+        if (int.TryParse(userIdClaim, out var userId))
+        {
+            return userId;
+        }
+        
+        return 0;
     }
 }

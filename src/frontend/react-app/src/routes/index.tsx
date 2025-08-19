@@ -13,6 +13,7 @@ import { RoleDetails } from '@/components/roles/RoleDetails.js';
 import { Dashboard } from '@/pages/Dashboard.js';
 import { CreateUser } from '@/components/users/CreateUser.js';
 import { LandingPage } from '@/components/landing/LandingPage.js';
+import { UnauthorizedPage } from '@/components/common/UnauthorizedPage.js'; // 🔧 ADD
 
 // Router-free routes component for testing
 export function AppRoutesConfig() {
@@ -25,6 +26,9 @@ export function AppRoutesConfig() {
       <Route path="/welcome" element={<LandingPage />} />
       <Route path="/login" element={<EnhancedLoginForm />} />
       <Route path="/register" element={<SelfServeRegisterForm />} />
+      
+      {/* 🔧 ADD: Unauthorized page */}
+      <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
       {/* 🔧 FIX: Protected routes now under /app */}
       <Route path="/app" element={<AppLayout />}>
@@ -42,52 +46,76 @@ export function AppRoutesConfig() {
           </ProtectedRoute>
         } />
 
-        {/* User management routes */}
+        {/* User management routes - 🔧 Enhanced with smart redirect */}
         <Route path="users" element={
-          <ProtectedRoute requirePermission="users.view">
+          <ProtectedRoute 
+            requirePermission="users.view"
+            redirectToAccessibleRoute={true} // 🔧 NEW: Enable smart redirect
+          >
             <UserList />
           </ProtectedRoute>
         } />
         
         <Route path="users/:userId" element={
-          <ProtectedRoute requirePermission="users.view">
+          <ProtectedRoute 
+            requirePermission="users.view"
+            redirectToAccessibleRoute={true} // 🔧 NEW: Enable smart redirect
+          >
             <UserProfile />
           </ProtectedRoute>
         } />
         
         <Route path="users/:userId/roles" element={
-          <ProtectedRoute requirePermission="users.manage_roles">
+          <ProtectedRoute 
+            requirePermission="users.manage_roles"
+            redirectToAccessibleRoute={true} // 🔧 NEW: Enable smart redirect
+          >
             <UserRoleAssignment />
           </ProtectedRoute>
         } />
 
         <Route path="users/new" element={
-          <ProtectedRoute requirePermission="users.create">
+          <ProtectedRoute 
+            requirePermission="users.create"
+            redirectToAccessibleRoute={true} // 🔧 NEW: Enable smart redirect
+          >
             <CreateUser />
           </ProtectedRoute>
         } />
 
-        {/* Role management routes */}
+        {/* Role management routes - 🔧 Enhanced with smart redirect */}
         <Route path="roles" element={
-          <ProtectedRoute requirePermission="roles.view">
+          <ProtectedRoute 
+            requirePermission="roles.view"
+            redirectToAccessibleRoute={true} // 🔧 NEW: Enable smart redirect
+          >
             <RoleManagement />
           </ProtectedRoute>
         } />
         
         <Route path="roles/:id" element={
-          <ProtectedRoute requirePermission="roles.view">
+          <ProtectedRoute 
+            requirePermission="roles.view"
+            redirectToAccessibleRoute={true} // 🔧 NEW: Enable smart redirect
+          >
             <RoleDetails />
           </ProtectedRoute>
         } />
         
         <Route path="roles/:id/edit" element={
-          <ProtectedRoute requirePermission="roles.edit">
+          <ProtectedRoute 
+            requirePermission="roles.edit"
+            redirectToAccessibleRoute={true} // 🔧 NEW: Enable smart redirect
+          >
             <RoleEditor />
           </ProtectedRoute>
         } />
         
         <Route path="roles/new" element={
-          <ProtectedRoute requirePermission="roles.create">
+          <ProtectedRoute 
+            requirePermission="roles.create"
+            redirectToAccessibleRoute={true} // 🔧 NEW: Enable smart redirect
+          >
             <RoleEditor />
           </ProtectedRoute>
         } />

@@ -15,6 +15,11 @@ interface TenantContextType {
   showTenantSelector: boolean;
   setShowTenantSelector: (show: boolean) => void;
   completeTenantSelection: (tenantId: string) => Promise<void>;
+  // 🔧 NEW: Navigation flags for router-aware components
+  shouldRedirectToDashboard: boolean;
+  clearRedirectFlag: () => void;
+  // 🔧 NEW: Add refresh method for external use
+  refreshUserTenants: () => Promise<Tenant[]>;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
@@ -31,7 +36,9 @@ export function TenantProvider({ children }: TenantProviderProps) {
   const [error, setError] = useState<string | null>(null);
   const [showTenantSelector, setShowTenantSelector] = useState(false);
   
-  // 🔧 FIX: Change refreshAuthState to refreshAuth
+  // 🔧 NEW: Navigation flags instead of direct navigation
+  const [shouldRedirectToDashboard, setShouldRedirectToDashboard] = useState(false);
+  
   const { user, isAuthenticated, refreshAuth } = useAuth();
 
   // Listen for tenant errors from API client
@@ -64,9 +71,15 @@ export function TenantProvider({ children }: TenantProviderProps) {
     setTenantSettings({});
     setShowTenantSelector(false);
     setError(null);
+    setShouldRedirectToDashboard(false);
     
     // API client no longer needs tenant context (JWT approach)
     apiClient.setCurrentTenant(null);
+  };
+
+  const clearRedirectFlag = () => {
+    setShouldRedirectToDashboard(false);
+    sessionStorage.removeItem('tenant_switch_in_progress');
   };
 
   const loadUserTenants = async () => {
@@ -172,21 +185,45 @@ export function TenantProvider({ children }: TenantProviderProps) {
     }
   };
 
+  // Add a new method to refresh user tenants
+  const refreshUserTenants = async (): Promise<Tenant[]> => {
+    if (!user) return [];
+    
+    console.log('🔄 TenantContext: Refreshing user tenants...');
+    
+    try {
+      const response = await tenantService.getUserTenants(user.id);
+      if (response.success && response.data?.length > 0) {
+        console.log('✅ TenantContext: Tenant list refreshed with', response.data.length, 'tenants');
+        setAvailableTenants(response.data);
+        return response.data;
+      } else {
+        console.log('⚠️ TenantContext: No tenants found after refresh');
+        setAvailableTenants([]);
+        return [];
+      }
+    } catch (error) {
+      console.error('❌ TenantContext: Failed to refresh tenants:', error);
+      throw error;
+    }
+  };
+
   const switchTenant = async (tenantId: string) => {
     // 🔧 FIX: Wait a bit for availableTenants to be set if needed
     let tenant = availableTenants.find(t => t.id === tenantId);
     
-    // If tenant not found and availableTenants is empty, try to reload tenants
-    if (!tenant && availableTenants.length === 0 && user) {
-      console.log('🏢 TenantContext: Available tenants empty, reloading...');
+    // If tenant not found, try to refresh the tenant list
+    if (!tenant && user) {
+      console.log('🔄 TenantContext: Tenant not found, refreshing tenant list...');
       try {
-        const response = await tenantService.getUserTenants(user.id);
-        if (response.success && response.data?.length > 0) {
-          setAvailableTenants(response.data);
-          tenant = response.data.find(t => t.id === tenantId);
+        const refreshedTenants = await refreshUserTenants();
+        tenant = refreshedTenants.find(t => t.id === tenantId);
+        
+        if (tenant) {
+          console.log('✅ TenantContext: Found tenant after refresh:', tenant.name);
         }
       } catch (error) {
-        console.error('🏢 TenantContext: Failed to reload tenants:', error);
+        console.error('❌ TenantContext: Failed to refresh tenants during switch:', error);
       }
     }
     
@@ -200,6 +237,10 @@ export function TenantProvider({ children }: TenantProviderProps) {
     }
 
     setIsLoading(true);
+    
+    // 🔧 NEW: Mark tenant switch in progress for navigation logic
+    sessionStorage.setItem('tenant_switch_in_progress', 'true');
+    
     try {
       console.log('🏢 TenantContext: Switching to tenant via JWT refresh:', tenant.name);
       console.log('🔍 TenantContext: Current auth token exists:', !!localStorage.getItem('auth_token'));
@@ -221,11 +262,8 @@ export function TenantProvider({ children }: TenantProviderProps) {
           
           console.log('🏢 TenantContext: Tenant switched successfully with new JWT:', tenant.name);
           
-          // 🔧 REMOVE: Don't reload page - let React handle the state updates
-          // setTimeout(() => {
-          //   console.log('🔄 TenantContext: Reloading page now...');
-          //   window.location.reload();
-          // }, 100);
+          // 🔧 NEW: Set flag for navigation instead of direct navigation
+          setShouldRedirectToDashboard(true);
           
         } catch (refreshError) {
           console.error('🚨 TenantContext: refreshAuth failed:', refreshError);
@@ -239,6 +277,10 @@ export function TenantProvider({ children }: TenantProviderProps) {
     } catch (err) {
       console.error('🚨 TenantContext: switchTenant failed:', err);
       setError(err instanceof Error ? err.message : 'Failed to switch tenant');
+      
+      // Clear the flag on error
+      sessionStorage.removeItem('tenant_switch_in_progress');
+      
       throw err;
     } finally {
       setIsLoading(false);
@@ -316,6 +358,11 @@ export function TenantProvider({ children }: TenantProviderProps) {
     showTenantSelector,
     setShowTenantSelector,
     completeTenantSelection,
+    // 🔧 NEW: Navigation flags
+    shouldRedirectToDashboard,
+    clearRedirectFlag,
+    // 🔧 NEW: Add refresh method for external use
+    refreshUserTenants,
   };
 
   return <TenantContext.Provider value={value}>{children}</TenantContext.Provider>;

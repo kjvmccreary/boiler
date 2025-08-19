@@ -109,15 +109,17 @@ public class UserServiceImplementation : Contracts.User.IUserService
     {
         try
         {
-            // FIXED: Apply tenant filtering explicitly
             var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!currentTenantId.HasValue)
             {
                 return ApiResponseDto<PagedResultDto<UserDto>>.ErrorResult("Tenant context not found");
             }
 
-            var query = _userRepository.Query()
-                .Where(u => u.IsActive && u.TenantId == currentTenantId.Value);
+            // 🔧 FIX: Use TenantUsers to find users in current tenant
+            var query = from u in _userRepository.Query()
+                        join tu in _context.TenantUsers on u.Id equals tu.UserId
+                        where u.IsActive && tu.TenantId == currentTenantId.Value && tu.IsActive
+                        select u;
 
             // Apply search filter if provided
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
