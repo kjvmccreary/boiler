@@ -125,61 +125,10 @@ export function TenantProvider({ children }: TenantProviderProps) {
       console.log('🏢 TenantContext: Auto-selecting single tenant:', tenants[0].name);
       await selectTenant(tenants[0]);
     } else if (tenants.length > 1) {
-      // Get current JWT tenant ID and last selected preference
-      const jwtTenantId = getCurrentJwtTenantId();
-      const lastSelectedTenantId = localStorage.getItem(`lastTenant_${user?.id}`);
-      
-      console.log('🏢 TenantContext: Tenant selection debug:', {
-        jwtTenantId,
-        lastSelectedTenantId,
-        availableTenants: tenants.map(t => ({ id: t.id, name: t.name }))
-      });
-      
-      // Find tenants by ID
-      const jwtTenant = jwtTenantId ? tenants.find(t => t.id === jwtTenantId) : null;
-      const lastSelectedTenant = lastSelectedTenantId 
-        ? tenants.find(t => t.id === lastSelectedTenantId)
-        : null;
-
-      console.log('🏢 TenantContext: Found tenants:', {
-        jwtTenant: jwtTenant ? { id: jwtTenant.id, name: jwtTenant.name } : null,
-        lastSelected: lastSelectedTenant ? { id: lastSelectedTenant.id, name: lastSelectedTenant.name } : null
-      });
-
-      // If we have both and they're different, try to switch to preferred
-      if (jwtTenant && lastSelectedTenant && jwtTenant.id !== lastSelectedTenant.id) {
-        console.log('🏢 TenantContext: JWT tenant differs from preference, attempting switch:', {
-          from: jwtTenant.name,
-          to: lastSelectedTenant.name
-        });
-        
-        try {
-          await switchTenant(lastSelectedTenant.id);
-          return; // switchTenant handles everything
-        } catch (error) {
-          console.error('🏢 TenantContext: Auto-switch failed:', error);
-          // Fall back to JWT tenant
-          await selectTenant(jwtTenant);
-        }
-      } else if (jwtTenant) {
-        // Use JWT tenant (either no preference or same as preference)
-        console.log('🏢 TenantContext: Using JWT tenant:', jwtTenant.name);
-        await selectTenant(jwtTenant);
-      } else if (lastSelectedTenant) {
-        // No JWT match, try to switch to preference
-        console.log('🏢 TenantContext: No JWT tenant match, switching to preference:', lastSelectedTenant.name);
-        try {
-          await switchTenant(lastSelectedTenant.id);
-        } catch (error) {
-          console.error('🏢 TenantContext: Failed to switch to preference:', error);
-          // Fall back to first available tenant
-          await selectTenant(tenants[0]);
-        }
-      } else {
-        // No preference, show selector
-        console.log('🏢 TenantContext: Multiple tenants, showing selector');
-        setShowTenantSelector(true);
-      }
+      // 🔧 SIMPLIFIED: For multi-tenant users, ALWAYS show the selector
+      console.log('🏢 TenantContext: Multiple tenants found, showing selector');
+      console.log('🏢 TenantContext: Available tenants:', tenants.map(t => ({ id: t.id, name: t.name })));
+      setShowTenantSelector(true);
     } else {
       setError('User has no tenant access');
     }
@@ -209,6 +158,13 @@ export function TenantProvider({ children }: TenantProviderProps) {
   };
 
   const switchTenant = async (tenantId: string) => {
+    // 🔧 FIX: Check if we're already on the requested tenant
+    const jwtTenantId = getCurrentJwtTenantId();
+    if (jwtTenantId === tenantId && currentTenant?.id === tenantId) {
+      console.log('🏢 TenantContext: Already on requested tenant, skipping switch:', tenantId);
+      return;
+    }
+    
     // 🔧 FIX: Wait a bit for availableTenants to be set if needed
     let tenant = availableTenants.find(t => t.id === tenantId);
     
@@ -315,15 +271,16 @@ export function TenantProvider({ children }: TenantProviderProps) {
     
     setCurrentTenant(tenant);
     
-    // Load tenant-specific settings
+    // Load tenant-specific settings (but don't fail if it doesn't work)
     try {
       const settingsResponse = await tenantService.getTenantSettings(tenant.id);
       if (settingsResponse.success) {
         setTenantSettings(settingsResponse.data || {});
       }
     } catch (err) {
-      console.warn('🏢 TenantContext: Failed to load tenant settings:', err);
+      console.warn('🏢 TenantContext: Failed to load tenant settings (this is OK):', err);
       // Don't fail tenant selection for settings
+      setTenantSettings({});
     }
 
     // Remember user's tenant selection

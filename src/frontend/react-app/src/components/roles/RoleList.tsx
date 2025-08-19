@@ -32,6 +32,7 @@ import {
 } from '@mui/icons-material';
 import type { RoleDto, UserInfo } from '../../types';
 import { roleService } from '../../services/role.service';
+import { useTenant } from '@/contexts/TenantContext.js'; // 🔧 ADD: Import useTenant
 
 interface RoleListProps {
   onEditRole?: (roleId: number) => void;
@@ -67,8 +68,10 @@ export const RoleList: React.FC<RoleListProps> = ({
     totalPages: 0
   });
 
+  const { currentTenant } = useTenant(); // 🔧 ADD: Get current tenant
+
   const fetchRoles = async (page = 1, pageSize = 10, search = '') => {
-    console.log('🔍 RoleList: fetchRoles called', { page, pageSize, search });
+    console.log('🔍 RoleList: fetchRoles called', { page, pageSize, search, tenant: currentTenant?.name });
     
     try {
       setLoading(true);
@@ -80,7 +83,7 @@ export const RoleList: React.FC<RoleListProps> = ({
         searchTerm: search || undefined
       });
 
-      console.log('✅ RoleList: fetchRoles result:', result);
+      console.log('✅ RoleList: fetchRoles result for tenant:', currentTenant?.name, result);
 
       setRoles(result.roles || []);
       setPagination(result.pagination || {
@@ -99,29 +102,34 @@ export const RoleList: React.FC<RoleListProps> = ({
     }
   };
 
+  // 🔧 FIX: Add currentTenant as dependency to reload roles when tenant changes
   useEffect(() => {
-    console.log('🔍 RoleList: Initial load');
-    fetchRoles(1, 10, '');
-  }, []);
+    if (currentTenant) {
+      console.log('🔄 RoleList: Loading roles for tenant:', currentTenant.name);
+      fetchRoles(1, 10, '');
+    }
+  }, [currentTenant]); // 🔧 ADD: currentTenant dependency
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      console.log('🔍 RoleList: Search term changed:', searchTerm);
-      fetchRoles(1, pagination?.pageSize || 10, searchTerm);
+      if (currentTenant) {
+        console.log('🔍 RoleList: Search term changed:', searchTerm, 'for tenant:', currentTenant.name);
+        fetchRoles(1, pagination?.pageSize || 10, searchTerm);
+      }
     }, 500);
 
     return () => clearTimeout(timeoutId);
-  }, [searchTerm]);
+  }, [searchTerm, currentTenant]); // 🔧 ADD: currentTenant dependency
 
   const handlePageChange = (_event: unknown, newPage: number) => {
     const pageNumber = newPage + 1;
-    console.log('🔍 RoleList: Page change to:', pageNumber);
+    console.log('🔍 RoleList: Page change to:', pageNumber, 'for tenant:', currentTenant?.name);
     fetchRoles(pageNumber, pagination?.pageSize || 10, searchTerm);
   };
 
   const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newPageSize = parseInt(event.target.value, 10);
-    console.log('🔍 RoleList: Page size change to:', newPageSize);
+    console.log('🔍 RoleList: Page size change to:', newPageSize, 'for tenant:', currentTenant?.name);
     fetchRoles(1, newPageSize, searchTerm);
   };
 
@@ -143,7 +151,7 @@ export const RoleList: React.FC<RoleListProps> = ({
   const handleUserCountHover = async (event: React.MouseEvent<HTMLElement>, roleId: number, userCount: number) => {
     if (userCount === 0) return;
 
-    console.log('🔍 RoleList: User count hovered for role:', roleId);
+    console.log('🔍 RoleList: User count hovered for role:', roleId, 'in tenant:', currentTenant?.name);
     
     setUserPopover({
       anchorEl: event.currentTarget,
@@ -154,7 +162,7 @@ export const RoleList: React.FC<RoleListProps> = ({
 
     try {
       const users = await roleService.getRoleUsers(roleId);
-      console.log('✅ RoleList: Users loaded for role:', roleId, users);
+      console.log('✅ RoleList: Users loaded for role:', roleId, 'in tenant:', currentTenant?.name, users);
       
       setUserPopover(prev => ({
         ...prev,
@@ -186,11 +194,20 @@ export const RoleList: React.FC<RoleListProps> = ({
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
+  // 🔧 ADD: Don't render if no tenant is selected
+  if (!currentTenant) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
+        <Typography>Please select a tenant to view roles</Typography>
+      </Box>
+    );
+  }
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" p={4}>
         <CircularProgress />
-        <Typography sx={{ ml: 2 }}>Loading roles...</Typography>
+        <Typography sx={{ ml: 2 }}>Loading roles for {currentTenant.name}...</Typography>
       </Box>
     );
   }
@@ -199,7 +216,7 @@ export const RoleList: React.FC<RoleListProps> = ({
     return (
       <Box p={2}>
         <Typography color="error" variant="h6">
-          Failed to fetch roles
+          Failed to fetch roles for {currentTenant.name}
         </Typography>
         <Typography color="error" variant="body2" sx={{ mt: 1 }}>
           {error}
@@ -215,6 +232,16 @@ export const RoleList: React.FC<RoleListProps> = ({
 
   return (
     <Box>
+      {/* 🔧 ADD: Show current tenant name */}
+      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6" component="h2">
+          Role Management
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
+            {currentTenant.name}
+          </Typography>
+        </Typography>
+      </Box>
+
       <Box mb={2}>
         <TextField
           fullWidth
@@ -248,7 +275,7 @@ export const RoleList: React.FC<RoleListProps> = ({
               <TableRow>
                 <TableCell colSpan={6} align="center">
                   <Typography color="text.secondary" sx={{ py: 4 }}>
-                    No roles found
+                    No roles found in {currentTenant.name}
                   </Typography>
                 </TableCell>
               </TableRow>

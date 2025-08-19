@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { UserMenu } from './UserMenu.js';
+import { useTenant } from '@/contexts/TenantContext.js'; // 🔧 ADD: Import tenant context
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -13,6 +14,8 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuClick, showMenuButton }: HeaderProps) {
+  const { currentTenant } = useTenant(); // 🔧 ADD: Get current tenant
+
   return (
     <Toolbar>
       {showMenuButton && (
@@ -28,7 +31,8 @@ export function Header({ onMenuClick, showMenuButton }: HeaderProps) {
       )}
       
       <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-        Microservices Starter
+        {/* 🔧 CHANGE: Replace hardcoded text with tenant name */}
+        {currentTenant?.name || 'Microservices Starter'}
       </Typography>
       
       <Box sx={{ display: 'flex', alignItems: 'center' }}>

@@ -50,6 +50,7 @@ import type { User } from '@/types/index.js';
 import toast from 'react-hot-toast';
 import { normalizeRoles } from '@/utils/role.utils.js';
 import { ROUTES } from '@/routes/route.constants.js'; // Add this import at the top (after other imports)
+import { useTenant } from '@/contexts/TenantContext.js'; // 🔧 ADD: Import useTenant
 
 export function UserList() {
   const [users, setUsers] = useState<User[]>([]);
@@ -69,32 +70,41 @@ export function UserList() {
     roleName: string | null;
     permissions: string[];
     loading: boolean;
-  }>({
-    anchorEl: null,
-    roleName: null,
-    permissions: [],
-    loading: false
-  });
+  }>(
+    {
+      anchorEl: null,
+      roleName: null,
+      permissions: [],
+      loading: false,
+    }
+  );
 
   const navigate = useNavigate();
+  const { currentTenant } = useTenant(); // 🔧 ADD: Get current tenant
 
+  // 🔧 FIX: Add currentTenant as dependency to reload users when tenant changes
   useEffect(() => {
-    loadUsers();
-  }, [page, rowsPerPage, searchTerm]);
+    if (currentTenant) {
+      loadUsers();
+    }
+  }, [page, rowsPerPage, searchTerm, currentTenant]); // 🔧 ADD: currentTenant dependency
 
   const loadUsers = async () => {
     try {
       setLoading(true);
+      console.log('🔄 UserList: Loading users for tenant:', currentTenant?.name || 'Unknown');
+
       const response = await userService.getUsers({
         page: page + 1, // API uses 1-based pagination
         pageSize: rowsPerPage,
         searchTerm: searchTerm || undefined,
       });
-      
+
+      console.log('✅ UserList: Loaded', response.data.length, 'users for tenant:', currentTenant?.name);
       setUsers(response.data);
       setTotalCount(response.totalCount);
     } catch (error) {
-      console.error('Failed to load users:', error);
+      console.error('❌ UserList: Failed to load users:', error);
       toast.error('Failed to load users');
     } finally {
       setLoading(false);
@@ -155,12 +165,12 @@ export function UserList() {
   // ✅ NEW: Handle role chip hover to show permissions
   const handleRoleHover = async (event: React.MouseEvent<HTMLElement>, roleName: string) => {
     console.log('🔍 UserList: Role hovered:', roleName);
-    
+
     setPermissionsPopover({
       anchorEl: event.currentTarget,
       roleName,
       permissions: [],
-      loading: true
+      loading: true,
     });
 
     try {
@@ -173,18 +183,18 @@ export function UserList() {
       // Then get permissions for the role
       const permissions = await roleService.getRolePermissions(role.id);
       console.log('✅ UserList: Permissions loaded for role:', roleName, permissions);
-      
-      setPermissionsPopover(prev => ({
+
+      setPermissionsPopover((prev) => ({
         ...prev,
         permissions,
-        loading: false
+        loading: false,
       }));
     } catch (error) {
       console.error('❌ UserList: Failed to load permissions for role:', roleName, error);
-      setPermissionsPopover(prev => ({
+      setPermissionsPopover((prev) => ({
         ...prev,
         permissions: [],
-        loading: false
+        loading: false,
       }));
       toast.error(`Could not load permissions for role "${roleName}"`);
     }
@@ -197,7 +207,7 @@ export function UserList() {
       anchorEl: null,
       roleName: null,
       permissions: [],
-      loading: false
+      loading: false,
     });
   };
 
@@ -207,7 +217,7 @@ export function UserList() {
       const parts = permission.split('.');
       const category = parts.length > 1 ? parts[0] : 'General';
       const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
-      
+
       if (!groups[categoryName]) {
         groups[categoryName] = [];
       }
@@ -226,13 +236,26 @@ export function UserList() {
 
   const isPermissionsPopoverOpen = Boolean(permissionsPopover.anchorEl);
 
+  // 🔧 ADD: Don't render if no tenant is selected
+  if (!currentTenant) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
+        <Typography>Please select a tenant to view users</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1">
           User Management
+          {/* 🔧 ADD: Show current tenant name */}
+          <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
+            {currentTenant.name}
+          </Typography>
         </Typography>
-        
+
         <CanAccess permission={PERMISSIONS.USERS_CREATE}>
           <Button
             variant="contained"
@@ -280,13 +303,16 @@ export function UserList() {
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={6} align="center">
-                      Loading...
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                        Loading users for {currentTenant.name}...
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ) : users.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} align="center">
-                      No users found
+                      <Typography>No users found in {currentTenant.name}</Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -307,9 +333,9 @@ export function UserList() {
                           </Box>
                         </Box>
                       </TableCell>
-                      
+
                       <TableCell>{user.email}</TableCell>
-                      
+
                       <TableCell>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                           {/* ✅ ENHANCED: Role chips with hover for permissions */}
@@ -321,16 +347,16 @@ export function UserList() {
                               color="primary"
                               variant="outlined"
                               onMouseEnter={(e) => handleRoleHover(e, role)}
-                              sx={{ 
-                                mr: 0.5, 
+                              sx={{
+                                mr: 0.5,
                                 mb: 0.5,
                                 cursor: 'pointer',
                                 '&:hover': {
                                   transform: 'scale(1.05)',
                                   transition: 'transform 0.2s ease-in-out',
                                   backgroundColor: 'primary.light',
-                                  color: 'primary.contrastText'
-                                }
+                                  color: 'primary.contrastText',
+                                },
                               }}
                             />
                           ))}
@@ -344,7 +370,7 @@ export function UserList() {
                           )}
                         </Box>
                       </TableCell>
-                      
+
                       <TableCell>
                         <Chip
                           label={user.emailConfirmed ? 'Active' : 'Pending'}
@@ -352,9 +378,9 @@ export function UserList() {
                           size="small"
                         />
                       </TableCell>
-                      
+
                       <TableCell>{formatDate(user.createdAt)}</TableCell>
-                      
+
                       <TableCell>
                         <CanAccess permissions={[PERMISSIONS.USERS_EDIT, PERMISSIONS.USERS_DELETE]}>
                           <IconButton
@@ -399,14 +425,14 @@ export function UserList() {
             Edit User
           </MenuItem>
         </CanAccess>
-        
+
         <CanAccess permission={PERMISSIONS.USERS_MANAGE_ROLES}>
           <MenuItem onClick={handleManageRoles}>
             <SecurityIcon sx={{ mr: 1 }} fontSize="small" />
             Manage Roles
           </MenuItem>
         </CanAccess>
-        
+
         <CanAccess permission={PERMISSIONS.USERS_DELETE}>
           <MenuItem onClick={handleDeleteClick}>
             <DeleteIcon sx={{ mr: 1 }} fontSize="small" />
@@ -434,9 +460,9 @@ export function UserList() {
               maxWidth: 350,
               maxHeight: 400,
               overflow: 'auto',
-              mt: 1
-            }
-          }
+              mt: 1,
+            },
+          },
         }}
         disableRestoreFocus
         disableAutoFocus
@@ -444,12 +470,13 @@ export function UserList() {
       >
         <Box sx={{ p: 2 }}>
           {/* Header with close button */}
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'space-between',
-            mb: 1 
-          }}>
+          <Box sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              mb: 1,
+            }}
+          >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <LockOpenIcon sx={{ mr: 1, color: 'primary.main' }} />
               <Typography variant="h6" component="div">
@@ -460,13 +487,13 @@ export function UserList() {
               <IconButton
                 onClick={handlePermissionsPopoverClose}
                 size="small"
-                sx={{ 
+                sx={{
                   ml: 1,
                   color: 'text.secondary',
                   '&:hover': {
                     color: 'text.primary',
-                    backgroundColor: 'action.hover'
-                  }
+                    backgroundColor: 'action.hover',
+                  },
                 }}
                 aria-label="Close permissions list"
               >
@@ -479,7 +506,7 @@ export function UserList() {
           <Typography variant="subtitle1" fontWeight="medium" sx={{ mb: 1 }}>
             {permissionsPopover.roleName}
           </Typography>
-          
+
           {permissionsPopover.loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
               <CircularProgress size={24} />
@@ -495,7 +522,7 @@ export function UserList() {
                 {permissionsPopover.permissions.length} permission{permissionsPopover.permissions.length === 1 ? '' : 's'} assigned
               </Typography>
               <Divider sx={{ mb: 1 }} />
-              
+
               {/* Group permissions by category */}
               {Object.entries(groupPermissionsByCategory(permissionsPopover.permissions)).map(([category, permissions]) => (
                 <Box key={category} sx={{ mb: 2 }}>
@@ -504,8 +531,8 @@ export function UserList() {
                   </Typography>
                   <List dense sx={{ pl: 1 }}>
                     {permissions.map((permission, index) => (
-                      <ListItem 
-                        key={permission} 
+                      <ListItem
+                        key={permission}
                         divider={index < permissions.length - 1}
                         sx={{ px: 0, py: 0.5 }}
                       >
@@ -521,7 +548,7 @@ export function UserList() {
                   </List>
                 </Box>
               ))}
-              
+
               <Box sx={{ mt: 1, p: 1, bgcolor: 'background.default', borderRadius: 1 }}>
                 <Typography variant="caption" color="text.secondary">
                   💡 Tip: Click "Manage Roles" to modify user role assignments
@@ -537,7 +564,7 @@ export function UserList() {
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete user "{userToDelete?.firstName} {userToDelete?.lastName}"? 
+            Are you sure you want to delete user "{userToDelete?.firstName} {userToDelete?.lastName}"?
             This action cannot be undone.
           </Typography>
         </DialogContent>

@@ -170,16 +170,6 @@ public class UserServiceImplementation : Contracts.User.IUserService
     {
         try
         {
-            // Check if user already exists
-            var existingUser = await _userRepository.Query()
-                .Where(u => u.Email.ToLower() == request.Email.ToLower())
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (existingUser != null)
-            {
-                return ApiResponseDto<UserDto>.ErrorResult("User with this email already exists");
-            }
-
             // Get current tenant ID
             var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (currentTenantId == null)
@@ -187,24 +177,115 @@ public class UserServiceImplementation : Contracts.User.IUserService
                 return ApiResponseDto<UserDto>.ErrorResult("Tenant context not found");
             }
 
-            // Create new user entity
-            var user = new User
+            _logger.LogInformation("Creating/adding user {Email} for tenant {TenantId}", request.Email, currentTenantId.Value);
+
+            // 🔧 FIX: Use context with IgnoreQueryFilters to find user across all tenants
+            var existingUser = await _context.Users
+                .IgnoreQueryFilters()  // This is critical - ignore tenant filters
+                .Where(u => u.Email.ToLower() == request.Email.ToLower())
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (existingUser != null)
             {
-                Email = request.Email.ToLower(),
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                PasswordHash = _passwordService.HashPassword(request.Password), // ✅ FIX: Hash password
-                TenantId = currentTenantId.Value,
-                IsActive = true,
-                EmailConfirmed = true, // ✅ FIX: Set to true for admin-created users
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
+                // User exists - check if they already have a TenantUser record for current tenant
+                var existingTenantUser = await _context.TenantUsers
+                    .FirstOrDefaultAsync(tu => tu.UserId == existingUser.Id && 
+                                              tu.TenantId == currentTenantId.Value && 
+                                              tu.IsActive, 
+                                        cancellationToken);
 
-            await _userRepository.AddAsync(user, cancellationToken);
+                if (existingTenantUser != null)
+                {
+                    // User already exists in this tenant - return graceful message
+                    _logger.LogInformation("User {Email} already exists in tenant {TenantId}", request.Email, currentTenantId.Value);
+                    var existingUserDto = _mapper.Map<UserDto>(existingUser);
+                    return ApiResponseDto<UserDto>.SuccessResult(existingUserDto, 
+                        $"User '{request.Email}' already exists in this organization");
+                }
+                else
+                {
+                    // User exists but not in current tenant - create TenantUser relationship
+                    _logger.LogInformation("Adding existing user {Email} (ID: {UserId}) to tenant {TenantId}", 
+                        request.Email, existingUser.Id, currentTenantId.Value);
 
-            var userDto = _mapper.Map<UserDto>(user);
-            return ApiResponseDto<UserDto>.SuccessResult(userDto, "User created successfully");
+                    var tenantUser = new TenantUser
+                    {
+                        UserId = existingUser.Id,
+                        TenantId = currentTenantId.Value,
+                        Role = "User", // Default role - can be updated later
+                        IsActive = true,
+                        JoinedAt = DateTime.UtcNow,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    _context.TenantUsers.Add(tenantUser);
+                    await _context.SaveChangesAsync(cancellationToken);
+
+                    _logger.LogInformation("Successfully added user {Email} to tenant {TenantId}", request.Email, currentTenantId.Value);
+
+                    // Return existing user with success message
+                    var addedUserDto = _mapper.Map<UserDto>(existingUser);
+                    return ApiResponseDto<UserDto>.SuccessResult(addedUserDto, 
+                        $"User '{request.Email}' has been successfully added to this organization");
+                }
+            }
+            else
+            {
+                // User doesn't exist - create new user and TenantUser relationship
+                _logger.LogInformation("Creating new user {Email} for tenant {TenantId}", request.Email, currentTenantId.Value);
+
+                // Create new user entity
+                var user = new User
+                {
+                    Email = request.Email.ToLower(),
+                    FirstName = request.FirstName,
+                    LastName = request.LastName,
+                    PasswordHash = _passwordService.HashPassword(request.Password),
+                    TenantId = currentTenantId.Value, // Set primary tenant
+                    IsActive = true,
+                    EmailConfirmed = true, // Set to true for admin-created users
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                // Use transaction to ensure both User and TenantUser are created together
+                using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+                try
+                {
+                    // Create the user
+                    await _userRepository.AddAsync(user, cancellationToken);
+
+                    // Create TenantUser relationship
+                    var tenantUser = new TenantUser
+                    {
+                        UserId = user.Id,
+                        TenantId = currentTenantId.Value,
+                        Role = "User", // Default role - can be updated later
+                        IsActive = true,
+                        JoinedAt = DateTime.UtcNow,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    _context.TenantUsers.Add(tenantUser);
+                    await _context.SaveChangesAsync(cancellationToken);
+
+                    await transaction.CommitAsync(cancellationToken);
+
+                    _logger.LogInformation("Successfully created new user {Email} (ID: {UserId}) for tenant {TenantId}", 
+                        request.Email, user.Id, currentTenantId.Value);
+
+                    var userDto = _mapper.Map<UserDto>(user);
+                    return ApiResponseDto<UserDto>.SuccessResult(userDto, "User created successfully");
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync(cancellationToken);
+                    _logger.LogError(ex, "Transaction failed while creating user {Email}", request.Email);
+                    throw; // Re-throw to be caught by outer catch block
+                }
+            }
         }
         catch (Exception ex)
         {

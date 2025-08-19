@@ -25,7 +25,7 @@ interface TenantSelectorProps {
 }
 
 export function TenantSelector({ onTenantSelected }: TenantSelectorProps) {
-  const { availableTenants, isLoading, error } = useTenant();
+  const { availableTenants, isLoading, error } = useTenant(); // 🔧 REVERT: Remove switchTenant
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
 
@@ -45,9 +45,11 @@ export function TenantSelector({ onTenantSelected }: TenantSelectorProps) {
 
     setIsSelecting(true);
     try {
+      // 🔧 REVERT: Just call the prop function - App.tsx will handle the switching logic
+      console.log('🏢 TenantSelector: Tenant selected:', selectedTenantId);
       await onTenantSelected(selectedTenantId);
     } catch (err) {
-      console.error('Failed to select tenant:', err);
+      console.error('❌ TenantSelector: Failed to select tenant:', err);
     } finally {
       setIsSelecting(false);
     }
@@ -156,7 +158,7 @@ export function TenantSelector({ onTenantSelected }: TenantSelectorProps) {
               disabled={!selectedTenantId || isSelecting || availableTenants.length === 0}
               startIcon={isSelecting ? <CircularProgress size={20} /> : undefined}
             >
-              {isSelecting ? 'Connecting...' : 
+              {isSelecting ? 'Switching Organization...' : 
                availableTenants.length === 1 ? 'Continue' : 'Select Organization'}
             </Button>
           </CardContent>
