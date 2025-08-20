@@ -137,6 +137,48 @@ public class EnhancedTokenService : ITokenService
         return generatedToken;
     }
 
+    // 🔧 NEW METHOD: Generate JWT without tenant context for initial login
+    public Task<string> GenerateAccessTokenWithoutTenantAsync(User user)
+    {
+        _logger.LogInformation("🔍 TOKEN DEBUG: Generating tenant-less JWT for user {UserId}", user.Id);
+        
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Email, user.Email),
+            new(ClaimTypes.GivenName, user.FirstName),
+            new(ClaimTypes.Surname, user.LastName),
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Email, user.Email),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(JwtRegisteredClaimNames.Iat, 
+                DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
+                ClaimValueTypes.Integer64)
+            
+            // 🔧 CRITICAL: NO tenant_id claim - this signals tenant selection needed
+            // 🔧 CRITICAL: NO role claims yet - will be added after tenant selection
+            // 🔧 CRITICAL: NO permission claims yet - will be added after tenant selection
+        };
+
+        _logger.LogInformation("🔍 TOKEN DEBUG: Tenant-less token will have {ClaimCount} claims (no tenant/roles/permissions)", claims.Count);
+        
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: _jwtSettings.Issuer,
+            audience: _jwtSettings.Audience,
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(15), // 🔧 Shorter expiry for tenant selection
+            signingCredentials: credentials
+        );
+
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+        _logger.LogInformation("🔍 TOKEN DEBUG: Tenant-less token generation completed for user {UserId}", user.Id);
+        
+        return Task.FromResult(tokenString);
+    }
+
     // Keep existing methods unchanged...
     public string GenerateRefreshToken()
     {

@@ -277,6 +277,33 @@ class TenantService {
       throw error;
     }
   }
+
+  // Add this method to the existing TenantService class
+  async selectTenant(tenantId: string): Promise<ApiResponse<{
+    accessToken: string;
+    refreshToken: string;
+    user: any;
+    tenant: any;
+  }>> {
+    try {
+      console.log('🏢 TenantService: Calling select-tenant API for tenant:', tenantId);
+      
+      const response = await apiClient.post<any>('/api/auth/select-tenant', { 
+        tenantId: parseInt(tenantId) 
+      });
+      
+      console.log('🏢 TenantService: Select tenant API response:', response.data);
+      
+      return {
+        success: true,
+        message: 'Tenant selected successfully',
+        data: response.data
+      };
+    } catch (error) {
+      console.error('🏢 TenantService: Select tenant API failed:', error);
+      throw error;
+    }
+  }
 }
 
 export const tenantService = new TenantService();

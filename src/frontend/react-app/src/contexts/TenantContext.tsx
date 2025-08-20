@@ -82,6 +82,62 @@ export function TenantProvider({ children }: TenantProviderProps) {
     sessionStorage.removeItem('tenant_switch_in_progress');
   };
 
+  const getCurrentJwtTenantId = (): string | null => {
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        console.log('🔍 TenantContext: No token found for tenant extraction');
+        return null;
+      }
+      
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const tenantId = payload.tenant_id?.toString();
+      
+      console.log('🔍 TenantContext: Extracted tenant from JWT:', {
+        tenantId,
+        tenantName: payload.tenant_name
+      });
+      
+      return tenantId || null;
+    } catch (error) {
+      console.error('🔍 TenantContext: Error extracting tenant from JWT:', error);
+      return null;
+    }
+  };
+
+  // 🔧 FIXED: Corrected TypeScript types for page refresh detection
+  const isPageRefresh = (): boolean => {
+    // Check if we have tenant data in localStorage from previous selection
+    // This indicates the user was previously using the app (page refresh scenario)
+    const lastTenant = user ? localStorage.getItem(`lastTenant_${user.id}`) : null;
+    
+    let hasNavigationEntries = false;
+    try {
+      // 🔧 FIX: Proper TypeScript casting for PerformanceNavigationTiming
+      if (window.performance) {
+        if ('navigation' in window.performance && window.performance.navigation) {
+          // Legacy API
+          hasNavigationEntries = (window.performance.navigation as any).type === 1; // TYPE_RELOAD
+        } else {
+          // Modern API
+          const navigationEntries = window.performance.getEntriesByType('navigation') as PerformanceNavigationTiming[];
+          hasNavigationEntries = navigationEntries.length > 0 && navigationEntries[0].type === 'reload';
+        }
+      }
+    } catch (error) {
+      console.warn('🔍 TenantContext: Error checking navigation type:', error);
+      hasNavigationEntries = false;
+    }
+    
+    console.log('🔍 TenantContext: Page refresh detection:', {
+      hasLastTenant: !!lastTenant,
+      hasNavigationEntries,
+      result: !!lastTenant || hasNavigationEntries
+    });
+    
+    return !!lastTenant || hasNavigationEntries;
+  };
+
   const loadUserTenants = async () => {
     if (!user) return;
 
@@ -120,17 +176,71 @@ export function TenantProvider({ children }: TenantProviderProps) {
     }
   };
 
+  // Replace the handleTenantSelection method in your existing TenantContext
   const handleTenantSelection = async (tenants: Tenant[]) => {
+    console.log('🏢 TenantContext: handleTenantSelection called with:', {
+      tenantCount: tenants.length,
+      tenants: tenants.map(t => ({ id: t.id, name: t.name }))
+    });
+
+    // 🔧 NEW LOGIC: Check JWT token for tenant FIRST
+    const jwtTenantId = getCurrentJwtTenantId();
+    
+    if (jwtTenantId) {
+      // JWT has tenant = this is a page refresh, auto-select
+      const jwtTenant = tenants.find(t => t.id === jwtTenantId);
+      if (jwtTenant) {
+        console.log('🏢 TenantContext: Page refresh - JWT tenant found, auto-selecting:', jwtTenant.name);
+        await selectTenant(jwtTenant);
+        return;
+      } else {
+        console.warn('🏢 TenantContext: JWT tenant not found in available tenants:', {
+          jwtTenantId,
+          availableIds: tenants.map(t => t.id)
+        });
+      }
+    }
+    
+    // 🔧 NEW LOGIC: No JWT tenant = fresh login, apply selection logic
     if (tenants.length === 1) {
-      console.log('🏢 TenantContext: Auto-selecting single tenant:', tenants[0].name);
-      await selectTenant(tenants[0]);
+      console.log('🏢 TenantContext: Single tenant, calling select-tenant API:', tenants[0].name);
+      await callSelectTenantApi(tenants[0].id);
     } else if (tenants.length > 1) {
-      // 🔧 SIMPLIFIED: For multi-tenant users, ALWAYS show the selector
-      console.log('🏢 TenantContext: Multiple tenants found, showing selector');
-      console.log('🏢 TenantContext: Available tenants:', tenants.map(t => ({ id: t.id, name: t.name })));
+      console.log('🏢 TenantContext: Multiple tenants, showing selector');
       setShowTenantSelector(true);
     } else {
       setError('User has no tenant access');
+    }
+  };
+
+  // 🔧 NEW METHOD: Call backend to complete login with tenant selection
+  const callSelectTenantApi = async (tenantId: string) => {
+    try {
+      console.log('🏢 TenantContext: Calling select-tenant API for tenantId:', tenantId);
+      
+      const response = await tenantService.selectTenant(tenantId);
+      if (response.success && response.data) {
+        console.log('🏢 TenantContext: Select-tenant API successful, updating tokens...');
+        
+        // Update tokens with tenant-enabled JWT
+        const tokenManager = await import('@/utils/token.manager.js');
+        tokenManager.tokenManager.setTokens(response.data.accessToken, response.data.refreshToken);
+        
+        // Refresh auth context to load new token
+        console.log('🏢 TenantContext: Refreshing auth context with new token...');
+        await refreshAuth();
+        
+        // Now select tenant in frontend
+        const selectedTenant = availableTenants.find(t => t.id === tenantId);
+        if (selectedTenant) {
+          console.log('🏢 TenantContext: Setting selected tenant:', selectedTenant.name);
+          await selectTenant(selectedTenant);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to select tenant via API:', error);
+      setError('Failed to select tenant');
+      throw error;
     }
   };
 
@@ -243,29 +353,6 @@ export function TenantProvider({ children }: TenantProviderProps) {
     }
   };
 
-  const getCurrentJwtTenantId = (): string | null => {
-    try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        console.log('🔍 TenantContext: No token found for tenant extraction');
-        return null;
-      }
-      
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const tenantId = payload.tenant_id?.toString();
-      
-      console.log('🔍 TenantContext: Extracted tenant from JWT:', {
-        tenantId,
-        tenantName: payload.tenant_name
-      });
-      
-      return tenantId || null;
-    } catch (error) {
-      console.error('🔍 TenantContext: Error extracting tenant from JWT:', error);
-      return null;
-    }
-  };
-
   const selectTenant = async (tenant: Tenant) => {
     console.log('🏢 TenantContext: Selecting tenant:', tenant.name);
     
@@ -296,13 +383,16 @@ export function TenantProvider({ children }: TenantProviderProps) {
   };
 
   const completeTenantSelection = async (tenantId: string) => {
-    const tenant = availableTenants.find(t => t.id === tenantId);
-    if (!tenant) {
-      throw new Error('Invalid tenant selection');
-    }
+    console.log('🏢 TenantContext: Completing tenant selection for:', tenantId);
 
-    // For initial tenant selection (login flow), just select without JWT refresh
-    await selectTenant(tenant);
+    try {
+      // For initial tenant selection from selector dialog, call the API
+      await callSelectTenantApi(tenantId);
+    } catch (error) {
+      console.error('Failed to complete tenant selection:', error);
+      setError('Failed to select tenant');
+      throw error;
+    }
   };
 
   const value: TenantContextType = {

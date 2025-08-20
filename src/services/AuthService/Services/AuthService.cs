@@ -159,7 +159,7 @@ public class AuthServiceImplementation : IAuthService
                 return ApiResponseDto<TokenResponseDto>.SuccessResult(response, 
                     $"Welcome to {tenant.Name}! Your account has been created successfully.");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 await transaction.RollbackAsync(cancellationToken);
                 throw;
@@ -176,23 +176,19 @@ public class AuthServiceImplementation : IAuthService
     {
         try
         {
-            // ➕ ADD: Debug logging
-            _logger.LogWarning("🔍 LOGIN DEBUG: Starting login for {Email}", request.Email);
+            _logger.LogInformation("🔍 LOGIN DEBUG: Starting login for {Email}", request.Email);
             
             // ✅ CRITICAL FIX: Use IgnoreQueryFilters() for login to bypass tenant isolation
-            // During login, we don't have tenant context yet, so we need to find the user first
-            // ✅ CRITICAL FIX: Load UserRoles collection for RBAC system
             var user = await _context.Users
                 .IgnoreQueryFilters() // ✅ BYPASS tenant filtering during login
                 .Include(u => u.PrimaryTenant)
                 .Include(u => u.TenantUsers)  // Legacy roles (fallback)
-                .Include(u => u.UserRoles)    // ✅ ADD: Modern RBAC roles
-                    .ThenInclude(ur => ur.Role) // ✅ ADD: Include role details
+                .Include(u => u.UserRoles)    // ✅ Modern RBAC roles
+                    .ThenInclude(ur => ur.Role)
                 .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
 
-            // ➕ ADD: Debug user lookup
-            _logger.LogWarning("🔍 LOGIN DEBUG: User found: {UserExists}, IsActive: {IsActive}, TenantId: {TenantId}", 
-                user != null, user?.IsActive, user?.TenantId);
+            _logger.LogInformation("🔍 LOGIN DEBUG: User found: {UserExists}, IsActive: {IsActive}", 
+                user != null, user?.IsActive);
 
             if (user == null)
             {
@@ -212,12 +208,7 @@ public class AuthServiceImplementation : IAuthService
                 return ApiResponseDto<TokenResponseDto>.ErrorResult($"Account is locked until {user.LockedOutUntil}.");
             }
 
-            // ➕ ADD: Debug password verification with null safety
-            _logger.LogWarning("🔍 LOGIN DEBUG: Attempting password verification for {Email}", request.Email);
-            _logger.LogWarning("🔍 LOGIN DEBUG: Password length: {PasswordLength}, Hash starts with: {HashStart}", 
-                request.Password?.Length, user.PasswordHash?.Substring(0, Math.Min(10, user.PasswordHash?.Length ?? 0)));
-
-            // FIX: Add null checks before calling VerifyPassword
+            // Validate password
             if (string.IsNullOrEmpty(request.Password) || string.IsNullOrEmpty(user.PasswordHash))
             {
                 _logger.LogWarning("Login attempt with null password or hash for {Email}", request.Email);
@@ -232,35 +223,18 @@ public class AuthServiceImplementation : IAuthService
             }
 
             var passwordVerified = _passwordService.VerifyPassword(request.Password, user.PasswordHash);
-            _logger.LogWarning("🔍 LOGIN DEBUG: Password verification result: {PasswordVerified}", passwordVerified);
+            _logger.LogInformation("🔍 LOGIN DEBUG: Password verification result: {PasswordVerified}", passwordVerified);
 
             if (!passwordVerified)
             {
-                // Increment failed login attempts
                 user.FailedLoginAttempts++;
                 if (user.FailedLoginAttempts >= 5)
                 {
                     user.LockedOutUntil = DateTime.UtcNow.AddMinutes(30);
                     _logger.LogWarning("User {Email} locked out due to failed login attempts", request.Email);
                 }
-
                 await _context.SaveChangesAsync(cancellationToken);
                 return ApiResponseDto<TokenResponseDto>.ErrorResult("Invalid email or password.");
-            }
-
-            // ➕ ADD: Debug tenant lookup
-            _logger.LogWarning("🔍 LOGIN DEBUG: Checking tenant relationship. PrimaryTenant: {HasPrimaryTenant}, TenantId: {TenantId}", 
-                user.PrimaryTenant != null, user.TenantId);
-
-            // Ensure user has a tenant
-            if (user.PrimaryTenant == null && user.TenantId.HasValue)
-            {
-                user.PrimaryTenant = await _tenantRepository.GetTenantByIdAsync(user.TenantId.Value, cancellationToken);
-            }
-
-            if (user.PrimaryTenant == null)
-            {
-                return ApiResponseDto<TokenResponseDto>.ErrorResult("User tenant not found.");
             }
 
             // Reset failed login attempts on successful login
@@ -268,21 +242,21 @@ public class AuthServiceImplementation : IAuthService
             user.LockedOutUntil = null;
             user.LastLoginAt = DateTime.UtcNow;
 
-            // Generate new tokens
-            var accessToken = await _tokenService.GenerateAccessTokenAsync(user, user.PrimaryTenant);
+            // 🔧 NEW LOGIC: Generate JWT WITHOUT tenant initially
+            _logger.LogInformation("🔍 LOGIN DEBUG: Generating tenant-less JWT for initial login");
+            var accessToken = await _tokenService.GenerateAccessTokenWithoutTenantAsync(user);
             var refreshTokenEntity = await _tokenService.CreateRefreshTokenAsync(user);
 
-            // Set additional properties
-            refreshTokenEntity.TenantId = user.TenantId ?? user.PrimaryTenant.Id;
+            // 🔧 CRITICAL: Don't set TenantId on refresh token yet
+            refreshTokenEntity.TenantId = null; // No tenant context yet
             refreshTokenEntity.CreatedByIp = GetClientIpAddress();
 
             _context.RefreshTokens.Add(refreshTokenEntity);
             await _context.SaveChangesAsync(cancellationToken);
 
-            // Map to DTOs
+            // 🔧 IMPORTANT: Return response WITHOUT tenant info
             var userDto = _mapper.Map<DTOs.User.UserDto>(user);
-            userDto.TenantId = user.TenantId ?? user.PrimaryTenant.Id;
-            var tenantDto = _mapper.Map<DTOs.Tenant.TenantDto>(user.PrimaryTenant);
+            // Don't set userDto.TenantId yet - user needs to select tenant
 
             var response = new TokenResponseDto
             {
@@ -291,11 +265,11 @@ public class AuthServiceImplementation : IAuthService
                 ExpiresAt = refreshTokenEntity.ExpiryDate,
                 TokenType = "Bearer",
                 User = userDto,
-                Tenant = tenantDto
+                Tenant = null // 🔧 CRITICAL: No tenant in initial login response
             };
 
-            _logger.LogInformation("User {Email} logged in successfully", request.Email);
-            return ApiResponseDto<TokenResponseDto>.SuccessResult(response, "Login successful");
+            _logger.LogInformation("User {Email} logged in successfully (no tenant selected yet)", request.Email);
+            return ApiResponseDto<TokenResponseDto>.SuccessResult(response, "Login successful - please select tenant");
         }
         catch (Exception ex)
         {
@@ -566,8 +540,8 @@ public class AuthServiceImplementation : IAuthService
             // Load user with tenant relationships - bypass global query filters
             var user = await _context.Users
                 .IgnoreQueryFilters() // Bypass tenant filtering to load user
-                .Include(u => u.TenantUsers.Where(tu => tu.IsActive))
-                .Include(u => u.UserRoles.Where(ur => ur.IsActive))
+                .Include(u => u.TenantUsers!.Where(tu => tu.IsActive))
+                .Include(u => u.UserRoles!.Where(ur => ur.IsActive))
                     .ThenInclude(ur => ur.Role)
                 .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
@@ -580,7 +554,7 @@ public class AuthServiceImplementation : IAuthService
             _logger.LogWarning("🔍 TENANT SWITCH DEBUG: User loaded. TenantUsers count: {Count}", user.TenantUsers?.Count ?? 0);
 
             // Verify user has access to target tenant
-            var hasAccess = user.TenantUsers.Any(tu => tu.TenantId == tenantId && tu.IsActive);
+            var hasAccess = user.TenantUsers?.Any(tu => tu.TenantId == tenantId && tu.IsActive) ?? false;
             
             _logger.LogWarning("🔍 TENANT SWITCH DEBUG: User has access to tenant {TenantId}: {HasAccess}", tenantId, hasAccess);
             
@@ -667,6 +641,81 @@ public class AuthServiceImplementation : IAuthService
             _logger.LogError(ex, "Error switching tenant for user {UserId} to tenant {TenantId}", 
                 userId, tenantId);
             return ApiResponseDto<TokenResponseDto>.ErrorResult("Tenant switch failed");
+        }
+    }
+
+    // Add this new method to the existing AuthService class
+    public async Task<ApiResponseDto<TokenResponseDto>> SelectTenantAsync(int userId, int tenantId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("🔍 TENANT SELECT: User {UserId} selecting tenant {TenantId}", userId, tenantId);
+
+            // Load user and verify tenant access
+            var user = await _context.Users
+                .IgnoreQueryFilters()
+                .Include(u => u.TenantUsers!.Where(tu => tu.IsActive))
+                .Include(u => u.UserRoles!.Where(ur => ur.IsActive))
+                    .ThenInclude(ur => ur.Role)
+                .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+
+            if (user == null)
+            {
+                _logger.LogWarning("User {UserId} not found during tenant selection", userId);
+                return ApiResponseDto<TokenResponseDto>.ErrorResult("User not found");
+            }
+
+            // Verify access to tenant
+            var hasAccess = user.TenantUsers?.Any(tu => tu.TenantId == tenantId && tu.IsActive) ?? false;
+            if (!hasAccess)
+            {
+                _logger.LogWarning("User {UserId} denied access to tenant {TenantId}", userId, tenantId);
+                return ApiResponseDto<TokenResponseDto>.ErrorResult("Access denied to tenant");
+            }
+
+            // Load tenant
+            var tenant = await _tenantRepository.GetTenantByIdAsync(tenantId, cancellationToken);
+            if (tenant == null || !tenant.IsActive)
+            {
+                _logger.LogWarning("Tenant {TenantId} not found or inactive", tenantId);
+                return ApiResponseDto<TokenResponseDto>.ErrorResult("Tenant not found or inactive");
+            }
+
+            // 🔧 NOW generate full JWT WITH tenant context
+            _logger.LogInformation("🔍 TENANT SELECT: Generating full JWT with tenant context");
+            var accessToken = await _tokenService.GenerateAccessTokenAsync(user, tenant);
+            var refreshToken = await _tokenService.CreateRefreshTokenAsync(user);
+
+            refreshToken.TenantId = tenant.Id;
+            refreshToken.CreatedByIp = GetClientIpAddress();
+
+            _context.RefreshTokens.Add(refreshToken);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            // Return full response with tenant
+            var userDto = _mapper.Map<DTOs.User.UserDto>(user);
+            userDto.TenantId = tenant.Id;
+            var tenantDto = _mapper.Map<DTOs.Tenant.TenantDto>(tenant);
+
+            var response = new TokenResponseDto
+            {
+                AccessToken = accessToken,
+                RefreshToken = refreshToken.Token,
+                ExpiresAt = refreshToken.ExpiryDate,
+                TokenType = "Bearer",
+                User = userDto,
+                Tenant = tenantDto
+            };
+
+            _logger.LogInformation("User {UserId} successfully selected tenant {TenantId} ({TenantName})", 
+                userId, tenant.Id, tenant.Name);
+
+            return ApiResponseDto<TokenResponseDto>.SuccessResult(response, $"Welcome to {tenant.Name}!");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error selecting tenant {TenantId} for user {UserId}", tenantId, userId);
+            return ApiResponseDto<TokenResponseDto>.ErrorResult("Tenant selection failed");
         }
     }
 

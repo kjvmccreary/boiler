@@ -303,6 +303,34 @@ public class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Complete login by selecting tenant and issuing full JWT
+    /// </summary>
+    [HttpPost("select-tenant")]
+    [Authorize] // User must have basic JWT token
+    public async Task<ActionResult<ApiResponseDto<TokenResponseDto>>> SelectTenant(
+        [FromBody] SelectTenantDto request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var userId = GetCurrentUserId();
+            var result = await _authService.SelectTenantAsync(userId, request.TenantId, cancellationToken);
+
+            if (result.Success)
+            {
+                return Ok(result);
+            }
+
+            return BadRequest(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error selecting tenant for user {UserId}", GetCurrentUserId());
+            return StatusCode(500, ApiResponseDto<TokenResponseDto>.ErrorResult("Tenant selection failed"));
+        }
+    }
+
     #region Helper Methods
 
     private int GetCurrentUserId()

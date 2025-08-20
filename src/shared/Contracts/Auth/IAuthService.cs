@@ -18,7 +18,8 @@ public interface IAuthService
     // NEW: RBAC-related methods for Enhanced Phase 4
     Task<List<string>> GetUserPermissionsAsync(int userId, CancellationToken cancellationToken = default);
     Task<List<string>> GetUserRolesAsync(int userId, CancellationToken cancellationToken = default);
-    
+    Task<ApiResponseDto<TokenResponseDto>> SelectTenantAsync(int userId, int tenantId, CancellationToken cancellationToken = default);
+
     // 🔧 NEW: Tenant switching method
     Task<ApiResponseDto<TokenResponseDto>> SwitchTenantAsync(int userId, int tenantId, CancellationToken cancellationToken = default);
 }
