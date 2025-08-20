@@ -382,15 +382,22 @@ public class RoleService : IRoleService
                 throw new InvalidOperationException("Tenant context not found");
             }
 
-            // 🔧 FIX: Check if user exists and belongs to the current tenant
-            var userExists = await _context.Users
-                .AnyAsync(u => u.Id == userId && u.TenantId == tenantId.Value, cancellationToken);
+            // 🔧 FIX: Check if user exists and has access to current tenant via UserRoles or TenantUsers
+            var userHasRbacAccess = await _context.UserRoles
+                .AnyAsync(ur => ur.UserId == userId && ur.TenantId == tenantId.Value && ur.IsActive, cancellationToken);
             
-            if (!userExists)
+            var userHasLegacyAccess = false;
+            if (!userHasRbacAccess)
+            {
+                userHasLegacyAccess = await _context.TenantUsers
+                    .AnyAsync(tu => tu.UserId == userId && tu.TenantId == tenantId.Value && tu.IsActive, cancellationToken);
+            }
+            
+            if (!userHasRbacAccess && !userHasLegacyAccess)
             {
                 await _auditService.LogAsync(AuditAction.UnauthorizedAccess, $"user:{userId}:role:{roleId}", 
                     new { UserId = userId, RoleId = roleId, AttemptedAction = "AssignRole", Reason = "UserNotFoundOrCrossTenant" }, false);
-                    
+                
                 throw new InvalidOperationException("User not found or access denied");
             }
 
@@ -403,7 +410,7 @@ public class RoleService : IRoleService
             {
                 await _auditService.LogAsync(AuditAction.UnauthorizedAccess, $"user:{userId}:role:{roleId}", 
                     new { UserId = userId, RoleId = roleId, AttemptedAction = "AssignRole", Reason = "RoleNotFoundOrCrossTenant" }, false);
-                    
+                
                 throw new InvalidOperationException("Role not found or access denied");
             }
 
@@ -424,7 +431,7 @@ public class RoleService : IRoleService
                     await _auditService.LogAsync(AuditAction.RoleAssigned, $"user:{userId}:role:{roleId}", 
                         new { UserId = userId, RoleId = roleId, RoleName = role.Name, Action = "Reactivated" }, true);
                 }
-                return; // 🔧 FIX: Return void instead of bool
+                return;
             }
 
             // Create new assignment
@@ -536,7 +543,7 @@ public class RoleService : IRoleService
             FirstName = u.FirstName,
             LastName = u.LastName,
             IsActive = u.IsActive,
-            TenantId = tenantId.Value  // 🔧 FIX: Use current tenant context
+            TenantId = tenantId.Value  // 🔧 FIX: Use current tenant context instead of u.TenantId
         });
     }
 
@@ -550,24 +557,29 @@ public class RoleService : IRoleService
                 return Enumerable.Empty<RoleInfo>();
             }
 
-            // 🔧 FIX: Check if the user exists and belongs to the current tenant
-            var userExists = await _context.Users
-                .AnyAsync(u => u.Id == userId && u.TenantId == tenantId.Value, cancellationToken);
+            // 🔧 FIX: Check if user has access to current tenant via UserRoles OR TenantUsers
+            var userHasRbacAccess = await _context.UserRoles
+                .AnyAsync(ur => ur.UserId == userId && ur.TenantId == tenantId.Value && ur.IsActive, cancellationToken);
             
-            if (!userExists)
+            var userHasLegacyAccess = false;
+            if (!userHasRbacAccess)
+            {
+                // Fallback to legacy TenantUsers check
+                userHasLegacyAccess = await _context.TenantUsers
+                    .AnyAsync(tu => tu.UserId == userId && tu.TenantId == tenantId.Value && tu.IsActive, cancellationToken);
+            }
+            
+            if (!userHasRbacAccess && !userHasLegacyAccess)
             {
                 await _auditService.LogAsync(AuditAction.UnauthorizedAccess, $"user:{userId}", 
-                    new { UserId = userId, AttemptedAction = "ViewRoles", Reason = "UserNotFoundOrCrossTenant" }, false);
+                    new { UserId = userId, TenantId = tenantId.Value, AttemptedAction = "ViewRoles", Reason = "UserNotInTenant" }, false);
                     
-                throw new UnauthorizedAccessException($"Access denied to user {userId}");
+                throw new UnauthorizedAccessException($"User {userId} does not have access to tenant {tenantId.Value}");
             }
 
             var roles = await _context.UserRoles
                 .Where(ur => ur.UserId == userId && ur.TenantId == tenantId.Value && ur.IsActive)
-                .Join(_context.Roles,
-                    ur => ur.RoleId,
-                    r => r.Id,
-                    (ur, r) => r)
+                .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r)
                 .ToListAsync(cancellationToken);
 
             var roleInfos = new List<RoleInfo>();

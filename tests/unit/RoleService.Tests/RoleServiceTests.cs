@@ -75,7 +75,7 @@ public class RoleServiceTests : IDisposable
 
         _context.Permissions.AddRange(permissions);
 
-        // FIX: Add test users for role assignment tests
+        // 🔧 FIX: Remove TenantId from test users
         var users = new List<User>
         {
             new() 
@@ -84,7 +84,7 @@ public class RoleServiceTests : IDisposable
                 Email = "user1@test.com", 
                 FirstName = "User", 
                 LastName = "One", 
-                TenantId = 1, 
+                // TenantId = 1, // 🔧 REMOVE: User no longer has TenantId
                 IsActive = true,
                 PasswordHash = "hashedpassword",
                 CreatedAt = DateTime.UtcNow,
@@ -96,7 +96,7 @@ public class RoleServiceTests : IDisposable
                 Email = "user2@test.com", 
                 FirstName = "User", 
                 LastName = "Two", 
-                TenantId = 1, 
+                // TenantId = 1, // 🔧 REMOVE: User no longer has TenantId
                 IsActive = true,
                 PasswordHash = "hashedpassword", 
                 CreatedAt = DateTime.UtcNow,
@@ -105,6 +105,33 @@ public class RoleServiceTests : IDisposable
         };
 
         _context.Users.AddRange(users);
+
+        // 🔧 ADD: Create TenantUser relationships
+        var tenantUsers = new List<TenantUser>
+        {
+            new()
+            {
+                TenantId = 1,
+                UserId = 1,
+                Role = "User",
+                IsActive = true,
+                JoinedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            },
+            new()
+            {
+                TenantId = 1,
+                UserId = 2,
+                Role = "User", 
+                IsActive = true,
+                JoinedAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            }
+        };
+
+        _context.TenantUsers.AddRange(tenantUsers);
         _context.SaveChanges();
     }
 

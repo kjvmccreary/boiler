@@ -10,6 +10,5 @@ public class Tenant : BaseEntity
     public string Settings { get; set; } = "{}"; // JSON string for tenant-specific settings
 
     // Navigation properties
-    public ICollection<User> Users { get; set; } = new List<User>();
     public ICollection<TenantUser> TenantUsers { get; set; } = new List<TenantUser>();
 }

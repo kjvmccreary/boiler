@@ -107,9 +107,23 @@ public class AuthServiceImplementationTests : TestBase
         };
 
         // FIXED: Set up the user's primary tenant relationship properly
-        user.PrimaryTenant = tenant;
+        // user.PrimaryTenant = tenant; // 🔧 REMOVE: User no longer has PrimaryTenant
         // Update the context to reflect this change
-        Context.Users.Update(user);
+        // Context.Users.Update(user); // 🔧 REMOVE: No need to update
+        // Context.SaveChanges(); // 🔧 REMOVE: No changes to save
+
+        // Instead, create a TenantUser relationship:
+        var tenantUser = new TenantUser
+        {
+            TenantId = tenant.Id,
+            UserId = user.Id,
+            Role = "User",
+            IsActive = true,
+            JoinedAt = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        Context.TenantUsers.Add(tenantUser);
         Context.SaveChanges();
 
         _mockPasswordService
@@ -125,7 +139,7 @@ public class AuthServiceImplementationTests : TestBase
             .ReturnsAsync(refreshTokenEntity);
 
         _mockTenantRepository
-            .Setup(x => x.GetTenantByIdAsync(user.TenantId!.Value, It.IsAny<CancellationToken>()))
+            .Setup(x => x.GetTenantByIdAsync(tenant.Id, It.IsAny<CancellationToken>()))
             .ReturnsAsync(tenant);
 
         // Act

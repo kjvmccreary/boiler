@@ -10,13 +10,9 @@ public class UserMappingProfile : Profile
 {
     public UserMappingProfile()
     {
-        // ========================================
-        // User Entity to DTO Mappings (Read Operations)
-        // ========================================
-
         // User → UserDto (Main user representation)
         CreateMap<User, UserDto>()
-            .ForMember(dest => dest.TenantId, opt => opt.MapFrom(src => src.TenantId ?? 0)) // Handle nullable TenantId
+            .ForMember(dest => dest.TenantId, opt => opt.Ignore()) // 🔧 FIX: Set from context
             .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => GetUserRoles(src)))
             .ForMember(dest => dest.PhoneNumber, opt => opt.MapFrom(src => src.PhoneNumber))
             .ForMember(dest => dest.TimeZone, opt => opt.MapFrom(src => src.TimeZone))
@@ -26,31 +22,27 @@ public class UserMappingProfile : Profile
             .ForMember(dest => dest.Preferences, opt => opt.MapFrom(src => 
                 DeserializeUserPreferences(src.Preferences)));
 
-        // User → UserSummaryDto (Lightweight for lists)
+        // User → UserSummaryDto (Lightweight for lists)  
         CreateMap<User, UserSummaryDto>()
+            //.ForMember(dest => dest.TenantId, opt => opt.Ignore()) // 🔧 ADD: Set from context
             .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => GetUserRoles(src)));
 
         // User → UserDetailDto (Comprehensive admin view)
         CreateMap<User, UserDetailDto>()
-            .ForMember(dest => dest.TenantId, opt => opt.MapFrom(src => src.TenantId ?? 0))
+            .ForMember(dest => dest.TenantId, opt => opt.Ignore()) // 🔧 FIX: Set from context  
             .ForMember(dest => dest.LockedUntil, opt => opt.MapFrom(src => src.LockedOutUntil))
             .ForMember(dest => dest.Roles, opt => opt.MapFrom(src => GetUserRoles(src)))
             .ForMember(dest => dest.Preferences, opt => opt.MapFrom(src => 
                 DeserializeUserPreferences(src.Preferences)));
 
-        // ========================================
-        // DTO to User Entity Mappings (Write Operations)
-        // ========================================
-
         // UserUpdateDto → User (Profile updates)
         CreateMap<UserUpdateDto, User>()
             .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
-            .ForMember(dest => dest.Id, opt => opt.Ignore()) // Never update ID
-            .ForMember(dest => dest.Email, opt => opt.Ignore()) // Email updates require separate process
-            .ForMember(dest => dest.PasswordHash, opt => opt.Ignore()) // Password updates require separate process
-            .ForMember(dest => dest.TenantId, opt => opt.Ignore()) // Tenant cannot be changed via profile update
-            .ForMember(dest => dest.CreatedAt, opt => opt.Ignore()) // Never update CreatedAt
-            .ForMember(dest => dest.EmailConfirmed, opt => opt.Ignore()) // Requires separate email confirmation process
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
+            .ForMember(dest => dest.Email, opt => opt.Ignore())
+            .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
+            .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.EmailConfirmed, opt => opt.Ignore())
             .ForMember(dest => dest.EmailConfirmationToken, opt => opt.Ignore())
             .ForMember(dest => dest.EmailConfirmationTokenExpiry, opt => opt.Ignore())
             .ForMember(dest => dest.PasswordResetToken, opt => opt.Ignore())
@@ -58,35 +50,34 @@ public class UserMappingProfile : Profile
             .ForMember(dest => dest.FailedLoginAttempts, opt => opt.Ignore())
             .ForMember(dest => dest.LockedOutUntil, opt => opt.Ignore())
             .ForMember(dest => dest.LastLoginAt, opt => opt.Ignore())
-            .ForMember(dest => dest.PrimaryTenant, opt => opt.Ignore())
             .ForMember(dest => dest.TenantUsers, opt => opt.Ignore())
             .ForMember(dest => dest.RefreshTokens, opt => opt.Ignore())
-            .ForMember(dest => dest.Preferences, opt => opt.Ignore()); // Handled separately
+            .ForMember(dest => dest.UserRoles, opt => opt.Ignore()) // 🔧 ADD: UserRoles navigation
+            .ForMember(dest => dest.Preferences, opt => opt.Ignore());
 
         // UserCreateDto → User (New user creation)
         CreateMap<CreateUserDto, User>()
-            .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.ToLower())) // Normalize email
+            .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.ToLower()))
             .ForMember(dest => dest.IsActive, opt => opt.MapFrom(src => true))
             .ForMember(dest => dest.EmailConfirmed, opt => opt.MapFrom(src => false))
             .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
             .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
             .ForMember(dest => dest.FailedLoginAttempts, opt => opt.MapFrom(src => 0))
-            .ForMember(dest => dest.Id, opt => opt.Ignore()) // Set by database
-            .ForMember(dest => dest.TenantId, opt => opt.Ignore()) // Set by service logic
-            .ForMember(dest => dest.PasswordHash, opt => opt.Ignore()) // Handled separately with hashing
+            .ForMember(dest => dest.Id, opt => opt.Ignore())
+            .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
             .ForMember(dest => dest.EmailConfirmationToken, opt => opt.Ignore())
             .ForMember(dest => dest.EmailConfirmationTokenExpiry, opt => opt.Ignore())
             .ForMember(dest => dest.PasswordResetToken, opt => opt.Ignore())
             .ForMember(dest => dest.PasswordResetTokenExpiry, opt => opt.Ignore())
             .ForMember(dest => dest.LockedOutUntil, opt => opt.Ignore())
             .ForMember(dest => dest.LastLoginAt, opt => opt.Ignore())
-            .ForMember(dest => dest.PhoneNumber, opt => opt.Ignore()) // Not in UserCreateDto
-            .ForMember(dest => dest.TimeZone, opt => opt.Ignore()) // Not in UserCreateDto
-            .ForMember(dest => dest.Language, opt => opt.Ignore()) // Not in UserCreateDto
-            .ForMember(dest => dest.Preferences, opt => opt.Ignore()) // Set to default
-            .ForMember(dest => dest.PrimaryTenant, opt => opt.Ignore())
+            .ForMember(dest => dest.PhoneNumber, opt => opt.Ignore())
+            .ForMember(dest => dest.TimeZone, opt => opt.Ignore())
+            .ForMember(dest => dest.Language, opt => opt.Ignore())
+            .ForMember(dest => dest.Preferences, opt => opt.Ignore())
             .ForMember(dest => dest.TenantUsers, opt => opt.Ignore())
-            .ForMember(dest => dest.RefreshTokens, opt => opt.Ignore());
+            .ForMember(dest => dest.RefreshTokens, opt => opt.Ignore())
+            .ForMember(dest => dest.UserRoles, opt => opt.Ignore()); // 🔧 ADD: UserRoles navigation
 
         // ========================================
         // Preferences Mappings

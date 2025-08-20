@@ -182,8 +182,7 @@ public class ApplicationDbContext : DbContext
             {
                 await Database.ExecuteSqlRawAsync(
                     "SELECT set_config('app.tenant_id', {0}, false)", 
-                    tenantId.ToString(), 
-                    cancellationToken);
+                    tenantId.ToString()); // 🔧 FIX: Remove the cancellationToken parameter to fix warning
             }
             catch
             {
@@ -271,6 +270,9 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Settings).HasColumnType("jsonb");
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();
+
+            // ❌ REMOVE: No direct Users relationship anymore since User.TenantId is gone
+            // Users are now related through TenantUsers junction table only
         });
     }
 
@@ -294,12 +296,6 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.PasswordResetToken).HasMaxLength(255);
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();
-
-            // Primary tenant relationship (optional)
-            entity.HasOne(e => e.PrimaryTenant)
-                  .WithMany(t => t.Users)
-                  .HasForeignKey(e => e.TenantId)
-                  .OnDelete(DeleteBehavior.SetNull);
         });
     }
 

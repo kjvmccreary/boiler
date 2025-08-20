@@ -247,7 +247,6 @@ public class UserServiceImplementation : Contracts.User.IUserService
                     FirstName = request.FirstName,
                     LastName = request.LastName,
                     PasswordHash = _passwordService.HashPassword(request.Password),
-                    TenantId = currentTenantId.Value, // Set primary tenant
                     IsActive = true,
                     EmailConfirmed = true, // Set to true for admin-created users
                     CreatedAt = DateTime.UtcNow,

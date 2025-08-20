@@ -89,11 +89,6 @@ namespace DTOs.Entities
         public bool IsActive { get; set; } = true;
 
         /// <summary>
-        /// Primary tenant ID (for default tenant assignment)
-        /// </summary>
-        public int? TenantId { get; set; }
-
-        /// <summary>
         /// Number of failed login attempts
         /// </summary>
         public int FailedLoginAttempts { get; set; } = 0;
@@ -104,7 +99,6 @@ namespace DTOs.Entities
         public DateTime? LockedOutUntil { get; set; }
 
         // Navigation properties
-        public Tenant? PrimaryTenant { get; set; }
         public ICollection<TenantUser> TenantUsers { get; set; } = new List<TenantUser>();
         public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
         

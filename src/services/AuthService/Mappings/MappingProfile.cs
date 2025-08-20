@@ -12,7 +12,7 @@ public class MappingProfile : Profile
     {
         // User mappings
         CreateMap<User, UserDto>()
-            .ForMember(dest => dest.TenantId, opt => opt.MapFrom(src => src.TenantId ?? 0)) // Handle nullable int
+            .ForMember(dest => dest.TenantId, opt => opt.Ignore()) // 🔧 FIX: TenantId will be set from context
             .ForMember(dest => dest.Roles, opt => opt.MapFrom(src =>
                 // 🔧 FIX: Use RBAC UserRoles instead of legacy TenantUsers
                 src.UserRoles.Where(ur => ur.IsActive).Select(ur => ur.Role.Name).ToList()));

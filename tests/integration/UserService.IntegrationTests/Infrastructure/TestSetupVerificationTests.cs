@@ -92,12 +92,22 @@ public class TestSetupVerificationTests : TestBase
         // ✅ CRITICAL: Use IgnoreQueryFilters to verify tenant isolation
         
         // Verify tenant 1 users
-        var tenant1Users = await _dbContext.Users.IgnoreQueryFilters().Where(u => u.TenantId == 1).ToListAsync();
+        var tenant1Users = await _dbContext.Users
+            .IgnoreQueryFilters()
+            .Join(_dbContext.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+            .Where(x => x.tu.TenantId == 1 && x.tu.IsActive)
+            .Select(x => x.u)
+            .ToListAsync();
         tenant1Users.Should().HaveCount(5);
         tenant1Users.Should().OnlyContain(u => u.Email.Contains("@tenant1.com"));
 
         // ✅ CRITICAL: This should now find Tenant 2 users
-        var tenant2Users = await _dbContext.Users.IgnoreQueryFilters().Where(u => u.TenantId == 2).ToListAsync();
+        var tenant2Users = await _dbContext.Users
+            .IgnoreQueryFilters()
+            .Join(_dbContext.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+            .Where(x => x.tu.TenantId == 2 && x.tu.IsActive)
+            .Select(x => x.u)
+            .ToListAsync();
         tenant2Users.Should().HaveCount(2); // ✅ Should now work
         tenant2Users.Should().OnlyContain(u => u.Email.Contains("@tenant2.com"));
 

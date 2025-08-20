@@ -32,7 +32,7 @@ public class TestDiagnosticsController : ControllerBase
             var rolePermissionCount = await _context.RolePermissions.CountAsync();
 
             var tenants = await _context.Tenants.Select(t => new { t.Id, t.Name, t.Domain }).ToListAsync();
-            var users = await _context.Users.Select(u => new { u.Id, u.Email, u.TenantId, u.IsActive }).ToListAsync();
+            var users = await _context.Users.Select(u => new { u.Id, u.Email, u.IsActive }).ToListAsync(); // 🔧 REMOVE: u.TenantId
 
             return Ok(new
             {

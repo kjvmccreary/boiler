@@ -40,7 +40,7 @@ public static class AuthenticationHelper
         // ✅ CRITICAL FIX: Use IgnoreQueryFilters to access ALL users regardless of tenant context
         var user = await dbContext.Users
             .IgnoreQueryFilters() // ✅ CRITICAL FIX
-            .Include(u => u.PrimaryTenant)
+            //.Include(u => u.PrimaryTenant)
             .FirstOrDefaultAsync(u => u.Email == email);
 
         if (user == null)
@@ -62,22 +62,30 @@ public static class AuthenticationHelper
 
         Console.WriteLine($"🔍 USER ENTITY DEBUG for {email}:");
         Console.WriteLine($"   - User ID: {user.Id}");
-        Console.WriteLine($"   - User TenantId: {user.TenantId}");
+        //Console.WriteLine($"   - User TenantId: {user.TenantId}");
         Console.WriteLine($"   - Separately loaded UserRoles count: {userRoles.Count}");
         Console.WriteLine($"   - UserRoles details: {string.Join(", ", userRoles.Select(ur => $"RoleId={ur.RoleId}, TenantId={ur.TenantId}, Active={ur.IsActive}"))}");
 
         // ✅ CRITICAL FIX: Use IgnoreQueryFilters for tenant lookup
-        var tenant = user.PrimaryTenant;
-        if (tenant == null && user.TenantId.HasValue)
-        {
-            tenant = await dbContext.Tenants
-                .IgnoreQueryFilters() // ✅ CRITICAL FIX (though Tenants probably don't have query filters)
-                .FirstOrDefaultAsync(t => t.Id == user.TenantId.Value);
-        }
-        
+        //var tenant = user.PrimaryTenant;
+        //if (tenant == null && user.TenantId.HasValue)
+        //{
+        //    tenant = await dbContext.Tenants
+        //        .IgnoreQueryFilters() // ✅ CRITICAL FIX (though Tenants probably don't have query filters)
+        //        .FirstOrDefaultAsync(t => t.Id == user.TenantId.Value);
+        //}
+
+        var tenantUser = await dbContext.TenantUsers
+            .IgnoreQueryFilters()
+            .Include(tu => tu.Tenant)
+            .Where(tu => tu.UserId == user.Id && tu.IsActive)
+            .FirstOrDefaultAsync();
+
+        var tenant = tenantUser?.Tenant;
+
         if (tenant == null)
         {
-            throw new InvalidOperationException($"User {email} must have a primary tenant. User.TenantId={user.TenantId}");
+            throw new InvalidOperationException($"User {email} must have a tenant assignment through TenantUsers table.");
         }
 
         Console.WriteLine($"🔍 TENANT DEBUG:");
@@ -132,7 +140,7 @@ public static class AuthenticationHelper
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(u => u.Email == "admin@tenant2.com");
             Console.WriteLine($"   - Tenant 2 Admin User Exists: {t2Admin != null}");
-            Console.WriteLine($"   - User TenantId: {t2Admin?.TenantId}");
+            //Console.WriteLine($"   - User TenantId: {t2Admin?.TenantId}");
             
             // Check Tenant 2 Admin role assignments
             var t2AdminRoles = await dbContext.UserRoles

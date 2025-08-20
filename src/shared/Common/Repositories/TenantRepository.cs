@@ -1,4 +1,4 @@
-// FILE: src/shared/Common/Repositories/TenantRepository.cs
+// FILE: src shared/Common/Repositories/TenantRepository.cs
 using Common.Data;
 using Contracts.Repositories;
 using Contracts.Services;
@@ -169,7 +169,8 @@ public class TenantScopedRepository : TenantRepository<Tenant>, ITenantRepositor
     public async Task<Tenant?> GetWithUsersAsync(int tenantId, CancellationToken cancellationToken = default)
     {
         return await Query()
-            .Include(t => t.Users)
+            .Include(t => t.TenantUsers) // 🔧 FIX: Use TenantUsers instead of Users
+            .ThenInclude(tu => tu.User) // 🔧 FIX: Include the actual User through TenantUsers
             .FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
     }
 

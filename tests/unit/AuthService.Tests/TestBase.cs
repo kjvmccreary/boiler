@@ -46,9 +46,9 @@ public abstract class TestBase : IDisposable
         {
             // User mappings
             cfg.CreateMap<User, DTOs.User.UserDto>()
-                .ForMember(dest => dest.TenantId, opt => opt.MapFrom(src => src.TenantId ?? 0))
+                .ForMember(dest => dest.TenantId, opt => opt.Ignore()) // 🔧 FIX: TenantId set from context
                 .ForMember(dest => dest.Roles, opt => opt.MapFrom(src =>
-                    src.TenantUsers.Where(tu => tu.IsActive).Select(tu => tu.Role).ToList()));
+                    src.UserRoles.Where(ur => ur.IsActive).Select(ur => ur.Role.Name).ToList()));
 
             // Tenant mappings  
             cfg.CreateMap<Tenant, DTOs.Tenant.TenantDto>()
@@ -72,8 +72,8 @@ public abstract class TestBase : IDisposable
             Name = "Test Tenant",
             Domain = "test.com",
             IsActive = true,
-            SubscriptionPlan = "Basic", // ADDED: Missing required property
-            Settings = "{}", // ADDED: Missing required property
+            SubscriptionPlan = "Basic",
+            Settings = "{}",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -81,7 +81,7 @@ public abstract class TestBase : IDisposable
         var user = new User
         {
             Id = 1,
-            TenantId = 1,
+            // TenantId = 1, // 🔧 REMOVE: User no longer has TenantId
             Email = "test@test.com",
             FirstName = "Test",
             LastName = "User",
@@ -93,8 +93,21 @@ public abstract class TestBase : IDisposable
             UpdatedAt = DateTime.UtcNow
         };
 
+        // 🔧 ADD: Create TenantUser relationship
+        var tenantUser = new TenantUser
+        {
+            TenantId = 1,
+            UserId = 1,
+            Role = "User",
+            IsActive = true,
+            JoinedAt = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
         Context.Tenants.Add(tenant);
         Context.Users.Add(user);
+        Context.TenantUsers.Add(tenantUser); // 🔧 ADD: Create tenant-user relationship
         Context.SaveChanges();
     }
 

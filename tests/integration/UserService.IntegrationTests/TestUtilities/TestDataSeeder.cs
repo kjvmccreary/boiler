@@ -241,27 +241,12 @@ public static class TestDataSeeder
         {
             Console.WriteLine("👤 Creating users...");
 
-            var tenant1 = await dbContext.Tenants.FirstAsync(t => t.Name == "Test Tenant 1");
-            var tenant2 = await dbContext.Tenants.FirstAsync(t => t.Name == "Test Tenant 2");
-
-            Console.WriteLine($"🔍 Found Tenant 1: ID={tenant1.Id}, Name={tenant1.Name}");
-            Console.WriteLine($"🔍 Found Tenant 2: ID={tenant2.Id}, Name={tenant2.Name}");
-
-            // ✅ SIMPLIFIED FIX: Just use IgnoreQueryFilters instead of creating new contexts
-            var existingUsers = await dbContext.Users.IgnoreQueryFilters().ToListAsync();
-            if (existingUsers.Any())
-            {
-                Console.WriteLine($"🧹 Removing {existingUsers.Count} existing users");
-                dbContext.Users.RemoveRange(existingUsers);
-                await dbContext.SaveChangesAsync();
-            }
-
+            // Remove TenantId assignments from User objects
             var users = new[]
             {
                 // Tenant 1 users (5 users)
                 new User
                 {
-                    TenantId = tenant1.Id,
                     Email = "admin@tenant1.com",
                     FirstName = "Admin",
                     LastName = "User1",
@@ -274,7 +259,6 @@ public static class TestDataSeeder
                 },
                 new User
                 {
-                    TenantId = tenant1.Id,
                     Email = "user@tenant1.com",
                     FirstName = "Regular",
                     LastName = "User1",
@@ -286,7 +270,6 @@ public static class TestDataSeeder
                 },
                 new User
                 {
-                    TenantId = tenant1.Id,
                     Email = "manager@tenant1.com",
                     FirstName = "Manager",
                     LastName = "User1",
@@ -298,7 +281,6 @@ public static class TestDataSeeder
                 },
                 new User
                 {
-                    TenantId = tenant1.Id,
                     Email = "viewer@tenant1.com",
                     FirstName = "View",
                     LastName = "Only",
@@ -310,7 +292,6 @@ public static class TestDataSeeder
                 },
                 new User
                 {
-                    TenantId = tenant1.Id,
                     Email = "editor@tenant1.com",
                     FirstName = "Content",
                     LastName = "Editor",
@@ -324,7 +305,6 @@ public static class TestDataSeeder
                 // Tenant 2 users (2 users)
                 new User
                 {
-                    TenantId = tenant2.Id,
                     Email = "admin@tenant2.com",
                     FirstName = "Admin",
                     LastName = "User2",
@@ -336,7 +316,6 @@ public static class TestDataSeeder
                 },
                 new User
                 {
-                    TenantId = tenant2.Id,
                     Email = "user@tenant2.com",
                     FirstName = "Regular",
                     LastName = "User2",
@@ -374,7 +353,7 @@ public static class TestDataSeeder
                 {
                     throw new InvalidOperationException($"Critical test user missing: {requiredEmail}");
                 }
-                Console.WriteLine($"✅ Verified required user exists: {requiredEmail} (TenantId: {user.TenantId})");
+                Console.WriteLine($"✅ Verified required user exists: {requiredEmail} (ID:  {user.Id})");
             }
 
             Console.WriteLine("🎉 All users created and verified successfully!");
@@ -907,24 +886,37 @@ public static class TestDataSeeder
             // ✅ CRITICAL FIX: Use IgnoreQueryFilters() to get all users
             var users = await dbContext.Users.IgnoreQueryFilters().ToListAsync();
 
-            var legacyTenantUsers = users.Select(user => new TenantUser
+            // Get tenants from context directly
+            var tenant1 = await dbContext.Tenants.FirstAsync(t => t.Name == "Test Tenant 1");
+            var tenant2 = await dbContext.Tenants.FirstAsync(t => t.Name == "Test Tenant 2");
+
+            var legacyTenantUsers = new List<TenantUser>();
+            
+            foreach (var user in users)
             {
-                UserId = user.Id,
-                TenantId = user.TenantId!.Value,
-                Role = user.Email.Contains("admin") ? "Admin" :
-                       user.Email.Contains("manager") ? "Manager" :
-                       user.Email.Contains("viewer") ? "Viewer" :
-                       user.Email.Contains("editor") ? "Editor" : "User",
-                IsActive = true,
-                JoinedAt = DateTime.UtcNow,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            }).ToArray();
+                // 🔧 FIX: Determine tenant based on email pattern instead of user.TenantId
+                var tenantId = user.Email.Contains("@tenant1.com") ? tenant1.Id : 
+                              user.Email.Contains("@tenant2.com") ? tenant2.Id : tenant1.Id; // Default to tenant1
+                
+                legacyTenantUsers.Add(new TenantUser
+                {
+                    UserId = user.Id,
+                    TenantId = tenantId, // 🔧 FIX: Use calculated tenantId instead of user.TenantId
+                    Role = user.Email.Contains("admin") ? "Admin" :
+                           user.Email.Contains("manager") ? "Manager" :
+                           user.Email.Contains("viewer") ? "Viewer" :
+                           user.Email.Contains("editor") ? "Editor" : "User",
+                    IsActive = true,
+                    JoinedAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                });
+            }
 
             dbContext.TenantUsers.AddRange(legacyTenantUsers);
             await dbContext.SaveChangesAsync();
 
-            var createdCount = await dbContext.TenantUsers.IgnoreQueryFilters().CountAsync(); // ✅ Use IgnoreQueryFilters for count
+            var createdCount = await dbContext.TenantUsers.IgnoreQueryFilters().CountAsync();
             Console.WriteLine($"✅ Created {createdCount} legacy tenant users");
         }
         catch (Exception ex)
@@ -965,18 +957,18 @@ public static class TestDataSeeder
                     // ✅ ENHANCED ERROR: Show all users without query filters
                     var allUsers = await dbContext.Users
                         .IgnoreQueryFilters()
-                        .Select(u => new { u.Email, u.TenantId })
+                        .Select(u => new { u.Email, u.Id }) // 🔧 REMOVE: u.TenantId (since User no longer has TenantId)
                         .ToListAsync();
 
                     Console.WriteLine($"❌ All users in database (query filters disabled):");
                     foreach (var u in allUsers)
                     {
-                        Console.WriteLine($"   - {u.Email} (TenantId: {u.TenantId})");
+                        Console.WriteLine($"   - {u.Email} (ID: {u.Id})"); // 🔧 REMOVE: TenantId reference
                     }
 
                     throw new InvalidOperationException($"Critical test user missing: {email}. Check database constraints and entity relationships.");
                 }
-                Console.WriteLine($"✅ Verified user: {email} (ID: {user.Id}, TenantId: {user.TenantId})");
+                Console.WriteLine($"✅ Verified user: {email} (ID: {user.Id})");
             }
 
             // ✅ Verify user role assignments (disable query filters)

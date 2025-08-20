@@ -1,5 +1,5 @@
 using AutoMapper;
-using Common.Repositories;
+using Common.Data; // 🔧 FIX: Use ApplicationDbContext instead of UserDbContext
 using Contracts.Repositories;
 using Contracts.Services;
 using Contracts.User;
@@ -17,9 +17,9 @@ public class UserService : IUserService
     private readonly ITenantProvider _tenantProvider;
     private readonly IMapper _mapper;
     private readonly ILogger<UserService> _logger;
-    // 🔧 .NET 9 FIX: Add dependencies for role/permission functionality
     private readonly IRoleService _roleService;
     private readonly IPermissionService _permissionService;
+    private readonly ApplicationDbContext _context; // 🔧 FIX: Use ApplicationDbContext
 
     public UserService(
         IUserRepository userRepository,
@@ -27,7 +27,8 @@ public class UserService : IUserService
         IMapper mapper,
         ILogger<UserService> logger,
         IRoleService roleService,
-        IPermissionService permissionService)
+        IPermissionService permissionService,
+        ApplicationDbContext context) // 🔧 FIX: Use ApplicationDbContext
     {
         _userRepository = userRepository;
         _tenantProvider = tenantProvider;
@@ -35,6 +36,7 @@ public class UserService : IUserService
         _logger = logger;
         _roleService = roleService;
         _permissionService = permissionService;
+        _context = context;
     }
 
     public async Task<ApiResponseDto<UserDto>> GetUserByIdAsync(int userId, CancellationToken cancellationToken = default)
@@ -48,7 +50,9 @@ public class UserService : IUserService
             }
 
             var user = await _userRepository.Query()
-                .Where(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value)
+                .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                .Where(x => x.u.Id == userId && x.u.IsActive && x.tu.TenantId == currentTenantId.Value && x.tu.IsActive)
+                .Select(x => x.u)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)
@@ -57,6 +61,7 @@ public class UserService : IUserService
             }
 
             var userDto = _mapper.Map<UserDto>(user);
+            userDto.TenantId = currentTenantId.Value; // 🔧 FIX: Set TenantId from context
             return ApiResponseDto<UserDto>.SuccessResult(userDto, "User retrieved successfully");
         }
         catch (Exception ex)
@@ -77,7 +82,9 @@ public class UserService : IUserService
             }
 
             var user = await _userRepository.Query()
-                .Where(u => u.Email.ToLower() == email.ToLower() && u.IsActive && u.TenantId == currentTenantId.Value)
+                .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                .Where(x => x.u.Email.ToLower() == email.ToLower() && x.u.IsActive && x.tu.TenantId == currentTenantId.Value && x.tu.IsActive)
+                .Select(x => x.u)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)
@@ -86,6 +93,7 @@ public class UserService : IUserService
             }
 
             var userDto = _mapper.Map<UserDto>(user);
+            userDto.TenantId = currentTenantId.Value; // 🔧 FIX: Set TenantId from context
             return ApiResponseDto<UserDto>.SuccessResult(userDto, "User retrieved successfully");
         }
         catch (Exception ex)
@@ -108,7 +116,9 @@ public class UserService : IUserService
             }
 
             var query = _userRepository.Query()
-                .Where(u => u.IsActive && u.TenantId == currentTenantId.Value);
+                .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                .Where(x => x.u.IsActive && x.tu.TenantId == currentTenantId.Value && x.tu.IsActive)
+                .Select(x => x.u);
 
             // Apply search filter
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
@@ -129,8 +139,13 @@ public class UserService : IUserService
                 .ToListAsync(cancellationToken);
 
             var userDtos = _mapper.Map<List<UserDto>>(users);
+            
+            // 🔧 FIX: Set TenantId from context for all users
+            foreach (var userDto in userDtos)
+            {
+                userDto.TenantId = currentTenantId.Value;
+            }
 
-            // 🔧 .NET 9 FIX: Use constructor instead of property assignment
             var result = new PagedResultDto<UserDto>(userDtos, totalCount, request.PageNumber, request.PageSize);
 
             return ApiResponseDto<PagedResultDto<UserDto>>.SuccessResult(result, "Users retrieved successfully");
@@ -152,12 +167,14 @@ public class UserService : IUserService
                 return ApiResponseDto<UserDto>.ErrorResult("Tenant context not found");
             }
 
-            // Check if user already exists in this tenant
-            var existingUser = await _userRepository.Query()
-                .Where(u => u.Email.ToLower() == request.Email.ToLower() && u.TenantId == currentTenantId.Value)
+            // 🔧 FIX: Check if user already exists in this tenant using TenantUsers join
+            var existingUserInTenant = await _userRepository.Query()
+                .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                .Where(x => x.u.Email.ToLower() == request.Email.ToLower() && x.tu.TenantId == currentTenantId.Value && x.tu.IsActive)
+                .Select(x => x.u)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (existingUser != null)
+            if (existingUserInTenant != null)
             {
                 return ApiResponseDto<UserDto>.ErrorResult("User with this email already exists in this tenant");
             }
@@ -169,16 +186,43 @@ public class UserService : IUserService
                 FirstName = request.FirstName,
                 LastName = request.LastName,
                 PasswordHash = request.Password, // Note: Should be hashed by calling service
-                TenantId = currentTenantId.Value,
                 IsActive = true,
                 EmailConfirmed = false,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
-            await _userRepository.AddAsync(user, cancellationToken);
+            // 🔧 FIX: Use transaction to create both User and TenantUser
+            using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                await _userRepository.AddAsync(user, cancellationToken);
+
+                // Create TenantUser relationship
+                var tenantUser = new TenantUser
+                {
+                    TenantId = currentTenantId.Value,
+                    UserId = user.Id,
+                    Role = "User", // Default role
+                    IsActive = true,
+                    JoinedAt = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _context.TenantUsers.Add(tenantUser);
+                await _context.SaveChangesAsync(cancellationToken);
+                
+                await transaction.CommitAsync(cancellationToken);
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
 
             var userDto = _mapper.Map<UserDto>(user);
+            userDto.TenantId = currentTenantId.Value; // 🔧 FIX: Set TenantId from context
             return ApiResponseDto<UserDto>.SuccessResult(userDto, "User created successfully");
         }
         catch (Exception ex)
@@ -198,8 +242,11 @@ public class UserService : IUserService
                 return ApiResponseDto<UserDto>.ErrorResult("Tenant context not found");
             }
 
+            // 🔧 FIX: Use TenantUsers join to find user
             var user = await _userRepository.Query()
-                .Where(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value)
+                .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                .Where(x => x.u.Id == userId && x.u.IsActive && x.tu.TenantId == currentTenantId.Value && x.tu.IsActive)
+                .Select(x => x.u)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)
@@ -219,9 +266,11 @@ public class UserService : IUserService
             // 🔧 .NET 9 FIX: Handle optional Email updates safely
             if (!string.IsNullOrEmpty(updateUserDto.Email) && updateUserDto.Email != user.Email)
             {
-                // Check if email is already taken
+                // 🔧 FIX: Check if email is already taken using TenantUsers join
                 var emailExists = await _userRepository.Query()
-                    .AnyAsync(u => u.Email == updateUserDto.Email.ToLower() && u.Id != userId && u.TenantId == currentTenantId.Value, cancellationToken);
+                    .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                    .Where(x => x.u.Email == updateUserDto.Email.ToLower() && x.u.Id != userId && x.tu.TenantId == currentTenantId.Value && x.tu.IsActive)
+                    .AnyAsync(cancellationToken);
                     
                 if (emailExists)
                 {
@@ -235,6 +284,7 @@ public class UserService : IUserService
             await _userRepository.UpdateAsync(user, cancellationToken);
 
             var userDto = _mapper.Map<UserDto>(user);
+            userDto.TenantId = currentTenantId.Value; // 🔧 FIX: Set TenantId from context
             return ApiResponseDto<UserDto>.SuccessResult(userDto, "User updated successfully");
         }
         catch (Exception ex)
@@ -254,8 +304,11 @@ public class UserService : IUserService
                 return ApiResponseDto<bool>.ErrorResult("Tenant context not found");
             }
 
+            // 🔧 FIX: Use TenantUsers join to find user
             var user = await _userRepository.Query()
-                .Where(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value)
+                .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                .Where(x => x.u.Id == userId && x.u.IsActive && x.tu.TenantId == currentTenantId.Value && x.tu.IsActive)
+                .Select(x => x.u)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)
@@ -288,8 +341,11 @@ public class UserService : IUserService
                 return ApiResponseDto<bool>.ErrorResult("Tenant context not found");
             }
 
+            // 🔧 FIX: Use TenantUsers join to check existence
             var exists = await _userRepository.Query()
-                .AnyAsync(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value, cancellationToken);
+                .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                .Where(x => x.u.Id == userId && x.u.IsActive && x.tu.TenantId == currentTenantId.Value && x.tu.IsActive)
+                .AnyAsync(cancellationToken);
 
             return ApiResponseDto<bool>.SuccessResult(exists);
         }
@@ -304,8 +360,11 @@ public class UserService : IUserService
     {
         try
         {
+            // 🔧 FIX: Use TenantUsers join instead of direct TenantId filter
             var query = _userRepository.Query()
-                .Where(u => u.TenantId == tenantId && u.IsActive);
+                .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                .Where(x => x.tu.TenantId == tenantId && x.u.IsActive && x.tu.IsActive)
+                .Select(x => x.u);
 
             // Apply search filter
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
@@ -326,10 +385,8 @@ public class UserService : IUserService
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
 
-            // 🔧 .NET 9 FIX: Use AutoMapper for consistent mapping
             var userSummaryDtos = _mapper.Map<List<UserSummaryDto>>(users);
 
-            // 🔧 .NET 9 FIX: Use constructor instead of property assignment
             var result = new PagedResultDto<UserSummaryDto>(userSummaryDtos, totalCount, request.PageNumber, request.PageSize);
 
             return ApiResponseDto<PagedResultDto<UserSummaryDto>>.SuccessResult(result, "User summaries retrieved successfully");
@@ -345,8 +402,11 @@ public class UserService : IUserService
     {
         try
         {
+            // 🔧 FIX: Use TenantUsers join instead of direct TenantId filter
             var user = await _userRepository.Query()
-                .Where(u => u.Id == userId && u.TenantId == tenantId && u.IsActive)
+                .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                .Where(x => x.u.Id == userId && x.tu.TenantId == tenantId && x.u.IsActive && x.tu.IsActive)
+                .Select(x => x.u)
                 .Include(u => u.TenantUsers)
                 .Include(u => u.RefreshTokens.Where(rt => rt.IsActive))
                 .FirstOrDefaultAsync(cancellationToken);
@@ -356,8 +416,8 @@ public class UserService : IUserService
                 return ApiResponseDto<UserDetailDto>.ErrorResult("User not found");
             }
 
-            // 🔧 .NET 9 FIX: Use AutoMapper and manually set ActiveSessions
             var userDetailDto = _mapper.Map<UserDetailDto>(user);
+            userDetailDto.TenantId = tenantId; // 🔧 FIX: Set TenantId from parameter
             
             // Set ActiveSessions count manually
             userDetailDto.ActiveSessions = user.RefreshTokens.Count(rt => rt.IsActive && rt.ExpiryDate > DateTime.UtcNow);
@@ -429,9 +489,11 @@ public class UserService : IUserService
                 return ApiResponseDto<bool>.ErrorResult("Tenant context not found");
             }
 
-            // Verify user exists in current tenant
+            // 🔧 FIX: Verify user exists in current tenant using TenantUsers join
             var userExists = await _userRepository.Query()
-                .AnyAsync(u => u.Id == userId && u.TenantId == currentTenantId.Value && u.IsActive, cancellationToken);
+                .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                .Where(x => x.u.Id == userId && x.tu.TenantId == currentTenantId.Value && x.u.IsActive && x.tu.IsActive)
+                .AnyAsync(cancellationToken);
 
             if (!userExists)
             {
@@ -458,9 +520,11 @@ public class UserService : IUserService
                 return ApiResponseDto<bool>.ErrorResult("Tenant context not found");
             }
 
-            // Verify user exists in current tenant
+            // 🔧 FIX: Verify user exists in current tenant using TenantUsers join
             var userExists = await _userRepository.Query()
-                .AnyAsync(u => u.Id == userId && u.TenantId == currentTenantId.Value && u.IsActive, cancellationToken);
+                .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                .Where(x => x.u.Id == userId && x.tu.TenantId == currentTenantId.Value && x.u.IsActive && x.tu.IsActive)
+                .AnyAsync(cancellationToken);
 
             if (!userExists)
             {
@@ -507,8 +571,11 @@ public class UserService : IUserService
                 return ApiResponseDto<bool>.ErrorResult("Tenant context not found");
             }
 
+            // 🔧 FIX: Use TenantUsers join to find user
             var user = await _userRepository.Query()
-                .Where(u => u.Id == userId && u.TenantId == currentTenantId.Value)
+                .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                .Where(x => x.u.Id == userId && x.tu.TenantId == currentTenantId.Value && x.tu.IsActive)
+                .Select(x => x.u)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)

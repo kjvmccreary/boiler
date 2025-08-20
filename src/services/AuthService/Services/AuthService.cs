@@ -69,7 +69,7 @@ public class AuthServiceImplementation : IAuthService
             
             var user = new User
             {
-                TenantId = tenant.Id,
+                // 🔧 FIX: Remove TenantId assignment - User no longer has TenantId property
                 Email = request.Email,
                 FirstName = request.FirstName,
                 LastName = request.LastName,
@@ -141,6 +141,7 @@ public class AuthServiceImplementation : IAuthService
 
                 // Create response
                 var userDto = _mapper.Map<DTOs.User.UserDto>(user);
+                userDto.TenantId = tenant.Id; // Set tenant context in DTO
                 var tenantDto = _mapper.Map<DTOs.Tenant.TenantDto>(tenant);
 
                 var response = new TokenResponseDto
@@ -181,8 +182,7 @@ public class AuthServiceImplementation : IAuthService
             // ✅ CRITICAL FIX: Use IgnoreQueryFilters() for login to bypass tenant isolation
             var user = await _context.Users
                 .IgnoreQueryFilters() // ✅ BYPASS tenant filtering during login
-                .Include(u => u.PrimaryTenant)
-                .Include(u => u.TenantUsers)  // Legacy roles (fallback)
+                .Include(u => u.TenantUsers)  // 🔧 FIX: Use TenantUsers instead of PrimaryTenant
                 .Include(u => u.UserRoles)    // ✅ Modern RBAC roles
                     .ThenInclude(ur => ur.Role)
                 .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
@@ -284,7 +284,7 @@ public class AuthServiceImplementation : IAuthService
         {
             var refreshToken = await _context.RefreshTokens
                 .Include(rt => rt.User)
-                    .ThenInclude(u => u.PrimaryTenant)
+                    .ThenInclude(u => u.TenantUsers) // 🔧 FIX: Use TenantUsers instead of PrimaryTenant
                 .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken, cancellationToken);
 
             if (refreshToken == null || !refreshToken.IsActive)
@@ -294,9 +294,21 @@ public class AuthServiceImplementation : IAuthService
             }
 
             var user = refreshToken.User;
-            if (user == null || !user.IsActive || user.PrimaryTenant == null)
+            if (user == null || !user.IsActive)
             {
                 return ApiResponseDto<TokenResponseDto>.ErrorResult("User not found or inactive.");
+            }
+
+            // 🔧 FIX: Get the tenant from the refresh token's TenantId
+            if (!refreshToken.TenantId.HasValue)
+            {
+                return ApiResponseDto<TokenResponseDto>.ErrorResult("No tenant context available for refresh.");
+            }
+
+            var tenant = await _tenantRepository.GetTenantByIdAsync(refreshToken.TenantId.Value, cancellationToken);
+            if (tenant == null)
+            {
+                return ApiResponseDto<TokenResponseDto>.ErrorResult("Tenant not found or inactive.");
             }
 
             // Revoke the old refresh token
@@ -305,11 +317,11 @@ public class AuthServiceImplementation : IAuthService
             refreshToken.RevokedByIp = GetClientIpAddress();
 
             // Generate new tokens
-            var accessToken = await _tokenService.GenerateAccessTokenAsync(user, user.PrimaryTenant);
+            var accessToken = await _tokenService.GenerateAccessTokenAsync(user, tenant);
             var newRefreshToken = await _tokenService.CreateRefreshTokenAsync(user);
 
             // Set new refresh token details
-            newRefreshToken.TenantId = user.TenantId ?? user.PrimaryTenant.Id;
+            newRefreshToken.TenantId = tenant.Id;
             newRefreshToken.CreatedByIp = GetClientIpAddress();
             refreshToken.ReplacedByToken = newRefreshToken.Token;
 
@@ -318,8 +330,8 @@ public class AuthServiceImplementation : IAuthService
 
             // Map to DTOs
             var userDto = _mapper.Map<DTOs.User.UserDto>(user);
-            userDto.TenantId = user.TenantId ?? user.PrimaryTenant.Id;
-            var tenantDto = _mapper.Map<DTOs.Tenant.TenantDto>(user.PrimaryTenant);
+            userDto.TenantId = tenant.Id; // Set tenant context in DTO
+            var tenantDto = _mapper.Map<DTOs.Tenant.TenantDto>(tenant);
 
             var response = new TokenResponseDto
             {
@@ -371,7 +383,10 @@ public class AuthServiceImplementation : IAuthService
     {
         try
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+            var user = await _context.Users
+                .IgnoreQueryFilters() // Use IgnoreQueryFilters for password operations
+                .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+            
             if (user == null)
             {
                 return ApiResponseDto<bool>.ErrorResult("User not found.");
@@ -514,7 +529,7 @@ public class AuthServiceImplementation : IAuthService
             }
 
             var roles = await _context.UserRoles
-                .Where(ur => ur.UserId == userId && ur.TenantId == tenantId.Value)
+                .Where(ur => ur.UserId == userId && ur.TenantId == tenantId.Value && ur.IsActive)
                 .Join(_context.Roles,
                     ur => ur.RoleId,
                     r => r.Id,

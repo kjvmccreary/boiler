@@ -68,7 +68,7 @@ public class UserServiceTests : IDisposable
             Email = "test@example.com", 
             FirstName = "Test", 
             LastName = "User",
-            TenantId = tenantId, 
+            // TenantId = tenantId, // 🔧 REMOVE: User no longer has TenantId
             IsActive = true 
         };
         var userDto = new UserDto 
@@ -160,7 +160,7 @@ public class UserServiceTests : IDisposable
         const int userId = 1;
         const int tenantId = 1;
         
-        var user = new User { Id = userId, TenantId = tenantId, IsActive = true };
+        var user = new User { Id = userId, /* TenantId = tenantId, */ IsActive = true }; // 🔧 REMOVE: TenantId
 
         _mockTenantProvider.Setup(x => x.GetCurrentTenantIdAsync())
             .ReturnsAsync(tenantId);
@@ -227,7 +227,7 @@ public class UserServiceTests : IDisposable
             Email = "newuser@example.com",
             FirstName = "New",
             LastName = "User",
-            TenantId = tenantId,
+            // TenantId = tenantId, // 🔧 REMOVE: User no longer has TenantId
             IsActive = true,
             EmailConfirmed = true,
             PasswordHash = "hashed_password_123"
@@ -295,7 +295,7 @@ public class UserServiceTests : IDisposable
         { 
             Id = 1, 
             Email = "existing@example.com", 
-            TenantId = tenantId 
+            // TenantId = tenantId // 🔧 REMOVE: User no longer has TenantId
         };
 
         _mockTenantProvider.Setup(x => x.GetCurrentTenantIdAsync())

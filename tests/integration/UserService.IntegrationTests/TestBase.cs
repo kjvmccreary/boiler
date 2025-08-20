@@ -84,7 +84,6 @@ public abstract class TestBase : IClassFixture<WebApplicationTestFixture>, IAsyn
             if (adminUser != null)
             {
                 var adminUserWithRoles = await _dbContext.Users
-                    .Include(u => u.PrimaryTenant)
                     .Include(u => u.UserRoles.Where(ur => ur.IsActive))
                         .ThenInclude(ur => ur.Role)
                             .ThenInclude(r => r.RolePermissions)
@@ -100,11 +99,17 @@ public abstract class TestBase : IClassFixture<WebApplicationTestFixture>, IAsyn
                 
                 _logger.LogInformation("🔑 Admin user analysis:");
                 _logger.LogInformation("   - Email: {Email}", adminUserWithRoles?.Email);
-                _logger.LogInformation("   - TenantId: {TenantId}", adminUserWithRoles?.TenantId);
-                _logger.LogInformation("   - PrimaryTenant: {PrimaryTenant}", adminUserWithRoles?.PrimaryTenant?.Name ?? "NULL");
                 _logger.LogInformation("   - UserRoles count: {UserRoleCount}", adminUserWithRoles?.UserRoles.Count ?? 0);
                 _logger.LogInformation("   - Active UserRoles: {ActiveUserRoleCount}", adminUserWithRoles?.UserRoles.Count(ur => ur.IsActive) ?? 0);
                 _logger.LogInformation("   - Permissions: {PermissionCount} [{Permissions}]", adminPermissions.Count, string.Join(", ", adminPermissions));
+
+                // Instead, get tenant from TenantUsers:
+                var userTenant = await _dbContext.TenantUsers
+                    .Include(tu => tu.Tenant)
+                    .Where(tu => tu.UserId == adminUser.Id && tu.IsActive)
+                    .FirstOrDefaultAsync();
+
+                _logger.LogInformation("   - Tenant: {TenantName}", userTenant?.Tenant?.Name ?? "NULL");
             }
         }
         catch (Exception ex)

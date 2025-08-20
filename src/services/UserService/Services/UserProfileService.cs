@@ -1,5 +1,6 @@
 // FILE: src/services/UserService/Services/UserProfileService.cs
 using AutoMapper;
+using Common.Data;
 using Contracts.Repositories;
 using Contracts.Services;
 using Contracts.User;
@@ -14,22 +15,25 @@ public class UserProfileService : IUserProfileService
 {
     private readonly IUserRepository _userRepository;
     private readonly ITenantProvider _tenantProvider;
-    private readonly IPermissionService _permissionService; // 🔧 ADD: Permission service for admin check
+    private readonly IPermissionService _permissionService;
     private readonly IMapper _mapper;
     private readonly ILogger<UserProfileService> _logger;
+    private readonly ApplicationDbContext _context; // 🔧 ADD: Context for TenantUsers access
 
     public UserProfileService(
         IUserRepository userRepository,
         ITenantProvider tenantProvider,
-        IPermissionService permissionService, // 🔧 ADD: Inject permission service
+        IPermissionService permissionService,
         IMapper mapper,
-        ILogger<UserProfileService> logger)
+        ILogger<UserProfileService> logger,
+        ApplicationDbContext context) // 🔧 ADD: Inject context
     {
         _userRepository = userRepository;
         _tenantProvider = tenantProvider;
-        _permissionService = permissionService; // 🔧 ADD: Initialize permission service
+        _permissionService = permissionService;
         _mapper = mapper;
         _logger = logger;
+        _context = context; // 🔧 ADD: Initialize context
     }
 
     public async Task<ApiResponseDto<UserDto>> GetUserProfileAsync(int userId, CancellationToken cancellationToken = default)
@@ -42,36 +46,23 @@ public class UserProfileService : IUserProfileService
                 return ApiResponseDto<UserDto>.ErrorResult("Tenant context not found");
             }
 
-            // 🔧 FIX: Use IgnoreQueryFilters and verify tenant access via TenantUsers table
-            // This allows users to access their profile when switching between tenants they have access to
+            // 🔧 FIX: Use TenantUsers join to verify user access to current tenant
             var user = await _userRepository.Query()
-                .IgnoreQueryFilters() // 🔧 CRITICAL: Bypass global tenant filtering
-                .Where(u => u.Id == userId && u.IsActive)
+                .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                .Where(x => x.u.Id == userId && x.u.IsActive && x.tu.TenantId == currentTenantId.Value && x.tu.IsActive)
+                .Select(x => x.u)
                 .Include(u => u.UserRoles.Where(ur => ur.IsActive && ur.TenantId == currentTenantId.Value))
                     .ThenInclude(ur => ur.Role)
-                .Include(u => u.TenantUsers.Where(tu => tu.IsActive)) // Load all tenant access
+                .Include(u => u.TenantUsers.Where(tu => tu.IsActive))
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)
             {
-                return ApiResponseDto<UserDto>.ErrorResult("User profile not found");
-            }
-
-            // 🔧 CRITICAL: Verify user has access to current tenant via TenantUsers table
-            var hasAccessToCurrentTenant = user.TenantUsers.Any(tu => 
-                tu.TenantId == currentTenantId.Value && tu.IsActive);
-                
-            if (!hasAccessToCurrentTenant)
-            {
-                _logger.LogWarning("User {UserId} attempted to access profile in tenant {TenantId} without TenantUsers access. Available tenants: {AvailableTenants}", 
-                    userId, currentTenantId.Value, string.Join(", ", user.TenantUsers.Where(tu => tu.IsActive).Select(tu => tu.TenantId)));
-                return ApiResponseDto<UserDto>.ErrorResult("Access denied to current tenant");
+                return ApiResponseDto<UserDto>.ErrorResult("User profile not found or access denied");
             }
 
             var userDto = _mapper.Map<UserDto>(user);
-            
-            // 🔧 IMPORTANT: Set the current tenant context, not the user's primary tenant
-            userDto.TenantId = currentTenantId.Value;
+            userDto.TenantId = currentTenantId.Value; // 🔧 FIX: Set TenantId from context
             
             _logger.LogInformation("User {UserId} successfully accessed profile in tenant {TenantId}", userId, currentTenantId.Value);
             
@@ -94,7 +85,7 @@ public class UserProfileService : IUserProfileService
                 return ApiResponseDto<UserDto>.ErrorResult("Tenant context not found");
             }
 
-            // 🔧 .NET 9 FIX: Use permission-based admin check instead of role-based
+            // Check if user has admin permissions
             var isAdmin = await IsUserAdminAsync(userId, cancellationToken);
             if (!isAdmin)
             {
@@ -103,8 +94,11 @@ public class UserProfileService : IUserProfileService
                 return ApiResponseDto<UserDto>.ErrorResult("Only admin users can update their profile");
             }
 
+            // 🔧 FIX: Use TenantUsers join to find user
             var user = await _userRepository.Query()
-                .Where(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value)
+                .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                .Where(x => x.u.Id == userId && x.u.IsActive && x.tu.TenantId == currentTenantId.Value && x.tu.IsActive)
+                .Select(x => x.u)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)
@@ -123,6 +117,7 @@ public class UserProfileService : IUserProfileService
             await _userRepository.UpdateAsync(user, cancellationToken);
 
             var userDto = _mapper.Map<UserDto>(user);
+            userDto.TenantId = currentTenantId.Value; // 🔧 FIX: Set TenantId from context
             return ApiResponseDto<UserDto>.SuccessResult(userDto, "Profile updated successfully");
         }
         catch (Exception ex)
@@ -142,8 +137,11 @@ public class UserProfileService : IUserProfileService
                 return ApiResponseDto<bool>.ErrorResult("Tenant context not found");
             }
 
+            // 🔧 FIX: Use TenantUsers join to find user
             var user = await _userRepository.Query()
-                .Where(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value)
+                .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                .Where(x => x.u.Id == userId && x.u.IsActive && x.tu.TenantId == currentTenantId.Value && x.tu.IsActive)
+                .Select(x => x.u)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)
@@ -175,8 +173,11 @@ public class UserProfileService : IUserProfileService
                 return ApiResponseDto<UserPreferencesDto>.ErrorResult("Tenant context not found");
             }
 
+            // 🔧 FIX: Use TenantUsers join to find user
             var user = await _userRepository.Query()
-                .Where(u => u.Id == userId && u.IsActive && u.TenantId == currentTenantId.Value)
+                .Join(_context.TenantUsers, u => u.Id, tu => tu.UserId, (u, tu) => new { u, tu })
+                .Where(x => x.u.Id == userId && x.u.IsActive && x.tu.TenantId == currentTenantId.Value && x.tu.IsActive)
+                .Select(x => x.u)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (user == null)
@@ -212,7 +213,6 @@ public class UserProfileService : IUserProfileService
         }
     }
 
-    // 🔧 .NET 9 FIX: Use permission-based admin check instead of role-based
     private async Task<bool> IsUserAdminAsync(int userId, CancellationToken cancellationToken = default)
     {
         try

@@ -773,7 +773,7 @@ public class RBACTestController : ControllerBase
 
             // Check Users
             var userCount = await _context.Users.CountAsync();
-            var userSample = await _context.Users.Take(5).Select(u => new { u.Id, u.Email, u.TenantId, u.IsActive }).ToListAsync();
+            var userSample = await _context.Users.Take(5).Select(u => new { u.Id, u.Email, u.IsActive }).ToListAsync(); // 🔧 REMOVE: u.TenantId reference
             userData["Count"] = userCount;
             userData["Sample"] = userSample;
 

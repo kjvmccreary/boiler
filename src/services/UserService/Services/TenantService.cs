@@ -76,11 +76,11 @@ public class TenantService : ITenantService
 
             _logger.LogInformation("Tenant created with ID: {TenantId}", tenant.Id);
 
-            // 🔧 STEP 1: Create default roles FIRST (before admin user)
+            // Create default roles FIRST (before admin user)
             _logger.LogInformation("Creating default roles for tenant {TenantId}", tenant.Id);
             await _roleTemplateService.CreateDefaultRolesForTenantAsync(tenant.Id);
 
-            // 🔧 STEP 2: Create admin user and assign proper RBAC role
+            // Create admin user and assign proper RBAC role
             var adminUser = await CreateTenantAdminUserAsync(tenant.Id, createDto.AdminUser);
             
             if (!adminUser.Success)
@@ -111,12 +111,13 @@ public class TenantService : ITenantService
     {
         try
         {
+            // 🔧 FIX: Use TenantUsers count instead of direct Users relationship
             var tenant = await _context.Tenants
                 .Where(t => t.Id == tenantId)
                 .Select(t => new
                 {
                     Tenant = t,
-                    UserCount = t.Users.Count(u => u.IsActive),
+                    UserCount = _context.TenantUsers.Count(tu => tu.TenantId == t.Id && tu.IsActive),
                     RoleCount = _context.Roles.Count(r => r.TenantId == t.Id && r.IsActive)
                 })
                 .FirstOrDefaultAsync();
@@ -146,13 +147,15 @@ public class TenantService : ITenantService
             var query = _context.Tenants.AsQueryable();
 
             var totalCount = await query.CountAsync();
+            
+            // 🔧 FIX: Use TenantUsers count instead of direct Users relationship
             var tenants = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(t => new
                 {
                     Tenant = t,
-                    UserCount = t.Users.Count(u => u.IsActive),
+                    UserCount = _context.TenantUsers.Count(tu => tu.TenantId == t.Id && tu.IsActive),
                     RoleCount = _context.Roles.Count(r => r.TenantId == t.Id && r.IsActive)
                 })
                 .ToListAsync();
@@ -239,8 +242,8 @@ public class TenantService : ITenantService
                 return ApiResponseDto<bool>.ErrorResult("Tenant not found");
             }
 
-            // Check if tenant has users (prevent accidental deletion)
-            var userCount = await _context.Users.CountAsync(u => u.TenantId == tenantId);
+            // 🔧 FIX: Check if tenant has users using TenantUsers count
+            var userCount = await _context.TenantUsers.CountAsync(tu => tu.TenantId == tenantId && tu.IsActive);
             if (userCount > 0)
             {
                 return ApiResponseDto<bool>.ErrorResult($"Cannot delete tenant with {userCount} users. Deactivate instead.");
@@ -338,8 +341,9 @@ public class TenantService : ITenantService
     {
         try
         {
-            // Check if user already exists
+            // 🔧 FIX: Check if user already exists using IgnoreQueryFilters
             var existingUser = await _context.Users
+                .IgnoreQueryFilters()
                 .Where(u => u.Email == adminDto.Email)
                 .FirstOrDefaultAsync();
 
@@ -355,7 +359,7 @@ public class TenantService : ITenantService
                 FirstName = adminDto.FirstName,
                 LastName = adminDto.LastName,
                 PasswordHash = _passwordService.HashPassword(adminDto.Password),
-                TenantId = tenantId,
+                // TenantId = tenantId, // 🔧 REMOVE: User no longer has TenantId
                 IsActive = true,
                 EmailConfirmed = true, // Auto-confirm for tenant admin
                 CreatedAt = DateTime.UtcNow,
@@ -365,7 +369,7 @@ public class TenantService : ITenantService
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // 🔧 STEP 3: Find the "Tenant Admin" role that was just created
+            // Find the "Tenant Admin" role that was just created
             var tenantAdminRole = await _context.Roles
                 .Where(r => r.TenantId == tenantId && r.Name == "Tenant Admin")
                 .FirstOrDefaultAsync();
@@ -377,7 +381,7 @@ public class TenantService : ITenantService
                 return ApiResponseDto<UserDto>.ErrorResult("Failed to find Tenant Admin role");
             }
 
-            // 🔧 STEP 4: Create proper RBAC UserRole assignment
+            // Create proper RBAC UserRole assignment
             var userRole = new UserRole
             {
                 UserId = user.Id,
@@ -392,7 +396,7 @@ public class TenantService : ITenantService
 
             _context.UserRoles.Add(userRole);
 
-            // 🔧 STEP 5: Create legacy TenantUser relationship (for fallback compatibility)
+            // Create legacy TenantUser relationship (for fallback compatibility)
             var tenantUser = new TenantUser
             {
                 TenantId = tenantId,
@@ -411,6 +415,7 @@ public class TenantService : ITenantService
                 adminDto.Email, tenantId, tenantAdminRole.Id);
 
             var userDto = _mapper.Map<UserDto>(user);
+            userDto.TenantId = tenantId; // 🔧 FIX: Set TenantId from parameter
             return ApiResponseDto<UserDto>.SuccessResult(userDto);
         }
         catch (Exception ex)
@@ -428,7 +433,6 @@ public class TenantService : ITenantService
         string tenantName, 
         string? tenantDomain = null)
     {
-        // 🔧 CRITICAL DEBUG: Add extensive logging at method entry
         _logger.LogWarning("🚀 STARTING CreateTenantForExistingUserAsync - UserId: {UserId}, TenantName: {TenantName}", userId, tenantName);
         
         using var transaction = await _context.Database.BeginTransactionAsync();
@@ -494,7 +498,7 @@ public class TenantService : ITenantService
                 await _roleTemplateService.CreateDefaultRolesForTenantAsync(tenant.Id);
                 _logger.LogWarning("✅ Default roles created successfully for tenant {TenantId}", tenant.Id);
                 
-                // 🔧 CRITICAL FIX: Get the Tenant Admin role immediately after creation
+                // Get the Tenant Admin role immediately after creation
                 tenantAdminRole = _context.Roles.Local
                     .FirstOrDefault(r => r.TenantId == tenant.Id && r.Name == "Tenant Admin");
                     
