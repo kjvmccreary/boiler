@@ -24,9 +24,10 @@ public abstract class TestBase : IDisposable
         MockTenantProvider.Setup(x => x.GetCurrentTenantIdAsync())
             .ReturnsAsync(1);
 
-        // Setup In-Memory Database
+        // ✅ FIXED for .NET 9: Use the simple approach that works in all EF Core versions
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .ConfigureWarnings(warnings => warnings.Default(WarningBehavior.Ignore))
             .Options;
 
         Context = new ApplicationDbContext(
@@ -35,20 +36,16 @@ public abstract class TestBase : IDisposable
             MockTenantProvider.Object
         );
 
-        // FIXED: Add logging services before AutoMapper configuration
+        // Setup AutoMapper
         var services = new ServiceCollection();
-
-        // Add logging services that AutoMapper needs
         services.AddLogging(builder => builder.AddConsole());
-
-        // FIXED: Add AutoMapper configuration with proper mappings
         services.AddAutoMapper(cfg =>
         {
             // User mappings
             cfg.CreateMap<User, DTOs.User.UserDto>()
-                .ForMember(dest => dest.TenantId, opt => opt.Ignore()) // 🔧 FIX: TenantId set from context
+                .ForMember(dest => dest.TenantId, opt => opt.Ignore())
                 .ForMember(dest => dest.Roles, opt => opt.MapFrom(src =>
-                    src.UserRoles.Where(ur => ur.IsActive).Select(ur => ur.Role.Name).ToList()));
+                    src.UserRoles != null ? src.UserRoles.Where(ur => ur.IsActive).Select(ur => ur.Role != null ? ur.Role.Name : string.Empty).ToList() : new List<string>()));
 
             // Tenant mappings  
             cfg.CreateMap<Tenant, DTOs.Tenant.TenantDto>()
@@ -81,7 +78,6 @@ public abstract class TestBase : IDisposable
         var user = new User
         {
             Id = 1,
-            // TenantId = 1, // 🔧 REMOVE: User no longer has TenantId
             Email = "test@test.com",
             FirstName = "Test",
             LastName = "User",
@@ -93,7 +89,6 @@ public abstract class TestBase : IDisposable
             UpdatedAt = DateTime.UtcNow
         };
 
-        // 🔧 ADD: Create TenantUser relationship
         var tenantUser = new TenantUser
         {
             TenantId = 1,
@@ -107,7 +102,7 @@ public abstract class TestBase : IDisposable
 
         Context.Tenants.Add(tenant);
         Context.Users.Add(user);
-        Context.TenantUsers.Add(tenantUser); // 🔧 ADD: Create tenant-user relationship
+        Context.TenantUsers.Add(tenantUser);
         Context.SaveChanges();
     }
 
@@ -121,7 +116,6 @@ public abstract class TestBase : IDisposable
         return Context.Tenants.First();
     }
 
-    // ADDED: Helper method for parsing JSON settings (same as in MappingProfile)
     private static Dictionary<string, object> ParseJsonSettings(string settingsJson)
     {
         try

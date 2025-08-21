@@ -24,8 +24,8 @@ public class RoleTemplateService : IRoleTemplateService
             new RoleTemplateDto
             {
                 Name = "Tenant Admin",
-                Description = "Full administrative access to the tenant",
-                Permissions = Common.Constants.Permissions.GetAllPermissions(), // ✅ FIX: Get ALL permissions
+                Description = "Full administrative access to the tenant with all available permissions",
+                Permissions = Common.Constants.Permissions.GetAllPermissions(),
                 IsDefault = true
             }
         },
@@ -105,12 +105,13 @@ public class RoleTemplateService : IRoleTemplateService
                 await CreateRoleFromTemplateAsync(tenantId, template.Key);
             }
 
-            // ✅ FIXED: Pass details object instead of string
             await _auditService.LogAsync(
                 AuditAction.RoleCreated, 
                 $"tenants/{tenantId}/roles", 
                 new { Message = "Default roles created for tenant", TenantId = tenantId }, 
                 true);
+
+            _logger.LogInformation("Successfully created default roles for tenant {TenantId}", tenantId);
         }
         catch (Exception ex)
         {
@@ -135,7 +136,7 @@ public class RoleTemplateService : IRoleTemplateService
 
             if (existingRole != null)
             {
-                _logger.LogInformation("Role '{RoleName}' already exists for tenant {TenantId}", 
+                _logger.LogDebug("Role '{RoleName}' already exists for tenant {TenantId}", 
                     template.Name, tenantId);
                 return;
             }
@@ -154,29 +155,25 @@ public class RoleTemplateService : IRoleTemplateService
             };
 
             _context.Roles.Add(role);
-            
-            // 🔧 CRITICAL FIX: Save changes to get the Role.Id before creating permissions
             await _context.SaveChangesAsync();
 
-            _logger.LogInformation("Created role '{RoleName}' with ID {RoleId} for tenant {TenantId}", 
-                role.Name, role.Id, tenantId);
-
-            // ✅ Now get permissions (role.Id should be populated)
+            // Get permissions for the role
             var permissions = await _permissionRepository.GetByNamesAsync(template.Permissions);
             var permissionsList = permissions.ToList();
             
             if (permissionsList.Count == 0)
             {
-                _logger.LogWarning("No permissions found for role template '{TemplateName}' - tenant {TenantId}", 
+                _logger.LogWarning("No permissions found for role template '{TemplateName}' in tenant {TenantId}", 
                     templateName, tenantId);
             }
             else
             {
+                // Create role permissions
                 foreach (var permission in permissionsList)
                 {
                     var rolePermission = new RolePermission
                     {
-                        RoleId = role.Id, // 🔧 This should now have a valid ID (not 0)
+                        RoleId = role.Id,
                         PermissionId = permission.Id,
                         GrantedAt = DateTime.UtcNow,
                         GrantedBy = "System",
@@ -187,14 +184,12 @@ public class RoleTemplateService : IRoleTemplateService
                     _context.RolePermissions.Add(rolePermission);
                 }
 
-                // 🔧 Save role permissions
                 await _context.SaveChangesAsync();
             }
 
             _logger.LogInformation("Created role '{RoleName}' for tenant {TenantId} with {PermissionCount} permissions", 
                 role.Name, tenantId, permissionsList.Count);
 
-            // ✅ Keep the audit logging
             await _auditService.LogAsync(
                 AuditAction.RoleCreated, 
                 $"tenants/{tenantId}/roles/{role.Id}", 
@@ -203,7 +198,7 @@ public class RoleTemplateService : IRoleTemplateService
                     TemplateName = templateName, 
                     PermissionCount = permissionsList.Count,
                     TenantId = tenantId,
-                    RoleId = role.Id // 🔧 Include the actual role ID
+                    RoleId = role.Id
                 }, 
                 true);
         }
@@ -215,10 +210,8 @@ public class RoleTemplateService : IRoleTemplateService
         }
     }
 
-    // ✅ FIXED: Make method truly async to resolve warning
     public async Task<List<RoleTemplateDto>> GetAvailableTemplatesAsync()
     {
-        // Simulate async operation to resolve the warning
         await Task.Yield();
         return RoleTemplates.Values.ToList();
     }
