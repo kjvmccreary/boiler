@@ -31,7 +31,7 @@ builder.Services.AddSwaggerGen(c =>
     {
         Title = "UserService API",
         Version = "v1",
-        Description = "User Management and Profile Services"
+        Description = "User Management and Profile Services with Redis Caching"
     });
 
     // JWT Authentication configuration for Swagger
@@ -67,41 +67,61 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 // ✅ CRITICAL FIX: Add dynamic authorization for permission-based policies
 builder.Services.AddDynamicAuthorization();
 
-// ✅ NEW: Configure Redis for Phase 10 Caching
-var redisConnectionString = builder.Configuration.GetConnectionString("Redis") 
+// 🔧 FIXED: Improved Redis connection string resolution for Docker environments
+var redisConnectionString = Environment.GetEnvironmentVariable("Redis__ConnectionString") 
     ?? builder.Configuration["Redis:ConnectionString"]
-    ?? "localhost:6379";
+    ?? builder.Configuration.GetConnectionString("Redis")
+    ?? (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development" && 
+        Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true" 
+        ? "redis:6379"  // Docker container networking
+        : "localhost:6379");  // Local development
+
+// 🔧 ADD: Debug logging to see which connection string is being used
+Console.WriteLine($"🔍 Redis connection string resolved to: {redisConnectionString}");
+Console.WriteLine($"🐳 Running in container: {Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER")}");
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
     var configuration = ConfigurationOptions.Parse(redisConnectionString);
     configuration.AbortOnConnectFail = false;
-    configuration.ConnectTimeout = 5000;
-    configuration.SyncTimeout = 5000;
+    configuration.ConnectTimeout = 15000;  // ✅ INCREASED: Give more time for Docker networking
+    configuration.SyncTimeout = 15000;    // ✅ INCREASED: Give more time for Docker networking
+    configuration.ConnectRetry = 3;       // ✅ NEW: Retry connections
     
-    var connection = ConnectionMultiplexer.Connect(configuration);
-    
-    // Log connection status
+    // ✅ NEW: Add logging for connection attempts
     var logger = sp.GetRequiredService<ILogger<Program>>();
-    logger.LogInformation("Redis connection status: {Status}", connection.IsConnected ? "Connected" : "Disconnected");
     
-    return connection;
+    try
+    {
+        logger.LogInformation("Attempting to connect to Redis at: {ConnectionString}", redisConnectionString);
+        var connection = ConnectionMultiplexer.Connect(configuration);
+        
+        logger.LogInformation("Redis connection status: {Status} to {EndPoint}", 
+            connection.IsConnected ? "Connected" : "Disconnected", redisConnectionString);
+        
+        return connection;
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to connect to Redis at: {ConnectionString}", redisConnectionString);
+        
+        // ✅ NEW: Create a "null" multiplexer that won't crash the app
+        // This allows the service to start even if Redis is unavailable
+        throw; // Re-throw for now, but we could return a NullConnectionMultiplexer
+    }
 });
 
 // ✅ NEW: Register cache services for Phase 10
 builder.Services.AddSingleton<ICacheService, RedisCacheService>();
 builder.Services.AddSingleton<IPermissionCache, RedisPermissionCache>();
 
-// ✅ NEW: Add distributed caching with Redis
+// ✅ NEW: Register cache invalidation service
+builder.Services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
+
+// ✅ FIXED: Add distributed caching with Redis without BuildServiceProvider warning
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.ConnectionMultiplexerFactory = async () =>
-    {
-        var multiplexer = builder.Services
-            .BuildServiceProvider()
-            .GetRequiredService<IConnectionMultiplexer>();
-        return await Task.FromResult(multiplexer);
-    };
+    options.Configuration = redisConnectionString;
 });
 
 // USE DATABASE EXTENSION (includes DbContext + Repositories)
@@ -109,6 +129,10 @@ builder.Services.AddDatabase(builder.Configuration);
 
 // FIXED: Use Common extension for AutoMapper
 builder.Services.AddAutoMapperProfiles(typeof(UserMappingProfile));
+
+// ✅ UPDATED: Replace PermissionService with CachedPermissionService
+// Remove the old registration and add the cached version
+builder.Services.AddScoped<IPermissionService, CachedPermissionService>();
 
 // Add your service implementations
 builder.Services.AddScoped<Contracts.User.IUserService, UserServiceImplementation>();
@@ -149,6 +173,9 @@ builder.Services.AddCors(options =>
 
 // Add this line to register the password service
 builder.Services.AddScoped<IPasswordService, Common.Services.PasswordService>();
+
+// ✅ NEW: Register Performance Metrics Service for Phase 10 Session 3
+builder.Services.AddSingleton<IPerformanceMetricsService, PerformanceMetricsService>();
 
 var app = builder.Build();
 
@@ -209,20 +236,31 @@ try
     Log.Information("Starting UserService with Redis caching enabled");
     Console.WriteLine("=== UserService Starting with Redis Caching ===");
     
-    // ✅ NEW: Test Redis connection on startup
+    // ✅ IMPROVED: Test Redis connection with better error handling
     try
     {
         var redis = app.Services.GetRequiredService<IConnectionMultiplexer>();
-        var db = redis.GetDatabase();
-        await db.StringSetAsync("startup-test", DateTime.UtcNow.ToString(), TimeSpan.FromSeconds(10));
-        var test = await db.StringGetAsync("startup-test");
-        Console.WriteLine($"✅ Redis connection successful: {test}");
-        Log.Information("Redis connection test successful");
+        Log.Information("Redis connection status: {Status}", redis.IsConnected ? "Connected" : "Disconnected");
+        
+        if (redis.IsConnected)
+        {
+            var db = redis.GetDatabase();
+            var testKey = $"startup-test:{Environment.MachineName}:{DateTime.UtcNow:yyyyMMddHHmmss}";
+            await db.StringSetAsync(testKey, DateTime.UtcNow.ToString(), TimeSpan.FromSeconds(10));
+            var test = await db.StringGetAsync(testKey);
+            Console.WriteLine($"✅ Redis connection successful: {test}");
+            Log.Information("Redis connection test successful: {TestValue}", test);
+        }
     }
-    catch (Exception ex)
+    catch (RedisConnectionException ex)
     {
         Console.WriteLine($"⚠️  Redis connection failed: {ex.Message}");
         Log.Warning(ex, "Redis connection test failed, caching will be unavailable");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️  Redis connection test error: {ex.Message}");
+        Log.Warning(ex, "Redis connection test failed with unexpected error");
     }
     
     // 🔧 ADD: Automatic database seeding on startup

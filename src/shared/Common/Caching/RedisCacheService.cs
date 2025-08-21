@@ -1,19 +1,22 @@
 using StackExchange.Redis;
 using System;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Common.Performance;
 
 namespace Common.Caching
 {
     /// <summary>
-    /// Redis implementation of the cache service
+    /// Redis implementation of the cache service with performance metrics
     /// </summary>
     public class RedisCacheService : ICacheService
     {
         private readonly IConnectionMultiplexer _redis;
         private readonly IDatabase _database;
         private readonly ILogger<RedisCacheService> _logger;
+        private readonly IPerformanceMetricsService? _metricsService;
 
         // JSON serializer options for consistent serialization
         private readonly JsonSerializerOptions _jsonOptions = new()
@@ -24,11 +27,13 @@ namespace Common.Caching
 
         public RedisCacheService(
             IConnectionMultiplexer redis,
-            ILogger<RedisCacheService> logger)
+            ILogger<RedisCacheService> logger,
+            IPerformanceMetricsService? metricsService = null)
         {
             _redis = redis ?? throw new ArgumentNullException(nameof(redis));
             _database = redis.GetDatabase();
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _metricsService = metricsService;
         }
 
         public async Task<T?> GetAsync<T>(string key)
@@ -36,21 +41,29 @@ namespace Common.Caching
             if (string.IsNullOrWhiteSpace(key))
                 throw new ArgumentException("Cache key cannot be null or empty", nameof(key));
 
+            var stopwatch = Stopwatch.StartNew();
             try
             {
                 var value = await _database.StringGetAsync(key);
+                stopwatch.Stop();
+
                 if (value.IsNullOrEmpty)
                 {
                     _logger.LogDebug("Cache miss for key: {Key}", key);
+                    await _metricsService?.RecordCacheMissAsync(key, typeof(T).Name, stopwatch.Elapsed)!;
                     return default(T);
                 }
 
                 _logger.LogDebug("Cache hit for key: {Key}", key);
+                await _metricsService?.RecordCacheHitAsync(key, typeof(T).Name, stopwatch.Elapsed)!;
+                
                 return JsonSerializer.Deserialize<T>(value!, _jsonOptions);
             }
             catch (Exception ex)
             {
+                stopwatch.Stop();
                 _logger.LogError(ex, "Error getting cache key: {Key}", key);
+                await _metricsService?.RecordCacheMissAsync(key, typeof(T).Name, stopwatch.Elapsed)!;
                 return default(T);
             }
         }
@@ -60,16 +73,21 @@ namespace Common.Caching
             if (string.IsNullOrWhiteSpace(key))
                 throw new ArgumentException("Cache key cannot be null or empty", nameof(key));
 
+            var stopwatch = Stopwatch.StartNew();
             try
             {
                 var json = JsonSerializer.Serialize(value, _jsonOptions);
                 await _database.StringSetAsync(key, json, expiration);
+                stopwatch.Stop();
+                
+                await _metricsService?.RecordCacheSetAsync(key, typeof(T).Name, stopwatch.Elapsed)!;
                 
                 _logger.LogDebug("Set cache key: {Key} with expiration: {Expiration}", 
                     key, expiration?.ToString() ?? "Never");
             }
             catch (Exception ex)
             {
+                stopwatch.Stop();
                 _logger.LogError(ex, "Error setting cache key: {Key}", key);
             }
         }
@@ -156,7 +174,10 @@ namespace Common.Caching
 
             _logger.LogDebug("Cache miss for key: {Key}, executing factory", key);
             
+            var stopwatch = Stopwatch.StartNew();
             var value = await factory();
+            stopwatch.Stop();
+            
             await SetAsync(key, value, expiration);
             
             return value;

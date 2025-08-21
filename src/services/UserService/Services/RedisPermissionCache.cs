@@ -64,7 +64,7 @@ namespace UserService.Services
         public async Task InvalidateTenantPermissionsAsync(int tenantId)
         {
             var pattern = $"permissions:tenant:{tenantId}:*";
-            await _cache.RemoveByPatternAsync(pattern);
+            await RemoveByPatternAsync(pattern);
             
             _logger.LogInformation("Invalidated all permission caches for tenant {TenantId}", tenantId);
         }
@@ -104,6 +104,16 @@ namespace UserService.Services
             
             _logger.LogInformation("Invalidated role permission caches for role {RoleId} in tenant {TenantId}", 
                 roleId, tenantId);
+        }
+
+        /// <summary>
+        /// Remove cache entries matching a pattern using the underlying cache service
+        /// </summary>
+        /// <param name="pattern">Redis pattern to match keys</param>
+        public async Task RemoveByPatternAsync(string pattern)
+        {
+            await _cache.RemoveByPatternAsync(pattern);
+            _logger.LogDebug("Removed cache entries matching pattern: {Pattern}", pattern);
         }
 
         /// <summary>

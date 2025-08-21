@@ -58,5 +58,11 @@ namespace Common.Caching
         /// <param name="roleId">Role ID</param>
         /// <param name="tenantId">Tenant ID</param>
         Task InvalidateRolePermissionsAsync(int roleId, int tenantId);
+
+        /// <summary>
+        /// Remove cache entries matching a pattern (e.g., "permissions:*" for all permission caches)
+        /// </summary>
+        /// <param name="pattern">Redis pattern to match keys</param>
+        Task RemoveByPatternAsync(string pattern);
     }
 }
