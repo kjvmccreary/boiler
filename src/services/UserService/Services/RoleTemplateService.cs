@@ -25,14 +25,7 @@ public class RoleTemplateService : IRoleTemplateService
             {
                 Name = "Tenant Admin",
                 Description = "Full administrative access to the tenant",
-                Permissions = new List<string>
-                {
-                    "users.view", "users.edit", "users.create", "users.delete",
-                    "roles.view", "roles.edit", "roles.create", "roles.delete",
-                    "permissions.view", "permissions.assign",
-                    "settings.view", "settings.edit",
-                    "audit.view", "reports.view", "reports.export"
-                },
+                Permissions = Common.Constants.Permissions.GetAllPermissions(), // ✅ FIX: Get ALL permissions
                 IsDefault = true
             }
         },
@@ -47,7 +40,7 @@ public class RoleTemplateService : IRoleTemplateService
                     "users.view", "users.edit", "users.create",
                     "roles.view",
                     "reports.view", "reports.create", "reports.export",
-                    "dashboard.view"
+                    "settings.view"
                 },
                 IsDefault = true
             }
@@ -60,9 +53,9 @@ public class RoleTemplateService : IRoleTemplateService
                 Description = "Basic user access",
                 Permissions = new List<string>
                 {
-                    "profile.view", "profile.edit",
-                    "dashboard.view",
-                    "reports.view"
+                    "roles.view",
+                    "reports.view",
+                    "permissions.view"
                 },
                 IsDefault = true
             }
@@ -78,8 +71,7 @@ public class RoleTemplateService : IRoleTemplateService
                     "users.view",
                     "roles.view",
                     "reports.view",
-                    "dashboard.view",
-                    "profile.view"
+                    "permissions.view"
                 },
                 IsDefault = false
             }

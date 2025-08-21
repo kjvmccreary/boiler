@@ -15,177 +15,74 @@ public static class AuthenticationHelper
     private const string Issuer = "AuthService";
     private const string Audience = "StarterApp";
 
-    public static async Task<string> GetValidTokenAsync(
-        HttpClient client, 
+    /// <summary>
+    /// Phase 1: Generate initial JWT without tenant (like real login response)
+    /// </summary>
+    public static async Task<string> GetInitialJwtAsync(
         ApplicationDbContext dbContext, 
-        string email, 
-        string? overrideRole = null) // ✅ RBAC FIX: Make role optional
+        string email)
     {
-        // ✅ CRITICAL DEBUGGING: First check if UserRoles exist at all
-        var totalUserRoles = await dbContext.UserRoles.IgnoreQueryFilters().CountAsync(); // ✅ FIXED
-        var userRolesForEmail = await dbContext.UserRoles
-            .IgnoreQueryFilters() // ✅ FIXED
-            .Where(ur => ur.User.Email == email)
-            .CountAsync();
-        var activeUserRolesForEmail = await dbContext.UserRoles
-            .IgnoreQueryFilters() // ✅ FIXED
-            .Where(ur => ur.User.Email == email && ur.IsActive)
-            .CountAsync();
-
-        Console.WriteLine($"🔍 DEBUGGING UserRole Query for {email}:");
-        Console.WriteLine($"   - Total UserRoles in DB: {totalUserRoles}");
-        Console.WriteLine($"   - UserRoles for this email: {userRolesForEmail}");
-        Console.WriteLine($"   - Active UserRoles for this email: {activeUserRolesForEmail}");
-
-        // ✅ CRITICAL FIX: Use IgnoreQueryFilters to access ALL users regardless of tenant context
         var user = await dbContext.Users
-            .IgnoreQueryFilters() // ✅ CRITICAL FIX
-            //.Include(u => u.PrimaryTenant)
+            .IgnoreQueryFilters()
             .FirstOrDefaultAsync(u => u.Email == email);
 
         if (user == null)
         {
             var availableUsers = await dbContext.Users
-                .IgnoreQueryFilters() // ✅ CRITICAL FIX
+                .IgnoreQueryFilters()
                 .Select(u => u.Email).ToListAsync();
             throw new InvalidOperationException($"Test user with email {email} not found. Available users: {string.Join(", ", availableUsers)}");
         }
 
-        // ✅ CRITICAL FIX: Use IgnoreQueryFilters for UserRoles lookup
-        var userRoles = await dbContext.UserRoles
-            .IgnoreQueryFilters() // ✅ CRITICAL FIX
-            .Include(ur => ur.Role)
-                .ThenInclude(r => r.RolePermissions)
-                    .ThenInclude(rp => rp.Permission)
-            .Where(ur => ur.UserId == user.Id && ur.IsActive)
-            .ToListAsync();
-
-        Console.WriteLine($"🔍 USER ENTITY DEBUG for {email}:");
-        Console.WriteLine($"   - User ID: {user.Id}");
-        //Console.WriteLine($"   - User TenantId: {user.TenantId}");
-        Console.WriteLine($"   - Separately loaded UserRoles count: {userRoles.Count}");
-        Console.WriteLine($"   - UserRoles details: {string.Join(", ", userRoles.Select(ur => $"RoleId={ur.RoleId}, TenantId={ur.TenantId}, Active={ur.IsActive}"))}");
-
-        // ✅ CRITICAL FIX: Use IgnoreQueryFilters for tenant lookup
-        //var tenant = user.PrimaryTenant;
-        //if (tenant == null && user.TenantId.HasValue)
-        //{
-        //    tenant = await dbContext.Tenants
-        //        .IgnoreQueryFilters() // ✅ CRITICAL FIX (though Tenants probably don't have query filters)
-        //        .FirstOrDefaultAsync(t => t.Id == user.TenantId.Value);
-        //}
-
-        var tenantUser = await dbContext.TenantUsers
-            .IgnoreQueryFilters()
-            .Include(tu => tu.Tenant)
-            .Where(tu => tu.UserId == user.Id && tu.IsActive)
-            .FirstOrDefaultAsync();
-
-        var tenant = tenantUser?.Tenant;
-
-        if (tenant == null)
-        {
-            throw new InvalidOperationException($"User {email} must have a tenant assignment through TenantUsers table.");
-        }
-
-        Console.WriteLine($"🔍 TENANT DEBUG:");
-        Console.WriteLine($"   - Tenant ID: {tenant.Id}");
-        Console.WriteLine($"   - Tenant Name: {tenant.Name}");
-
-        // ✅ CRITICAL FIX: Filter UserRoles by tenant (but we now have access to all user roles)
-        var relevantUserRoles = userRoles
-            .Where(ur => ur.TenantId == tenant.Id)
-            .ToList();
-
-        Console.WriteLine($"🔍 FILTERING DEBUG:");
-        Console.WriteLine($"   - Total loaded UserRoles: {userRoles.Count}");
-        Console.WriteLine($"   - UserRoles after TenantId filter: {relevantUserRoles.Count}");
-        Console.WriteLine($"   - Relevant UserRoles: {string.Join(", ", relevantUserRoles.Select(ur => $"RoleId={ur.RoleId}, RoleName={ur.Role?.Name}"))}");
-
-        var permissions = relevantUserRoles
-            .SelectMany(ur => ur.Role.RolePermissions)
-            .Select(rp => rp.Permission.Name)
-            .Distinct()
-            .ToList();
-
-        Console.WriteLine($"🔍 USER {email} in TENANT {tenant.Id}:");
-        Console.WriteLine($"   - UserRoles: {relevantUserRoles.Count}");
-        Console.WriteLine($"   - Permissions: {permissions.Count} [{string.Join(", ", permissions)}]");
-
-        // ✅ RBAC FIX: Use actual roles from RBAC system
-        var actualRoles = relevantUserRoles.Select(ur => ur.Role.Name).ToList();
-        var primaryRole = actualRoles.FirstOrDefault() ?? "User";
-        
-        // ✅ RBAC FIX: Only override role for specific test scenarios
-        var roleToUse = overrideRole ?? primaryRole;
-        
-        // ✅ RBAC FIX: Warn if overriding role for debugging
-        if (overrideRole != null && !actualRoles.Contains(overrideRole))
-        {
-            Console.WriteLine($"⚠️ WARNING: Overriding role to {overrideRole} but user actually has: {string.Join(", ", actualRoles)}");
-        }
-
-        Console.WriteLine($"🔑 JWT CLAIMS for {email}:");
-        Console.WriteLine($"   - Role: {roleToUse} (Actual: {string.Join(", ", actualRoles)})");
-        Console.WriteLine($"   - Tenant: {tenant.Name} (ID: {tenant.Id})");
-        Console.WriteLine($"   - Permissions: {permissions.Count}");
-
-        // ✅ ENHANCED DEBUG: Special logging for Tenant 2 Admin
-        if (email == "admin@tenant2.com")
-        {
-            Console.WriteLine($"🔍🔍🔍 SPECIAL DEBUG FOR TENANT 2 ADMIN 🔍🔍🔍");
-            
-            // Check if Tenant 2 Admin user exists
-            var t2Admin = await dbContext.Users
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(u => u.Email == "admin@tenant2.com");
-            Console.WriteLine($"   - Tenant 2 Admin User Exists: {t2Admin != null}");
-            //Console.WriteLine($"   - User TenantId: {t2Admin?.TenantId}");
-            
-            // Check Tenant 2 Admin role assignments
-            var t2AdminRoles = await dbContext.UserRoles
-                .IgnoreQueryFilters()
-                .Include(ur => ur.Role)
-                .Where(ur => ur.UserId == t2Admin.Id)
-                .ToListAsync();
-            Console.WriteLine($"   - Total UserRole assignments: {t2AdminRoles.Count}");
-            foreach (var ur in t2AdminRoles)
-            {
-                Console.WriteLine($"     * RoleId={ur.RoleId}, RoleName={ur.Role?.Name}, TenantId={ur.TenantId}, IsActive={ur.IsActive}");
-            }
-            
-            // Check Tenant 2 Admin role permissions
-            var t2AdminRolePermissions = await dbContext.RolePermissions
-                .IgnoreQueryFilters()
-                .Include(rp => rp.Permission)
-                .Include(rp => rp.Role)
-                .Where(rp => t2AdminRoles.Select(ur => ur.RoleId).Contains(rp.RoleId))
-                .ToListAsync();
-            Console.WriteLine($"   - Total Role Permissions: {t2AdminRolePermissions.Count}");
-            foreach (var rp in t2AdminRolePermissions.Take(10)) // Only show first 10 to avoid spam
-            {
-                Console.WriteLine($"     * Permission: {rp.Permission.Name}, Role: {rp.Role.Name}");
-            }
-        }
-
-        // ✅ ENHANCED DEBUG: After generating permissions list
-        if (email == "admin@tenant2.com")
-        {
-            Console.WriteLine($"🔑 FINAL TENANT 2 ADMIN TOKEN CLAIMS:");
-            Console.WriteLine($"   - Final Role: {roleToUse}");
-            Console.WriteLine($"   - Final Tenant: {tenant.Name} (ID: {tenant.Id})");
-            Console.WriteLine($"   - Final Permissions ({permissions.Count}): [{string.Join(", ", permissions)}]");
-            Console.WriteLine($"   - Has 'roles.view': {permissions.Contains("roles.view")}");
-            Console.WriteLine($"   - Has 'users.view': {permissions.Contains("users.view")}");
-            Console.WriteLine($"   - Has 'tenants.initialize': {permissions.Contains("tenants.initialize")}");
-            Console.WriteLine($"🔍🔍🔍 END TENANT 2 ADMIN DEBUG 🔍🔍🔍");
-        }
-        
-        return GenerateJwtToken(user, tenant, roleToUse, permissions);
+        return GenerateInitialJwtToken(user);
     }
 
-    // ✅ FIX: Also support multiple roles (as per RBAC migration document)
-    public static string GenerateJwtToken(User user, Tenant tenant, string primaryRole, List<string> permissions)
+    /// <summary>
+    /// Phase 2: Simulate tenant selection and get tenant-aware JWT
+    /// </summary>
+    public static async Task<string> GetTenantAwareJwtAsync(
+        HttpClient client,
+        ApplicationDbContext dbContext,
+        string email,
+        int? preferredTenantId = null)
+    {
+        // Step 1: Get initial JWT (no tenant)
+        var initialJwt = await GetInitialJwtAsync(dbContext, email);
+
+        // Step 2: Get user's available tenants
+        var availableTenants = await GetUserTenantsAsync(dbContext, email);
+        if (!availableTenants.Any())
+        {
+            throw new InvalidOperationException($"User {email} has no tenant assignments");
+        }
+
+        // Step 3: Select tenant (auto-select if only one, or use preferred)
+        var selectedTenantId = preferredTenantId ?? availableTenants.First().Id;
+        if (!availableTenants.Any(t => t.Id == selectedTenantId))
+        {
+            throw new InvalidOperationException($"User {email} does not have access to tenant {selectedTenantId}");
+        }
+
+        // Step 4: Simulate calling /api/auth/select-tenant
+        return await SimulateTenantSelectionAsync(client, dbContext, initialJwt, email, selectedTenantId);
+    }
+
+    /// <summary>
+    /// Convenience method: Get tenant-aware JWT with automatic tenant selection
+    /// This is what your existing tests should use
+    /// </summary>
+    public static async Task<string> GetValidTokenAsync(
+        HttpClient client, 
+        ApplicationDbContext dbContext, 
+        string email, 
+        string? overrideRole = null) // Keep for backward compatibility
+    {
+        return await GetTenantAwareJwtAsync(client, dbContext, email);
+    }
+
+    #region Private Helper Methods
+
+    private static string GenerateInitialJwtToken(User user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.UTF8.GetBytes(SecretKey);
@@ -196,35 +93,21 @@ public static class AuthenticationHelper
             new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.GivenName, user.FirstName),
             new(ClaimTypes.Surname, user.LastName),
-            new(ClaimTypes.Role, primaryRole), // Primary role for compatibility
-            new("tenant_id", tenant.Id.ToString()),
-            new("tenant_name", tenant.Name),
-            new("tenant_domain", tenant.Domain ?? "default.com"),
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(JwtRegisteredClaimNames.Iat, 
                 DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
                 ClaimValueTypes.Integer64)
+            // NOTE: No tenant_id, no roles, no permissions - just like real login
         };
-
-        // ✅ CRITICAL: Add permission claims that controllers expect
-        foreach (var permission in permissions)
-        {
-            claims.Add(new Claim("permission", permission));
-        }
-
-        Console.WriteLine($"🔑 JWT CLAIMS for {user.Email}:");
-        Console.WriteLine($"   - Role: {primaryRole}");
-        Console.WriteLine($"   - Tenant: {tenant.Name} (ID: {tenant.Id})");
-        Console.WriteLine($"   - Permissions: {permissions.Count}");
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
             Expires = DateTime.UtcNow.AddHours(1),
-            Issuer = Issuer,      
-            Audience = Audience,  
+            Issuer = Issuer,
+            Audience = Audience,
             SigningCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(key), 
                 SecurityAlgorithms.HmacSha256Signature)
@@ -233,4 +116,121 @@ public static class AuthenticationHelper
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
     }
+
+    private static async Task<List<Tenant>> GetUserTenantsAsync(ApplicationDbContext dbContext, string email)
+    {
+        return await dbContext.TenantUsers
+            .IgnoreQueryFilters()
+            .Include(tu => tu.Tenant)
+            .Where(tu => tu.User.Email == email && tu.IsActive)
+            .Select(tu => tu.Tenant)
+            .ToListAsync();
+    }
+
+    private static async Task<string> SimulateTenantSelectionAsync(
+        HttpClient client,
+        ApplicationDbContext dbContext,
+        string initialJwt,
+        string email,
+        int tenantId)
+    {
+        // Since we're testing UserService, not AuthService, we'll generate the tenant-aware JWT directly
+        // In a full E2E test, you would actually call the AuthService endpoint
+        
+        var user = await dbContext.Users
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Email == email);
+
+        var tenant = await dbContext.Tenants
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(t => t.Id == tenantId);
+
+        if (user == null || tenant == null)
+        {
+            throw new InvalidOperationException($"User {email} or tenant {tenantId} not found");
+        }
+
+        // Get user's roles and permissions for this tenant
+        var userRoles = await dbContext.UserRoles
+            .IgnoreQueryFilters()
+            .Include(ur => ur.Role)
+                .ThenInclude(r => r.RolePermissions)
+                    .ThenInclude(rp => rp.Permission)
+            .Where(ur => ur.UserId == user.Id && ur.TenantId == tenantId && ur.IsActive)
+            .ToListAsync();
+
+        var roles = userRoles.Select(ur => ur.Role.Name).ToList();
+        var permissions = userRoles
+            .SelectMany(ur => ur.Role.RolePermissions)
+            .Select(rp => rp.Permission.Name)
+            .Distinct()
+            .ToList();
+
+        var primaryRole = roles.FirstOrDefault() ?? "User";
+
+        Console.WriteLine($"🔑 Generated tenant-aware JWT for {email}:");
+        Console.WriteLine($"   - Tenant: {tenant.Name} (ID: {tenantId})");
+        Console.WriteLine($"   - Roles: {string.Join(", ", roles)}");
+        Console.WriteLine($"   - Permissions: {permissions.Count}");
+
+        return GenerateTenantAwareJwtToken(user, tenant, primaryRole, roles, permissions);
+    }
+
+    private static string GenerateTenantAwareJwtToken(
+        User user, 
+        Tenant tenant, 
+        string primaryRole, 
+        List<string> roles, 
+        List<string> permissions)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = Encoding.UTF8.GetBytes(SecretKey);
+
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new(ClaimTypes.Email, user.Email),
+            new(ClaimTypes.GivenName, user.FirstName),
+            new(ClaimTypes.Surname, user.LastName),
+            new(ClaimTypes.Role, primaryRole),
+            new("tenant_id", tenant.Id.ToString()),
+            new("tenant_name", tenant.Name),
+            new("tenant_domain", tenant.Domain ?? "default.com"),
+            new("current_tenant_id", tenant.Id.ToString()), // 🔧 ADD: Extra claim for tenant context
+            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new(JwtRegisteredClaimNames.Email, user.Email),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(JwtRegisteredClaimNames.Iat, 
+                DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
+                ClaimValueTypes.Integer64)
+        };
+
+        // Add all roles as role claims
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
+
+        // Add permission claims
+        foreach (var permission in permissions)
+        {
+            claims.Add(new Claim("permission", permission));
+        }
+
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(claims),
+            Expires = DateTime.UtcNow.AddHours(1),
+            Issuer = Issuer,
+            Audience = Audience,
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(key), 
+                SecurityAlgorithms.HmacSha256Signature)
+        };
+
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
+    }
+
+    #endregion
 }

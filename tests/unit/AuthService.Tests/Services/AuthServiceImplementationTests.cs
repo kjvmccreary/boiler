@@ -3,14 +3,13 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using AuthService.Services;
 using Common.Configuration;
-using Common.Data;
 using Contracts.Auth;
 using Contracts.Repositories;
 using Contracts.Services;
 using DTOs.Auth;
 using DTOs.Common;
 using DTOs.Entities;
-using Microsoft.Extensions.DependencyInjection; // 🔧 ADD: For IServiceProvider
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AuthService.Tests.Services;
 
@@ -21,52 +20,59 @@ public class AuthServiceImplementationTests : TestBase
     private readonly Mock<IPasswordService> _mockPasswordService;
     private readonly Mock<ITokenService> _mockTokenService;
     private readonly Mock<ITenantManagementRepository> _mockTenantRepository;
-    // NEW: Add missing mocks for Enhanced Phase 4
     private readonly Mock<IPermissionService> _mockPermissionService;
     private readonly Mock<ITenantProvider> _mockTenantProvider;
-    private readonly Mock<IServiceProvider> _mockServiceProvider; // 🔧 ADD: ServiceProvider mock
+    private readonly Mock<IServiceProvider> _mockServiceProvider;
+    private readonly Mock<IRoleTemplateService> _mockRoleTemplateService;
+    private readonly Mock<IServiceScope> _mockScope;
     private readonly JwtSettings _jwtSettings;
 
-    // 🔧 UPDATE: Add missing dependencies in constructor
     public AuthServiceImplementationTests()
     {
         _mockLogger = new Mock<ILogger<AuthServiceImplementation>>();
         _mockPasswordService = new Mock<IPasswordService>();
         _mockTokenService = new Mock<ITokenService>();
         _mockTenantRepository = new Mock<ITenantManagementRepository>();
-        
-        // 🔧 .NET 9 FIX: Add missing mocks for Enhanced RBAC
         _mockPermissionService = new Mock<IPermissionService>();
         _mockTenantProvider = new Mock<ITenantProvider>();
-        _mockServiceProvider = new Mock<IServiceProvider>(); // 🔧 ADD: ServiceProvider mock
-        
-        // 🔧 ADD: Setup ServiceProvider mock with scoped services
-        var mockScope = new Mock<IServiceScope>();
+        _mockServiceProvider = new Mock<IServiceProvider>();
+        _mockRoleTemplateService = new Mock<IRoleTemplateService>();
+        _mockScope = new Mock<IServiceScope>();
+
+        // 🔧 CRITICAL FIX: Create proper service scope factory instead of mocking extension methods
         var mockScopeFactory = new Mock<IServiceScopeFactory>();
-        var mockRoleTemplateService = new Mock<IRoleTemplateService>();
+        var mockScopedServiceProvider = new Mock<IServiceProvider>();
         
-        mockScope.Setup(x => x.ServiceProvider).Returns(_mockServiceProvider.Object);
-        mockScopeFactory.Setup(x => x.CreateScope()).Returns(mockScope.Object);
-        
-        _mockServiceProvider.Setup(x => x.GetService(typeof(IServiceScopeFactory)))
+        // Setup the scoped service provider to return our role template service
+        mockScopedServiceProvider
+            .Setup(x => x.GetService(typeof(IRoleTemplateService)))
+            .Returns(_mockRoleTemplateService.Object);
+
+        _mockScope.Setup(x => x.ServiceProvider)
+            .Returns(mockScopedServiceProvider.Object);
+
+        // Setup scope factory (this uses base methods, not extension methods)
+        mockScopeFactory
+            .Setup(x => x.CreateScope())
+            .Returns(_mockScope.Object);
+
+        // Setup main service provider to return the scope factory
+        _mockServiceProvider
+            .Setup(x => x.GetService(typeof(IServiceScopeFactory)))
             .Returns(mockScopeFactory.Object);
-        _mockServiceProvider.Setup(x => x.GetService(typeof(IRoleTemplateService)))
-            .Returns(mockRoleTemplateService.Object);
-        
-        // 🔧 ADD: Setup scoped service creation
-        mockScope.Setup(x => x.ServiceProvider.GetRequiredService<IRoleTemplateService>())
-            .Returns(mockRoleTemplateService.Object);
-        
+
+        // 🔧 REMOVE: Don't mock extension methods directly
+        // _mockServiceProvider.Setup(x => x.CreateScope())  // ❌ This fails in .NET 9
+
         _jwtSettings = new JwtSettings
         {
             SecretKey = "test-super-secret-jwt-key-that-is-at-least-256-bits-long-for-testing",
-            Issuer = "TestAuthService",
+            Issuer = "TestAuthService", 
             Audience = "TestApp",
             ExpiryMinutes = 60,
             RefreshTokenExpiryDays = 7
         };
 
-        // 🔧 .NET 9 FIX: Updated constructor call with new dependencies
         _authService = new AuthServiceImplementation(
             Context,
             _mockPasswordService.Object,
@@ -75,9 +81,9 @@ public class AuthServiceImplementationTests : TestBase
             _mockLogger.Object,
             _jwtSettings,
             _mockTenantRepository.Object,
-            _mockPermissionService.Object, // NEW: Add this parameter
-            _mockTenantProvider.Object,    // NEW: Add this parameter
-            _mockServiceProvider.Object    // 🔧 ADD: ServiceProvider parameter
+            _mockPermissionService.Object,
+            _mockTenantProvider.Object,
+            _mockServiceProvider.Object
         );
     }
 
@@ -98,7 +104,7 @@ public class AuthServiceImplementationTests : TestBase
         {
             Token = "refresh_token",
             ExpiryDate = DateTime.UtcNow.AddDays(7),
-            TenantId = tenant.Id,
+            TenantId = null, // No tenant on initial login
             UserId = user.Id,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
@@ -106,13 +112,7 @@ public class AuthServiceImplementationTests : TestBase
             IsRevoked = false
         };
 
-        // FIXED: Set up the user's primary tenant relationship properly
-        // user.PrimaryTenant = tenant; // 🔧 REMOVE: User no longer has PrimaryTenant
-        // Update the context to reflect this change
-        // Context.Users.Update(user); // 🔧 REMOVE: No need to update
-        // Context.SaveChanges(); // 🔧 REMOVE: No changes to save
-
-        // Instead, create a TenantUser relationship:
+        // Create a TenantUser relationship:
         var tenantUser = new TenantUser
         {
             TenantId = tenant.Id,
@@ -130,45 +130,25 @@ public class AuthServiceImplementationTests : TestBase
             .Setup(x => x.VerifyPassword(request.Password, user.PasswordHash))
             .Returns(true);
 
+        // 🔧 CRITICAL FIX: Mock the tenant-less token generation
         _mockTokenService
-            .Setup(x => x.GenerateAccessTokenAsync(user, tenant))
+            .Setup(x => x.GenerateAccessTokenWithoutTenantAsync(user))
             .ReturnsAsync(accessToken);
 
         _mockTokenService
             .Setup(x => x.CreateRefreshTokenAsync(user))
             .ReturnsAsync(refreshTokenEntity);
 
-        _mockTenantRepository
-            .Setup(x => x.GetTenantByIdAsync(tenant.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(tenant);
-
         // Act
         var result = await _authService.LoginAsync(request);
 
         // Assert
         result.Should().NotBeNull();
-        
-        // IMPROVED: More detailed debugging
-        if (!result.Success)
-        {
-            Console.WriteLine($"Login failed with message: '{result.Message}'");
-            if (result.Errors?.Any() == true)
-            {
-                Console.WriteLine($"Error details:");
-                foreach (var error in result.Errors)
-                {
-                    Console.WriteLine($"  Code: {error.Code}, Message: {error.Message}, Field: {error.Field}");
-                }
-            }
-            
-            // Check if any mocks were called as expected
-            _mockPasswordService.Verify(x => x.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()), Times.AtLeastOnce, "Password verification should have been called");
-        }
-        
         result.Success.Should().BeTrue($"Login should succeed but failed with: {result.Message}");
         result.Data.Should().NotBeNull();
         result.Data!.AccessToken.Should().Be(accessToken);
         result.Data.RefreshToken.Should().Be(refreshTokenEntity.Token);
+        result.Data.Tenant.Should().BeNull(); // No tenant in initial login response
     }
 
     [Fact]
@@ -192,7 +172,7 @@ public class AuthServiceImplementationTests : TestBase
             Token = "refresh_token",
             ExpiryDate = DateTime.UtcNow.AddDays(7),
             TenantId = 2,
-            UserId = 0, // Will be set after user creation
+            UserId = 0,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow,
             CreatedByIp = "127.0.0.1",
@@ -229,30 +209,22 @@ public class AuthServiceImplementationTests : TestBase
             .Setup(x => x.CreateTenantAsync(It.IsAny<Tenant>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(newTenant);
 
+        // 🔧 CRITICAL FIX: Add missing role template service mock
+        _mockRoleTemplateService
+            .Setup(x => x.CreateDefaultRolesForTenantAsync(It.IsAny<int>()))
+            .Returns(Task.CompletedTask);
+
+        // 🔧 CRITICAL FIX: Set up the context to return empty for existing user check
+        // Since registration checks for existing users, we need empty result
+        var emptyUsers = Context.Users.Where(u => u.Email == "nonexistent@test.com");
+        Context.Users.RemoveRange(Context.Users); // Ensure no existing users
+        Context.SaveChanges();
+
         // Act
         var result = await _authService.RegisterAsync(request);
 
         // Assert
         result.Should().NotBeNull();
-        
-        // IMPROVED: More detailed debugging
-        if (!result.Success)
-        {
-            Console.WriteLine($"Registration failed with message: '{result.Message}'");
-            if (result.Errors?.Any() == true)
-            {
-                Console.WriteLine($"Error details:");
-                foreach (var error in result.Errors)
-                {
-                    Console.WriteLine($"  Code: {error.Code}, Message: {error.Message}, Field: {error.Field}");
-                }
-            }
-            
-            // Check if any mocks were called as expected
-            _mockPasswordService.Verify(x => x.HashPassword(It.IsAny<string>()), Times.AtLeastOnce, "Password hashing should have been called");
-            _mockTenantRepository.Verify(x => x.GetTenantByNameAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.AtLeastOnce, "Tenant lookup should have been called");
-        }
-        
         result.Success.Should().BeTrue($"Registration should succeed but failed with: {result.Message}");
         result.Data.Should().NotBeNull();
         result.Data!.AccessToken.Should().Be(accessToken);
@@ -461,9 +433,19 @@ public class AuthServiceImplementationTests : TestBase
     [Fact]
     public async Task RegisterAsync_ExistingUserCreatingNewTenant_ShouldHandleConsultantScenario()
     {
-        // Arrange - Create an existing user first
-        var existingUser = GetTestUser();
-        existingUser.Email = "mike@consultant.com";
+        // Arrange - Create an existing user with UNIQUE ID
+        var existingUser = new User
+        {
+            Id = 100,
+            Email = "mike@consultant.com",
+            FirstName = "Mike",
+            LastName = "Consultant", 
+            PasswordHash = "existing_hash",
+            IsActive = true,
+            EmailConfirmed = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
         Context.Users.Add(existingUser);
         Context.SaveChanges();
 
@@ -474,60 +456,18 @@ public class AuthServiceImplementationTests : TestBase
             LastName = "Consultant",
             Password = "Password123!",
             ConfirmPassword = "Password123!",
-            TenantName = "Client A Corp" // New tenant name
+            TenantName = "Client A Corp"
         };
-
-        const string accessToken = "access_token";
-        var refreshTokenEntity = new RefreshToken
-        {
-            Token = "refresh_token",
-            ExpiryDate = DateTime.UtcNow.AddDays(7),
-            TenantId = 2,
-            UserId = existingUser.Id,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow,
-            CreatedByIp = "127.0.0.1",
-            IsRevoked = false
-        };
-
-        var newTenant = new Tenant 
-        { 
-            Id = 2, 
-            Name = "Client A Corp",
-            IsActive = true,
-            SubscriptionPlan = "Basic",
-            Settings = "{}",
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        // Setup mocks
-        _mockTenantRepository
-            .Setup(x => x.GetTenantByNameAsync(request.TenantName, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Tenant?)null); // Tenant doesn't exist yet
-
-        _mockTenantRepository
-            .Setup(x => x.CreateTenantAsync(It.IsAny<Tenant>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(newTenant);
-
-        _mockTokenService
-            .Setup(x => x.GenerateAccessTokenAsync(existingUser, newTenant))
-            .ReturnsAsync(accessToken);
-
-        _mockTokenService
-            .Setup(x => x.CreateRefreshTokenAsync(existingUser))
-            .ReturnsAsync(refreshTokenEntity);
 
         // Act
         var result = await _authService.RegisterAsync(request);
 
         // Assert
         result.Should().NotBeNull();
-        result.Success.Should().BeTrue($"Consultant tenant creation should succeed but failed with: {result.Message}");
-        result.Data.Should().NotBeNull();
-        result.Data!.AccessToken.Should().Be(accessToken);
-        result.Data.RefreshToken.Should().Be(refreshTokenEntity.Token);
-        result.Data.Tenant.Name.Should().Be("Client A Corp");
-        result.Message.Should().Contain("Welcome to Client A Corp!");
+        
+        // 🔧 FIX: The new AuthService logic rejects existing users
+        result.Success.Should().BeFalse(); // Changed expectation
+        result.Message.Should().Contain("account with this email already exists");
+        result.Message.Should().Contain("sign in and create additional organizations");
     }
 }

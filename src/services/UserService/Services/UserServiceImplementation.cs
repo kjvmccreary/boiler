@@ -68,7 +68,10 @@ public class UserServiceImplementation : Contracts.User.IUserService
                 return ApiResponseDto<UserDto>.ErrorResult("User not found");
             }
 
+            // 🔧 MINIMAL CHANGE: Set TenantId after mapping
             var userDto = _mapper.Map<UserDto>(user);
+            userDto.TenantId = currentTenantId.Value; // ✅ Set correct TenantId
+            
             return ApiResponseDto<UserDto>.SuccessResult(userDto);
         }
         catch (Exception ex)
@@ -124,9 +127,11 @@ public class UserServiceImplementation : Contracts.User.IUserService
                 return ApiResponseDto<PagedResultDto<UserDto>>.ErrorResult("Tenant context not found");
             }
 
-            // 🔧 SIMPLIFIED: Now that global filter uses TenantUsers, we can use simple queries
-            var query = _userRepository.Query()
-                .Where(u => u.IsActive);
+            // 🔧 CRITICAL FIX: Explicit tenant filtering using TenantUsers join
+            var query = from u in _userRepository.Query()
+                        join tu in _context.TenantUsers on u.Id equals tu.UserId
+                        where u.IsActive && tu.TenantId == currentTenantId.Value && tu.IsActive
+                        select u;
 
             // Apply search filter if provided
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
@@ -138,13 +143,9 @@ public class UserServiceImplementation : Contracts.User.IUserService
                     u.Email.ToLower().Contains(searchLower));
             }
 
-            // Apply sorting BEFORE Include
             query = ApplySorting(query, request.SortBy, request.SortDirection);
-
-            // Count total items BEFORE applying pagination
             var totalCount = await query.CountAsync(cancellationToken);
 
-            // Apply pagination and Include
             var users = await query
                 .Include(u => u.UserRoles.Where(ur => ur.IsActive))
                     .ThenInclude(ur => ur.Role)
@@ -153,10 +154,15 @@ public class UserServiceImplementation : Contracts.User.IUserService
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
 
-            var userDtos = _mapper.Map<List<UserDto>>(users);
+            // Set TenantId correctly
+            var userDtos = users.Select(u =>
+            {
+                var dto = _mapper.Map<UserDto>(u);
+                dto.TenantId = currentTenantId.Value;
+                return dto;
+            }).ToList();
 
             var pagedResult = new PagedResultDto<UserDto>(userDtos, totalCount, request.PageNumber, request.PageSize);
-
             return ApiResponseDto<PagedResultDto<UserDto>>.SuccessResult(pagedResult);
         }
         catch (Exception ex)
@@ -680,6 +686,79 @@ public class UserServiceImplementation : Contracts.User.IUserService
         {
             _logger.LogError(ex, "Error updating status for user {UserId}", userId);
             return ApiResponseDto<bool>.ErrorResult("An error occurred while updating user status");
+        }
+    }
+
+    // Add this method to properly set TenantId after mapping
+    private async Task<UserDto> MapUserToDtoWithTenantAsync(User user)
+    {
+        var userDto = _mapper.Map<UserDto>(user);
+        
+        // 🔧 CRITICAL FIX: Set TenantId from tenant context
+        var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+        if (tenantId.HasValue)
+        {
+            userDto.TenantId = tenantId.Value;
+        }
+        
+        return userDto;
+    }
+
+    // Update your GetUsersAsync method to use this:
+    public async Task<ApiResponseDto<PagedResultDto<UserDto>>> GetUsersAsync(
+        int page = 1,
+        int pageSize = 10,
+        string? searchTerm = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var query = _context.Users
+                .Include(u => u.UserRoles!)
+                    .ThenInclude(ur => ur.Role)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                query = query.Where(u => 
+                    u.FirstName.Contains(searchTerm) || 
+                    u.LastName.Contains(searchTerm) ||
+                    u.Email.Contains(searchTerm));
+            }
+
+            var totalCount = await query.CountAsync(cancellationToken);
+            var users = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync(cancellationToken);
+
+            // 🔧 CRITICAL FIX: Map with tenant context
+            var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            var userDtos = users.Select(u =>
+            {
+                var dto = _mapper.Map<UserDto>(u);
+                if (tenantId.HasValue)
+                {
+                    dto.TenantId = tenantId.Value;
+                }
+                return dto;
+            }).ToList();
+
+            var result = new PagedResultDto<UserDto>
+            {
+                Items = userDtos,
+                TotalCount = totalCount,
+                PageNumber = page,
+                PageSize = pageSize
+            };
+
+            return ApiResponseDto<PagedResultDto<UserDto>>.SuccessResult(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving users");
+            return ApiResponseDto<PagedResultDto<UserDto>>.ErrorResult(
+                "An error occurred while retrieving users");
         }
     }
 }

@@ -1,10 +1,10 @@
-// FILE: src/services/AuthService/Services/AuthService.cs
+// FILE: src services/AuthService/Services/AuthService.cs
 using AutoMapper;
 using Common.Configuration;
 using Common.Data;
 using Contracts.Auth;
 using Contracts.Repositories; 
-using Contracts.Services; // NEW: Add for IPermissionService and ITenantProvider
+using Contracts.Services;
 using DTOs.Auth;
 using DTOs.Common;
 using DTOs.Entities;
@@ -23,7 +23,7 @@ public class AuthServiceImplementation : IAuthService
     private readonly ITenantManagementRepository _tenantRepository;
     private readonly IPermissionService _permissionService;
     private readonly ITenantProvider _tenantProvider;
-    private readonly IServiceProvider _serviceProvider; // 🔧 ADD: For scoped role template service
+    private readonly IServiceProvider _serviceProvider;
 
     public AuthServiceImplementation(
         ApplicationDbContext context,
@@ -35,7 +35,7 @@ public class AuthServiceImplementation : IAuthService
         ITenantManagementRepository tenantRepository,
         IPermissionService permissionService,
         ITenantProvider tenantProvider,
-        IServiceProvider serviceProvider) // 🔧 ADD: Service provider for scoped services
+        IServiceProvider serviceProvider)
     {
         _context = context;
         _passwordService = passwordService;
@@ -46,17 +46,18 @@ public class AuthServiceImplementation : IAuthService
         _tenantRepository = tenantRepository;
         _permissionService = permissionService;
         _tenantProvider = tenantProvider;
-        _serviceProvider = serviceProvider; // 🔧 ADD: Initialize service provider
+        _serviceProvider = serviceProvider;
     }
 
     public async Task<ApiResponseDto<TokenResponseDto>> RegisterAsync(RegisterRequestDto request, CancellationToken cancellationToken = default)
     {
         try
         {
+            _logger.LogInformation("Starting registration for {Email}", request.Email);
+
             var existingUser = await _context.Users.IgnoreQueryFilters()
                 .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
 
-            // 🔧 SIMPLIFIED: If user exists, direct them to login
             if (existingUser != null)
             {
                 return ApiResponseDto<TokenResponseDto>.ErrorResult(
@@ -64,56 +65,62 @@ public class AuthServiceImplementation : IAuthService
                 );
             }
 
-            // Continue with normal new user registration...
-            var tenant = await GetTenantForRegistrationAsync(request, cancellationToken);
-            
-            var user = new User
-            {
-                // 🔧 FIX: Remove TenantId assignment - User no longer has TenantId property
-                Email = request.Email,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                PasswordHash = _passwordService.HashPassword(request.Password),
-                IsActive = true,
-                EmailConfirmed = true
-            };
-
             using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
             
             try
             {
+                _logger.LogInformation("Getting tenant for registration");
+
+                // Get or create tenant
+                var tenant = await GetTenantForRegistrationAsync(request, cancellationToken);
+                
+                _logger.LogInformation("Tenant obtained - ID: {TenantId}, Name: {TenantName}", 
+                    tenant.Id, tenant.Name);
+
+                // Save tenant first to get the ID
+                if (tenant.Id == 0)
+                {
+                    _logger.LogInformation("Saving new tenant to get ID");
+                    await _context.SaveChangesAsync(cancellationToken);
+                    _logger.LogInformation("Tenant saved with ID: {TenantId}", tenant.Id);
+                }
+
+                _logger.LogInformation("Creating user");
+                
+                var user = new User
+                {
+                    Email = request.Email,
+                    FirstName = request.FirstName,
+                    LastName = request.LastName,
+                    PasswordHash = _passwordService.HashPassword(request.Password),
+                    IsActive = true,
+                    EmailConfirmed = true
+                };
+
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync(cancellationToken);
+
+                _logger.LogInformation("User created with ID: {UserId}", user.Id);
 
                 // Create default roles for new tenant (if it's new)
                 if (!string.IsNullOrEmpty(request.TenantName))
                 {
-                    using var roleServiceScope = _serviceProvider.CreateScope();
-                    var roleTemplateService = roleServiceScope.ServiceProvider.GetRequiredService<IRoleTemplateService>();
-                    await roleTemplateService.CreateDefaultRolesForTenantAsync(tenant.Id);
+                    _logger.LogInformation("Creating Tenant Admin role with full permissions for new user");
 
-                    // Find the "Tenant Admin" role
-                    var tenantAdminRole = await _context.Roles
-                        .Where(r => r.TenantId == tenant.Id && r.Name == "Tenant Admin")
-                        .FirstOrDefaultAsync(cancellationToken);
-
-                    if (tenantAdminRole != null)
+                    try
                     {
-                        // Create RBAC UserRole assignment
-                        var userRole = new UserRole
-                        {
-                            UserId = user.Id,
-                            RoleId = tenantAdminRole.Id,
-                            TenantId = tenant.Id,
-                            IsActive = true,
-                            AssignedAt = DateTime.UtcNow,
-                            AssignedBy = "System",
-                            CreatedAt = DateTime.UtcNow,
-                            UpdatedAt = DateTime.UtcNow
-                        };
-                        _context.UserRoles.Add(userRole);
+                        // 🔧 USE COMPREHENSIVE METHOD: Full permissions including role management
+                        await CreateTenantAdminRoleAndAssignToUserAsync(tenant.Id, user.Id, cancellationToken);
+                        _logger.LogInformation("Tenant Admin role created and assigned successfully with full permissions");
+                    }
+                    catch (Exception roleEx)
+                    {
+                        _logger.LogError(roleEx, "FAILED to create Tenant Admin role - continuing without admin permissions");
+                        // Don't throw - let registration continue even if role creation fails
                     }
                 }
+
+                _logger.LogInformation("Creating TenantUser relationship");
 
                 // Create TenantUser relationship
                 var tenantUser = new TenantUser
@@ -128,6 +135,8 @@ public class AuthServiceImplementation : IAuthService
                 };
                 _context.TenantUsers.Add(tenantUser);
 
+                _logger.LogInformation("Generating tokens");
+
                 // Generate tokens
                 var accessToken = await _tokenService.GenerateAccessTokenAsync(user, tenant);
                 var refreshTokenEntity = await _tokenService.CreateRefreshTokenAsync(user);
@@ -135,13 +144,18 @@ public class AuthServiceImplementation : IAuthService
                 refreshTokenEntity.CreatedByIp = GetClientIpAddress();
 
                 _context.RefreshTokens.Add(refreshTokenEntity);
+                
+                _logger.LogInformation("Saving final changes");
                 await _context.SaveChangesAsync(cancellationToken);
 
+                _logger.LogInformation("Committing transaction");
                 await transaction.CommitAsync(cancellationToken);
+
+                _logger.LogInformation("Creating response DTOs");
 
                 // Create response
                 var userDto = _mapper.Map<DTOs.User.UserDto>(user);
-                userDto.TenantId = tenant.Id; // Set tenant context in DTO
+                userDto.TenantId = tenant.Id;
                 var tenantDto = _mapper.Map<DTOs.Tenant.TenantDto>(tenant);
 
                 var response = new TokenResponseDto
@@ -154,21 +168,22 @@ public class AuthServiceImplementation : IAuthService
                     Tenant = tenantDto
                 };
 
-                _logger.LogInformation("New user {Email} registered successfully for tenant {TenantName}", 
+                _logger.LogInformation("User {Email} registered successfully for tenant {TenantName}", 
                     request.Email, tenant.Name);
                 
                 return ApiResponseDto<TokenResponseDto>.SuccessResult(response, 
                     $"Welcome to {tenant.Name}! Your account has been created successfully.");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error in registration transaction, rolling back - {Message}", ex.Message);
                 await transaction.RollbackAsync(cancellationToken);
                 throw;
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during user registration for {Email}", request.Email);
+            _logger.LogError(ex, "Registration failed: {Message}", ex.Message);
             return ApiResponseDto<TokenResponseDto>.ErrorResult("Registration failed. Please try again.");
         }
     }
@@ -177,17 +192,16 @@ public class AuthServiceImplementation : IAuthService
     {
         try
         {
-            _logger.LogInformation("🔍 LOGIN DEBUG: Starting login for {Email}", request.Email);
+            _logger.LogInformation("Starting login for {Email}", request.Email);
             
-            // ✅ CRITICAL FIX: Use IgnoreQueryFilters() for login to bypass tenant isolation
             var user = await _context.Users
-                .IgnoreQueryFilters() // ✅ BYPASS tenant filtering during login
-                .Include(u => u.TenantUsers)  // 🔧 FIX: Use TenantUsers instead of PrimaryTenant
-                .Include(u => u.UserRoles)    // ✅ Modern RBAC roles
+                .IgnoreQueryFilters()
+                .Include(u => u.TenantUsers)
+                .Include(u => u.UserRoles)
                     .ThenInclude(ur => ur.Role)
                 .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
 
-            _logger.LogInformation("🔍 LOGIN DEBUG: User found: {UserExists}, IsActive: {IsActive}", 
+            _logger.LogInformation("User found: {UserExists}, IsActive: {IsActive}", 
                 user != null, user?.IsActive);
 
             if (user == null)
@@ -223,7 +237,7 @@ public class AuthServiceImplementation : IAuthService
             }
 
             var passwordVerified = _passwordService.VerifyPassword(request.Password, user.PasswordHash);
-            _logger.LogInformation("🔍 LOGIN DEBUG: Password verification result: {PasswordVerified}", passwordVerified);
+            _logger.LogInformation("Password verification result: {PasswordVerified}", passwordVerified);
 
             if (!passwordVerified)
             {
@@ -242,21 +256,18 @@ public class AuthServiceImplementation : IAuthService
             user.LockedOutUntil = null;
             user.LastLoginAt = DateTime.UtcNow;
 
-            // 🔧 NEW LOGIC: Generate JWT WITHOUT tenant initially
-            _logger.LogInformation("🔍 LOGIN DEBUG: Generating tenant-less JWT for initial login");
+            // Generate JWT WITHOUT tenant initially for tenant selection
+            _logger.LogInformation("Generating tenant-less JWT for initial login");
             var accessToken = await _tokenService.GenerateAccessTokenWithoutTenantAsync(user);
             var refreshTokenEntity = await _tokenService.CreateRefreshTokenAsync(user);
 
-            // 🔧 CRITICAL: Don't set TenantId on refresh token yet
             refreshTokenEntity.TenantId = null; // No tenant context yet
             refreshTokenEntity.CreatedByIp = GetClientIpAddress();
 
             _context.RefreshTokens.Add(refreshTokenEntity);
             await _context.SaveChangesAsync(cancellationToken);
 
-            // 🔧 IMPORTANT: Return response WITHOUT tenant info
             var userDto = _mapper.Map<DTOs.User.UserDto>(user);
-            // Don't set userDto.TenantId yet - user needs to select tenant
 
             var response = new TokenResponseDto
             {
@@ -265,7 +276,7 @@ public class AuthServiceImplementation : IAuthService
                 ExpiresAt = refreshTokenEntity.ExpiryDate,
                 TokenType = "Bearer",
                 User = userDto,
-                Tenant = null // 🔧 CRITICAL: No tenant in initial login response
+                Tenant = null // No tenant in initial login response
             };
 
             _logger.LogInformation("User {Email} logged in successfully (no tenant selected yet)", request.Email);
@@ -284,7 +295,7 @@ public class AuthServiceImplementation : IAuthService
         {
             var refreshToken = await _context.RefreshTokens
                 .Include(rt => rt.User)
-                    .ThenInclude(u => u.TenantUsers) // 🔧 FIX: Use TenantUsers instead of PrimaryTenant
+                    .ThenInclude(u => u.TenantUsers)
                 .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken, cancellationToken);
 
             if (refreshToken == null || !refreshToken.IsActive)
@@ -299,7 +310,6 @@ public class AuthServiceImplementation : IAuthService
                 return ApiResponseDto<TokenResponseDto>.ErrorResult("User not found or inactive.");
             }
 
-            // 🔧 FIX: Get the tenant from the refresh token's TenantId
             if (!refreshToken.TenantId.HasValue)
             {
                 return ApiResponseDto<TokenResponseDto>.ErrorResult("No tenant context available for refresh.");
@@ -320,7 +330,6 @@ public class AuthServiceImplementation : IAuthService
             var accessToken = await _tokenService.GenerateAccessTokenAsync(user, tenant);
             var newRefreshToken = await _tokenService.CreateRefreshTokenAsync(user);
 
-            // Set new refresh token details
             newRefreshToken.TenantId = tenant.Id;
             newRefreshToken.CreatedByIp = GetClientIpAddress();
             refreshToken.ReplacedByToken = newRefreshToken.Token;
@@ -328,9 +337,8 @@ public class AuthServiceImplementation : IAuthService
             _context.RefreshTokens.Add(newRefreshToken);
             await _context.SaveChangesAsync(cancellationToken);
 
-            // Map to DTOs
             var userDto = _mapper.Map<DTOs.User.UserDto>(user);
-            userDto.TenantId = tenant.Id; // Set tenant context in DTO
+            userDto.TenantId = tenant.Id;
             var tenantDto = _mapper.Map<DTOs.Tenant.TenantDto>(tenant);
 
             var response = new TokenResponseDto
@@ -384,7 +392,7 @@ public class AuthServiceImplementation : IAuthService
         try
         {
             var user = await _context.Users
-                .IgnoreQueryFilters() // Use IgnoreQueryFilters for password operations
+                .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
             
             if (user == null)
@@ -431,11 +439,9 @@ public class AuthServiceImplementation : IAuthService
             var user = await _context.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
             if (user == null)
             {
-                // Don't reveal if user exists for security
                 return ApiResponseDto<bool>.SuccessResult(true, "If the email exists, a reset link has been sent.");
             }
 
-            // Generate password reset token
             var resetToken = Guid.NewGuid().ToString();
             user.PasswordResetToken = resetToken;
             user.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1);
@@ -443,7 +449,6 @@ public class AuthServiceImplementation : IAuthService
 
             await _context.SaveChangesAsync(cancellationToken);
 
-            // TODO: Send email with reset link
             _logger.LogInformation("Password reset token for {Email}: {Token}", email, resetToken);
 
             return ApiResponseDto<bool>.SuccessResult(true, "If the email exists, a reset link has been sent.");
@@ -503,7 +508,6 @@ public class AuthServiceImplementation : IAuthService
         }
     }
 
-    // NEW: RBAC-related methods for Enhanced Phase 4
     public async Task<List<string>> GetUserPermissionsAsync(int userId, CancellationToken cancellationToken = default)
     {
         try
@@ -550,7 +554,7 @@ public class AuthServiceImplementation : IAuthService
     {
         try
         {
-            _logger.LogWarning("🔍 TENANT SWITCH DEBUG: User {UserId} requesting to switch to tenant {TenantId}", userId, tenantId);
+            _logger.LogInformation("User {UserId} requesting to switch to tenant {TenantId}", userId, tenantId);
 
             // Load user with tenant relationships - bypass global query filters
             var user = await _context.Users
@@ -566,12 +570,12 @@ public class AuthServiceImplementation : IAuthService
                 return ApiResponseDto<TokenResponseDto>.ErrorResult("User not found");
             }
 
-            _logger.LogWarning("🔍 TENANT SWITCH DEBUG: User loaded. TenantUsers count: {Count}", user.TenantUsers?.Count ?? 0);
+            _logger.LogWarning("User loaded. TenantUsers count: {Count}", user.TenantUsers?.Count ?? 0);
 
             // Verify user has access to target tenant
             var hasAccess = user.TenantUsers?.Any(tu => tu.TenantId == tenantId && tu.IsActive) ?? false;
             
-            _logger.LogWarning("🔍 TENANT SWITCH DEBUG: User has access to tenant {TenantId}: {HasAccess}", tenantId, hasAccess);
+            _logger.LogWarning("User has access to tenant {TenantId}: {HasAccess}", tenantId, hasAccess);
             
             if (!hasAccess)
             {
@@ -581,16 +585,16 @@ public class AuthServiceImplementation : IAuthService
             }
 
             // Load target tenant
-            _logger.LogWarning("🔍 TENANT SWITCH DEBUG: Loading tenant {TenantId} from repository", tenantId);
+            _logger.LogWarning("Loading tenant {TenantId} from repository", tenantId);
             var tenant = await _tenantRepository.GetTenantByIdAsync(tenantId, cancellationToken);
             
             if (tenant == null)
             {
-                _logger.LogWarning("🔍 TENANT SWITCH DEBUG: Tenant {TenantId} not found in repository", tenantId);
+                _logger.LogWarning("Tenant {TenantId} not found in repository", tenantId);
                 return ApiResponseDto<TokenResponseDto>.ErrorResult("Tenant not found");
             }
 
-            _logger.LogWarning("🔍 TENANT SWITCH DEBUG: Tenant loaded - ID: {ActualId}, Name: {Name}, IsActive: {IsActive}", 
+            _logger.LogWarning("Tenant loaded - ID: {ActualId}, Name: {Name}, IsActive: {IsActive}", 
                 tenant.Id, tenant.Name, tenant.IsActive);
 
             if (!tenant.IsActive)
@@ -612,7 +616,7 @@ public class AuthServiceImplementation : IAuthService
             }
 
             // 🔧 CRITICAL DEBUG: Log what we're passing to token generation
-            _logger.LogWarning("🔍 TENANT SWITCH DEBUG: About to generate token with - User ID: {UserId}, Tenant ID: {TenantId}, Tenant Name: {TenantName}", 
+            _logger.LogWarning("About to generate token with - User ID: {UserId}, Tenant ID: {TenantId}, Tenant Name: {TenantName}", 
                 user.Id, tenant.Id, tenant.Name);
 
             // Generate new JWT for the target tenant with tenant-specific permissions
@@ -632,7 +636,7 @@ public class AuthServiceImplementation : IAuthService
 
             var tenantDto = _mapper.Map<DTOs.Tenant.TenantDto>(tenant);
 
-            _logger.LogWarning("🔍 TENANT SWITCH DEBUG: Response DTOs created - UserDto.TenantId: {UserTenantId}, TenantDto.Id: {TenantDtoId}, TenantDto.Name: {TenantDtoName}", 
+            _logger.LogWarning("Response DTOs created - UserDto.TenantId: {UserTenantId}, TenantDto.Id: {TenantDtoId}, TenantDto.Name: {TenantDtoName}", 
                 userDto.TenantId, tenantDto.Id, tenantDto.Name);
 
             var response = new TokenResponseDto
@@ -659,12 +663,11 @@ public class AuthServiceImplementation : IAuthService
         }
     }
 
-    // Add this new method to the existing AuthService class
     public async Task<ApiResponseDto<TokenResponseDto>> SelectTenantAsync(int userId, int tenantId, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("🔍 TENANT SELECT: User {UserId} selecting tenant {TenantId}", userId, tenantId);
+            _logger.LogInformation("User {UserId} selecting tenant {TenantId}", userId, tenantId);
 
             // Load user and verify tenant access
             var user = await _context.Users
@@ -696,8 +699,7 @@ public class AuthServiceImplementation : IAuthService
                 return ApiResponseDto<TokenResponseDto>.ErrorResult("Tenant not found or inactive");
             }
 
-            // 🔧 NOW generate full JWT WITH tenant context
-            _logger.LogInformation("🔍 TENANT SELECT: Generating full JWT with tenant context");
+            _logger.LogInformation("Generating full JWT with tenant context");
             var accessToken = await _tokenService.GenerateAccessTokenAsync(user, tenant);
             var refreshToken = await _tokenService.CreateRefreshTokenAsync(user);
 
@@ -734,7 +736,7 @@ public class AuthServiceImplementation : IAuthService
         }
     }
 
-    // Helper methods - FIXED: Properly implemented async method
+    // Helper methods
     private async Task<Tenant> GetTenantForRegistrationAsync(RegisterRequestDto request, CancellationToken cancellationToken)
     {
         if (!string.IsNullOrEmpty(request.TenantName))
@@ -752,13 +754,15 @@ public class AuthServiceImplementation : IAuthService
                 Domain = request.TenantDomain,
                 SubscriptionPlan = "Basic",
                 IsActive = true,
-                Settings = "{}"
+                Settings = "{}",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
-            return await _tenantRepository.CreateTenantAsync(newTenant, cancellationToken);
+            _context.Tenants.Add(newTenant);
+            return newTenant;
         }
 
-        // Get existing tenant or create default
         var allTenants = await _tenantRepository.GetAllTenantsAsync(cancellationToken);
         var firstTenant = allTenants.FirstOrDefault();
 
@@ -767,22 +771,272 @@ public class AuthServiceImplementation : IAuthService
             return firstTenant;
         }
 
-        // Create default tenant if none exists
         var defaultTenant = new Tenant
         {
             Name = "Default",
             SubscriptionPlan = "Basic",
             IsActive = true,
-            Settings = "{}"
+            Settings = "{}",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
-        return await _tenantRepository.CreateTenantAsync(defaultTenant, cancellationToken);
+        _context.Tenants.Add(defaultTenant);
+        return defaultTenant;
+    }
+
+    // 🔧 COMPREHENSIVE METHOD: Creates Tenant Admin role with ALL 14 permissions
+    private async Task CreateTenantAdminRoleAndAssignToUserAsync(int tenantId, int userId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation("Creating comprehensive Tenant Admin role for tenant {TenantId}", tenantId);
+
+            // Check if Tenant Admin role already exists for this tenant
+            var existingRole = await _context.Roles
+                .Where(r => r.TenantId == tenantId && r.Name == "Tenant Admin")
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (existingRole != null)
+            {
+                _logger.LogInformation("Tenant Admin role already exists with ID: {RoleId}", existingRole.Id);
+                
+                // Just assign the existing role to the user
+                var userRole = new UserRole
+                {
+                    UserId = userId,
+                    RoleId = existingRole.Id,
+                    TenantId = tenantId,
+                    IsActive = true,
+                    AssignedAt = DateTime.UtcNow,
+                    AssignedBy = "System",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _context.UserRoles.Add(userRole);
+                return;
+            }
+
+            // Create the Tenant Admin role
+            var tenantAdminRole = new Role
+            {
+                Name = "Tenant Admin",
+                Description = "Full administrative access to the tenant",
+                TenantId = tenantId,
+                IsSystemRole = false,
+                IsDefault = true,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Roles.Add(tenantAdminRole);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Tenant Admin role created with ID: {RoleId}", tenantAdminRole.Id);
+
+            // 🔧 COMPREHENSIVE: All admin permissions including COMPLETE role management (MATCHING TEST SEEDER)
+            var adminPermissions = new[]
+            {
+                // Users permissions - COMPLETE SET (matching test seeder)
+                "users.view", "users.edit", "users.create", "users.delete", 
+                "users.view_all",           // ← 🆕 CRITICAL: Missing from our list!
+                "users.manage_roles",       // ← Already have this
+
+                // Roles permissions - COMPLETE SET (matching test seeder)
+                "roles.view", "roles.edit", "roles.create", "roles.delete",
+                "roles.assign_users",       // ← Already have this
+                "roles.manage_permissions", // ← Already have this
+
+                // Tenants permissions - COMPLETE SET (matching test seeder)  
+                "tenants.view", "tenants.edit",
+                "tenants.create",           // ← 🆕 ADD: Missing from our list
+                "tenants.delete",           // ← 🆕 ADD: Missing from our list
+                "tenants.initialize",       // ← 🆕 ADD: Missing from our list
+                "tenants.view_all",         // ← 🆕 ADD: Missing from our list
+                "tenants.manage_settings",  // ← 🆕 ADD: Missing from our list
+
+                // Reports permissions - COMPLETE SET (matching test seeder)
+                "reports.view", "reports.export",
+                "reports.create",           // ← 🆕 ADD: Missing from our list
+                "reports.schedule",         // ← 🆕 ADD: Missing from our list
+
+                // Permissions management - COMPLETE SET (matching test seeder)
+                "permissions.view", "permissions.assign",
+                "permissions.create",       // ← 🆕 ADD: Missing from our list  
+                "permissions.edit",         // ← 🆕 ADD: Missing from our list
+                "permissions.delete",       // ← 🆕 ADD: Missing from our list
+                "permissions.manage",       // ← 🆕 ADD: Missing from our list
+
+                // Settings permissions
+                "settings.view", "settings.edit",
+                "audit.view"
+            };
+
+            // Use the comprehensive permission creation method
+            await EnsurePermissionsExistAndAssignToRoleAsync(tenantAdminRole.Id, adminPermissions, cancellationToken);
+
+            // Assign the role to the user
+            var userRoleAssignment = new UserRole
+            {
+                UserId = userId,
+                RoleId = tenantAdminRole.Id,
+                TenantId = tenantId,
+                IsActive = true,
+                AssignedAt = DateTime.UtcNow,
+                AssignedBy = "System",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            _context.UserRoles.Add(userRoleAssignment);
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Tenant Admin role created and assigned to user {UserId} with {PermissionCount} permissions", 
+                userId, adminPermissions.Length);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating comprehensive Tenant Admin role for tenant {TenantId} and user {UserId}", tenantId, userId);
+            throw;
+        }
+    }
+
+    private async Task EnsurePermissionsExistAndAssignToRoleAsync(int roleId, string[] permissionNames, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("🔍 PERMISSION DEBUG: Starting permission creation for role {RoleId} with {RequestedCount} permissions", roleId, permissionNames.Length);
+        
+        // Get existing permissions
+        var existingPermissions = await _context.Permissions
+            .Where(p => permissionNames.Contains(p.Name))
+            .ToListAsync(cancellationToken);
+
+        var existingPermissionNames = existingPermissions.Select(p => p.Name).ToHashSet();
+        
+        _logger.LogInformation("🔍 PERMISSION DEBUG: Found {ExistingCount} existing permissions: {ExistingPermissions}", 
+            existingPermissions.Count, string.Join(", ", existingPermissionNames));
+
+        // Create missing permissions
+        var missingPermissions = permissionNames
+            .Where(name => !existingPermissionNames.Contains(name))
+            .ToList();
+
+        _logger.LogInformation("🔍 PERMISSION DEBUG: Need to create {MissingCount} missing permissions: {MissingPermissions}", 
+            missingPermissions.Count, string.Join(", ", missingPermissions));
+
+        foreach (var permissionName in missingPermissions)
+        {
+            var permission = new Permission
+            {
+                Name = permissionName,
+                Description = GetPermissionDescription(permissionName),
+                Category = GetPermissionCategory(permissionName),
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            
+            _context.Permissions.Add(permission);
+            existingPermissions.Add(permission);
+            _logger.LogInformation("🔍 PERMISSION DEBUG: Added new permission: {PermissionName}", permissionName);
+        }
+
+        if (missingPermissions.Any())
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("🔍 PERMISSION DEBUG: Saved {CreatedCount} new permissions to database", missingPermissions.Count);
+        }
+
+        _logger.LogInformation("🔍 PERMISSION DEBUG: Total permissions to assign: {TotalCount}", existingPermissions.Count);
+
+        // Assign all permissions to the role
+        foreach (var permission in existingPermissions)
+        {
+            // Check if this role-permission combination already exists
+            var existingRolePermission = await _context.RolePermissions
+                .Where(rp => rp.RoleId == roleId && rp.PermissionId == permission.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (existingRolePermission == null)
+            {
+                var rolePermission = new RolePermission
+                {
+                    RoleId = roleId,
+                    PermissionId = permission.Id,
+                    GrantedAt = DateTime.UtcNow,
+                    GrantedBy = "System",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _context.RolePermissions.Add(rolePermission);
+                _logger.LogInformation("🔍 PERMISSION DEBUG: Added role permission: Role {RoleId} -> Permission {PermissionName}", roleId, permission.Name);
+            }
+            else
+            {
+                _logger.LogInformation("🔍 PERMISSION DEBUG: Role permission already exists: Role {RoleId} -> Permission {PermissionName}", roleId, permission.Name);
+            }
+        }
+
+        await _context.SaveChangesAsync(cancellationToken);
+        _logger.LogInformation("🔍 PERMISSION DEBUG: Successfully assigned {PermissionCount} permissions to role {RoleId}", existingPermissions.Count, roleId);
+    }
+
+    private static string GetPermissionDescription(string permissionName)
+    {
+        return permissionName switch
+        {
+            "users.view" => "View users",
+            "users.edit" => "Edit users", 
+            "users.create" => "Create users",
+            "users.delete" => "Delete users",
+            "users.view_all" => "View all users across tenants",      // ← 🆕 ADD
+            "users.manage_roles" => "Manage user roles",              // ← Already have this
+            
+            "roles.view" => "View roles",
+            "roles.edit" => "Edit roles",
+            "roles.create" => "Create roles", 
+            "roles.delete" => "Delete roles",
+            "roles.assign_users" => "Assign roles to users",
+            "roles.manage_permissions" => "Manage role permissions",
+            
+            "tenants.view" => "View tenant information",
+            "tenants.edit" => "Edit tenant settings",
+            "tenants.create" => "Create new tenants",                 // ← 🆕 ADD
+            "tenants.delete" => "Delete tenants",                     // ← 🆕 ADD
+            "tenants.initialize" => "Initialize tenant settings",     // ← 🆕 ADD
+            "tenants.view_all" => "View all tenants",                 // ← 🆕 ADD
+            "tenants.manage_settings" => "Manage tenant settings",    // ← 🆕 ADD
+            
+            "reports.view" => "View reports",
+            "reports.create" => "Create reports",                     // ← 🆕 ADD
+            "reports.export" => "Export reports",
+            "reports.schedule" => "Schedule reports",                 // ← 🆕 ADD
+            
+            "permissions.view" => "View permissions",
+            "permissions.assign" => "Assign permissions",
+            "permissions.create" => "Create permissions",             // ← 🆕 ADD
+            "permissions.edit" => "Edit permissions",                 // ← 🆕 ADD
+            "permissions.delete" => "Delete permissions",             // ← 🆕 ADD
+            "permissions.manage" => "Manage all permissions",         // ← 🆕 ADD
+            
+            "settings.view" => "View settings",
+            "settings.edit" => "Edit settings",
+            "audit.view" => "View audit logs",
+            "profile.view" => "View own profile",
+            "profile.edit" => "Edit own profile",
+            "dashboard.view" => "View dashboard",
+            _ => $"Permission: {permissionName}"
+        };
+    }
+
+    private static string GetPermissionCategory(string permissionName)
+    {
+        var parts = permissionName.Split('.');
+        return parts.Length > 0 ? char.ToUpper(parts[0][0]) + parts[0][1..] : "General";
     }
 
     private string GetClientIpAddress()
     {
-        // This would normally get the client IP from HttpContext
-        // For now, return a placeholder
         return "127.0.0.1"; // TODO: Implement proper IP resolution with IHttpContextAccessor
     }
 }
