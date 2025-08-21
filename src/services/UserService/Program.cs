@@ -2,6 +2,7 @@ using Common.Data;
 using Common.Extensions;
 using Common.Middleware;
 using Common.Services;
+using Common.Caching;
 using Contracts.Repositories;
 using Contracts.Services;
 using Contracts.User;
@@ -10,6 +11,7 @@ using Microsoft.OpenApi.Models;
 using UserService.Mappings;
 using UserService.Services;
 using UserService.Middleware;
+using StackExchange.Redis;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -64,6 +66,43 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 
 // ✅ CRITICAL FIX: Add dynamic authorization for permission-based policies
 builder.Services.AddDynamicAuthorization();
+
+// ✅ NEW: Configure Redis for Phase 10 Caching
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis") 
+    ?? builder.Configuration["Redis:ConnectionString"]
+    ?? "localhost:6379";
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var configuration = ConfigurationOptions.Parse(redisConnectionString);
+    configuration.AbortOnConnectFail = false;
+    configuration.ConnectTimeout = 5000;
+    configuration.SyncTimeout = 5000;
+    
+    var connection = ConnectionMultiplexer.Connect(configuration);
+    
+    // Log connection status
+    var logger = sp.GetRequiredService<ILogger<Program>>();
+    logger.LogInformation("Redis connection status: {Status}", connection.IsConnected ? "Connected" : "Disconnected");
+    
+    return connection;
+});
+
+// ✅ NEW: Register cache services for Phase 10
+builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+builder.Services.AddSingleton<IPermissionCache, RedisPermissionCache>();
+
+// ✅ NEW: Add distributed caching with Redis
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.ConnectionMultiplexerFactory = async () =>
+    {
+        var multiplexer = builder.Services
+            .BuildServiceProvider()
+            .GetRequiredService<IConnectionMultiplexer>();
+        return await Task.FromResult(multiplexer);
+    };
+});
 
 // USE DATABASE EXTENSION (includes DbContext + Repositories)
 builder.Services.AddDatabase(builder.Configuration);
@@ -167,8 +206,24 @@ app.Lifetime.ApplicationStarted.Register(() =>
 
 try
 {
-    Log.Information("Starting UserService");
-    Console.WriteLine("=== UserService Starting ===");
+    Log.Information("Starting UserService with Redis caching enabled");
+    Console.WriteLine("=== UserService Starting with Redis Caching ===");
+    
+    // ✅ NEW: Test Redis connection on startup
+    try
+    {
+        var redis = app.Services.GetRequiredService<IConnectionMultiplexer>();
+        var db = redis.GetDatabase();
+        await db.StringSetAsync("startup-test", DateTime.UtcNow.ToString(), TimeSpan.FromSeconds(10));
+        var test = await db.StringGetAsync("startup-test");
+        Console.WriteLine($"✅ Redis connection successful: {test}");
+        Log.Information("Redis connection test successful");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️  Redis connection failed: {ex.Message}");
+        Log.Warning(ex, "Redis connection test failed, caching will be unavailable");
+    }
     
     // 🔧 ADD: Automatic database seeding on startup
     await app.Services.SeedDatabaseAsync();
