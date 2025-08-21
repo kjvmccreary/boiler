@@ -1,192 +1,534 @@
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+PS C:\Users\mccre\dev\boiler> dotnet test tests/performance/UserService.PerformanceTests/
+Restore complete (0.4s)
+  DTOs succeeded (0.1s) → src\shared\DTOs\bin\Debug\net9.0\DTOs.dll
+  Contracts succeeded (0.2s) → src\shared\Contracts\bin\Debug\net9.0\Contracts.dll
+  Common succeeded (0.1s) → src\shared\Common\bin\Debug\net9.0\Common.dll
+  UserService succeeded (0.1s) → src\services\UserService\bin\Debug\net9.0\UserService.dll
+  UserService.PerformanceTests succeeded (0.2s) → tests\performance\UserService.PerformanceTests\bin\Debug\net9.0\UserService.PerformanceTests.dll
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 9.0.7)
+[xUnit.net 00:00:00.07]   Discovering: UserService.PerformanceTests
+[xUnit.net 00:00:00.09]   Discovered:  UserService.PerformanceTests
+[xUnit.net 00:00:00.09]   Starting:    UserService.PerformanceTests
+[14:18:31 INF] Starting UserService {}
+=== UserService Starting ===
+[14:18:32 INF] ?? Starting performance data seeding... {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:18:32 INF] ? Created 5 tenants {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:18:32 INF] ? Created 15 permissions {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:18:35 INF] ? Created 20 users with role assignments for Performance Tenant 1 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:18:38 INF] ? Created 20 users with role assignments for Performance Tenant 2 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:18:42 INF] ? Created 20 users with role assignments for Performance Tenant 3 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:18:47 INF] ? Created 20 users with role assignments for Performance Tenant 4 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:18:52 INF] ? Created 20 users with role assignments for Performance Tenant 5 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:18:53 INF] ?? Performance data seeding completed: {"Tenants": 5, "Users": 101, "Roles": 16, "Permissions": 15, "UserRoles": 101, "RolePermissions": 160, "TenantUsers": 101} {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:18:53 WRN] Failed to determine the https port for redirect. {"EventId": {"Id": 3, "Name": "FailedToDeterminePort"}, "SourceContext": "Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware", "RequestId": "0HNF0SU8HELPI", "RequestPath": "/api/roles"}
+[14:18:53 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPI", "RequestPath": "/api/roles"}
+[14:18:53 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPI", "RequestPath": "/api/roles"}
+[14:18:53 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELPI", "RequestPath": "/api/roles"}
+[14:18:53 INF] HTTP GET /api/roles responded 200 in 248.5667 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:18:53 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPJ", "RequestPath": "/api/roles"}
+[14:18:53 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPJ", "RequestPath": "/api/roles"}
+[14:18:53 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELPJ", "RequestPath": "/api/roles"}
+[14:18:53 INF] HTTP GET /api/roles responded 200 in 8.3808 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:18:53 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPK", "RequestPath": "/api/roles"}
+[14:18:53 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPK", "RequestPath": "/api/roles"}
+[14:18:53 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELPK", "RequestPath": "/api/roles"}
+[14:18:53 INF] HTTP GET /api/roles responded 200 in 6.5266 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:18:53 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPL", "RequestPath": "/api/roles"}
+[14:18:53 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPL", "RequestPath": "/api/roles"}
+[14:18:53 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELPL", "RequestPath": "/api/roles"}
+[14:18:53 INF] HTTP GET /api/roles responded 200 in 2.6182 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:18:53 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPM", "RequestPath": "/api/roles"}
+[14:18:53 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPM", "RequestPath": "/api/roles"}
+[14:18:53 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELPM", "RequestPath": "/api/roles"}
+[14:18:53 INF] HTTP GET /api/roles responded 200 in 1.8154 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:18:53 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPN", "RequestPath": "/api/users/profile"}
+[14:18:53 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPN", "RequestPath": "/api/users/profile"}
+[14:18:53 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELPN", "RequestPath": "/api/users/profile"}
+[14:18:53 INF] User 1 successfully accessed profile in tenant 1 {"SourceContext": "UserService.Services.UserProfileService", "ActionId": "79c44ffa-00db-4971-8f66-d794163d0ced", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF0SU8HELPN", "RequestPath": "/api/users/profile"}
+[14:18:53 INF] HTTP GET /api/users/profile responded 200 in 196.1665 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:18:53 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPO", "RequestPath": "/api/users/profile"}
+[14:18:53 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPO", "RequestPath": "/api/users/profile"}
+[14:18:53 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELPO", "RequestPath": "/api/users/profile"}
+[14:18:53 INF] User 1 successfully accessed profile in tenant 1 {"SourceContext": "UserService.Services.UserProfileService", "ActionId": "79c44ffa-00db-4971-8f66-d794163d0ced", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF0SU8HELPO", "RequestPath": "/api/users/profile"}
+[14:18:53 INF] HTTP GET /api/users/profile responded 200 in 7.9818 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:18:53 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPP", "RequestPath": "/api/users/profile"}
+[14:18:53 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPP", "RequestPath": "/api/users/profile"}
+[14:18:53 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELPP", "RequestPath": "/api/users/profile"}
+[14:18:53 INF] User 1 successfully accessed profile in tenant 1 {"SourceContext": "UserService.Services.UserProfileService", "ActionId": "79c44ffa-00db-4971-8f66-d794163d0ced", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF0SU8HELPP", "RequestPath": "/api/users/profile"}
+[14:18:53 INF] HTTP GET /api/users/profile responded 200 in 6.4317 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:18:53 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPQ", "RequestPath": "/api/users/profile"}
+[14:18:53 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPQ", "RequestPath": "/api/users/profile"}
+[14:18:53 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELPQ", "RequestPath": "/api/users/profile"}
+[14:18:53 INF] User 1 successfully accessed profile in tenant 1 {"SourceContext": "UserService.Services.UserProfileService", "ActionId": "79c44ffa-00db-4971-8f66-d794163d0ced", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF0SU8HELPQ", "RequestPath": "/api/users/profile"}
+[14:18:53 INF] HTTP GET /api/users/profile responded 200 in 2.3554 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:18:53 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPR", "RequestPath": "/api/users/profile"}
+[14:18:53 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPR", "RequestPath": "/api/users/profile"}
+[14:18:53 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELPR", "RequestPath": "/api/users/profile"}
+[14:18:53 INF] User 1 successfully accessed profile in tenant 1 {"SourceContext": "UserService.Services.UserProfileService", "ActionId": "79c44ffa-00db-4971-8f66-d794163d0ced", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF0SU8HELPR", "RequestPath": "/api/users/profile"}
+[14:18:53 INF] HTTP GET /api/users/profile responded 200 in 1.9544 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:18:53 INF] ?? Starting performance data seeding... {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[xUnit.net 00:00:22.33]     UserService.PerformanceTests.BasicPerformanceTests.RoleOperations_ShouldMeetPerformanceTarget [FAIL]
+[xUnit.net 00:00:22.33]       Expected averageQueryTime to be less than 50.0 because Database queries should be fast even with tenant filtering, but found 55.4 (difference of 5.399999999999999).
+[xUnit.net 00:00:22.33]       Stack Trace:
+[xUnit.net 00:00:22.33]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+[xUnit.net 00:00:22.33]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+[xUnit.net 00:00:22.33]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+[xUnit.net 00:00:22.33]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:22.33]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:22.33]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+[xUnit.net 00:00:22.33]            at FluentAssertions.Numeric.NumericAssertions`2.BeLessThan(T expected, String because, Object[] becauseArgs)
+[xUnit.net 00:00:22.33]         C:\Users\mccre\dev\boiler\tests\performance\UserService.PerformanceTests\BasicPerformanceTests.cs(148,0): at UserService.PerformanceTests.BasicPerformanceTests.RoleOperations_ShouldMeetPerformanceTarget()
+[xUnit.net 00:00:22.33]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:22.33]       Output:
+[xUnit.net 00:00:22.33]         📊 Database Query Performance:
+[xUnit.net 00:00:22.33]            Average: 55.40ms
+[xUnit.net 00:00:22.33]            Max: 317ms
+[xUnit.net 00:00:22.33]            Target: <50ms
+[14:18:53 INF] ? Created 5 tenants {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:18:53 INF] ? Created 15 permissions {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:18:59 INF] ? Created 20 users with role assignments for Performance Tenant 1 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:04 INF] ? Created 20 users with role assignments for Performance Tenant 2 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:09 INF] ? Created 20 users with role assignments for Performance Tenant 3 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:15 INF] ? Created 20 users with role assignments for Performance Tenant 4 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:20 INF] ? Created 20 users with role assignments for Performance Tenant 5 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:20 INF] ?? Performance data seeding completed: {"Tenants": 5, "Users": 101, "Roles": 16, "Permissions": 15, "UserRoles": 101, "RolePermissions": 160, "TenantUsers": 101} {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:20 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPT", "RequestPath": "/api/users"}
+[14:19:20 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPV", "RequestPath": "/api/users"}
+[14:19:20 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPT", "RequestPath": "/api/users"}
+[14:19:20 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPV", "RequestPath": "/api/users"}
+[14:19:20 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPU", "RequestPath": "/api/users"}
+[14:19:20 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELPV", "RequestPath": "/api/users"}
+[14:19:20 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELPT", "RequestPath": "/api/users"}
+[14:19:20 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPU", "RequestPath": "/api/users"}
+[14:19:20 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELPU", "RequestPath": "/api/users"}
+[14:19:20 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ0", "RequestPath": "/api/users"}
+[14:19:20 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ0", "RequestPath": "/api/users"}
+[14:19:20 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQ0", "RequestPath": "/api/users"}
+[14:19:20 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPS", "RequestPath": "/api/users"}
+[14:19:20 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELPS", "RequestPath": "/api/users"}
+[14:19:20 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELPS", "RequestPath": "/api/users"}
+[14:19:20 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ1", "RequestPath": "/api/users"}
+[14:19:20 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ1", "RequestPath": "/api/users"}
+[14:19:20 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQ1", "RequestPath": "/api/users"}
+[14:19:20 INF] HTTP GET /api/users responded 200 in 52.8131 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:19:20 INF] HTTP GET /api/users responded 200 in 52.6403 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:19:20 INF] HTTP GET /api/users responded 200 in 52.7994 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:19:20 INF] HTTP GET /api/users responded 200 in 50.7751 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:19:20 INF] HTTP GET /api/users responded 200 in 50.7739 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:19:20 INF] HTTP GET /api/users responded 200 in 53.6425 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:19:20 INF] ?? Starting performance data seeding... {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:20 INF] ? Created 5 tenants {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:20 INF] ? Created 15 permissions {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:25 INF] ? Created 20 users with role assignments for Performance Tenant 1 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:31 INF] ? Created 20 users with role assignments for Performance Tenant 2 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:35 INF] ? Created 20 users with role assignments for Performance Tenant 3 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:40 INF] ? Created 20 users with role assignments for Performance Tenant 4 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:46 INF] ? Created 20 users with role assignments for Performance Tenant 5 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:46 INF] ?? Performance data seeding completed: {"Tenants": 5, "Users": 101, "Roles": 16, "Permissions": 15, "UserRoles": 101, "RolePermissions": 160, "TenantUsers": 101} {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:46 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ2", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ2", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQ2", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] User 1 successfully accessed profile in tenant 1 {"SourceContext": "UserService.Services.UserProfileService", "ActionId": "79c44ffa-00db-4971-8f66-d794163d0ced", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF0SU8HELQ2", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] HTTP GET /api/users/profile responded 200 in 7.8013 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:19:46 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ3", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ3", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQ3", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] User 1 successfully accessed profile in tenant 1 {"SourceContext": "UserService.Services.UserProfileService", "ActionId": "79c44ffa-00db-4971-8f66-d794163d0ced", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF0SU8HELQ3", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] HTTP GET /api/users/profile responded 200 in 1.5804 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:19:46 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ4", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ4", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQ4", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] User 1 successfully accessed profile in tenant 1 {"SourceContext": "UserService.Services.UserProfileService", "ActionId": "79c44ffa-00db-4971-8f66-d794163d0ced", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF0SU8HELQ4", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] HTTP GET /api/users/profile responded 200 in 1.1363 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:19:46 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ5", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ5", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQ5", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] User 1 successfully accessed profile in tenant 1 {"SourceContext": "UserService.Services.UserProfileService", "ActionId": "79c44ffa-00db-4971-8f66-d794163d0ced", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF0SU8HELQ5", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] HTTP GET /api/users/profile responded 200 in 0.6937 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:19:46 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ6", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ6", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQ6", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] User 1 successfully accessed profile in tenant 1 {"SourceContext": "UserService.Services.UserProfileService", "ActionId": "79c44ffa-00db-4971-8f66-d794163d0ced", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF0SU8HELQ6", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] HTTP GET /api/users/profile responded 200 in 1.1034 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:19:46 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ7", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ7", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQ7", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] User 1 successfully accessed profile in tenant 1 {"SourceContext": "UserService.Services.UserProfileService", "ActionId": "79c44ffa-00db-4971-8f66-d794163d0ced", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF0SU8HELQ7", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] HTTP GET /api/users/profile responded 200 in 1.0166 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:19:46 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ8", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ8", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQ8", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] User 1 successfully accessed profile in tenant 1 {"SourceContext": "UserService.Services.UserProfileService", "ActionId": "79c44ffa-00db-4971-8f66-d794163d0ced", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF0SU8HELQ8", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] HTTP GET /api/users/profile responded 200 in 0.9697 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:19:46 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ9", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQ9", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQ9", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] User 1 successfully accessed profile in tenant 1 {"SourceContext": "UserService.Services.UserProfileService", "ActionId": "79c44ffa-00db-4971-8f66-d794163d0ced", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF0SU8HELQ9", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] HTTP GET /api/users/profile responded 200 in 1.7496 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:19:46 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQA", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQA", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQA", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] User 1 successfully accessed profile in tenant 1 {"SourceContext": "UserService.Services.UserProfileService", "ActionId": "79c44ffa-00db-4971-8f66-d794163d0ced", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF0SU8HELQA", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] HTTP GET /api/users/profile responded 200 in 5.9878 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:19:46 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQB", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQB", "RequestPath": "/api/users/profile"}
+[14:19:46 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQB", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] User 1 successfully accessed profile in tenant 1 {"SourceContext": "UserService.Services.UserProfileService", "ActionId": "79c44ffa-00db-4971-8f66-d794163d0ced", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF0SU8HELQB", "RequestPath": "/api/users/profile"}
+[14:19:46 INF] HTTP GET /api/users/profile responded 200 in 1.3191 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:19:46 INF] ?? Starting performance data seeding... {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:46 INF] ? Created 5 tenants {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:46 INF] ? Created 15 permissions {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:51 INF] ? Created 20 users with role assignments for Performance Tenant 1 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:19:56 INF] ? Created 20 users with role assignments for Performance Tenant 2 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:20:01 INF] ? Created 20 users with role assignments for Performance Tenant 3 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:20:07 INF] ? Created 20 users with role assignments for Performance Tenant 4 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:20:12 INF] ? Created 20 users with role assignments for Performance Tenant 5 {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:20:13 INF] ?? Performance data seeding completed: {"Tenants": 5, "Users": 101, "Roles": 16, "Permissions": 15, "UserRoles": 101, "RolePermissions": 160, "TenantUsers": 101} {"SourceContext": "UserService.PerformanceTests.BasicPerformanceTests"}
+[14:20:13 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQC", "RequestPath": "/api/users"}
+[14:20:13 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQC", "RequestPath": "/api/users"}
+[14:20:13 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQC", "RequestPath": "/api/users"}
+[14:20:13 INF] HTTP GET /api/users responded 200 in 3.7033 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:13 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQD", "RequestPath": "/api/users"}
+[14:20:13 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQD", "RequestPath": "/api/users"}
+[14:20:13 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQD", "RequestPath": "/api/users"}
+[14:20:13 INF] HTTP GET /api/users responded 200 in 2.2391 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:13 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQE", "RequestPath": "/api/users"}
+[14:20:13 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQE", "RequestPath": "/api/users"}
+[14:20:13 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQE", "RequestPath": "/api/users"}
+[14:20:13 INF] HTTP GET /api/users responded 200 in 1.5827 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:13 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQF", "RequestPath": "/api/users"}
+[14:20:13 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQF", "RequestPath": "/api/users"}
+[14:20:13 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQF", "RequestPath": "/api/users"}
+[14:20:13 INF] HTTP GET /api/users responded 200 in 1.8952 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:13 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQG", "RequestPath": "/api/users"}
+[14:20:13 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQG", "RequestPath": "/api/users"}
+[14:20:13 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQG", "RequestPath": "/api/users"}
+[14:20:13 INF] HTTP GET /api/users responded 200 in 5.5975 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:13 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQH", "RequestPath": "/api/users"}
+[14:20:13 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQH", "RequestPath": "/api/users"}
+[14:20:13 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQH", "RequestPath": "/api/users"}
+[14:20:13 INF] HTTP GET /api/users responded 200 in 2.2137 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:13 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQI", "RequestPath": "/api/users"}
+[14:20:13 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQI", "RequestPath": "/api/users"}
+[14:20:13 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQI", "RequestPath": "/api/users"}
+[14:20:13 INF] HTTP GET /api/users responded 200 in 1.5562 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:13 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQJ", "RequestPath": "/api/users"}
+[14:20:13 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQJ", "RequestPath": "/api/users"}
+[14:20:13 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQJ", "RequestPath": "/api/users"}
+[14:20:13 INF] HTTP GET /api/users responded 200 in 1.5816 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:13 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQK", "RequestPath": "/api/users"}
+[14:20:13 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQK", "RequestPath": "/api/users"}
+[14:20:13 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQK", "RequestPath": "/api/users"}
+[14:20:13 INF] HTTP GET /api/users responded 200 in 1.5685 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:13 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQL", "RequestPath": "/api/users"}
+[14:20:13 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQL", "RequestPath": "/api/users"}
+[14:20:13 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQL", "RequestPath": "/api/users"}
+[14:20:13 INF] HTTP GET /api/users responded 200 in 1.4843 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:13 INF] Starting UserService {}
+=== UserService Starting ===
+[14:20:39 WRN] Failed to determine the https port for redirect. {"EventId": {"Id": 3, "Name": "FailedToDeterminePort"}, "SourceContext": "Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware", "RequestId": "0HNF0SU8HELQM", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQO", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQP", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQO", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQR", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQR", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQQ", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQQ", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQP", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQO", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQP", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQR", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQM", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQM", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQM", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQN", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQN", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQQ", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQN", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQS", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQS", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQS", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQT", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQT", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQT", "RequestPath": "/api/roles"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 13.7550 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 12.5582 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 13.2893 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 16.1578 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 16.7612 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR0", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR0", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQV", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQV", "RequestPath": "/api/roles"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 20.5220 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR1", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR1", "RequestPath": "/api/roles"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 18.5597 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR9", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR3", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR9", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELR0", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR3", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELR9", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELR3", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQV", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR4", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR4", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELR4", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELR1", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR2", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR2", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELR2", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQU", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELQU", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELQU", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR5", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR6", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR5", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR6", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELR5", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELR6", "RequestPath": "/api/roles"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 6.1910 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 1.4850 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 7.3341 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 10.2486 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 10.3001 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR7", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR7", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELR7", "RequestPath": "/api/roles"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 12.7742 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 16.8955 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 26.2047 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 1.0279 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 10.3106 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 12.6834 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR8", "RequestPath": "/api/roles"}
+[14:20:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELR8", "RequestPath": "/api/roles"}
+[14:20:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELR8", "RequestPath": "/api/roles"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 11.6619 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:20:39 INF] HTTP GET /api/roles responded 200 in 3.5403 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRB", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRC", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRA", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRB", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRC", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRA", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRA", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRC", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRD", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRD", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRB", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRD", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRE", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRE", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRE", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRF", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRF", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRF", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRG", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRH", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRG", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRG", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRH", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRH", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRI", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRI", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRI", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRJ", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRJ", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRJ", "RequestPath": "/api/users"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 21.0000 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 20.7390 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 19.1859 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 3.4367 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 1.4777 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 3.1283 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 13.4028 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 20.8431 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 14.4096 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 3.6783 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRK", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRL", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRM", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRK", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRM", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRM", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRK", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRL", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRL", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRN", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRO", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRN", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRN", "RequestPath": "/api/users"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 6.3675 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRP", "RequestPath": "/api/users"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 6.7174 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRP", "RequestPath": "/api/users"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 6.8586 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 1.5569 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRR", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRR", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRR", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRQ", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRQ", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRQ", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRS", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRS", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRS", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRO", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRO", "RequestPath": "/api/users"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 0.7683 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 0.9185 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 0.6034 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRT", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRT", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRT", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRP", "RequestPath": "/api/users"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 2.5547 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 2.3624 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 1.0701 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRV", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS0", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRV", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS2", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS0", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS2", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRV", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELS0", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELS2", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS1", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS1", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELS1", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRU", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELRU", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELRU", "RequestPath": "/api/users"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 1.7386 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 5.8036 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 1.7360 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 5.9451 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS5", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS5", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS4", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELS5", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS3", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS3", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELS3", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS4", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELS4", "RequestPath": "/api/users"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 2.2897 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 2.2297 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS6", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS6", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELS6", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS7", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS7", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELS7", "RequestPath": "/api/users"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 6.7344 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 3.0899 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 2.9166 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 14.6567 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS9", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSA", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS9", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS8", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSA", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSA", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELS9", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELS8", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELS8", "RequestPath": "/api/users"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 1.9800 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 1.9562 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 2.0740 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSD", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSB", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSD", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSB", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSD", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSE", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSE", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSB", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSE", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSC", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSC", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSC", "RequestPath": "/api/users"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 4.3040 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSG", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSG", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSG", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSF", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSF", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSF", "RequestPath": "/api/users"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 6.9263 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 2.7389 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 7.3978 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 7.5933 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 3.3455 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSH", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSH", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSH", "RequestPath": "/api/users"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 1.3784 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSI", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSK", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSJ", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSI", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSK", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSJ", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSK", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSJ", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSI", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSL", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSL", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSL", "RequestPath": "/api/users"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 2.0422 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 2.0048 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSM", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSN", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSM", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSN", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSM", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSN", "RequestPath": "/api/users"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 3.1547 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 4.7574 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 5.4069 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSO", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSP", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSO", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSP", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSO", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSP", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSQ", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSQ", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSQ", "RequestPath": "/api/users"}
+[14:21:04 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSR", "RequestPath": "/api/users"}
+[14:21:04 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF0SU8HELSR", "RequestPath": "/api/users"}
+[14:21:04 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF0SU8HELSR", "RequestPath": "/api/users"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 5.7126 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 1.2005 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 5.0274 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 1.3101 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[14:21:04 INF] HTTP GET /api/users responded 200 in 2.1225 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[xUnit.net 00:02:33.39]   Finished:    UserService.PerformanceTests
+  UserService.PerformanceTests test failed with 1 error(s) (153.9s)
+    C:\Users\mccre\dev\boiler\tests\performance\UserService.PerformanceTests\BasicPerformanceTests.cs(148): error TESTERROR:
+      UserService.PerformanceTests.BasicPerformanceTests.RoleOperations_ShouldMeetPerformanceTarget (1s 289ms): Error Me
+      ssage: Expected averageQueryTime to be less than 50.0 because Database queries should be fast even with tenant fil
+      tering, but found 55.4 (difference of 5.399999999999999).
+      Stack Trace:
+         at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+         at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+         at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+         at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+         at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+         at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+         at FluentAssertions.Numeric.NumericAssertions`2.BeLessThan(T expected, String because, Object[] becauseArgs)
+         at UserService.PerformanceTests.BasicPerformanceTests.RoleOperations_ShouldMeetPerformanceTarget() in C:\Users\
+      mccre\dev\boiler\tests\performance\UserService.PerformanceTests\BasicPerformanceTests.cs:line 148
+      --- End of stack trace from previous location ---
+        Standard Output Messages:
+       📊 Database Query Performance:
+          Average: 55.40ms
+          Max: 317ms
+          Target: <50ms
 
- FAIL  src/components/__tests__/roles/RoleList.test.tsx > RoleList > renders roles list correctly
-TestingLibraryElementError: Unable to find an element with the text: Admin. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
-
-Ignored nodes: comments, script, style
-<body>
-  <div>
-    <div
-      class="MuiBox-root css-qd5mg9"
-    >
-      <span
-        class="MuiCircularProgress-root MuiCircularProgress-indeterminate MuiCircularProgress-colorPrimary css-1wxecgq-MuiCircularProgress-root"
-        role="progressbar"
-        style="width: 40px; height: 40px;"
-      >
-        <svg
-          class="MuiCircularProgress-svg css-54pwck-MuiCircularProgress-svg"
-          viewBox="22 22 44 44"
-        >
-          <circle
-            class="MuiCircularProgress-circle MuiCircularProgress-circleIndeterminate css-19t5dcl-MuiCircularProgress-circle"
-            cx="44"
-            cy="44"
-            fill="none"
-            r="20.2"
-            stroke-width="3.6"
-          />
-        </svg>
-      </span>
-      <p
-        class="MuiTypography-root MuiTypography-body1 css-bn546x-MuiTypography-root"
-      >
-        Loading roles for
-        Test Tenant
-        ...
-      </p>
-    </div>
-  </div>
-</body>
-
-Ignored nodes: comments, script, style
-<html>
-  <head>
-    <meta
-      content=""
-      name="emotion-insertion-point"
-    />
-  </head>
-  <body>
-    <div>
-      <div
-        class="MuiBox-root css-qd5mg9"
-      >
-        <span
-          class="MuiCircularProgress-root MuiCircularProgress-indeterminate MuiCircularProgress-colorPrimary css-1wxecgq-MuiCircularProgress-root"
-          role="progressbar"
-          style="width: 40px; height: 40px;"
-        >
-          <svg
-            class="MuiCircularProgress-svg css-54pwck-MuiCircularProgress-svg"
-            viewBox="22 22 44 44"
-          >
-            <circle
-              class="MuiCircularProgress-circle MuiCircularProgress-circleIndeterminate css-19t5dcl-MuiCircularProgress-circle"
-              cx="44"
-              cy="44"
-              fill="none"
-              r="20.2"
-              stroke-width="3.6"
-            />
-          </svg>
-        </span>
-        <p
-          class="MuiTypography-root MuiTypography-body1 css-bn546x-MuiTypography-root"
-        >
-          Loading roles for
-          Test Tenant
-          ...
-        </p>
-      </div>
-    </div>
-  </body>
-</html>...
- ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
- ❯ src/components/__tests__/roles/RoleList.test.tsx:145:11
-    143|
-    144|     // ✅ Wait for the roles to load and render
-    145|     await waitFor(() => {
-       |           ^
-    146|       expect(screen.getByText('Admin')).toBeInTheDocument()
-    147|     }, { timeout: 5000 })
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
-
- FAIL  src/components/__tests__/roles/RoleList.test.tsx > RoleList > renders roles list correctly
-TestingLibraryElementError: Unable to find an element with the text: Admin. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
-
-Ignored nodes: comments, script, style
-<body>
-  <div>
-    <div
-      class="MuiBox-root css-qd5mg9"
-    >
-      <span
-        class="MuiCircularProgress-root MuiCircularProgress-indeterminate MuiCircularProgress-colorPrimary css-1wxecgq-MuiCircularProgress-root"
-        role="progressbar"
-        style="width: 40px; height: 40px;"
-      >
-        <svg
-          class="MuiCircularProgress-svg css-54pwck-MuiCircularProgress-svg"
-          viewBox="22 22 44 44"
-        >
-          <circle
-            class="MuiCircularProgress-circle MuiCircularProgress-circleIndeterminate css-19t5dcl-MuiCircularProgress-circle"
-            cx="44"
-            cy="44"
-            fill="none"
-            r="20.2"
-            stroke-width="3.6"
-          />
-        </svg>
-      </span>
-      <p
-        class="MuiTypography-root MuiTypography-body1 css-bn546x-MuiTypography-root"
-      >
-        Loading roles for
-        Test Tenant
-        ...
-      </p>
-    </div>
-  </div>
-</body>
-
-Ignored nodes: comments, script, style
-<html>
-  <head>
-    <meta
-      content=""
-      name="emotion-insertion-point"
-    />
-  </head>
-  <body>
-    <div>
-      <div
-        class="MuiBox-root css-qd5mg9"
-      >
-        <span
-          class="MuiCircularProgress-root MuiCircularProgress-indeterminate MuiCircularProgress-colorPrimary css-1wxecgq-MuiCircularProgress-root"
-          role="progressbar"
-          style="width: 40px; height: 40px;"
-        >
-          <svg
-            class="MuiCircularProgress-svg css-54pwck-MuiCircularProgress-svg"
-            viewBox="22 22 44 44"
-          >
-            <circle
-              class="MuiCircularProgress-circle MuiCircularProgress-circleIndeterminate css-19t5dcl-MuiCircularProgress-circle"
-              cx="44"
-              cy="44"
-              fill="none"
-              r="20.2"
-              stroke-width="3.6"
-            />
-          </svg>
-        </span>
-        <p
-          class="MuiTypography-root MuiTypography-body1 css-bn546x-MuiTypography-root"
-        >
-          Loading roles for
-          Test Tenant
-          ...
-        </p>
-      </div>
-    </div>
-  </body>
-</html>...
- ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
- ❯ src/components/__tests__/roles/RoleList.test.tsx:145:11
-    143|
-    144|     // ✅ Wait for the roles to load and render
-    145|     await waitFor(() => {
-       |           ^
-    146|       expect(screen.getByText('Admin')).toBeInTheDocument()
-    147|     }, { timeout: 5000 })
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
-
- Test Files  1 failed (1)
-      Tests  1 failed | 1 passed (2)
-   Start at  11:28:41
-   Duration  17.45s
+Test summary: total: 6, failed: 1, succeeded: 5, skipped: 0, duration: 153.9s
+Build failed with 1 error(s) in 155.4s

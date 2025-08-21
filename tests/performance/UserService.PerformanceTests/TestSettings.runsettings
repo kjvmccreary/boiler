@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <RunConfiguration>
+    <MaxCpuCount>0</MaxCpuCount>
+    <ResultsDirectory>.\TestResults</ResultsDirectory>
+    <TestSessionTimeout>300000</TestSessionTimeout>
+  </RunConfiguration>
+
+  <TestRunParameters>
+    <Parameter name="PerformanceTestEnabled" value="true" />
+    <Parameter name="MaxResponseTimeMs" value="100" />
+    <Parameter name="LoadTestDuration" value="120" />
+  </TestRunParameters>
+
+  <LoggerRunSettings>
+    <Loggers>
+      <Logger friendlyName="console" enabled="True" />
+      <Logger friendlyName="trx" enabled="True">
+        <Configuration>
+          <LogFileName>performance-test-results.trx</LogFileName>
+        </Configuration>
+      </Logger>
+    </Loggers>
+  </LoggerRunSettings>
+</RunSettings>

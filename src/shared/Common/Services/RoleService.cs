@@ -340,6 +340,7 @@ public class RoleService : IRoleService
         }
     }
 
+    // 🚀 PERFORMANCE OPTIMIZATION: Fix the N+1 query problem
     public async Task<IEnumerable<RoleInfo>> GetTenantRolesAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -350,18 +351,28 @@ public class RoleService : IRoleService
                 return Enumerable.Empty<RoleInfo>();
             }
 
-            var roles = await _roleRepository.Query()
-                .Where(r => r.TenantId == tenantId.Value || r.IsSystemRole)
-                .Where(r => r.IsActive)
+            // ✅ PERFORMANCE FIX: Load roles with permissions in a single query using Include
+            var roles = await _context.Roles
+                .Include(r => r.RolePermissions)
+                    .ThenInclude(rp => rp.Permission)
+                .Where(r => (r.TenantId == tenantId.Value || r.IsSystemRole) && r.IsActive)
                 .OrderBy(r => r.IsSystemRole ? 0 : 1)
                 .ThenBy(r => r.Name)
                 .ToListAsync(cancellationToken);
 
-            var roleInfos = new List<RoleInfo>();
-            foreach (var role in roles)
+            // ✅ PERFORMANCE FIX: Map using already loaded data instead of individual queries
+            var roleInfos = roles.Select(role => new RoleInfo
             {
-                roleInfos.Add(await MapToRoleInfoAsync(role, cancellationToken));
-            }
+                Id = role.Id,
+                Name = role.Name,
+                Description = role.Description,
+                IsSystemRole = role.IsSystemRole,
+                IsDefault = role.IsDefault,
+                TenantId = role.TenantId ?? 0,
+                Permissions = role.RolePermissions.Select(rp => rp.Permission.Name).ToList(),
+                CreatedAt = role.CreatedAt,
+                UpdatedAt = role.UpdatedAt
+            }).ToList();
 
             return roleInfos;
         }
@@ -577,16 +588,28 @@ public class RoleService : IRoleService
                 throw new UnauthorizedAccessException($"User {userId} does not have access to tenant {tenantId.Value}");
             }
 
+            // ✅ PERFORMANCE OPTIMIZATION: Load roles with permissions in one query
             var roles = await _context.UserRoles
+                .Include(ur => ur.Role)
+                    .ThenInclude(r => r.RolePermissions)
+                        .ThenInclude(rp => rp.Permission)
                 .Where(ur => ur.UserId == userId && ur.TenantId == tenantId.Value && ur.IsActive)
-                .Join(_context.Roles, ur => ur.RoleId, r => r.Id, (ur, r) => r)
+                .Select(ur => ur.Role)
                 .ToListAsync(cancellationToken);
 
-            var roleInfos = new List<RoleInfo>();
-            foreach (var role in roles)
+            // Map using already loaded data
+            var roleInfos = roles.Select(role => new RoleInfo
             {
-                roleInfos.Add(await MapToRoleInfoAsync(role, cancellationToken));
-            }
+                Id = role.Id,
+                Name = role.Name,
+                Description = role.Description,
+                IsSystemRole = role.IsSystemRole,
+                IsDefault = role.IsDefault,
+                TenantId = role.TenantId ?? 0,
+                Permissions = role.RolePermissions.Select(rp => rp.Permission.Name).ToList(),
+                CreatedAt = role.CreatedAt,
+                UpdatedAt = role.UpdatedAt
+            }).ToList();
 
             return roleInfos;
         }

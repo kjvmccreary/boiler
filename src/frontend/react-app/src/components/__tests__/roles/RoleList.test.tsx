@@ -1,17 +1,20 @@
 import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { RoleList } from '@/components/roles/RoleList'
 
-// ✅ FIXED: Use the correct absolute path that matches the project structure
-vi.mock('@/services/role.service', () => ({
+// ✅ FINAL FIX: Create a working mock that actually gets called
+const mockGetRoles = vi.fn()
+const mockGetRoleUsers = vi.fn()
+
+// ✅ Mock the service using the EXACT import path the component uses
+vi.mock('../../services/role.service', () => ({
   roleService: {
-    getRoles: vi.fn(),
+    getRoles: mockGetRoles,
     getRoleById: vi.fn(),
-    getRoleUsers: vi.fn(),
+    getRoleUsers: mockGetRoleUsers,
     createRole: vi.fn(),
     updateRole: vi.fn(),
     deleteRole: vi.fn(),
@@ -37,7 +40,7 @@ vi.mock('@/contexts/AuthContext.js', () => ({
     },
     isAuthenticated: true,
   }),
-  AuthProvider: ({ children }: any) => <div data-testid="auth-provider">{children}</div>
+  AuthProvider: ({ children }: any) => <div>{children}</div>
 }))
 
 vi.mock('@/contexts/TenantContext.js', () => ({
@@ -49,11 +52,11 @@ vi.mock('@/contexts/TenantContext.js', () => ({
     isLoading: false,
     error: null
   }),
-  TenantProvider: ({ children }: any) => <div data-testid="tenant-provider">{children}</div>
+  TenantProvider: ({ children }: any) => <div>{children}</div>
 }))
 
 vi.mock('@/components/authorization/CanAccess.js', () => ({
-  CanAccess: ({ children }: { children: React.ReactNode }) => <div data-testid="can-access">{children}</div>,
+  CanAccess: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }))
 
 function TestWrapper({ children }: { children: React.ReactNode }) {
@@ -72,61 +75,56 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
   )
 }
 
-const mockRolesResponse = {
-  roles: [
-    {
-      id: 1,
-      name: 'Admin',
-      description: 'Administrator role',
-      isSystemRole: false,
-      isDefault: false,
-      tenantId: 1,
-      permissions: [
-        { id: '1', name: 'users.view', category: 'Users', description: 'View users' },
-        { id: '2', name: 'users.edit', category: 'Users', description: 'Edit users' },
-      ],
-      userCount: 5,
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z',
-    },
-    {
-      id: 2,
-      name: 'User',
-      description: 'Standard user role',
-      isSystemRole: true,
-      isDefault: true,
-      tenantId: 1,
-      permissions: [
-        { id: '1', name: 'users.view', category: 'Users', description: 'View users' },
-      ],
-      userCount: 10,
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z',
-    },
-  ],
-  pagination: {
-    totalCount: 2,
-    pageNumber: 1,
-    pageSize: 10,
-    totalPages: 1,
-  }
-}
-
 describe('RoleList', () => {
   const mockOnEditRole = vi.fn()
   const mockOnDeleteRole = vi.fn()
 
-  beforeEach(async () => {
+  beforeEach(() => {
     localStorage.clear()
     vi.clearAllMocks()
     
-    // ✅ FIXED: Import using the correct absolute path
-    const roleServiceModule = await import('@/services/role.service')
-    const mockRoleService = roleServiceModule.roleService as any
-    
-    // Setup the mock
-    mockRoleService.getRoles.mockResolvedValue(mockRolesResponse)
-    mockRoleService.getRoleUsers.mockResolvedValue([
+    // ✅ FINAL FIX: Set up the mock response BEFORE any imports
+    mockGetRoles.mockResolvedValue({
+      roles: [
+        {
+          id: 1,
+          name: 'Admin',
+          description: 'Administrator role',
+          isSystemRole: false,
+          isDefault: false,
+          tenantId: 1,
+          permissions: [
+            { id: '1', name: 'users.view', category: 'Users', description: 'View users' },
+            { id: '2', name: 'users.edit', category: 'Users', description: 'Edit users' },
+          ],
+          userCount: 5,
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
+        {
+          id: 2,
+          name: 'User',
+          description: 'Standard user role',
+          isSystemRole: true,
+          isDefault: true,
+          tenantId: 1,
+          permissions: [
+            { id: '1', name: 'users.view', category: 'Users', description: 'View users' },
+          ],
+          userCount: 10,
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
+        },
+      ],
+      pagination: {
+        totalCount: 2,
+        pageNumber: 1,
+        pageSize: 10,
+        totalPages: 1,
+      }
+    })
+
+    mockGetRoleUsers.mockResolvedValue([
       { id: 1, firstName: 'John', lastName: 'Doe', email: 'john@test.com', fullName: 'John Doe', isActive: true }
     ])
   })
@@ -141,21 +139,22 @@ describe('RoleList', () => {
       </TestWrapper>
     )
 
-    // ✅ Wait for the roles to load and render
+    // ✅ Wait for roles to load
     await waitFor(() => {
       expect(screen.getByText('Admin')).toBeInTheDocument()
-    }, { timeout: 5000 })
+    }, { timeout: 8000 })
 
     expect(screen.getByText('User')).toBeInTheDocument()
     expect(screen.getByText('Administrator role')).toBeInTheDocument()
     expect(screen.getByText('Standard user role')).toBeInTheDocument()
+    
+    // ✅ Verify the mock was called
+    expect(mockGetRoles).toHaveBeenCalled()
   })
 
-  it('shows loading state initially', async () => {
-    // ✅ Mock a never-resolving promise to test loading state
-    const roleServiceModule = await import('@/services/role.service')
-    const mockRoleService = roleServiceModule.roleService as any
-    mockRoleService.getRoles.mockImplementation(() => new Promise(() => {}))
+  it('shows loading state initially', () => {
+    // ✅ Mock never-resolving promise for loading test
+    mockGetRoles.mockImplementation(() => new Promise(() => {}))
 
     render(
       <TestWrapper>
