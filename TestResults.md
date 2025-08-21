@@ -1,32 +1,192 @@
-Building Test Projects
-========== Starting test run ==========
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.04]   Starting:    UserService.Tests
-?? Starting CreateUserAsync test with detailed debugging
-?? TenantProvider returns: 1
-?? About to call CreateUserAsync
-?? PasswordService.HashPassword called
-?? CreateUserAsync returned: Success=False, Message='An error occurred while creating the user'
-?? EXCEPTION in CreateUserAsync test: Xunit.Sdk.XunitException: Expected result.Success to be true because CreateUser should succeed but failed with: An error occurred while creating the user, but found False.
-   at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-   at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-   at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-   at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-   at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-   at FluentAssertions.Primitives.BooleanAssertions`1.BeTrue(String because, Object[] becauseArgs)
-   at UserService.Tests.UserServiceTests.CreateUserAsync_WithValidData_ShouldCreateActiveUser() in C:\Users\mccre\dev\boiler\tests\unit\UserService.Tests\UserServiceTests.cs:line 190
-[xUnit.net 00:00:00.55]     UserService.Tests.UserServiceTests.CreateUserAsync_WithValidData_ShouldCreateActiveUser [FAIL]
-[xUnit.net 00:00:00.55]       Expected result.Success to be true because CreateUser should succeed but failed with: An error occurred while creating the user, but found False.
-[xUnit.net 00:00:00.55]       Stack Trace:
-[xUnit.net 00:00:00.55]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:00.55]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:00.55]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:00.55]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.55]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.55]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[xUnit.net 00:00:00.55]            at FluentAssertions.Primitives.BooleanAssertions`1.BeTrue(String because, Object[] becauseArgs)
-[xUnit.net 00:00:00.55]         C:\Users\mccre\dev\boiler\tests\unit\UserService.Tests\UserServiceTests.cs(190,0): at UserService.Tests.UserServiceTests.CreateUserAsync_WithValidData_ShouldCreateActiveUser()
-[xUnit.net 00:00:00.55]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.55]   Finished:    UserService.Tests
-========== Test run finished: 1 Tests (0 Passed, 1 Failed, 0 Skipped) run in 563 ms ==========
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/components/__tests__/roles/RoleList.test.tsx > RoleList > renders roles list correctly
+TestingLibraryElementError: Unable to find an element with the text: Admin. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="MuiBox-root css-qd5mg9"
+    >
+      <span
+        class="MuiCircularProgress-root MuiCircularProgress-indeterminate MuiCircularProgress-colorPrimary css-1wxecgq-MuiCircularProgress-root"
+        role="progressbar"
+        style="width: 40px; height: 40px;"
+      >
+        <svg
+          class="MuiCircularProgress-svg css-54pwck-MuiCircularProgress-svg"
+          viewBox="22 22 44 44"
+        >
+          <circle
+            class="MuiCircularProgress-circle MuiCircularProgress-circleIndeterminate css-19t5dcl-MuiCircularProgress-circle"
+            cx="44"
+            cy="44"
+            fill="none"
+            r="20.2"
+            stroke-width="3.6"
+          />
+        </svg>
+      </span>
+      <p
+        class="MuiTypography-root MuiTypography-body1 css-bn546x-MuiTypography-root"
+      >
+        Loading roles for
+        Test Tenant
+        ...
+      </p>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<html>
+  <head>
+    <meta
+      content=""
+      name="emotion-insertion-point"
+    />
+  </head>
+  <body>
+    <div>
+      <div
+        class="MuiBox-root css-qd5mg9"
+      >
+        <span
+          class="MuiCircularProgress-root MuiCircularProgress-indeterminate MuiCircularProgress-colorPrimary css-1wxecgq-MuiCircularProgress-root"
+          role="progressbar"
+          style="width: 40px; height: 40px;"
+        >
+          <svg
+            class="MuiCircularProgress-svg css-54pwck-MuiCircularProgress-svg"
+            viewBox="22 22 44 44"
+          >
+            <circle
+              class="MuiCircularProgress-circle MuiCircularProgress-circleIndeterminate css-19t5dcl-MuiCircularProgress-circle"
+              cx="44"
+              cy="44"
+              fill="none"
+              r="20.2"
+              stroke-width="3.6"
+            />
+          </svg>
+        </span>
+        <p
+          class="MuiTypography-root MuiTypography-body1 css-bn546x-MuiTypography-root"
+        >
+          Loading roles for
+          Test Tenant
+          ...
+        </p>
+      </div>
+    </div>
+  </body>
+</html>...
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/__tests__/roles/RoleList.test.tsx:145:11
+    143|
+    144|     // ✅ Wait for the roles to load and render
+    145|     await waitFor(() => {
+       |           ^
+    146|       expect(screen.getByText('Admin')).toBeInTheDocument()
+    147|     }, { timeout: 5000 })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/components/__tests__/roles/RoleList.test.tsx > RoleList > renders roles list correctly
+TestingLibraryElementError: Unable to find an element with the text: Admin. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="MuiBox-root css-qd5mg9"
+    >
+      <span
+        class="MuiCircularProgress-root MuiCircularProgress-indeterminate MuiCircularProgress-colorPrimary css-1wxecgq-MuiCircularProgress-root"
+        role="progressbar"
+        style="width: 40px; height: 40px;"
+      >
+        <svg
+          class="MuiCircularProgress-svg css-54pwck-MuiCircularProgress-svg"
+          viewBox="22 22 44 44"
+        >
+          <circle
+            class="MuiCircularProgress-circle MuiCircularProgress-circleIndeterminate css-19t5dcl-MuiCircularProgress-circle"
+            cx="44"
+            cy="44"
+            fill="none"
+            r="20.2"
+            stroke-width="3.6"
+          />
+        </svg>
+      </span>
+      <p
+        class="MuiTypography-root MuiTypography-body1 css-bn546x-MuiTypography-root"
+      >
+        Loading roles for
+        Test Tenant
+        ...
+      </p>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<html>
+  <head>
+    <meta
+      content=""
+      name="emotion-insertion-point"
+    />
+  </head>
+  <body>
+    <div>
+      <div
+        class="MuiBox-root css-qd5mg9"
+      >
+        <span
+          class="MuiCircularProgress-root MuiCircularProgress-indeterminate MuiCircularProgress-colorPrimary css-1wxecgq-MuiCircularProgress-root"
+          role="progressbar"
+          style="width: 40px; height: 40px;"
+        >
+          <svg
+            class="MuiCircularProgress-svg css-54pwck-MuiCircularProgress-svg"
+            viewBox="22 22 44 44"
+          >
+            <circle
+              class="MuiCircularProgress-circle MuiCircularProgress-circleIndeterminate css-19t5dcl-MuiCircularProgress-circle"
+              cx="44"
+              cy="44"
+              fill="none"
+              r="20.2"
+              stroke-width="3.6"
+            />
+          </svg>
+        </span>
+        <p
+          class="MuiTypography-root MuiTypography-body1 css-bn546x-MuiTypography-root"
+        >
+          Loading roles for
+          Test Tenant
+          ...
+        </p>
+      </div>
+    </div>
+  </body>
+</html>...
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/components/__tests__/roles/RoleList.test.tsx:145:11
+    143|
+    144|     // ✅ Wait for the roles to load and render
+    145|     await waitFor(() => {
+       |           ^
+    146|       expect(screen.getByText('Admin')).toBeInTheDocument()
+    147|     }, { timeout: 5000 })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 passed (2)
+   Start at  11:28:41
+   Duration  17.45s
