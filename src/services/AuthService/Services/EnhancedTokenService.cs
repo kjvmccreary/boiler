@@ -99,6 +99,59 @@ public class EnhancedTokenService : ITokenService
             }
         }
 
+        // ✅ ADD: Include system roles (TenantId == null) always
+        try
+        {
+            var systemRoles = await _context.UserRoles
+                .IgnoreQueryFilters()
+                .Where(ur => ur.UserId == user.Id &&
+                             ur.IsActive &&
+                             ur.Role != null &&
+                             ur.Role.IsSystemRole &&
+                             ur.Role.IsActive)
+                .Include(ur => ur.Role)
+                .ToListAsync();
+
+            foreach (var sr in systemRoles)
+            {
+                if (sr.Role != null && !claims.Any(c => c.Type == ClaimTypes.Role && c.Value == sr.Role.Name))
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, sr.Role.Name));
+                    _logger.LogInformation("🔍 JWT: Added system role claim '{RoleName}' for user {UserId}", sr.Role.Name, user.Id);
+                }
+            }
+
+            // Pull system role permissions directly to ensure presence
+            var systemRoleIds = systemRoles.Select(r => r.RoleId).Distinct().ToList();
+            if (systemRoleIds.Any())
+            {
+                var sysPerms = await _context.RolePermissions
+                    .Where(rp => systemRoleIds.Contains(rp.RoleId))
+                    .Include(rp => rp.Permission)
+                    .ToListAsync();
+
+                int sysPermAdded = 0;
+                foreach (var rp in sysPerms)
+                {
+                    if (rp.Permission?.IsActive == true &&
+                        !claims.Any(c => c.Type == "permission" && c.Value == rp.Permission.Name))
+                    {
+                        claims.Add(new Claim("permission", rp.Permission.Name));
+                        sysPermAdded++;
+                    }
+                }
+
+                if (sysPermAdded > 0)
+                {
+                    _logger.LogInformation("🔍 JWT: Added {Count} system permissions (from system roles) for user {UserId}", sysPermAdded, user.Id);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "🔍 JWT: Failed to enrich token with system roles/permissions for user {UserId}", user.Id);
+        }
+
         // Include user permissions in JWT claims for better performance
         try
         {
@@ -141,7 +194,7 @@ public class EnhancedTokenService : ITokenService
     public Task<string> GenerateAccessTokenWithoutTenantAsync(User user)
     {
         _logger.LogInformation("🔍 TOKEN DEBUG: Generating tenant-less JWT for user {UserId}", user.Id);
-        
+
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -151,31 +204,57 @@ public class EnhancedTokenService : ITokenService
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new(JwtRegisteredClaimNames.Iat, 
+            new(JwtRegisteredClaimNames.Iat,
                 DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
                 ClaimValueTypes.Integer64)
-            
-            // 🔧 CRITICAL: NO tenant_id claim - this signals tenant selection needed
-            // 🔧 CRITICAL: NO role claims yet - will be added after tenant selection
-            // 🔧 CRITICAL: NO permission claims yet - will be added after tenant selection
         };
 
-        _logger.LogInformation("🔍 TOKEN DEBUG: Tenant-less token will have {ClaimCount} claims (no tenant/roles/permissions)", claims.Count);
-        
+        // ✅ ADD: System roles & permissions (TenantId == null)
+        var systemUserRoles = _context.UserRoles
+            .IgnoreQueryFilters()
+            .Where(ur => ur.UserId == user.Id && ur.IsActive && ur.Role != null && ur.Role.IsSystemRole && ur.Role.IsActive)
+            .Include(ur => ur.Role)
+            .ToList();
+
+        foreach (var sur in systemUserRoles)
+        {
+            if (sur.Role != null)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, sur.Role.Name));
+            }
+        }
+
+        // Direct system permissions from those roles
+        var sysPerms = _context.RolePermissions
+            .Where(rp => systemUserRoles.Select(sur => sur.RoleId).Contains(rp.RoleId))
+            .Include(rp => rp.Permission)
+            .ToList();
+
+        int sysAdded = 0;
+        foreach (var rp in sysPerms)
+        {
+            if (rp.Permission?.IsActive == true &&
+                !claims.Any(c => c.Type == "permission" && c.Value == rp.Permission.Name))
+            {
+                claims.Add(new Claim("permission", rp.Permission.Name));
+                sysAdded++;
+            }
+        }
+
+        _logger.LogInformation("🔍 TOKEN DEBUG: Tenant-less system roles={RoleCount}, system permissions added={PermCount}",
+            systemUserRoles.Count, sysAdded);
+
+        // (Existing token build code unchanged below)
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSettings.SecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
         var token = new JwtSecurityToken(
             issuer: _jwtSettings.Issuer,
             audience: _jwtSettings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(15), // 🔧 Shorter expiry for tenant selection
-            signingCredentials: credentials
-        );
+            expires: DateTime.UtcNow.AddMinutes(15),
+            signingCredentials: credentials);
 
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-        _logger.LogInformation("🔍 TOKEN DEBUG: Tenant-less token generation completed for user {UserId}", user.Id);
-        
         return Task.FromResult(tokenString);
     }
 

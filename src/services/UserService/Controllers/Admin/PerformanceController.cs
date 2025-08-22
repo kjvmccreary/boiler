@@ -5,6 +5,7 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
+using Common.Constants; // ✅ add
 
 namespace UserService.Controllers.Admin
 {
@@ -13,7 +14,7 @@ namespace UserService.Controllers.Admin
     /// </summary>
     [ApiController]
     [Route("api/admin/performance")]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "RedisMonitoring")]
     public class PerformanceController : ControllerBase
     {
         private readonly IPerformanceMetricsService _metricsService;
@@ -35,7 +36,7 @@ namespace UserService.Controllers.Admin
         {
             try
             {
-                var period = periodHours.HasValue ? TimeSpan.FromHours(periodHours.Value) : null;
+                TimeSpan? period = periodHours.HasValue ? TimeSpan.FromHours(periodHours.Value) : null;
 
                 var dashboard = new PerformanceDashboard
                 {
@@ -62,7 +63,7 @@ namespace UserService.Controllers.Admin
         {
             try
             {
-                var period = periodHours.HasValue ? TimeSpan.FromHours(periodHours.Value) : null;
+                TimeSpan? period = periodHours.HasValue ? TimeSpan.FromHours(periodHours.Value) : null;
                 var metrics = await _metricsService.GetCacheMetricsAsync(period);
                 return Ok(metrics);
             }
@@ -81,7 +82,7 @@ namespace UserService.Controllers.Admin
         {
             try
             {
-                var period = periodHours.HasValue ? TimeSpan.FromHours(periodHours.Value) : null;
+                TimeSpan? period = periodHours.HasValue ? TimeSpan.FromHours(periodHours.Value) : null;
                 var metrics = await _metricsService.GetApiMetricsAsync(period);
                 return Ok(metrics);
             }
@@ -118,7 +119,7 @@ namespace UserService.Controllers.Admin
         {
             try
             {
-                var period = periodHours.HasValue ? TimeSpan.FromHours(periodHours.Value) : null;
+                TimeSpan? period = periodHours.HasValue ? TimeSpan.FromHours(periodHours.Value) : null;
                 
                 var cacheMetrics = await _metricsService.GetCacheMetricsAsync(period);
                 var apiMetrics = await _metricsService.GetApiMetricsAsync(period);
@@ -151,6 +152,7 @@ namespace UserService.Controllers.Admin
         /// Clear all performance metrics (Admin only)
         /// </summary>
         [HttpDelete("clear")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<ActionResult> ClearMetrics()
         {
             try
@@ -174,7 +176,7 @@ namespace UserService.Controllers.Admin
         {
             try
             {
-                var period = periodHours.HasValue ? TimeSpan.FromHours(periodHours.Value) : null;
+                TimeSpan? period = periodHours.HasValue ? TimeSpan.FromHours(periodHours.Value) : null;
                 var apiMetrics = await _metricsService.GetApiMetricsAsync(period);
 
                 var analysis = new EndpointAnalysis();

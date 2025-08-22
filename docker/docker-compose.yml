@@ -90,7 +90,6 @@ services:
       Redis__ConnectionString: "redis:6379"
       TenantSettings__DefaultTenantId: "1"
       TenantSettings__RequireTenantContext: "false"
-      TenantSettings__EnableRowLevelSecurity: "true"
     depends_on:
       postgres:
         condition: service_healthy

@@ -4,18 +4,17 @@ using Common.Caching;
 using Common.Performance;
 using System;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
+using System.Linq;
+using System.Collections.Generic;
+using Common.Constants;
 
 namespace UserService.Controllers.Admin
 {
-    /// <summary>
-    /// Cache management and administration tools
-    /// </summary>
     [ApiController]
     [Route("api/admin/cache")]
-    [Authorize(Policy = "AdminOnly")]
+    [Authorize(Policy = "RedisMonitoring")]
     public class CacheManagementController : ControllerBase
     {
         private readonly ICacheService _cacheService;
@@ -35,52 +34,91 @@ namespace UserService.Controllers.Admin
             _logger = logger;
         }
 
-        /// <summary>
-        /// Get Redis connection status and basic info
-        /// </summary>
         [HttpGet("status")]
         public async Task<ActionResult<CacheStatus>> GetCacheStatus()
         {
+            var status = new CacheStatus
+            {
+                IsConnected = _redis.IsConnected,
+                Timestamp = DateTime.UtcNow,
+                RedisVersion = "Unknown",
+                UsedMemory = "Unknown"
+            };
+
+            if (!_redis.IsConnected)
+                return Ok(status); // 200 with IsConnected=false
+
             try
             {
-                var status = new CacheStatus
+                var endpoints = _redis.GetEndPoints();
+                if (endpoints == null || endpoints.Length == 0)
                 {
-                    IsConnected = _redis.IsConnected,
-                    Timestamp = DateTime.UtcNow
-                };
-
-                if (_redis.IsConnected)
-                {
-                    var server = _redis.GetServer(_redis.GetEndPoints()[0]);
-                    var info = await server.InfoAsync();
-                    
-                    status.RedisVersion = info.FirstOrDefault(i => i.Key == "redis_version").Value ?? "Unknown";
-                    status.ServerUptime = TimeSpan.FromSeconds(
-                        long.TryParse(info.FirstOrDefault(i => i.Key == "uptime_in_seconds").Value, out var uptime) 
-                        ? uptime : 0);
-                    
-                    var memInfo = info.FirstOrDefault(i => i.Key == "used_memory_human").Value;
-                    status.UsedMemory = memInfo ?? "Unknown";
-
-                    // Get key counts by pattern
-                    status.TotalKeys = server.Keys(pattern: "*").Count();
-                    status.PermissionKeys = server.Keys(pattern: "permissions:*").Count();
-                    status.UserKeys = server.Keys(pattern: "*user*").Count();
+                    _logger.LogWarning("Redis returned no endpoints");
+                    return Ok(status);
                 }
+
+                var server = _redis.GetServer(endpoints[0]);
+
+                // INFO section
+                try
+                {
+                    var infoGroups = await server.InfoAsync();
+                    var flat = infoGroups.SelectMany(g => g);
+
+                    string? GetInfo(string key) => flat.FirstOrDefault(i => i.Key == key).Value;
+
+                    status.RedisVersion = GetInfo("redis_version") ?? "Unknown";
+
+                    if (long.TryParse(GetInfo("uptime_in_seconds"), out var uptimeSeconds))
+                        status.ServerUptime = TimeSpan.FromSeconds(uptimeSeconds);
+
+                    status.UsedMemory = GetInfo("used_memory_human") ?? "Unknown";
+                }
+                catch (Exception exInfo)
+                {
+                    _logger.LogWarning(exInfo, "Failed Redis INFO (AllowAdmin missing or restricted) – continuing");
+                }
+
+                // Key counts (each guarded)
+                status.TotalKeys = SafeCountKeys(server, "*");
+                status.PermissionKeys = SafeCountKeys(server, "permissions:*");
+                status.UserKeys = SafeCountKeys(server, "*user*");
 
                 return Ok(status);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving cache status");
-                return StatusCode(500, new { error = "Failed to retrieve cache status" });
+                _logger.LogError(ex, "Error retrieving cache status (outer)");
+                // Return partial (not throwing) to keep UX predictable
+                return StatusCode(500, new { error = "Failed to retrieve cache status", detail = "See logs" });
             }
         }
 
-        /// <summary>
-        /// Clear all permission caches
-        /// </summary>
+        private int SafeCountKeys(IServer server, string pattern)
+        {
+            try
+            {
+                int count = 0;
+                foreach (var key in server.Keys(pattern: pattern, pageSize: 250))
+                {
+                    count++;
+                    if (count >= 100_000)
+                    {
+                        _logger.LogWarning("Aborting key count early for pattern {Pattern} at {Count}", pattern, count);
+                        break;
+                    }
+                }
+                return count;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Key enumeration failed for pattern {Pattern}", pattern);
+                return -1; // sentinel for failure
+            }
+        }
+
         [HttpDelete("permissions")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<ActionResult> ClearPermissionCaches()
         {
             try
@@ -96,10 +134,8 @@ namespace UserService.Controllers.Admin
             }
         }
 
-        /// <summary>
-        /// Clear permission cache for specific tenant
-        /// </summary>
         [HttpDelete("permissions/tenant/{tenantId}")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<ActionResult> ClearTenantPermissionCaches(int tenantId)
         {
             try
@@ -115,10 +151,8 @@ namespace UserService.Controllers.Admin
             }
         }
 
-        /// <summary>
-        /// Clear permission cache for specific user
-        /// </summary>
         [HttpDelete("permissions/user/{userId}/tenant/{tenantId}")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<ActionResult> ClearUserPermissionCache(int userId, int tenantId)
         {
             try
@@ -136,10 +170,8 @@ namespace UserService.Controllers.Admin
             }
         }
 
-        /// <summary>
-        /// Clear all caches (DANGEROUS - Admin only)
-        /// </summary>
         [HttpDelete("all")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<ActionResult> ClearAllCaches()
         {
             try
@@ -155,23 +187,13 @@ namespace UserService.Controllers.Admin
             }
         }
 
-        /// <summary>
-        /// Warm up permission caches for a tenant
-        /// </summary>
         [HttpPost("warm/permissions/tenant/{tenantId}")]
-        public async Task<ActionResult> WarmPermissionCaches(int tenantId)
+        [Authorize(Policy = "AdminOnly")]
+        public ActionResult WarmPermissionCaches(int tenantId)
         {
             try
             {
-                // This would trigger cache warming - you'd implement this based on your business logic
-                // For now, we'll just acknowledge the request
                 _logger.LogInformation("Permission cache warming requested for tenant {TenantId}", tenantId);
-                
-                // You could implement actual cache warming here by:
-                // 1. Getting all users in the tenant
-                // 2. Pre-loading their permissions
-                // 3. Pre-loading role permissions
-                
                 return Ok(new { 
                     message = $"Permission cache warming initiated for tenant {tenantId}",
                     note = "Cache warming is running in background"
@@ -184,11 +206,8 @@ namespace UserService.Controllers.Admin
             }
         }
 
-        /// <summary>
-        /// Get cache keys matching a pattern (for debugging)
-        /// </summary>
         [HttpGet("keys")]
-        public async Task<ActionResult<CacheKeysResponse>> GetCacheKeys(
+        public ActionResult<CacheKeysResponse> GetCacheKeys(
             [FromQuery] string pattern = "*", 
             [FromQuery] int limit = 100)
         {
@@ -220,7 +239,6 @@ namespace UserService.Controllers.Admin
         }
     }
 
-    // DTOs
     public class CacheStatus
     {
         public bool IsConnected { get; set; }
