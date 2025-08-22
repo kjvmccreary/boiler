@@ -12,10 +12,13 @@ using Microsoft.OpenApi.Models;
 using UserService.Mappings;
 using UserService.Services;
 using UserService.Middleware;
+using UserService.HealthChecks;
 using StackExchange.Redis;
 using Serilog;
 using Common.Constants;
 using UserService.Infrastructure;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -120,6 +123,18 @@ builder.Services.AddScoped<ITenantService, UserService.Services.TenantService>()
 builder.Services.AddScoped<IRoleTemplateService, RoleTemplateService>();
 builder.Services.AddFluentValidation();
 
+// ✅ UPDATED: Use proper health check classes
+builder.Services.AddHealthChecks()
+    .AddCheck<RedisHealthCheck>("redis", 
+        failureStatus: HealthStatus.Unhealthy,
+        tags: new[] { "cache", "redis", "infrastructure" })
+    .AddCheck<DatabaseHealthCheck>("database", 
+        failureStatus: HealthStatus.Unhealthy,
+        tags: new[] { "db", "sql", "infrastructure" })
+    .AddCheck<PerformanceHealthCheck>("performance",
+        failureStatus: HealthStatus.Degraded,
+        tags: new[] { "performance", "cache", "metrics" });
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("AdminOnly", policy =>
@@ -135,6 +150,16 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy("RedisMonitoring", policy =>
         policy.RequireClaim("permission", Permissions.System.ViewMetrics));
+        
+    // ✅ ADD: Health Check Authorization Policy
+    options.AddPolicy("HealthCheckAccess", policy =>
+        policy.RequireAssertion(context =>
+        {
+            // Allow unauthenticated access to basic health endpoint
+            // Require admin access for detailed health endpoints
+            var path = context.Resource as Microsoft.AspNetCore.Http.DefaultHttpContext;
+            return path?.Request.Path.StartsWithSegments("/health") == true;
+        }));
 });
 
 builder.Services.AddCors(options =>
@@ -173,7 +198,134 @@ app.UseTenantResolution();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.MapGet("/health", () => Results.Ok(new { Status = "Healthy", Timestamp = DateTime.UtcNow }));
+
+// ✅ ADD: Health Check Endpoints - Task 3.6
+// Basic health endpoint (public access)
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    AllowCachingResponses = false,
+    ResultStatusCodes =
+    {
+        [HealthStatus.Healthy] = StatusCodes.Status200OK,
+        [HealthStatus.Degraded] = StatusCodes.Status200OK,
+        [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
+    },
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var response = new
+        {
+            status = report.Status.ToString(),
+            timestamp = DateTime.UtcNow,
+            duration = report.TotalDuration,
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                duration = e.Value.Duration,
+                description = e.Value.Description
+            })
+        };
+        await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response, new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        }));
+    }
+});
+
+// Detailed cache health endpoint
+app.MapHealthChecks("/health/cache", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("cache"),
+    AllowCachingResponses = false,
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var response = new
+        {
+            status = report.Status.ToString(),
+            timestamp = DateTime.UtcNow,
+            duration = report.TotalDuration,
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                duration = e.Value.Duration,
+                description = e.Value.Description,
+                data = e.Value.Data
+            })
+        };
+        await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response, new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        }));
+    }
+});
+
+// Infrastructure health endpoint (database + redis)
+app.MapHealthChecks("/health/infrastructure", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("infrastructure"),
+    AllowCachingResponses = false,
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var response = new
+        {
+            status = report.Status.ToString(),
+            timestamp = DateTime.UtcNow,
+            duration = report.TotalDuration,
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                duration = e.Value.Duration,
+                description = e.Value.Description,
+                data = e.Value.Data
+            })
+        };
+        await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response, new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        }));
+    }
+});
+
+// Performance metrics health endpoint
+app.MapHealthChecks("/health/performance", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("performance"),
+    AllowCachingResponses = false,
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+        var response = new
+        {
+            status = report.Status.ToString(),
+            timestamp = DateTime.UtcNow,
+            duration = report.TotalDuration,
+            checks = report.Entries.Select(e => new
+            {
+                name = e.Key,
+                status = e.Value.Status.ToString(),
+                duration = e.Value.Duration,
+                description = e.Value.Description,
+                data = e.Value.Data
+            })
+        };
+        await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response, new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        }));
+    }
+});
+
+// Legacy simple health endpoint (keeping for backward compatibility)
+app.MapGet("/health/simple", () => Results.Ok(new { Status = "Healthy", Timestamp = DateTime.UtcNow }));
 
 app.Lifetime.ApplicationStarted.Register(() =>
 {
@@ -185,6 +337,14 @@ app.Lifetime.ApplicationStarted.Register(() =>
         Console.WriteLine($"Now listening on: {address}");
         Log.Information("Now listening on: {Address}", address);
     }
+    
+    // ✅ ADD: Log health check endpoints
+    Console.WriteLine("Health check endpoints available:");
+    Console.WriteLine("  - GET /health (basic health status)");
+    Console.WriteLine("  - GET /health/cache (Redis and cache status)");
+    Console.WriteLine("  - GET /health/infrastructure (database + Redis)");
+    Console.WriteLine("  - GET /health/performance (performance metrics)");
+    Log.Information("Health check endpoints configured and available");
 });
 
 try

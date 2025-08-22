@@ -50,12 +50,12 @@ namespace Common.Caching
                 if (value.IsNullOrEmpty)
                 {
                     _logger.LogDebug("Cache miss for key: {Key}", key);
-                    await _metricsService?.RecordCacheMissAsync(key, typeof(T).Name, stopwatch.Elapsed)!;
+                    _metricsService?.RecordCacheMiss(key, typeof(T).Name, stopwatch.Elapsed);
                     return default(T);
                 }
 
                 _logger.LogDebug("Cache hit for key: {Key}", key);
-                await _metricsService?.RecordCacheHitAsync(key, typeof(T).Name, stopwatch.Elapsed)!;
+                _metricsService?.RecordCacheHit(key, typeof(T).Name, stopwatch.Elapsed);
                 
                 return JsonSerializer.Deserialize<T>(value!, _jsonOptions);
             }
@@ -63,7 +63,7 @@ namespace Common.Caching
             {
                 stopwatch.Stop();
                 _logger.LogError(ex, "Error getting cache key: {Key}", key);
-                await _metricsService?.RecordCacheMissAsync(key, typeof(T).Name, stopwatch.Elapsed)!;
+                _metricsService?.RecordCacheMiss(key, typeof(T).Name, stopwatch.Elapsed);
                 return default(T);
             }
         }
@@ -80,7 +80,7 @@ namespace Common.Caching
                 await _database.StringSetAsync(key, json, expiration);
                 stopwatch.Stop();
                 
-                await _metricsService?.RecordCacheSetAsync(key, typeof(T).Name, stopwatch.Elapsed)!;
+                _metricsService?.RecordCacheSet(key, typeof(T).Name, stopwatch.Elapsed);
                 
                 _logger.LogDebug("Set cache key: {Key} with expiration: {Expiration}", 
                     key, expiration?.ToString() ?? "Never");

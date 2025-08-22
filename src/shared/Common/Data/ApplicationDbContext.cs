@@ -180,9 +180,11 @@ public class ApplicationDbContext : DbContext
         {
             try
             {
+                // ✅ FIX: Properly handle parameters to avoid warning
+                var tenantIdParam = tenantId.ToString();
                 await Database.ExecuteSqlRawAsync(
                     "SELECT set_config('app.tenant_id', {0}, false)", 
-                    tenantId.ToString()); // 🔧 FIX: Remove the cancellationToken parameter to fix warning
+                    tenantIdParam);
             }
             catch
             {
