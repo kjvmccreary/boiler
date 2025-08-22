@@ -37,7 +37,7 @@ public static class DatabaseExtensions
         services.AddScoped<ITenantManagementRepository, TenantManagementRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         
-        // ADD: RBAC Repository registrations
+        // RBAC Repository registrations
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IUserRoleRepository, UserRoleRepository>();
         services.AddScoped<IPermissionRepository, PermissionRepository>();
@@ -45,10 +45,11 @@ public static class DatabaseExtensions
         // Service registrations
         services.AddScoped<ITenantProvider, TenantProvider>();
         services.AddScoped<IPermissionService, PermissionService>();
-        
-        // ADD: RBAC Service registrations
         services.AddScoped<IRoleService, RoleService>();
-        services.AddScoped<IAuditService, AuditService>();
+        
+        // ENHANCED: Register Enhanced Audit Service (Phase 11)
+        services.AddScoped<IAuditService, EnhancedAuditService>();
+        services.AddScoped<IEnhancedAuditService, EnhancedAuditService>();
         
         return services;
     }

@@ -36,6 +36,11 @@ public class ApplicationDbContext : DbContext
     // 🔧 ADD: Audit table
     public DbSet<AuditEntry> AuditEntries { get; set; }
 
+    // Enhanced audit tables (Phase 11)
+    public DbSet<PermissionAuditEntry> PermissionAuditEntries { get; set; }
+    public DbSet<RoleChangeAuditEntry> RoleChangeAuditEntries { get; set; }
+    public DbSet<SecurityEventAuditEntry> SecurityEventAuditEntries { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Apply global query filters for tenant isolation
@@ -56,6 +61,11 @@ public class ApplicationDbContext : DbContext
         // 🔧 ADD: Audit configuration
         ConfigureAuditEntry(modelBuilder);
 
+        // Phase 11 audit configurations
+        ConfigurePermissionAuditEntry(modelBuilder);
+        ConfigureRoleChangeAuditEntry(modelBuilder);
+        ConfigureSecurityEventAuditEntry(modelBuilder);
+        
         base.OnModelCreating(modelBuilder);
     }
 
@@ -108,6 +118,19 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<AuditEntry>().HasQueryFilter(ae => 
             EF.Property<int?>(ae, "TenantId") == null || 
             EF.Property<int?>(ae, "TenantId") == GetCurrentTenantIdFromProvider());
+
+        // 🔧 FIX: Add tenant filters for ENHANCED AUDIT ENTITIES
+        modelBuilder.Entity<PermissionAuditEntry>().HasQueryFilter(pae => 
+            EF.Property<int?>(pae, "TenantId") == null || 
+            EF.Property<int?>(pae, "TenantId") == GetCurrentTenantIdFromProvider());
+
+        modelBuilder.Entity<RoleChangeAuditEntry>().HasQueryFilter(rcae => 
+            EF.Property<int?>(rcae, "TenantId") == null || 
+            EF.Property<int?>(rcae, "TenantId") == GetCurrentTenantIdFromProvider());
+
+        modelBuilder.Entity<SecurityEventAuditEntry>().HasQueryFilter(seae => 
+            EF.Property<int?>(seae, "TenantId") == null || 
+            EF.Property<int?>(seae, "TenantId") == GetCurrentTenantIdFromProvider());
 
         // Note: Permissions are global (no tenant filter)
         // Note: Tenants are global for tenant management (no tenant filter)
@@ -180,11 +203,10 @@ public class ApplicationDbContext : DbContext
         {
             try
             {
-                // ✅ FIX: Properly handle parameters to avoid warning
-                var tenantIdParam = tenantId.ToString();
+                // ✅ FIX: Properly handle parameters to avoid warning - provide parameters array
                 await Database.ExecuteSqlRawAsync(
                     "SELECT set_config('app.tenant_id', {0}, false)", 
-                    tenantIdParam);
+                    new object[] { tenantId.Value }); // Fix: Explicit object array
             }
             catch
             {
@@ -259,9 +281,116 @@ public class ApplicationDbContext : DbContext
         });
     }
 
-    // Existing configuration methods...
-    private void ConfigureTenant(ModelBuilder modelBuilder)
+    // Add these configuration methods to your existing ApplicationDbContext:
+
+private void ConfigurePermissionAuditEntry(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<PermissionAuditEntry>(entity =>
     {
+        entity.HasKey(e => e.Id);
+        entity.HasIndex(e => new { e.TenantId, e.Timestamp }).HasDatabaseName("IX_PermissionAudit_Tenant_Time");
+        entity.HasIndex(e => new { e.UserId, e.Timestamp }).HasDatabaseName("IX_PermissionAudit_User_Time");
+        entity.HasIndex(e => new { e.Permission, e.Granted }).HasDatabaseName("IX_PermissionAudit_Permission_Granted");
+        
+        entity.Property(e => e.TenantId).IsRequired();
+        entity.Property(e => e.UserId).IsRequired();
+        entity.Property(e => e.Permission).IsRequired().HasMaxLength(100);
+        entity.Property(e => e.Resource).IsRequired().HasMaxLength(255);
+        entity.Property(e => e.DenialReason).HasMaxLength(500);
+        entity.Property(e => e.IpAddress).HasMaxLength(50);
+        entity.Property(e => e.UserAgent).HasMaxLength(500);
+        entity.Property(e => e.Timestamp).IsRequired();
+
+        // Relationships
+        entity.HasOne(e => e.Tenant)
+              .WithMany()
+              .HasForeignKey(e => e.TenantId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+        entity.HasOne(e => e.User)
+              .WithMany()
+              .HasForeignKey(e => e.UserId)
+              .OnDelete(DeleteBehavior.Restrict);
+    });
+}
+
+private void ConfigureRoleChangeAuditEntry(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<RoleChangeAuditEntry>(entity =>
+    {
+        entity.HasKey(e => e.Id);
+        entity.HasIndex(e => new { e.TenantId, e.Timestamp }).HasDatabaseName("IX_RoleChangeAudit_Tenant_Time");
+        entity.HasIndex(e => new { e.RoleId, e.Timestamp }).HasDatabaseName("IX_RoleChangeAudit_Role_Time");
+        entity.HasIndex(e => e.ChangeType).HasDatabaseName("IX_RoleChangeAudit_ChangeType");
+        
+        entity.Property(e => e.TenantId).IsRequired();
+        entity.Property(e => e.RoleId).IsRequired();
+        entity.Property(e => e.RoleName).IsRequired().HasMaxLength(100);
+        entity.Property(e => e.ChangeType).IsRequired().HasMaxLength(50);
+        entity.Property(e => e.OldValue).HasColumnType("jsonb");
+        entity.Property(e => e.NewValue).HasColumnType("jsonb");
+        entity.Property(e => e.ChangedByUserId).IsRequired();
+        entity.Property(e => e.ChangedByEmail).HasMaxLength(255);
+        entity.Property(e => e.IpAddress).HasMaxLength(50);
+        entity.Property(e => e.UserAgent).HasMaxLength(500);
+        entity.Property(e => e.Timestamp).IsRequired();
+
+        // Relationships
+        entity.HasOne(e => e.Tenant)
+              .WithMany()
+              .HasForeignKey(e => e.TenantId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+        entity.HasOne(e => e.Role)
+              .WithMany()
+              .HasForeignKey(e => e.RoleId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+        entity.HasOne(e => e.ChangedByUser)
+              .WithMany()
+              .HasForeignKey(e => e.ChangedByUserId)
+              .OnDelete(DeleteBehavior.Restrict);
+    });
+}
+
+private void ConfigureSecurityEventAuditEntry(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<SecurityEventAuditEntry>(entity =>
+    {
+        entity.HasKey(e => e.Id);
+        entity.HasIndex(e => new { e.TenantId, e.Timestamp }).HasDatabaseName("IX_SecurityAudit_Tenant_Time");
+        entity.HasIndex(e => new { e.EventType, e.Severity }).HasDatabaseName("IX_SecurityAudit_Event_Severity");
+        entity.HasIndex(e => e.IpAddress).HasDatabaseName("IX_SecurityAudit_IP");
+        entity.HasIndex(e => e.Investigated).HasDatabaseName("IX_SecurityAudit_Investigated");
+        
+        entity.Property(e => e.TenantId).IsRequired();
+        entity.Property(e => e.EventType).IsRequired().HasMaxLength(100);
+        entity.Property(e => e.IpAddress).HasMaxLength(50);
+        entity.Property(e => e.UserAgent).HasMaxLength(500);
+        entity.Property(e => e.UserEmail).HasMaxLength(255);
+        entity.Property(e => e.Details).HasColumnType("jsonb");
+        entity.Property(e => e.Severity).IsRequired().HasMaxLength(20);
+        entity.Property(e => e.Resource).HasMaxLength(255);
+        entity.Property(e => e.Action).HasMaxLength(100);
+        entity.Property(e => e.Timestamp).IsRequired();
+        entity.Property(e => e.InvestigationNotes).HasMaxLength(1000);
+
+        // Relationships
+        entity.HasOne(e => e.Tenant)
+              .WithMany()
+              .HasForeignKey(e => e.TenantId)
+              .OnDelete(DeleteBehavior.Restrict);
+
+        entity.HasOne(e => e.User)
+              .WithMany()
+              .HasForeignKey(e => e.UserId)
+              .OnDelete(DeleteBehavior.SetNull);
+    });
+}
+
+// Existing configuration methods...
+private void ConfigureTenant(ModelBuilder modelBuilder)
+{
         modelBuilder.Entity<Tenant>(entity =>
         {
             entity.HasKey(e => e.Id);

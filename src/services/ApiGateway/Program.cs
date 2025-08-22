@@ -195,6 +195,10 @@ builder.Services.AddHealthChecks()
     .AddCheck("user-service", () => 
         Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy("User service reachable"));
 
+// 🔧 REMOVE: Enhanced Security from ApiGateway (doesn't need database dependencies)
+// ❌ REMOVED: builder.Services.AddEnhancedSecurity();
+// ❌ REMOVED: builder.Services.AddEnhancedAuthorizationPolicies();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
@@ -252,6 +256,9 @@ app.Lifetime.ApplicationStarted.Register(() =>
         Console.WriteLine($"Now listening on: {address}");
         Log.Information("Now listening on: {Address}", address);
     }
+    
+    Console.WriteLine("🌐 API Gateway started without Enhanced Security (routing only)");
+    Log.Information("API Gateway started - routing service without database dependencies");
 });
 
 // ⚠️ CRITICAL: Use conditional Ocelot to preserve local routes
@@ -265,6 +272,9 @@ try
 {
     Log.Information("Starting API Gateway");
     Console.WriteLine("=== API Gateway Starting ===");
+    
+    // 🔧 REMOVE: Enhanced Security middleware (not needed for gateway)
+    // ❌ REMOVED: app.UseEnhancedSecurity();
     
     app.Run();
 }

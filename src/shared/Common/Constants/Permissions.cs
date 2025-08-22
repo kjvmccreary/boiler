@@ -44,7 +44,7 @@ public static class Permissions
         public const string Create = "tenants.create";
         public const string Edit = "tenants.edit";
         public const string Delete = "tenants.delete";
-        public const string Initialize = "tenants.initialize";  // ✅ ADD THIS LINE
+        public const string Initialize = "tenants.initialize";
         public const string ViewAll = "tenants.view_all";
         public const string ManageSettings = "tenants.manage_settings";
     }
@@ -58,6 +58,8 @@ public static class Permissions
         public const string ManageSettings = "system.manage_settings";
         public const string ViewMetrics = "system.view_metrics";
         public const string ManageBackups = "system.manage_backups";
+        public const string Manage = "system.manage"; // 🔧 ADD: For MonitoringController
+        public const string Monitor = "system.monitor"; // 🔧 ADD: For monitoring endpoints
     }
 
     /// <summary>
