@@ -25,7 +25,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.7" />
 
-    <!-- ✅ FIXED: Update JWT packages to .NET 9 compatible versions -->
+    <!-- JWT packages for .NET 9 -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.7" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.1.2" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.1.2" />
@@ -33,8 +33,7 @@
 
     <!-- AutoMapper -->
     <PackageReference Include="AutoMapper" Version="12.0.1" />
-    <!-- Add this if BCrypt is needed -->
-<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
   </ItemGroup>
 
   <!-- EXPLICIT EF CORE VERSION RESOLUTION - Force all EF packages to use 9.0.7 -->

@@ -7,6 +7,11 @@ using Common.Data;
 using Microsoft.AspNetCore.Http;
 using Contracts.Services;
 using Common.Configuration;
+using Common.Caching;
+using UserService.IntegrationTests.TestUtilities;
+using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
+using Moq;
 
 namespace UserService.IntegrationTests.Fixtures;
 
@@ -18,18 +23,18 @@ public class WebApplicationTestFixture : WebApplicationFactory<Program>
     {
         _databaseName = $"IntegrationTestDb_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}_{Guid.NewGuid():N}";
     }
-    
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureServices(services =>
         {
             // Remove existing database services
-            var descriptors = services.Where(d => 
+            var descriptors = services.Where(d =>
                 d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>) ||
                 d.ServiceType == typeof(ApplicationDbContext) ||
                 d.ImplementationType?.Name.Contains("ApplicationDbContext") == true ||
                 d.ServiceType.Name.Contains("DbContext")).ToList();
-            
+
             foreach (var descriptor in descriptors)
             {
                 services.Remove(descriptor);
@@ -42,7 +47,7 @@ public class WebApplicationTestFixture : WebApplicationFactory<Program>
                 var accessor = new HttpContextAccessor();
                 return accessor;
             });
-            
+
             // ✅ CRITICAL FIX: Use dynamic TestTenantProvider that reads from JWT claims
             services.RemoveAll<ITenantProvider>();
             services.AddSingleton<ITenantProvider>(provider =>
@@ -53,7 +58,7 @@ public class WebApplicationTestFixture : WebApplicationFactory<Program>
 
             // ✅ CRITICAL: Add TenantSettings that completely disables tenant requirements
             services.RemoveAll<TenantSettings>();
-            services.AddSingleton<TenantSettings>(new TenantSettings 
+            services.AddSingleton<TenantSettings>(new TenantSettings
             {
                 RequireTenantContext = false, // ✅ Don't require tenant context in tests
                 ResolutionStrategy = TenantResolutionStrategy.Header,
@@ -63,14 +68,47 @@ public class WebApplicationTestFixture : WebApplicationFactory<Program>
                 AllowCrossTenantQueries = true // ✅ Allow cross-tenant queries in tests
             });
 
+            // ✅ SIMPLIFIED: Use Moq to create Redis mocks
+            services.RemoveAll<StackExchange.Redis.IConnectionMultiplexer>();
+            services.RemoveAll<IPermissionCache>();
+            services.RemoveAll<Common.Caching.ICacheService>();
+
+            // Create mock Redis connection using Moq
+            var mockConnectionMultiplexer = new Mock<StackExchange.Redis.IConnectionMultiplexer>();
+            var mockDatabase = new Mock<StackExchange.Redis.IDatabase>();
+            
+            mockConnectionMultiplexer.Setup(x => x.IsConnected).Returns(true);
+            mockConnectionMultiplexer.Setup(x => x.GetDatabase(It.IsAny<int>(), It.IsAny<object>()))
+                                   .Returns(mockDatabase.Object);
+            
+            // Setup basic Redis operations that might be called
+            mockDatabase.Setup(x => x.StringSetAsync(It.IsAny<StackExchange.Redis.RedisKey>(), 
+                                                   It.IsAny<StackExchange.Redis.RedisValue>(), 
+                                                   It.IsAny<TimeSpan?>(), 
+                                                   It.IsAny<StackExchange.Redis.When>(), 
+                                                   It.IsAny<StackExchange.Redis.CommandFlags>()))
+                       .ReturnsAsync(true);
+            
+            mockDatabase.Setup(x => x.StringGetAsync(It.IsAny<StackExchange.Redis.RedisKey>(), 
+                                                    It.IsAny<StackExchange.Redis.CommandFlags>()))
+                       .ReturnsAsync(DateTime.UtcNow.ToString()); // Return a test value
+            
+            services.AddSingleton(mockConnectionMultiplexer.Object);
+
+            // Add in-memory permission cache for testing
+            services.AddSingleton<IPermissionCache, InMemoryPermissionCache>();
+
+            // Add mock cache service if needed by other components
+            services.AddSingleton<Common.Caching.ICacheService, MockCacheService>();
+
             // ✅ Use regular ApplicationDbContext with proper test configuration
             services.AddDbContext<ApplicationDbContext>(options =>
             {
                 options.UseInMemoryDatabase(_databaseName);
                 options.EnableSensitiveDataLogging();
                 options.EnableDetailedErrors();
-                
-                options.ConfigureWarnings(warnings => 
+
+                options.ConfigureWarnings(warnings =>
                 {
                     warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning);
                 });
@@ -104,7 +142,7 @@ public class WebApplicationTestFixture : WebApplicationFactory<Program>
 public class TestTenantProvider : ITenantProvider
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
-    
+
     public TestTenantProvider(IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
@@ -122,11 +160,11 @@ public class TestTenantProvider : ITenantProvider
                 return Task.FromResult<int?>(tenantId);
             }
         }
-        
+
         // ✅ Fallback to tenant 1 if no claims found (for data seeding)
         return Task.FromResult<int?>(1);
     }
-    
+
     public Task<string?> GetCurrentTenantIdentifierAsync()
     {
         // ✅ Read from claims or fallback
@@ -139,14 +177,14 @@ public class TestTenantProvider : ITenantProvider
                 return Task.FromResult<string?>(tenantClaim.Value);
             }
         }
-        
+
         return Task.FromResult<string?>("1");
     }
-    
+
     public Task SetCurrentTenantAsync(int tenantId) => Task.CompletedTask;
     public Task SetCurrentTenantAsync(string tenantIdentifier) => Task.CompletedTask;
     public Task ClearCurrentTenantAsync() => Task.CompletedTask;
-    
+
     // ✅ Return true if we have tenant context from JWT or fallback
     public bool HasTenantContext
     {
@@ -156,5 +194,57 @@ public class TestTenantProvider : ITenantProvider
             return httpContext?.User?.Identity?.IsAuthenticated == true ||
                    httpContext?.Request != null; // Always have context during tests
         }
+    }
+}
+
+// ✅ FIXED: Simple mock cache service with proper nullability handling
+public class MockCacheService : Common.Caching.ICacheService
+{
+    private readonly ConcurrentDictionary<string, object?> _cache = new();
+
+    public Task<T?> GetAsync<T>(string key)
+    {
+        _cache.TryGetValue(key, out var value);
+        return Task.FromResult((T?)value);
+    }
+
+    public Task SetAsync<T>(string key, T value, TimeSpan? expiration = null)
+    {
+        _cache.AddOrUpdate(key, value, (_, _) => value);
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> ExistsAsync(string key)
+    {
+        return Task.FromResult(_cache.ContainsKey(key));
+    }
+
+    public Task RemoveAsync(string key)
+    {
+        _cache.TryRemove(key, out _);
+        return Task.CompletedTask;
+    }
+
+    public Task RemoveByPatternAsync(string pattern)
+    {
+        var dotnetPattern = pattern.Replace("*", "");
+        var keysToRemove = _cache.Keys.Where(k => k.StartsWith(dotnetPattern)).ToList();
+        foreach (var key in keysToRemove)
+        {
+            _cache.TryRemove(key, out _);
+        }
+        return Task.CompletedTask;
+    }
+
+    public async Task<T?> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null)
+    {
+        if (_cache.TryGetValue(key, out var existing) && existing is T existingT)
+        {
+            return existingT;
+        }
+
+        var value = await factory();
+        await SetAsync(key, value, expiration);
+        return value;
     }
 }
