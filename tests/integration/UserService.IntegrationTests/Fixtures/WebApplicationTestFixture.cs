@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Configuration;
 using Common.Data;
 using Microsoft.AspNetCore.Http;
 using Contracts.Services;
@@ -26,6 +27,30 @@ public class WebApplicationTestFixture : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // 🔧 CRITICAL FIX: Configure test-specific settings to disable rate limiting
+        builder.ConfigureAppConfiguration((context, config) =>
+        {
+            // 🔧 FIX: Cast to IEnumerable<KeyValuePair<string, string?>> to fix nullability warning
+            var testConfiguration = new KeyValuePair<string, string?>[]
+            {
+                // Disable rate limiting for tests
+                new("RateLimiting:Enabled", "false"),
+                new("RateLimiting:GlobalOptions:PermitLimit", "10000"),
+                new("RateLimiting:GlobalOptions:Window", "01:00:00"),
+                new("RateLimiting:GlobalOptions:QueueLimit", "1000"),
+                new("RateLimiting:AuthOptions:PermitLimit", "10000"),
+                new("RateLimiting:AuthOptions:Window", "01:00:00"),
+                
+                // Ensure testing environment
+                new("ASPNETCORE_ENVIRONMENT", "Testing"),
+                
+                // Disable HTTPS redirection warnings
+                new("ASPNETCORE_HTTPS_PORT", ""),
+            };
+            
+            config.AddInMemoryCollection(testConfiguration);
+        });
+        
         builder.ConfigureServices(services =>
         {
             // Remove existing database services
@@ -197,7 +222,7 @@ public class TestTenantProvider : ITenantProvider
     }
 }
 
-// ✅ FIXED: Simple mock cache service with proper nullability handling
+// 🔧 FIX: Correct return type to match interface
 public class MockCacheService : Common.Caching.ICacheService
 {
     private readonly ConcurrentDictionary<string, object?> _cache = new();
@@ -236,7 +261,8 @@ public class MockCacheService : Common.Caching.ICacheService
         return Task.CompletedTask;
     }
 
-    public async Task<T?> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null)
+    // 🔧 FIX: Change return type to Task<T> to match interface
+    public async Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null)
     {
         if (_cache.TryGetValue(key, out var existing) && existing is T existingT)
         {

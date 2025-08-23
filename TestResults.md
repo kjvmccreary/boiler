@@ -1,760 +1,3059 @@
-boiler-postgres | 
-boiler-postgres | PostgreSQL Database directory appears to contain a database; Skipping initialization
-boiler-postgres | 
-boiler-postgres | 2025-08-23 01:26:23.570 UTC [1] LOG:  starting PostgreSQL 15.14 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
-boiler-postgres | 2025-08-23 01:26:23.570 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
-boiler-postgres | 2025-08-23 01:26:23.570 UTC [1] LOG:  listening on IPv6 address "::", port 5432
-boiler-postgres | 2025-08-23 01:26:23.573 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
-boiler-postgres | 2025-08-23 01:26:23.579 UTC [30] LOG:  database system was shut down at 2025-08-23 01:25:42 UTC
-boiler-postgres | 2025-08-23 01:26:23.585 UTC [1] LOG:  database system is ready to accept connections
-boiler-pgadmin | 2025-08-23T01:26:23.926654338Z postfix/postlog: starting the Postfix mail system
-boiler-pgadmin | 2025-08-23T01:26:25.911186465Z /venv/lib/python3.12/site-packages/passlib/pwd.py:16: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
-boiler-pgadmin | 2025-08-23T01:26:25.911216867Z   import pkg_resources
-boiler-pgadmin | 2025-08-23T01:26:29.351045143Z /venv/lib/python3.12/site-packages/passlib/pwd.py:16: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
-boiler-pgadmin | 2025-08-23T01:26:29.351115947Z   import pkg_resources
-boiler-redis |  | 2025-08-23T01:26:23.513357542Z 1:C 23 Aug 2025 01:26:23.512 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
-boiler-redis |  | 2025-08-23T01:26:23.513406045Z 1:C 23 Aug 2025 01:26:23.513 * Redis version=7.4.5, bits=64, commit=00000000, modified=0, pid=1, just started
-boiler-redis |  | 2025-08-23T01:26:23.513409546Z 1:C 23 Aug 2025 01:26:23.513 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
-boiler-redis |  | 2025-08-23T01:26:23.514255603Z 1:M 23 Aug 2025 01:26:23.513 * monotonic clock: POSIX clock_gettime
-boiler-redis |  | 2025-08-23T01:26:23.515293573Z 1:M 23 Aug 2025 01:26:23.514 * Running mode=standalone, port=6379.
-boiler-redis |  | 2025-08-23T01:26:23.516454952Z 1:M 23 Aug 2025 01:26:23.516 * Server initialized
-boiler-redis |  | 2025-08-23T01:26:23.516475653Z 1:M 23 Aug 2025 01:26:23.516 * Loading RDB produced by version 7.4.5
-boiler-redis |  | 2025-08-23T01:26:23.516668466Z 1:M 23 Aug 2025 01:26:23.516 * RDB age 41 seconds
-boiler-redis |  | 2025-08-23T01:26:23.516672567Z 1:M 23 Aug 2025 01:26:23.516 * RDB memory usage when created 1.35 Mb
-boiler-redis |  | 2025-08-23T01:26:23.516858079Z 1:M 23 Aug 2025 01:26:23.516 * Done loading RDB, keys loaded: 21, keys expired: 3.
-boiler-redis |  | 2025-08-23T01:26:23.516862680Z 1:M 23 Aug 2025 01:26:23.516 * DB loaded from disk: 0.001 seconds
-boiler-redis |  | 2025-08-23T01:26:23.516864880Z 1:M 23 Aug 2025 01:26:23.516 * Ready to accept connections tcp
-boiler-frontend | 10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
-boiler-frontend | 10-listen-on-ipv6-by-default.sh: info: /etc/nginx/conf.d/default.conf differs from the packaged version
-boiler-frontend | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
-boiler-frontend | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
-boiler-frontend | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
-boiler-frontend | /docker-entrypoint.sh: Configuration complete; ready for start up
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: using the "epoll" event method
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: nginx/1.29.1
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: built by gcc 14.2.0 (Alpine 14.2.0) 
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: OS: Linux 6.6.87.2-microsoft-standard-WSL2
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1048576:1048576
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: start worker processes
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: start worker process 29
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: start worker process 30
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: start worker process 31
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: start worker process 32
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: start worker process 33
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: start worker process 34
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: start worker process 35
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: start worker process 36
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: start worker process 37
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: start worker process 38
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: start worker process 39
-boiler-frontend | 2025/08/23 01:26:40 [notice] 1#1: start worker process 40
-boiler-gateway | 2025-08-23T01:26:40.529441059Z [01:26:40 INF] Starting API Gateway {}
-boiler-gateway | 2025-08-23T01:26:40.529522163Z === API Gateway Starting ===
-boiler-gateway | 2025-08-23T01:26:40.538236268Z [01:26:40 WRN] Using an in-memory repository. Keys will not be persisted to storage. {"EventId": {"Id": 50, "Name": "UsingInMemoryRepository"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.Repositories.EphemeralXmlRepository"}
-boiler-gateway | 2025-08-23T01:26:40.538275170Z [01:26:40 WRN] Neither user profile nor HKLM registry available. Using an ephemeral key repository. Protected data will be unavailable when application exits. {"EventId": {"Id": 59, "Name": "UsingEphemeralKeyRepository"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"}
-boiler-gateway | 2025-08-23T01:26:40.550049851Z [01:26:40 WRN] No XML encryptor configured. Key {4b3d53a7-39e7-4a05-bc5e-0530a3fade76} may be persisted to storage in unencrypted form. {"EventId": {"Id": 35, "Name": "NoXMLEncryptorConfiguredKeyMayBePersistedToStorageInUnencryptedForm"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"}
-boiler-gateway | 2025-08-23T01:26:40.555168247Z [01:26:40 WRN] Overriding HTTP_PORTS '8080' and HTTPS_PORTS ''. Binding to values defined by URLS instead 'http://0.0.0.0:5000;https://0.0.0.0:7000'. {"EventId": {"Id": 15}, "SourceContext": "Microsoft.AspNetCore.Hosting.Diagnostics"}
-boiler-gateway | 2025-08-23T01:26:40.665934856Z Now listening on: http://0.0.0.0:5000
-boiler-gateway | 2025-08-23T01:26:40.668107882Z [01:26:40 INF] Now listening on: http://0.0.0.0:5000 {}
-boiler-gateway | 2025-08-23T01:26:40.668145984Z Now listening on: https://0.0.0.0:7000
-boiler-gateway | 2025-08-23T01:26:40.668775121Z [01:26:40 INF] Now listening on: https://0.0.0.0:7000 {}
-boiler-gateway | 2025-08-23T01:26:40.668783121Z 🌐 API Gateway started without Enhanced Security (routing only)
-boiler-gateway | 2025-08-23T01:26:40.669428258Z [01:26:40 INF] API Gateway started - routing service without database dependencies {}
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET / HTTP/1.1" 200 970 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /.well-known/appspecific/com.chrome.devtools.json HTTP/1.1" 200 970 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /assets/index-EFDK_Fdj.js HTTP/1.1" 200 76287 "https://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /assets/react-vendor-gH-7aFTg.js HTTP/1.1" 200 4595 "https://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /assets/router-vendor-BmDKUtvC.js HTTP/1.1" 200 13500 "https://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /assets/role-components-Km1ZIL_l.js HTTP/1.1" 200 9021 "https://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /assets/index-Dgq5rOVt.css HTTP/1.1" 200 2707 "https://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /assets/auth-components-CIoxq1vn.js HTTP/1.1" 200 21919 "https://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /assets/mui-vendor-DgZ36Fo-.js HTTP/1.1" 200 117977 "https://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /assets/user-components-uSG9RUl9.js HTTP/1.1" 200 20393 "https://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /assets/react-vendor-gH-7aFTg.js.map HTTP/1.1" 200 42098 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /assets/auth-components-CIoxq1vn.js.map HTTP/1.1" 200 229788 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /assets/user-components-uSG9RUl9.js.map HTTP/1.1" 200 191051 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /assets/router-vendor-BmDKUtvC.js.map HTTP/1.1" 200 387235 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /assets/index-EFDK_Fdj.js.map HTTP/1.1" 200 970996 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /assets/mui-vendor-DgZ36Fo-.js.map HTTP/1.1" 200 1760631 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /assets/role-components-Km1ZIL_l.js.map HTTP/1.1" 200 103390 "-" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:10 +0000] "GET /vite.svg HTTP/1.1" 200 796 "https://localhost:3000/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-gateway | 2025-08-23T01:28:15.679741066Z [01:28:15 INF] REQUEST dd769a11: GET /health from 127.0.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKO:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGFMEPKO"}
-boiler-gateway | 2025-08-23T01:28:15.680171301Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:15.680199503Z    Path: /health
-boiler-gateway | 2025-08-23T01:28:15.680202404Z    Method: GET
-boiler-gateway | 2025-08-23T01:28:15.680204404Z    Authorization Header: MISSING
-boiler-gateway | 2025-08-23T01:28:15.680206604Z [01:28:15 INF] RESPONSE dd769a11: 200 in 0ms | Size: Unknown {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKO:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGFMEPKO"}
-boiler-gateway | 2025-08-23T01:28:15.680209304Z [01:28:15 INF] HTTP GET /health responded 200 in 0.5446 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKO:00000001", "ConnectionId": "0HNF1SGFMEPKO"}
-boiler-gateway | 2025-08-23T01:28:21.806674628Z [01:28:21 INF] REQUEST e730e2b6: POST /api/auth/login from 172.18.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKP:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGFMEPKP"}
-boiler-gateway | 2025-08-23T01:28:21.806744232Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:21.806748032Z    Path: /api/auth/login
-boiler-gateway | 2025-08-23T01:28:21.806750032Z    Method: POST
-boiler-gateway | 2025-08-23T01:28:21.806752533Z    Authorization Header: MISSING
-boiler-gateway | 2025-08-23T01:28:21.830086919Z [01:28:21 INF] requestId: 0HNF1SGFMEPKP:00000001, previousRequestId: No PreviousRequestId, message: 'No authentication needed for path '/api/auth/login'.' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPKP:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGFMEPKP"}
-boiler-gateway | 2025-08-23T01:28:21.830539347Z [01:28:21 INF] requestId: 0HNF1SGFMEPKP:00000001, previousRequestId: No PreviousRequestId, message: '/api/auth/login route does not require user to be authorized' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKP:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGFMEPKP"}
-boiler-gateway | 2025-08-23T01:28:21.836168506Z [01:28:21 WRN] requestId: 0HNF1SGFMEPKP:00000001, previousRequestId: No PreviousRequestId, message: 'You have ignored all SSL warnings by using DangerousAcceptAnyServerCertificateValidator for this DownstreamRoute, UpstreamPathTemplate: Ocelot.Values.UpstreamPathTemplate, DownstreamPathTemplate: /api/auth/login' {"SourceContext": "Ocelot.Requester.MessageInvokerPool", "RequestId": "0HNF1SGFMEPKP:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGFMEPKP"}
-boiler-auth |   | 2025-08-23T01:28:21.939538489Z [01:28:21 INF] Starting login for mccrearyforward@gmail.com {"SourceContext": "AuthService.Services.AuthServiceImplementation", "ActionId": "b21555d8-2394-411a-af67-6e2223887831", "ActionName": "AuthService.Controllers.AuthController.Login (AuthService)", "RequestId": "0HNF1SGDV8PP5:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGDV8PP5"}
-boiler-auth |   | 2025-08-23T01:28:22.017095328Z [01:28:22 WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'. {"EventId": {"Id": 20504, "Name": "Microsoft.EntityFrameworkCore.Query.MultipleCollectionIncludeWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Query", "ActionId": "b21555d8-2394-411a-af67-6e2223887831", "ActionName": "AuthService.Controllers.AuthController.Login (AuthService)", "RequestId": "0HNF1SGDV8PP5:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGDV8PP5"}
-boiler-auth |   | 2025-08-23T01:28:22.134040775Z [01:28:22 INF] User found: True, IsActive: True {"SourceContext": "AuthService.Services.AuthServiceImplementation", "ActionId": "b21555d8-2394-411a-af67-6e2223887831", "ActionName": "AuthService.Controllers.AuthController.Login (AuthService)", "RequestId": "0HNF1SGDV8PP5:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGDV8PP5"}
-boiler-auth |   | 2025-08-23T01:28:22.873228449Z [01:28:22 INF] Password verification result: True {"SourceContext": "AuthService.Services.AuthServiceImplementation", "ActionId": "b21555d8-2394-411a-af67-6e2223887831", "ActionName": "AuthService.Controllers.AuthController.Login (AuthService)", "RequestId": "0HNF1SGDV8PP5:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGDV8PP5"}
-boiler-auth |   | 2025-08-23T01:28:22.873300753Z [01:28:22 INF] Generating tenant-less JWT for initial login {"SourceContext": "AuthService.Services.AuthServiceImplementation", "ActionId": "b21555d8-2394-411a-af67-6e2223887831", "ActionName": "AuthService.Controllers.AuthController.Login (AuthService)", "RequestId": "0HNF1SGDV8PP5:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGDV8PP5"}
-boiler-auth |   | 2025-08-23T01:28:22.876039828Z [01:28:22 INF] 🔍 TOKEN DEBUG: Generating tenant-less JWT for user 6 {"SourceContext": "AuthService.Services.EnhancedTokenService", "ActionId": "b21555d8-2394-411a-af67-6e2223887831", "ActionName": "AuthService.Controllers.AuthController.Login (AuthService)", "RequestId": "0HNF1SGDV8PP5:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGDV8PP5"}
-boiler-auth |   | 2025-08-23T01:28:22.962607441Z [01:28:22 INF] 🔍 TOKEN DEBUG: Tenant-less system roles=0, system permissions added=0 {"SourceContext": "AuthService.Services.EnhancedTokenService", "ActionId": "b21555d8-2394-411a-af67-6e2223887831", "ActionName": "AuthService.Controllers.AuthController.Login (AuthService)", "RequestId": "0HNF1SGDV8PP5:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGDV8PP5"}
-boiler-auth |   | 2025-08-23T01:28:22.995540038Z [01:28:22 INF] 🔍 All request headers: Accept=application/json, text/plain, */*; Connection=close; Host=boiler-auth:7001; User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36; Accept-Encoding=gzip, deflate, br, zstd; Accept-Language=en-US,en;q=0.9; Content-Type=application/json; Origin=https://localhost:3000; Referer=https://localhost:3000/login; traceparent=00-a93feadc9c9060715580d02862cd1891-012ce1e6c5c8f51c-00; Content-Length=62; X-Real-IP=172.18.0.1; X-Forwarded-For=172.18.0.1; X-Forwarded-Proto=https; sec-ch-ua-platform="Windows"; sec-ch-ua="Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"; sec-ch-ua-mobile=?0; Sec-Fetch-Site=same-origin; Sec-Fetch-Mode=cors; Sec-Fetch-Dest=empty {"SourceContext": "Common.Services.TenantProvider", "ActionId": "b21555d8-2394-411a-af67-6e2223887831", "ActionName": "AuthService.Controllers.AuthController.Login (AuthService)", "RequestId": "0HNF1SGDV8PP5:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGDV8PP5"}
-boiler-auth |   | 2025-08-23T01:28:22.995604442Z [01:28:22 WRN] ❌ No tenant found in any headers: X-Tenant-Id, X-Tenant-ID, X-Tenant-ID {"SourceContext": "Common.Services.TenantProvider", "ActionId": "b21555d8-2394-411a-af67-6e2223887831", "ActionName": "AuthService.Controllers.AuthController.Login (AuthService)", "RequestId": "0HNF1SGDV8PP5:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGDV8PP5"}
-boiler-auth |   | 2025-08-23T01:28:22.995649445Z [01:28:22 WRN] Could not resolve tenant from any source. Strategy: Header, IsAuthenticated: False {"SourceContext": "Common.Services.TenantProvider", "ActionId": "b21555d8-2394-411a-af67-6e2223887831", "ActionName": "AuthService.Controllers.AuthController.Login (AuthService)", "RequestId": "0HNF1SGDV8PP5:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGDV8PP5"}
-boiler-auth |   | 2025-08-23T01:28:22.996464497Z [01:28:22 WRN] Failed to resolve tenant ID from any source {"SourceContext": "Common.Services.TenantProvider", "ActionId": "b21555d8-2394-411a-af67-6e2223887831", "ActionName": "AuthService.Controllers.AuthController.Login (AuthService)", "RequestId": "0HNF1SGDV8PP5:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGDV8PP5"}
-boiler-auth |   | 2025-08-23T01:28:23.076824814Z [01:28:23 INF] User mccrearyforward@gmail.com logged in successfully (no tenant selected yet) {"SourceContext": "AuthService.Services.AuthServiceImplementation", "ActionId": "b21555d8-2394-411a-af67-6e2223887831", "ActionName": "AuthService.Controllers.AuthController.Login (AuthService)", "RequestId": "0HNF1SGDV8PP5:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGDV8PP5"}
-boiler-auth |   | 2025-08-23T01:28:23.092469411Z [01:28:23 INF] HTTP POST /api/auth/login responded 200 in 1226.1593 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-gateway | 2025-08-23T01:28:23.094325129Z [01:28:23 INF] requestId: 0HNF1SGFMEPKP:00000001, previousRequestId: No PreviousRequestId, message: '200 (OK) status code of request URI: https://boiler-auth:7001/api/auth/login.' {"SourceContext": "Ocelot.Requester.Middleware.HttpRequesterMiddleware", "RequestId": "0HNF1SGFMEPKP:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGFMEPKP"}
-boiler-gateway | 2025-08-23T01:28:23.101418681Z [01:28:23 INF] RESPONSE e730e2b6: 200 in 1294ms | Size: Unknown {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKP:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGFMEPKP"}
-boiler-gateway | 2025-08-23T01:28:23.102324838Z [01:28:23 WRN] SLOW REQUEST e730e2b6: POST /api/auth/login took 1294ms {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKP:00000001", "RequestPath": "/api/auth/login", "ConnectionId": "0HNF1SGFMEPKP"}
-boiler-gateway | 2025-08-23T01:28:23.102368641Z [01:28:23 INF] HTTP POST /api/auth/login responded 200 in 1296.3203 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKP:00000001", "ConnectionId": "0HNF1SGFMEPKP"}
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:23 +0000] "POST /api/auth/login HTTP/1.1" 200 903 "https://localhost:3000/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-gateway | 2025-08-23T01:28:23.117406999Z [01:28:23 INF] REQUEST 49cb2336: GET /api/users/6/tenants from 172.18.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKQ:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKQ"}
-boiler-gateway | 2025-08-23T01:28:23.117482604Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:23.117486304Z    Path: /api/users/6/tenants
-boiler-gateway | 2025-08-23T01:28:23.117488504Z    Method: GET
-boiler-gateway | 2025-08-23T01:28:23.117490504Z    Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodH...
-boiler-gateway | 2025-08-23T01:28:23.137319567Z ✅ JWT Token Validated Successfully:
-boiler-gateway | 2025-08-23T01:28:23.137360770Z    UserId: 6
-boiler-gateway | 2025-08-23T01:28:23.137363270Z    Email: mccrearyforward@gmail.com
-boiler-gateway | 2025-08-23T01:28:23.137365370Z    Issuer: AuthService
-boiler-gateway | 2025-08-23T01:28:23.137367770Z    Audience: StarterApp
-boiler-gateway | 2025-08-23T01:28:23.137369770Z    Claims Count: 11
-boiler-gateway | 2025-08-23T01:28:23.137863001Z [01:28:23 WRN] ⚠️ No tenant ID found for authenticated request to /api/users/6/tenants {"SourceContext": "ApiGateway.Middleware.TenantResolutionMiddleware", "RequestId": "0HNF1SGFMEPKQ:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKQ"}
-boiler-gateway | 2025-08-23T01:28:23.149909269Z [01:28:23 INF] requestId: 0HNF1SGFMEPKQ:00000001, previousRequestId: No PreviousRequestId, message: 'The path '/api/users/6/tenants' is an authenticated route! AuthenticationMiddleware checking if client is authenticated...' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPKQ:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKQ"}
-boiler-gateway | 2025-08-23T01:28:23.150574211Z [01:28:23 INF] requestId: 0HNF1SGFMEPKQ:00000001, previousRequestId: No PreviousRequestId, message: 'Client has been authenticated for path '/api/users/6/tenants' by 'AuthenticationTypes.Federation' scheme.' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPKQ:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKQ"}
-boiler-gateway | 2025-08-23T01:28:23.150588512Z [01:28:23 INF] requestId: 0HNF1SGFMEPKQ:00000001, previousRequestId: No PreviousRequestId, message: 'route is authenticated scopes must be checked' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKQ:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKQ"}
-boiler-gateway | 2025-08-23T01:28:23.151558674Z [01:28:23 INF] requestId: 0HNF1SGFMEPKQ:00000001, previousRequestId: No PreviousRequestId, message: 'user scopes is authorized calling next authorization checks' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKQ:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKQ"}
-boiler-gateway | 2025-08-23T01:28:23.151612077Z [01:28:23 INF] requestId: 0HNF1SGFMEPKQ:00000001, previousRequestId: No PreviousRequestId, message: '/api/users/{everything} route does not require user to be authorized' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKQ:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKQ"}
-boiler-gateway | 2025-08-23T01:28:23.151990501Z [01:28:23 WRN] requestId: 0HNF1SGFMEPKQ:00000001, previousRequestId: No PreviousRequestId, message: 'You have ignored all SSL warnings by using DangerousAcceptAnyServerCertificateValidator for this DownstreamRoute, UpstreamPathTemplate: Ocelot.Values.UpstreamPathTemplate, DownstreamPathTemplate: /api/users/{everything}' {"SourceContext": "Ocelot.Requester.MessageInvokerPool", "RequestId": "0HNF1SGFMEPKQ:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKQ"}
-boiler-user |   | 2025-08-23T01:28:23.163572039Z [01:28:23 INF] 🔍 All request headers: Accept=application/json, text/plain, */*; Connection=close; Host=boiler-user:7002; User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36; Accept-Encoding=gzip, deflate, br, zstd; Accept-Language=en-US,en;q=0.9; Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiNGQzYTg4NjEtZjYzZi00MGU2LTljYWUtMDZhZjdlYjFhMjU2IiwiaWF0IjoxNzU1OTEyNTAyLCJleHAiOjE3NTU5MTM0MDIsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.jZpbRy7pF21m_Whokn8l4P_UQbmjVvCap7E20n2F1NI; Referer=https://localhost:3000/login; traceparent=00-e327783836c9a18f0f42e381b49213d0-32a25a7bdaba936b-00; X-Real-IP=172.18.0.1; X-Forwarded-For=172.18.0.1; X-Forwarded-Proto=https; sec-ch-ua-platform="Windows"; sec-ch-ua="Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"; sec-ch-ua-mobile=?0; Sec-Fetch-Site=same-origin; Sec-Fetch-Mode=cors; Sec-Fetch-Dest=empty; X-Forwarded-Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiNGQzYTg4NjEtZjYzZi00MGU2LTljYWUtMDZhZjdlYjFhMjU2IiwiaWF0IjoxNzU1OTEyNTAyLCJleHAiOjE3NTU5MTM0MDIsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.jZpbRy7pF21m_Whokn8l4P_UQbmjVvCap7E20n2F1NI; X-User-Context=eyJVc2VySWQiOm51bGwsIlRlbmFudElkIjpudWxsLCJSb2xlcyI6W10sIlBlcm1pc3Npb25zIjpbXSwiRW1haWwiOm51bGx9; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1C:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGDV4P1C"}
-boiler-user |   | 2025-08-23T01:28:23.163678646Z [01:28:23 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1C:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGDV4P1C"}
-boiler-user |   | 2025-08-23T01:28:23.217847995Z [01:28:23 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1C:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGDV4P1C"}
-boiler-user |   | 2025-08-23T01:28:23.218734152Z [01:28:23 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1C:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGDV4P1C"}
-boiler-user |   | 2025-08-23T01:28:23.222614699Z [01:28:23 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF1SGDV4P1C:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGDV4P1C"}
-boiler-user |   | 2025-08-23T01:28:23.310007264Z [01:28:23 INF] Found 15 tenants for user 6 (unfiltered by tenant context) {"SourceContext": "UserService.Controllers.UsersController", "ActionId": "11a08787-bb4d-4497-92c4-4141400e01cb", "ActionName": "UserService.Controllers.UsersController.GetUserTenants (UserService)", "RequestId": "0HNF1SGDV4P1C:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGDV4P1C"}
-boiler-gateway | 2025-08-23T01:28:23.319857991Z [01:28:23 INF] requestId: 0HNF1SGFMEPKQ:00000001, previousRequestId: No PreviousRequestId, message: '200 (OK) status code of request URI: https://boiler-user:7002/api/users/6/tenants.' {"SourceContext": "Ocelot.Requester.Middleware.HttpRequesterMiddleware", "RequestId": "0HNF1SGFMEPKQ:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKQ"}
-boiler-user |   | 2025-08-23T01:28:23.320505733Z [01:28:23 INF] HTTP GET /api/users/6/tenants responded 200 in 157.5855 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-gateway | 2025-08-23T01:28:23.321540999Z [01:28:23 INF] RESPONSE 49cb2336: 200 in 204ms | Size: Unknown {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKQ:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKQ"}
-boiler-gateway | 2025-08-23T01:28:23.321895421Z [01:28:23 INF] HTTP GET /api/users/6/tenants responded 200 in 204.4178 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKQ:00000001", "ConnectionId": "0HNF1SGFMEPKQ"}
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:23 +0000] "GET /api/users/6/tenants HTTP/1.1" 200 666 "https://localhost:3000/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-gateway | 2025-08-23T01:28:28.577465595Z [01:28:28 INF] REQUEST ab3b1061: POST /api/auth/switch-tenant from 172.18.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKR:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGFMEPKR"}
-boiler-gateway | 2025-08-23T01:28:28.577578801Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:28.577590401Z    Path: /api/auth/switch-tenant
-boiler-gateway | 2025-08-23T01:28:28.577593302Z    Method: POST
-boiler-gateway | 2025-08-23T01:28:28.577595902Z    Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodH...
-boiler-gateway | 2025-08-23T01:28:28.578206333Z ✅ JWT Token Validated Successfully:
-boiler-gateway | 2025-08-23T01:28:28.578224734Z    UserId: 6
-boiler-gateway | 2025-08-23T01:28:28.578227734Z    Email: mccrearyforward@gmail.com
-boiler-gateway | 2025-08-23T01:28:28.578230335Z    Issuer: AuthService
-boiler-gateway | 2025-08-23T01:28:28.578232835Z    Audience: StarterApp
-boiler-gateway | 2025-08-23T01:28:28.578235335Z    Claims Count: 11
-boiler-gateway | 2025-08-23T01:28:28.578301138Z [01:28:28 WRN] ⚠️ No tenant ID found for authenticated request to /api/auth/switch-tenant {"SourceContext": "ApiGateway.Middleware.TenantResolutionMiddleware", "RequestId": "0HNF1SGFMEPKR:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGFMEPKR"}
-boiler-gateway | 2025-08-23T01:28:28.579883120Z [01:28:28 INF] requestId: 0HNF1SGFMEPKR:00000001, previousRequestId: No PreviousRequestId, message: 'The path '/api/auth/switch-tenant' is an authenticated route! AuthenticationMiddleware checking if client is authenticated...' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPKR:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGFMEPKR"}
-boiler-gateway | 2025-08-23T01:28:28.579946424Z [01:28:28 INF] requestId: 0HNF1SGFMEPKR:00000001, previousRequestId: No PreviousRequestId, message: 'Client has been authenticated for path '/api/auth/switch-tenant' by 'AuthenticationTypes.Federation' scheme.' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPKR:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGFMEPKR"}
-boiler-gateway | 2025-08-23T01:28:28.579949924Z [01:28:28 INF] requestId: 0HNF1SGFMEPKR:00000001, previousRequestId: No PreviousRequestId, message: 'route is authenticated scopes must be checked' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKR:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGFMEPKR"}
-boiler-gateway | 2025-08-23T01:28:28.580138534Z [01:28:28 INF] requestId: 0HNF1SGFMEPKR:00000001, previousRequestId: No PreviousRequestId, message: 'user scopes is authorized calling next authorization checks' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKR:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGFMEPKR"}
-boiler-gateway | 2025-08-23T01:28:28.580143934Z [01:28:28 INF] requestId: 0HNF1SGFMEPKR:00000001, previousRequestId: No PreviousRequestId, message: '/api/auth/{everything} route does not require user to be authorized' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKR:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGFMEPKR"}
-boiler-gateway | 2025-08-23T01:28:28.580146834Z [01:28:28 WRN] requestId: 0HNF1SGFMEPKR:00000001, previousRequestId: No PreviousRequestId, message: 'You have ignored all SSL warnings by using DangerousAcceptAnyServerCertificateValidator for this DownstreamRoute, UpstreamPathTemplate: Ocelot.Values.UpstreamPathTemplate, DownstreamPathTemplate: /api/auth/{everything}' {"SourceContext": "Ocelot.Requester.MessageInvokerPool", "RequestId": "0HNF1SGFMEPKR:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGFMEPKR"}
-boiler-auth |   | 2025-08-23T01:28:28.635544411Z [01:28:28 INF] User 6 requesting to switch to tenant 1 {"SourceContext": "AuthService.Services.AuthServiceImplementation", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.642085751Z [01:28:28 WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'. {"EventId": {"Id": 20504, "Name": "Microsoft.EntityFrameworkCore.Query.MultipleCollectionIncludeWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Query", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.662802027Z [01:28:28 WRN] User loaded. TenantUsers count: 15 {"SourceContext": "AuthService.Services.AuthServiceImplementation", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.662863430Z [01:28:28 WRN] User has access to tenant 1: True {"SourceContext": "AuthService.Services.AuthServiceImplementation", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.663608469Z [01:28:28 WRN] Loading tenant 1 from repository {"SourceContext": "AuthService.Services.AuthServiceImplementation", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.681715809Z [01:28:28 WRN] Tenant loaded - ID: 1, Name: Default Tenant, IsActive: True {"SourceContext": "AuthService.Services.AuthServiceImplementation", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.691050994Z [01:28:28 INF] 🔍 All request headers: Accept=application/json, text/plain, */*; Connection=close; Host=boiler-auth:7001; User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36; Accept-Encoding=gzip, deflate, br, zstd; Accept-Language=en-US,en;q=0.9; Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiNGQzYTg4NjEtZjYzZi00MGU2LTljYWUtMDZhZjdlYjFhMjU2IiwiaWF0IjoxNzU1OTEyNTAyLCJleHAiOjE3NTU5MTM0MDIsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.jZpbRy7pF21m_Whokn8l4P_UQbmjVvCap7E20n2F1NI; Content-Type=application/json; Origin=https://localhost:3000; Referer=https://localhost:3000/login; traceparent=00-ff1768d288573e3f14bf2abe3c77ff70-756e7e86e9896969-00; Content-Length=14; X-Real-IP=172.18.0.1; X-Forwarded-For=172.18.0.1; X-Forwarded-Proto=https; sec-ch-ua-platform="Windows"; sec-ch-ua="Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"; sec-ch-ua-mobile=?0; Sec-Fetch-Site=same-origin; Sec-Fetch-Mode=cors; Sec-Fetch-Dest=empty; X-Forwarded-Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiNGQzYTg4NjEtZjYzZi00MGU2LTljYWUtMDZhZjdlYjFhMjU2IiwiaWF0IjoxNzU1OTEyNTAyLCJleHAiOjE3NTU5MTM0MDIsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.jZpbRy7pF21m_Whokn8l4P_UQbmjVvCap7E20n2F1NI; X-User-Context=eyJVc2VySWQiOm51bGwsIlRlbmFudElkIjpudWxsLCJSb2xlcyI6W10sIlBlcm1pc3Npb25zIjpbXSwiRW1haWwiOm51bGx9 {"SourceContext": "Common.Services.TenantProvider", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.691127398Z [01:28:28 WRN] ❌ No tenant found in any headers: X-Tenant-Id, X-Tenant-ID, X-Tenant-ID {"SourceContext": "Common.Services.TenantProvider", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.691131599Z [01:28:28 WRN] Could not resolve tenant from any source. Strategy: Header, IsAuthenticated: True {"SourceContext": "Common.Services.TenantProvider", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.691262405Z [01:28:28 WRN] Failed to resolve tenant ID from any source {"SourceContext": "Common.Services.TenantProvider", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.695048802Z [01:28:28 WRN] About to generate token with - User ID: 6, Tenant ID: 1, Tenant Name: Default Tenant {"SourceContext": "AuthService.Services.AuthServiceImplementation", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.713319151Z [01:28:28 INF] 🔍 JWT: Found 1 active roles for user 6 in tenant 1 {"SourceContext": "AuthService.Services.EnhancedTokenService", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.713358353Z [01:28:28 INF] 🔍 JWT: Added role claim 'Admin' for user 6 {"SourceContext": "AuthService.Services.EnhancedTokenService", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.722888548Z [01:28:28 INF] 🔍 PERMISSION DEBUG: Getting permissions for user 6 in tenant 1 {"SourceContext": "Common.Services.PermissionService", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.730120524Z [01:28:28 INF] 🔍 PERMISSION DEBUG: Found 1 active user roles for user 6 in tenant 1: 7 {"SourceContext": "Common.Services.PermissionService", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.746940697Z [01:28:28 INF] 🔍 PERMISSION DEBUG: Found 35 role permissions for roles 7 {"SourceContext": "Common.Services.PermissionService", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.754985715Z [01:28:28 INF] 🔍 PERMISSION DEBUG: Final permissions for user 6 in tenant 1: [permissions.delete, roles.create, reports.view, users.view_all, system.view_metrics, users.delete, tenants.view_all, users.view, tenants.create, billing.view_invoices, system.manage_backups, roles.assign_users, billing.view, billing.process_payments, roles.delete, tenants.edit, tenants.delete, users.manage_roles, billing.manage, roles.view, reports.schedule, permissions.manage, reports.export, users.edit, roles.manage_permissions, users.create, system.view_logs, roles.edit, permissions.view, tenants.view, permissions.create, tenants.manage_settings, system.manage_settings, reports.create, permissions.edit] {"SourceContext": "Common.Services.PermissionService", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.755030317Z [01:28:28 INF] 🔍 JWT: Added 35 permissions to JWT for user 6 in tenant 1 {"SourceContext": "AuthService.Services.EnhancedTokenService", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.756824610Z [01:28:28 INF] 🔍 JWT: Generated token for user 6 with 1 roles and 35 permissions {"SourceContext": "AuthService.Services.EnhancedTokenService", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.759213535Z [01:28:28 INF] 🔍 All request headers: Accept=application/json, text/plain, */*; Connection=close; Host=boiler-auth:7001; User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36; Accept-Encoding=gzip, deflate, br, zstd; Accept-Language=en-US,en;q=0.9; Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiNGQzYTg4NjEtZjYzZi00MGU2LTljYWUtMDZhZjdlYjFhMjU2IiwiaWF0IjoxNzU1OTEyNTAyLCJleHAiOjE3NTU5MTM0MDIsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.jZpbRy7pF21m_Whokn8l4P_UQbmjVvCap7E20n2F1NI; Content-Type=application/json; Origin=https://localhost:3000; Referer=https://localhost:3000/login; traceparent=00-ff1768d288573e3f14bf2abe3c77ff70-756e7e86e9896969-00; Content-Length=14; X-Real-IP=172.18.0.1; X-Forwarded-For=172.18.0.1; X-Forwarded-Proto=https; sec-ch-ua-platform="Windows"; sec-ch-ua="Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"; sec-ch-ua-mobile=?0; Sec-Fetch-Site=same-origin; Sec-Fetch-Mode=cors; Sec-Fetch-Dest=empty; X-Forwarded-Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiNGQzYTg4NjEtZjYzZi00MGU2LTljYWUtMDZhZjdlYjFhMjU2IiwiaWF0IjoxNzU1OTEyNTAyLCJleHAiOjE3NTU5MTM0MDIsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.jZpbRy7pF21m_Whokn8l4P_UQbmjVvCap7E20n2F1NI; X-User-Context=eyJVc2VySWQiOm51bGwsIlRlbmFudElkIjpudWxsLCJSb2xlcyI6W10sIlBlcm1pc3Npb25zIjpbXSwiRW1haWwiOm51bGx9 {"SourceContext": "Common.Services.TenantProvider", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.759267337Z [01:28:28 WRN] ❌ No tenant found in any headers: X-Tenant-Id, X-Tenant-ID, X-Tenant-ID {"SourceContext": "Common.Services.TenantProvider", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.759362742Z [01:28:28 WRN] Could not resolve tenant from any source. Strategy: Header, IsAuthenticated: True {"SourceContext": "Common.Services.TenantProvider", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.759615655Z [01:28:28 WRN] Failed to resolve tenant ID from any source {"SourceContext": "Common.Services.TenantProvider", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.771950196Z [01:28:28 WRN] Response DTOs created - UserDto.TenantId: 1, TenantDto.Id: 1, TenantDto.Name: Default Tenant {"SourceContext": "AuthService.Services.AuthServiceImplementation", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-auth |   | 2025-08-23T01:28:28.772014999Z [01:28:28 INF] User 6 successfully switched to tenant 1 (Default Tenant) {"SourceContext": "AuthService.Services.AuthServiceImplementation", "ActionId": "b0b4e54e-65c7-4981-8fd0-cf9eafc9bebe", "ActionName": "AuthService.Controllers.AuthController.SwitchTenant (AuthService)", "RequestId": "0HNF1SGDV8PP6:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGDV8PP6"}
-boiler-gateway | 2025-08-23T01:28:28.775428377Z [01:28:28 INF] requestId: 0HNF1SGFMEPKR:00000001, previousRequestId: No PreviousRequestId, message: '200 (OK) status code of request URI: https://boiler-auth:7001/api/auth/switch-tenant.' {"SourceContext": "Ocelot.Requester.Middleware.HttpRequesterMiddleware", "RequestId": "0HNF1SGFMEPKR:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGFMEPKR"}
-boiler-gateway | 2025-08-23T01:28:28.775882800Z [01:28:28 INF] RESPONSE ab3b1061: 200 in 198ms | Size: Unknown {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKR:00000001", "RequestPath": "/api/auth/switch-tenant", "ConnectionId": "0HNF1SGFMEPKR"}
-boiler-gateway | 2025-08-23T01:28:28.775890301Z [01:28:28 INF] HTTP POST /api/auth/switch-tenant responded 200 in 198.9811 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKR:00000001", "ConnectionId": "0HNF1SGFMEPKR"}
-boiler-auth |   | 2025-08-23T01:28:28.774627735Z [01:28:28 INF] HTTP POST /api/auth/switch-tenant responded 200 in 187.4405 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:28 +0000] "POST /api/auth/switch-tenant HTTP/1.1" 200 1534 "https://localhost:3000/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-gateway | 2025-08-23T01:28:28.786437849Z [01:28:28 INF] REQUEST 63da6234: GET /api/users/profile from 172.18.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKS:00000001", "RequestPath": "/api/users/profile", "ConnectionId": "0HNF1SGFMEPKS"}
-boiler-gateway | 2025-08-23T01:28:28.786530453Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:28.786534154Z    Path: /api/users/profile
-boiler-gateway | 2025-08-23T01:28:28.786536154Z    Method: GET
-boiler-gateway | 2025-08-23T01:28:28.786538154Z    Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodH...
-boiler-gateway | 2025-08-23T01:28:28.787378097Z ✅ JWT Token Validated Successfully:
-boiler-gateway | 2025-08-23T01:28:28.787393398Z    UserId: 6
-boiler-gateway | 2025-08-23T01:28:28.787395598Z    Email: mccrearyforward@gmail.com
-boiler-gateway | 2025-08-23T01:28:28.787397598Z    Issuer: AuthService
-boiler-gateway | 2025-08-23T01:28:28.787399798Z    Audience: StarterApp
-boiler-gateway | 2025-08-23T01:28:28.787401799Z    Claims Count: 50
-boiler-gateway | 2025-08-23T01:28:28.787520405Z [01:28:28 INF] ✅ Tenant resolved: 1 from jwt-claim {"SourceContext": "ApiGateway.Middleware.TenantResolutionMiddleware", "RequestId": "0HNF1SGFMEPKS:00000001", "RequestPath": "/api/users/profile", "ConnectionId": "0HNF1SGFMEPKS"}
-boiler-gateway | 2025-08-23T01:28:28.788411651Z [01:28:28 INF] requestId: 0HNF1SGFMEPKS:00000001, previousRequestId: No PreviousRequestId, message: 'The path '/api/users/profile' is an authenticated route! AuthenticationMiddleware checking if client is authenticated...' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPKS:00000001", "RequestPath": "/api/users/profile", "ConnectionId": "0HNF1SGFMEPKS"}
-boiler-gateway | 2025-08-23T01:28:28.788461954Z [01:28:28 INF] requestId: 0HNF1SGFMEPKS:00000001, previousRequestId: No PreviousRequestId, message: 'Client has been authenticated for path '/api/users/profile' by 'AuthenticationTypes.Federation' scheme.' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPKS:00000001", "RequestPath": "/api/users/profile", "ConnectionId": "0HNF1SGFMEPKS"}
-boiler-gateway | 2025-08-23T01:28:28.788465454Z [01:28:28 INF] requestId: 0HNF1SGFMEPKS:00000001, previousRequestId: No PreviousRequestId, message: 'route is authenticated scopes must be checked' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKS:00000001", "RequestPath": "/api/users/profile", "ConnectionId": "0HNF1SGFMEPKS"}
-boiler-gateway | 2025-08-23T01:28:28.788468354Z [01:28:28 INF] requestId: 0HNF1SGFMEPKS:00000001, previousRequestId: No PreviousRequestId, message: 'user scopes is authorized calling next authorization checks' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKS:00000001", "RequestPath": "/api/users/profile", "ConnectionId": "0HNF1SGFMEPKS"}
-boiler-gateway | 2025-08-23T01:28:28.788471054Z [01:28:28 INF] requestId: 0HNF1SGFMEPKS:00000001, previousRequestId: No PreviousRequestId, message: '/api/users/{everything} route does not require user to be authorized' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKS:00000001", "RequestPath": "/api/users/profile", "ConnectionId": "0HNF1SGFMEPKS"}
-boiler-user |   | 2025-08-23T01:28:28.795909240Z [01:28:28 INF] 🔍 All request headers: Accept=application/json, text/plain, */*; Connection=close; Host=boiler-user:7002; User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36; Accept-Encoding=gzip, deflate, br, zstd; Accept-Language=en-US,en;q=0.9; Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; Referer=https://localhost:3000/login; traceparent=00-92b32372d3d56000ec8d7c61a3356259-9cd9364957105b3f-00; X-Real-IP=172.18.0.1; X-Forwarded-For=172.18.0.1; X-Forwarded-Proto=https; sec-ch-ua-platform="Windows"; sec-ch-ua="Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"; sec-ch-ua-mobile=?0; Sec-Fetch-Site=same-origin; Sec-Fetch-Mode=cors; Sec-Fetch-Dest=empty; X-Tenant-ID=1; X-Forwarded-Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; X-User-Context=eyJVc2VySWQiOm51bGwsIlRlbmFudElkIjoiMSIsIlJvbGVzIjpbXSwiUGVybWlzc2lvbnMiOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJFbWFpbCI6bnVsbH0=; X-Tenant-Context=1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1D:00000001", "RequestPath": "/api/users/profile", "ConnectionId": "0HNF1SGDV4P1D"}
-boiler-user |   | 2025-08-23T01:28:28.795976744Z [01:28:28 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1D:00000001", "RequestPath": "/api/users/profile", "ConnectionId": "0HNF1SGDV4P1D"}
-boiler-user |   | 2025-08-23T01:28:28.802364276Z [01:28:28 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1D:00000001", "RequestPath": "/api/users/profile", "ConnectionId": "0HNF1SGDV4P1D"}
-boiler-user |   | 2025-08-23T01:28:28.802398077Z [01:28:28 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1D:00000001", "RequestPath": "/api/users/profile", "ConnectionId": "0HNF1SGDV4P1D"}
-boiler-user |   | 2025-08-23T01:28:28.803163817Z [01:28:28 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF1SGDV4P1D:00000001", "RequestPath": "/api/users/profile", "ConnectionId": "0HNF1SGDV4P1D"}
-boiler-user |   | 2025-08-23T01:28:28.826441326Z [01:28:28 WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'. {"EventId": {"Id": 20504, "Name": "Microsoft.EntityFrameworkCore.Query.MultipleCollectionIncludeWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Query", "ActionId": "e1edfb1d-7234-459a-9d7a-a64f3e71a394", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF1SGDV4P1D:00000001", "RequestPath": "/api/users/profile", "ConnectionId": "0HNF1SGDV4P1D"}
-boiler-user |   | 2025-08-23T01:28:28.901720336Z [01:28:28 INF] User 6 successfully accessed profile in tenant 1 {"SourceContext": "UserService.Services.UserProfileService", "ActionId": "e1edfb1d-7234-459a-9d7a-a64f3e71a394", "ActionName": "UserService.Controllers.UsersController.GetCurrentUserProfile (UserService)", "RequestId": "0HNF1SGDV4P1D:00000001", "RequestPath": "/api/users/profile", "ConnectionId": "0HNF1SGDV4P1D"}
-boiler-gateway | 2025-08-23T01:28:28.907111316Z [01:28:28 INF] requestId: 0HNF1SGFMEPKS:00000001, previousRequestId: No PreviousRequestId, message: '200 (OK) status code of request URI: https://boiler-user:7002/api/users/profile.' {"SourceContext": "Ocelot.Requester.Middleware.HttpRequesterMiddleware", "RequestId": "0HNF1SGFMEPKS:00000001", "RequestPath": "/api/users/profile", "ConnectionId": "0HNF1SGFMEPKS"}
-boiler-gateway | 2025-08-23T01:28:28.909461838Z [01:28:28 INF] RESPONSE 63da6234: 200 in 122ms | Size: Unknown {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKS:00000001", "RequestPath": "/api/users/profile", "ConnectionId": "0HNF1SGFMEPKS"}
-boiler-gateway | 2025-08-23T01:28:28.909510941Z [01:28:28 INF] HTTP GET /api/users/profile responded 200 in 123.0469 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKS:00000001", "ConnectionId": "0HNF1SGFMEPKS"}
-boiler-user |   | 2025-08-23T01:28:28.908563291Z [01:28:28 INF] HTTP GET /api/users/profile responded 200 in 112.8931 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:28 +0000] "GET /api/users/profile HTTP/1.1" 200 312 "https://localhost:3000/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-gateway | 2025-08-23T01:28:28.917703866Z [01:28:28 INF] REQUEST 04336498: GET /api/tenants/1/settings from 172.18.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKT:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKT"}
-boiler-gateway | 2025-08-23T01:28:28.917763169Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:28.917766770Z    Path: /api/tenants/1/settings
-boiler-gateway | 2025-08-23T01:28:28.917768870Z    Method: GET
-boiler-gateway | 2025-08-23T01:28:28.917770970Z    Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodH...
-boiler-gateway | 2025-08-23T01:28:28.917935478Z ✅ JWT Token Validated Successfully:
-boiler-gateway | 2025-08-23T01:28:28.917980881Z    UserId: 6
-boiler-gateway | 2025-08-23T01:28:28.917983881Z    Email: mccrearyforward@gmail.com
-boiler-gateway | 2025-08-23T01:28:28.917986181Z    Issuer: AuthService
-boiler-gateway | 2025-08-23T01:28:28.917988081Z    Audience: StarterApp
-boiler-gateway | 2025-08-23T01:28:28.917990181Z    Claims Count: 50
-boiler-gateway | 2025-08-23T01:28:28.918263595Z [01:28:28 INF] ✅ Tenant resolved: 1 from jwt-claim {"SourceContext": "ApiGateway.Middleware.TenantResolutionMiddleware", "RequestId": "0HNF1SGFMEPKT:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKT"}
-boiler-gateway | 2025-08-23T01:28:28.918475006Z [01:28:28 INF] requestId: 0HNF1SGFMEPKT:00000001, previousRequestId: No PreviousRequestId, message: 'The path '/api/tenants/1/settings' is an authenticated route! AuthenticationMiddleware checking if client is authenticated...' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPKT:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKT"}
-boiler-gateway | 2025-08-23T01:28:28.918487307Z [01:28:28 INF] requestId: 0HNF1SGFMEPKT:00000001, previousRequestId: No PreviousRequestId, message: 'Client has been authenticated for path '/api/tenants/1/settings' by 'AuthenticationTypes.Federation' scheme.' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPKT:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKT"}
-boiler-gateway | 2025-08-23T01:28:28.918490907Z [01:28:28 INF] requestId: 0HNF1SGFMEPKT:00000001, previousRequestId: No PreviousRequestId, message: 'route is authenticated scopes must be checked' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKT:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKT"}
-boiler-gateway | 2025-08-23T01:28:28.918493607Z [01:28:28 INF] requestId: 0HNF1SGFMEPKT:00000001, previousRequestId: No PreviousRequestId, message: 'user scopes is authorized calling next authorization checks' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKT:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKT"}
-boiler-gateway | 2025-08-23T01:28:28.918510808Z [01:28:28 INF] requestId: 0HNF1SGFMEPKT:00000001, previousRequestId: No PreviousRequestId, message: '/api/tenants/{everything} route does not require user to be authorized' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKT:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKT"}
-boiler-gateway | 2025-08-23T01:28:28.918513908Z [01:28:28 WRN] requestId: 0HNF1SGFMEPKT:00000001, previousRequestId: No PreviousRequestId, message: 'You have ignored all SSL warnings by using DangerousAcceptAnyServerCertificateValidator for this DownstreamRoute, UpstreamPathTemplate: Ocelot.Values.UpstreamPathTemplate, DownstreamPathTemplate: /api/tenants/{everything}' {"SourceContext": "Ocelot.Requester.MessageInvokerPool", "RequestId": "0HNF1SGFMEPKT:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKT"}
-boiler-gateway | 2025-08-23T01:28:28.919647367Z [01:28:28 INF] REQUEST 139ff2c4: GET /api/users/6/tenants from 172.18.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKU:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKU"}
-boiler-gateway | 2025-08-23T01:28:28.919666768Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:28.919669668Z    Path: /api/users/6/tenants
-boiler-gateway | 2025-08-23T01:28:28.919671668Z    Method: GET
-boiler-gateway | 2025-08-23T01:28:28.919673669Z    Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodH...
-boiler-gateway | 2025-08-23T01:28:28.919736272Z ✅ JWT Token Validated Successfully:
-boiler-gateway | 2025-08-23T01:28:28.919738772Z    UserId: 6
-boiler-gateway | 2025-08-23T01:28:28.919740872Z    Email: mccrearyforward@gmail.com
-boiler-gateway | 2025-08-23T01:28:28.919742872Z    Issuer: AuthService
-boiler-gateway | 2025-08-23T01:28:28.919744772Z    Audience: StarterApp
-boiler-gateway | 2025-08-23T01:28:28.919746772Z    Claims Count: 50
-boiler-gateway | 2025-08-23T01:28:28.919860578Z [01:28:28 INF] ✅ Tenant resolved: 1 from jwt-claim {"SourceContext": "ApiGateway.Middleware.TenantResolutionMiddleware", "RequestId": "0HNF1SGFMEPKU:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKU"}
-boiler-gateway | 2025-08-23T01:28:28.920423407Z [01:28:28 INF] requestId: 0HNF1SGFMEPKU:00000001, previousRequestId: No PreviousRequestId, message: 'The path '/api/users/6/tenants' is an authenticated route! AuthenticationMiddleware checking if client is authenticated...' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPKU:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKU"}
-boiler-gateway | 2025-08-23T01:28:28.920432208Z [01:28:28 INF] requestId: 0HNF1SGFMEPKU:00000001, previousRequestId: No PreviousRequestId, message: 'Client has been authenticated for path '/api/users/6/tenants' by 'AuthenticationTypes.Federation' scheme.' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPKU:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKU"}
-boiler-gateway | 2025-08-23T01:28:28.920434808Z [01:28:28 INF] requestId: 0HNF1SGFMEPKU:00000001, previousRequestId: No PreviousRequestId, message: 'route is authenticated scopes must be checked' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKU:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKU"}
-boiler-gateway | 2025-08-23T01:28:28.920456209Z [01:28:28 INF] requestId: 0HNF1SGFMEPKU:00000001, previousRequestId: No PreviousRequestId, message: 'user scopes is authorized calling next authorization checks' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKU:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKU"}
-boiler-gateway | 2025-08-23T01:28:28.920459109Z [01:28:28 INF] requestId: 0HNF1SGFMEPKU:00000001, previousRequestId: No PreviousRequestId, message: '/api/users/{everything} route does not require user to be authorized' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKU:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKU"}
-boiler-user |   | 2025-08-23T01:28:28.924790334Z [01:28:28 INF] 🔍 All request headers: Accept=application/json, text/plain, */*; Connection=close; Host=boiler-user:7002; User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36; Accept-Encoding=gzip, deflate, br, zstd; Accept-Language=en-US,en;q=0.9; Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; Referer=https://localhost:3000/login; traceparent=00-cea319a638280a1ae378ace6802d748c-c8752e35337080a5-00; X-Real-IP=172.18.0.1; X-Forwarded-For=172.18.0.1; X-Forwarded-Proto=https; sec-ch-ua-platform="Windows"; sec-ch-ua="Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"; sec-ch-ua-mobile=?0; Sec-Fetch-Site=same-origin; Sec-Fetch-Mode=cors; Sec-Fetch-Dest=empty; X-Tenant-ID=1; X-Forwarded-Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; X-User-Context=eyJVc2VySWQiOm51bGwsIlRlbmFudElkIjoiMSIsIlJvbGVzIjpbXSwiUGVybWlzc2lvbnMiOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJFbWFpbCI6bnVsbH0=; X-Tenant-Context=1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1F:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGDV4P1F"}
-boiler-user |   | 2025-08-23T01:28:28.924981944Z [01:28:28 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1F:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGDV4P1F"}
-boiler-user |   | 2025-08-23T01:28:28.925548374Z [01:28:28 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1E:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGDV4P1E"}
-boiler-user |   | 2025-08-23T01:28:28.925570475Z [01:28:28 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1E:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGDV4P1E"}
-boiler-user |   | 2025-08-23T01:28:28.927080253Z [01:28:28 INF] HTTP GET /api/tenants/1/settings responded 404 in 3.7649 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-gateway | 2025-08-23T01:28:28.928124107Z [01:28:28 WRN] requestId: 0HNF1SGFMEPKT:00000001, previousRequestId: No PreviousRequestId, message: '404 (Not Found) status code of request URI: https://boiler-user:7002/api/tenants/1/settings.' {"SourceContext": "Ocelot.Requester.Middleware.HttpRequesterMiddleware", "RequestId": "0HNF1SGFMEPKT:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKT"}
-boiler-gateway | 2025-08-23T01:28:28.928431023Z [01:28:28 INF] RESPONSE 04336498: 404 in 10ms | Size: 0 {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKT:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKT"}
-boiler-gateway | 2025-08-23T01:28:28.928438924Z [01:28:28 INF] HTTP GET /api/tenants/1/settings responded 404 in 11.0126 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKT:00000001", "ConnectionId": "0HNF1SGFMEPKT"}
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:28 +0000] "GET /api/tenants/1/settings HTTP/1.1" 404 0 "https://localhost:3000/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-user |   | 2025-08-23T01:28:28.929769293Z [01:28:28 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1F:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGDV4P1F"}
-boiler-user |   | 2025-08-23T01:28:28.929784894Z [01:28:28 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1F:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGDV4P1F"}
-boiler-user |   | 2025-08-23T01:28:28.931548785Z [01:28:28 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF1SGDV4P1F:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGDV4P1F"}
-boiler-user |   | 2025-08-23T01:28:28.935965715Z [01:28:28 INF] Found 15 tenants for user 6 (unfiltered by tenant context) {"SourceContext": "UserService.Controllers.UsersController", "ActionId": "11a08787-bb4d-4497-92c4-4141400e01cb", "ActionName": "UserService.Controllers.UsersController.GetUserTenants (UserService)", "RequestId": "0HNF1SGDV4P1F:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGDV4P1F"}
-boiler-gateway | 2025-08-23T01:28:28.936818259Z [01:28:28 INF] requestId: 0HNF1SGFMEPKU:00000001, previousRequestId: No PreviousRequestId, message: '200 (OK) status code of request URI: https://boiler-user:7002/api/users/6/tenants.' {"SourceContext": "Ocelot.Requester.Middleware.HttpRequesterMiddleware", "RequestId": "0HNF1SGFMEPKU:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKU"}
-boiler-user |   | 2025-08-23T01:28:28.937690804Z [01:28:28 INF] HTTP GET /api/users/6/tenants responded 200 in 13.0406 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-gateway | 2025-08-23T01:28:28.938285235Z [01:28:28 INF] RESPONSE 139ff2c4: 200 in 18ms | Size: Unknown {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKU:00000001", "RequestPath": "/api/users/6/tenants", "ConnectionId": "0HNF1SGFMEPKU"}
-boiler-gateway | 2025-08-23T01:28:28.938338438Z [01:28:28 INF] HTTP GET /api/users/6/tenants responded 200 in 18.8070 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKU:00000001", "ConnectionId": "0HNF1SGFMEPKU"}
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:28 +0000] "GET /api/users/6/tenants HTTP/1.1" 200 666 "https://localhost:3000/login" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-gateway | 2025-08-23T01:28:28.952869693Z [01:28:28 INF] REQUEST 810595b4: GET /api/tenants/1/settings from 172.18.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKV:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKV"}
-boiler-gateway | 2025-08-23T01:28:28.952965198Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:28.952969398Z    Path: /api/tenants/1/settings
-boiler-gateway | 2025-08-23T01:28:28.952971598Z    Method: GET
-boiler-gateway | 2025-08-23T01:28:28.952973598Z    Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodH...
-boiler-gateway | 2025-08-23T01:28:28.953451423Z ✅ JWT Token Validated Successfully:
-boiler-gateway | 2025-08-23T01:28:28.953522927Z    UserId: 6
-boiler-gateway | 2025-08-23T01:28:28.953525827Z    Email: mccrearyforward@gmail.com
-boiler-gateway | 2025-08-23T01:28:28.953527927Z    Issuer: AuthService
-boiler-gateway | 2025-08-23T01:28:28.953530127Z    Audience: StarterApp
-boiler-gateway | 2025-08-23T01:28:28.953532327Z    Claims Count: 50
-boiler-gateway | 2025-08-23T01:28:28.953534527Z [01:28:28 INF] ✅ Tenant resolved: 1 from jwt-claim {"SourceContext": "ApiGateway.Middleware.TenantResolutionMiddleware", "RequestId": "0HNF1SGFMEPKV:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKV"}
-boiler-gateway | 2025-08-23T01:28:28.953630032Z [01:28:28 INF] requestId: 0HNF1SGFMEPKV:00000001, previousRequestId: No PreviousRequestId, message: 'The path '/api/tenants/1/settings' is an authenticated route! AuthenticationMiddleware checking if client is authenticated...' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPKV:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKV"}
-boiler-gateway | 2025-08-23T01:28:28.953763339Z [01:28:28 INF] requestId: 0HNF1SGFMEPKV:00000001, previousRequestId: No PreviousRequestId, message: 'Client has been authenticated for path '/api/tenants/1/settings' by 'AuthenticationTypes.Federation' scheme.' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPKV:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKV"}
-boiler-gateway | 2025-08-23T01:28:28.953775040Z [01:28:28 INF] requestId: 0HNF1SGFMEPKV:00000001, previousRequestId: No PreviousRequestId, message: 'route is authenticated scopes must be checked' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKV:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKV"}
-boiler-gateway | 2025-08-23T01:28:28.953781140Z [01:28:28 INF] requestId: 0HNF1SGFMEPKV:00000001, previousRequestId: No PreviousRequestId, message: 'user scopes is authorized calling next authorization checks' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKV:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKV"}
-boiler-gateway | 2025-08-23T01:28:28.953783640Z [01:28:28 INF] requestId: 0HNF1SGFMEPKV:00000001, previousRequestId: No PreviousRequestId, message: '/api/tenants/{everything} route does not require user to be authorized' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPKV:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKV"}
-boiler-user |   | 2025-08-23T01:28:28.960780404Z [01:28:28 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1G:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGDV4P1G"}
-boiler-user |   | 2025-08-23T01:28:28.960854007Z [01:28:28 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1G:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGDV4P1G"}
-boiler-user |   | 2025-08-23T01:28:28.961815757Z [01:28:28 INF] HTTP GET /api/tenants/1/settings responded 404 in 3.3077 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-gateway | 2025-08-23T01:28:28.962685402Z [01:28:28 WRN] requestId: 0HNF1SGFMEPKV:00000001, previousRequestId: No PreviousRequestId, message: '404 (Not Found) status code of request URI: https://boiler-user:7002/api/tenants/1/settings.' {"SourceContext": "Ocelot.Requester.Middleware.HttpRequesterMiddleware", "RequestId": "0HNF1SGFMEPKV:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKV"}
-boiler-gateway | 2025-08-23T01:28:28.962826010Z [01:28:28 INF] RESPONSE 810595b4: 404 in 10ms | Size: 0 {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKV:00000001", "RequestPath": "/api/tenants/1/settings", "ConnectionId": "0HNF1SGFMEPKV"}
-boiler-gateway | 2025-08-23T01:28:28.962848311Z [01:28:28 INF] HTTP GET /api/tenants/1/settings responded 404 in 10.2368 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPKV:00000001", "ConnectionId": "0HNF1SGFMEPKV"}
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:28 +0000] "GET /api/tenants/1/settings HTTP/1.1" 404 0 "https://localhost:3000/app/dashboard" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-gateway | 2025-08-23T01:28:33.005005153Z [01:28:33 INF] REQUEST f9f8fae0: GET /api/roles?page=1&pageSize=10 from 172.18.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL0:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL0"}
-boiler-user |   | 2025-08-23T01:28:33.010836456Z [01:28:33 INF] 🔍 All request headers: Accept=application/json, text/plain, */*; Connection=close; Host=boiler-user:7002; User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36; Accept-Encoding=gzip, deflate, br, zstd; Accept-Language=en-US,en;q=0.9; Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; Referer=https://localhost:3000/app/roles; traceparent=00-c2b99604e13b61eaae91915b79e1f2ab-622a07d8dfb24cf0-00; X-Real-IP=172.18.0.1; X-Forwarded-For=172.18.0.1; X-Forwarded-Proto=https; sec-ch-ua-platform="Windows"; sec-ch-ua="Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"; sec-ch-ua-mobile=?0; Sec-Fetch-Site=same-origin; Sec-Fetch-Mode=cors; Sec-Fetch-Dest=empty; X-Tenant-ID=1; X-Forwarded-Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; X-User-Context=eyJVc2VySWQiOm51bGwsIlRlbmFudElkIjoiMSIsIlJvbGVzIjpbXSwiUGVybWlzc2lvbnMiOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJFbWFpbCI6bnVsbH0=; X-Tenant-Context=1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1H:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGDV4P1H"}
-boiler-user |   | 2025-08-23T01:28:33.010925561Z [01:28:33 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1H:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGDV4P1H"}
-boiler-gateway | 2025-08-23T01:28:33.005077657Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:33.005082757Z    Path: /api/roles
-boiler-gateway | 2025-08-23T01:28:33.005085057Z    Method: GET
-boiler-gateway | 2025-08-23T01:28:33.005087257Z    Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodH...
-boiler-gateway | 2025-08-23T01:28:33.005524480Z ✅ JWT Token Validated Successfully:
-boiler-gateway | 2025-08-23T01:28:33.005536681Z    UserId: 6
-boiler-gateway | 2025-08-23T01:28:33.005539181Z    Email: mccrearyforward@gmail.com
-boiler-gateway | 2025-08-23T01:28:33.005541381Z    Issuer: AuthService
-boiler-gateway | 2025-08-23T01:28:33.005543881Z    Audience: StarterApp
-boiler-gateway | 2025-08-23T01:28:33.005545881Z    Claims Count: 50
-boiler-gateway | 2025-08-23T01:28:33.005548081Z [01:28:33 INF] ✅ Tenant resolved: 1 from jwt-claim {"SourceContext": "ApiGateway.Middleware.TenantResolutionMiddleware", "RequestId": "0HNF1SGFMEPL0:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL0"}
-boiler-gateway | 2025-08-23T01:28:33.012360135Z [01:28:33 INF] requestId: 0HNF1SGFMEPL0:00000001, previousRequestId: No PreviousRequestId, message: 'The path '/api/roles' is an authenticated route! AuthenticationMiddleware checking if client is authenticated...' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPL0:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL0"}
-boiler-gateway | 2025-08-23T01:28:33.012409038Z [01:28:33 INF] requestId: 0HNF1SGFMEPL0:00000001, previousRequestId: No PreviousRequestId, message: 'Client has been authenticated for path '/api/roles' by 'AuthenticationTypes.Federation' scheme.' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPL0:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL0"}
-boiler-gateway | 2025-08-23T01:28:33.012412938Z [01:28:33 INF] requestId: 0HNF1SGFMEPL0:00000001, previousRequestId: No PreviousRequestId, message: 'route is authenticated scopes must be checked' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL0:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL0"}
-boiler-gateway | 2025-08-23T01:28:33.012415738Z [01:28:33 INF] requestId: 0HNF1SGFMEPL0:00000001, previousRequestId: No PreviousRequestId, message: 'user scopes is authorized calling next authorization checks' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL0:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL0"}
-boiler-gateway | 2025-08-23T01:28:33.012418438Z [01:28:33 INF] requestId: 0HNF1SGFMEPL0:00000001, previousRequestId: No PreviousRequestId, message: '/api/roles/{everything} route does not require user to be authorized' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL0:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL0"}
-boiler-gateway | 2025-08-23T01:28:33.012421738Z [01:28:33 WRN] requestId: 0HNF1SGFMEPL0:00000001, previousRequestId: No PreviousRequestId, message: 'You have ignored all SSL warnings by using DangerousAcceptAnyServerCertificateValidator for this DownstreamRoute, UpstreamPathTemplate: Ocelot.Values.UpstreamPathTemplate, DownstreamPathTemplate: /api/roles/{everything}' {"SourceContext": "Ocelot.Requester.MessageInvokerPool", "RequestId": "0HNF1SGFMEPL0:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL0"}
-boiler-user |   | 2025-08-23T01:28:33.015610504Z [01:28:33 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1H:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGDV4P1H"}
-boiler-user |   | 2025-08-23T01:28:33.015640205Z [01:28:33 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1H:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGDV4P1H"}
-boiler-user |   | 2025-08-23T01:28:33.015720910Z [01:28:33 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF1SGDV4P1H:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGDV4P1H"}
-boiler-gateway | 2025-08-23T01:28:33.102480316Z [01:28:33 INF] requestId: 0HNF1SGFMEPL0:00000001, previousRequestId: No PreviousRequestId, message: '200 (OK) status code of request URI: https://boiler-user:7002/api/roles?page=1&pageSize=10.' {"SourceContext": "Ocelot.Requester.Middleware.HttpRequesterMiddleware", "RequestId": "0HNF1SGFMEPL0:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL0"}
-boiler-user |   | 2025-08-23T01:28:33.103217054Z [01:28:33 INF] HTTP GET /api/roles responded 200 in 92.5416 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-gateway | 2025-08-23T01:28:33.103766783Z [01:28:33 INF] RESPONSE f9f8fae0: 200 in 98ms | Size: Unknown {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL0:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL0"}
-boiler-gateway | 2025-08-23T01:28:33.103965793Z [01:28:33 INF] HTTP GET /api/roles responded 200 in 99.1585 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL0:00000001", "ConnectionId": "0HNF1SGFMEPL0"}
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:33 +0000] "GET /api/roles?page=1&pageSize=10 HTTP/1.1" 200 1110 "https://localhost:3000/app/roles" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-gateway | 2025-08-23T01:28:33.514288004Z [01:28:33 INF] REQUEST 5388d89b: GET /api/roles?page=1&pageSize=10 from 172.18.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL1:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL1"}
-boiler-gateway | 2025-08-23T01:28:33.514335507Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:33.514339007Z    Path: /api/roles
-boiler-gateway | 2025-08-23T01:28:33.514341007Z    Method: GET
-boiler-gateway | 2025-08-23T01:28:33.514343107Z    Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodH...
-boiler-gateway | 2025-08-23T01:28:33.514719527Z ✅ JWT Token Validated Successfully:
-boiler-gateway | 2025-08-23T01:28:33.514724527Z    UserId: 6
-boiler-gateway | 2025-08-23T01:28:33.514726527Z    Email: mccrearyforward@gmail.com
-boiler-gateway | 2025-08-23T01:28:33.514728427Z    Issuer: AuthService
-boiler-gateway | 2025-08-23T01:28:33.514730427Z    Audience: StarterApp
-boiler-gateway | 2025-08-23T01:28:33.514732427Z    Claims Count: 50
-boiler-gateway | 2025-08-23T01:28:33.514735027Z [01:28:33 INF] ✅ Tenant resolved: 1 from jwt-claim {"SourceContext": "ApiGateway.Middleware.TenantResolutionMiddleware", "RequestId": "0HNF1SGFMEPL1:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL1"}
-boiler-gateway | 2025-08-23T01:28:33.514941538Z [01:28:33 INF] requestId: 0HNF1SGFMEPL1:00000001, previousRequestId: No PreviousRequestId, message: 'The path '/api/roles' is an authenticated route! AuthenticationMiddleware checking if client is authenticated...' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPL1:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL1"}
-boiler-gateway | 2025-08-23T01:28:33.514946238Z [01:28:33 INF] requestId: 0HNF1SGFMEPL1:00000001, previousRequestId: No PreviousRequestId, message: 'Client has been authenticated for path '/api/roles' by 'AuthenticationTypes.Federation' scheme.' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPL1:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL1"}
-boiler-gateway | 2025-08-23T01:28:33.514963039Z [01:28:33 INF] requestId: 0HNF1SGFMEPL1:00000001, previousRequestId: No PreviousRequestId, message: 'route is authenticated scopes must be checked' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL1:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL1"}
-boiler-gateway | 2025-08-23T01:28:33.514965639Z [01:28:33 INF] requestId: 0HNF1SGFMEPL1:00000001, previousRequestId: No PreviousRequestId, message: 'user scopes is authorized calling next authorization checks' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL1:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL1"}
-boiler-gateway | 2025-08-23T01:28:33.514968340Z [01:28:33 INF] requestId: 0HNF1SGFMEPL1:00000001, previousRequestId: No PreviousRequestId, message: '/api/roles/{everything} route does not require user to be authorized' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL1:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL1"}
-boiler-user |   | 2025-08-23T01:28:33.525664895Z [01:28:33 INF] 🔍 All request headers: Accept=application/json, text/plain, */*; Connection=close; Host=boiler-user:7002; User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36; Accept-Encoding=gzip, deflate, br, zstd; Accept-Language=en-US,en;q=0.9; Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; Referer=https://localhost:3000/app/roles; traceparent=00-3738414388e2c6e66767513c2c441f8a-6e77b666c0016749-00; X-Real-IP=172.18.0.1; X-Forwarded-For=172.18.0.1; X-Forwarded-Proto=https; sec-ch-ua-platform="Windows"; sec-ch-ua="Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"; sec-ch-ua-mobile=?0; Sec-Fetch-Site=same-origin; Sec-Fetch-Mode=cors; Sec-Fetch-Dest=empty; X-Tenant-ID=1; X-Forwarded-Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; X-User-Context=eyJVc2VySWQiOm51bGwsIlRlbmFudElkIjoiMSIsIlJvbGVzIjpbXSwiUGVybWlzc2lvbnMiOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJFbWFpbCI6bnVsbH0=; X-Tenant-Context=1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1I:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGDV4P1I"}
-boiler-user |   | 2025-08-23T01:28:33.525759200Z [01:28:33 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1I:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGDV4P1I"}
-boiler-user |   | 2025-08-23T01:28:33.529926516Z [01:28:33 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1I:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGDV4P1I"}
-boiler-user |   | 2025-08-23T01:28:33.530005021Z [01:28:33 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1I:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGDV4P1I"}
-boiler-user |   | 2025-08-23T01:28:33.530009121Z [01:28:33 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF1SGDV4P1I:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGDV4P1I"}
-boiler-gateway | 2025-08-23T01:28:33.536130539Z [01:28:33 INF] requestId: 0HNF1SGFMEPL1:00000001, previousRequestId: No PreviousRequestId, message: '200 (OK) status code of request URI: https://boiler-user:7002/api/roles?page=1&pageSize=10.' {"SourceContext": "Ocelot.Requester.Middleware.HttpRequesterMiddleware", "RequestId": "0HNF1SGFMEPL1:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL1"}
-boiler-user |   | 2025-08-23T01:28:33.536973882Z [01:28:33 INF] HTTP GET /api/roles responded 200 in 11.5946 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-gateway | 2025-08-23T01:28:33.537414305Z [01:28:33 INF] RESPONSE 5388d89b: 200 in 23ms | Size: Unknown {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL1:00000001", "RequestPath": "/api/roles", "ConnectionId": "0HNF1SGFMEPL1"}
-boiler-gateway | 2025-08-23T01:28:33.537462008Z [01:28:33 INF] HTTP GET /api/roles responded 200 in 23.2916 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL1:00000001", "ConnectionId": "0HNF1SGFMEPL1"}
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:33 +0000] "GET /api/roles?page=1&pageSize=10 HTTP/1.1" 200 1110 "https://localhost:3000/app/roles" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-gateway | 2025-08-23T01:28:37.512398199Z [01:28:37 INF] REQUEST f455cafc: GET /api/roles/12/users from 172.18.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL2:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL2"}
-boiler-gateway | 2025-08-23T01:28:37.512892327Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:37.512938830Z    Path: /api/roles/12/users
-boiler-gateway | 2025-08-23T01:28:37.512942430Z    Method: GET
-boiler-gateway | 2025-08-23T01:28:37.512945131Z    Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodH...
-boiler-gateway | 2025-08-23T01:28:37.512948031Z ✅ JWT Token Validated Successfully:
-boiler-gateway | 2025-08-23T01:28:37.512950631Z    UserId: 6
-boiler-gateway | 2025-08-23T01:28:37.512953131Z    Email: mccrearyforward@gmail.com
-boiler-gateway | 2025-08-23T01:28:37.512955531Z    Issuer: AuthService
-boiler-gateway | 2025-08-23T01:28:37.512957931Z    Audience: StarterApp
-boiler-gateway | 2025-08-23T01:28:37.512960631Z    Claims Count: 50
-boiler-gateway | 2025-08-23T01:28:37.512963132Z [01:28:37 INF] ✅ Tenant resolved: 1 from jwt-claim {"SourceContext": "ApiGateway.Middleware.TenantResolutionMiddleware", "RequestId": "0HNF1SGFMEPL2:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL2"}
-boiler-gateway | 2025-08-23T01:28:37.513437459Z [01:28:37 INF] requestId: 0HNF1SGFMEPL2:00000001, previousRequestId: No PreviousRequestId, message: 'The path '/api/roles/12/users' is an authenticated route! AuthenticationMiddleware checking if client is authenticated...' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPL2:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL2"}
-boiler-gateway | 2025-08-23T01:28:37.513449860Z [01:28:37 INF] requestId: 0HNF1SGFMEPL2:00000001, previousRequestId: No PreviousRequestId, message: 'Client has been authenticated for path '/api/roles/12/users' by 'AuthenticationTypes.Federation' scheme.' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPL2:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL2"}
-boiler-gateway | 2025-08-23T01:28:37.513453560Z [01:28:37 INF] requestId: 0HNF1SGFMEPL2:00000001, previousRequestId: No PreviousRequestId, message: 'route is authenticated scopes must be checked' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL2:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL2"}
-boiler-gateway | 2025-08-23T01:28:37.513456960Z [01:28:37 INF] requestId: 0HNF1SGFMEPL2:00000001, previousRequestId: No PreviousRequestId, message: 'user scopes is authorized calling next authorization checks' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL2:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL2"}
-boiler-gateway | 2025-08-23T01:28:37.513460161Z [01:28:37 INF] requestId: 0HNF1SGFMEPL2:00000001, previousRequestId: No PreviousRequestId, message: '/api/roles/{everything} route does not require user to be authorized' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL2:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL2"}
-boiler-user |   | 2025-08-23T01:28:37.523951073Z [01:28:37 INF] 🔍 All request headers: Accept=application/json, text/plain, */*; Connection=close; Host=boiler-user:7002; User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36; Accept-Encoding=gzip, deflate, br, zstd; Accept-Language=en-US,en;q=0.9; Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; Referer=https://localhost:3000/app/roles; traceparent=00-381b462202aed6b0938a2e72765b81e1-2eb1d2d631cc343d-00; X-Real-IP=172.18.0.1; X-Forwarded-For=172.18.0.1; X-Forwarded-Proto=https; sec-ch-ua-platform="Windows"; sec-ch-ua="Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"; sec-ch-ua-mobile=?0; Sec-Fetch-Site=same-origin; Sec-Fetch-Mode=cors; Sec-Fetch-Dest=empty; X-Tenant-ID=1; X-Forwarded-Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; X-User-Context=eyJVc2VySWQiOm51bGwsIlRlbmFudElkIjoiMSIsIlJvbGVzIjpbXSwiUGVybWlzc2lvbnMiOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJFbWFpbCI6bnVsbH0=; X-Tenant-Context=1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1J:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGDV4P1J"}
-boiler-user |   | 2025-08-23T01:28:37.524059980Z [01:28:37 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1J:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGDV4P1J"}
-boiler-user |   | 2025-08-23T01:28:37.531223698Z [01:28:37 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1J:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGDV4P1J"}
-boiler-user |   | 2025-08-23T01:28:37.531280501Z [01:28:37 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1J:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGDV4P1J"}
-boiler-user |   | 2025-08-23T01:28:37.531366306Z [01:28:37 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF1SGDV4P1J:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGDV4P1J"}
-boiler-gateway | 2025-08-23T01:28:37.560072683Z [01:28:37 INF] requestId: 0HNF1SGFMEPL2:00000001, previousRequestId: No PreviousRequestId, message: '200 (OK) status code of request URI: https://boiler-user:7002/api/roles/12/users.' {"SourceContext": "Ocelot.Requester.Middleware.HttpRequesterMiddleware", "RequestId": "0HNF1SGFMEPL2:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL2"}
-boiler-gateway | 2025-08-23T01:28:37.561131945Z [01:28:37 INF] RESPONSE f455cafc: 200 in 49ms | Size: Unknown {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL2:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL2"}
-boiler-gateway | 2025-08-23T01:28:37.561160246Z [01:28:37 INF] HTTP GET /api/roles/12/users responded 200 in 49.2201 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL2:00000001", "ConnectionId": "0HNF1SGFMEPL2"}
-boiler-user |   | 2025-08-23T01:28:37.560811026Z [01:28:37 INF] HTTP GET /api/roles/12/users responded 200 in 37.2432 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:37 +0000] "GET /api/roles/12/users HTTP/1.1" 200 194 "https://localhost:3000/app/roles" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-gateway | 2025-08-23T01:28:39.737040114Z [01:28:39 INF] REQUEST f1770cab: GET /api/permissions/grouped from 172.18.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL3:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL3"}
-boiler-gateway | 2025-08-23T01:28:39.737086116Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:39.737089816Z    Path: /api/permissions/grouped
-boiler-gateway | 2025-08-23T01:28:39.737091917Z    Method: GET
-boiler-gateway | 2025-08-23T01:28:39.737093917Z    Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodH...
-boiler-gateway | 2025-08-23T01:28:39.737113418Z ✅ JWT Token Validated Successfully:
-boiler-gateway | 2025-08-23T01:28:39.737115618Z    UserId: 6
-boiler-gateway | 2025-08-23T01:28:39.737118418Z    Email: mccrearyforward@gmail.com
-boiler-gateway | 2025-08-23T01:28:39.737120518Z    Issuer: AuthService
-boiler-gateway | 2025-08-23T01:28:39.737122418Z    Audience: StarterApp
-boiler-gateway | 2025-08-23T01:28:39.737124418Z    Claims Count: 50
-boiler-gateway | 2025-08-23T01:28:39.737126419Z [01:28:39 INF] ✅ Tenant resolved: 1 from jwt-claim {"SourceContext": "ApiGateway.Middleware.TenantResolutionMiddleware", "RequestId": "0HNF1SGFMEPL3:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL3"}
-boiler-gateway | 2025-08-23T01:28:39.737602046Z [01:28:39 INF] requestId: 0HNF1SGFMEPL3:00000001, previousRequestId: No PreviousRequestId, message: 'The path '/api/permissions/grouped' is an authenticated route! AuthenticationMiddleware checking if client is authenticated...' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPL3:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL3"}
-boiler-gateway | 2025-08-23T01:28:39.737610347Z [01:28:39 INF] requestId: 0HNF1SGFMEPL3:00000001, previousRequestId: No PreviousRequestId, message: 'Client has been authenticated for path '/api/permissions/grouped' by 'AuthenticationTypes.Federation' scheme.' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPL3:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL3"}
-boiler-gateway | 2025-08-23T01:28:39.737612947Z [01:28:39 INF] requestId: 0HNF1SGFMEPL3:00000001, previousRequestId: No PreviousRequestId, message: 'route is authenticated scopes must be checked' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL3:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL3"}
-boiler-gateway | 2025-08-23T01:28:39.737615347Z [01:28:39 INF] requestId: 0HNF1SGFMEPL3:00000001, previousRequestId: No PreviousRequestId, message: 'user scopes is authorized calling next authorization checks' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL3:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL3"}
-boiler-gateway | 2025-08-23T01:28:39.737618247Z [01:28:39 INF] requestId: 0HNF1SGFMEPL3:00000001, previousRequestId: No PreviousRequestId, message: '/api/permissions/{everything} route does not require user to be authorized' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL3:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL3"}
-boiler-gateway | 2025-08-23T01:28:39.737620947Z [01:28:39 WRN] requestId: 0HNF1SGFMEPL3:00000001, previousRequestId: No PreviousRequestId, message: 'You have ignored all SSL warnings by using DangerousAcceptAnyServerCertificateValidator for this DownstreamRoute, UpstreamPathTemplate: Ocelot.Values.UpstreamPathTemplate, DownstreamPathTemplate: /api/permissions/{everything}' {"SourceContext": "Ocelot.Requester.MessageInvokerPool", "RequestId": "0HNF1SGFMEPL3:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL3"}
-boiler-gateway | 2025-08-23T01:28:39.737835260Z [01:28:39 INF] REQUEST 107d9413: GET /api/roles/12 from 172.18.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL4:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL4"}
-boiler-gateway | 2025-08-23T01:28:39.738335489Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:39.738364491Z    Path: /api/roles/12
-boiler-gateway | 2025-08-23T01:28:39.738366991Z    Method: GET
-boiler-gateway | 2025-08-23T01:28:39.738369191Z    Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodH...
-boiler-gateway | 2025-08-23T01:28:39.738376092Z ✅ JWT Token Validated Successfully:
-boiler-gateway | 2025-08-23T01:28:39.738378692Z    UserId: 6
-boiler-gateway | 2025-08-23T01:28:39.738380592Z    Email: mccrearyforward@gmail.com
-boiler-gateway | 2025-08-23T01:28:39.738382992Z    Issuer: AuthService
-boiler-gateway | 2025-08-23T01:28:39.738384792Z    Audience: StarterApp
-boiler-gateway | 2025-08-23T01:28:39.738386792Z    Claims Count: 50
-boiler-gateway | 2025-08-23T01:28:39.738388692Z [01:28:39 INF] ✅ Tenant resolved: 1 from jwt-claim {"SourceContext": "ApiGateway.Middleware.TenantResolutionMiddleware", "RequestId": "0HNF1SGFMEPL4:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL4"}
-boiler-gateway | 2025-08-23T01:28:39.738736313Z [01:28:39 INF] requestId: 0HNF1SGFMEPL4:00000001, previousRequestId: No PreviousRequestId, message: 'The path '/api/roles/12' is an authenticated route! AuthenticationMiddleware checking if client is authenticated...' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPL4:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL4"}
-boiler-gateway | 2025-08-23T01:28:39.738809017Z [01:28:39 INF] requestId: 0HNF1SGFMEPL4:00000001, previousRequestId: No PreviousRequestId, message: 'Client has been authenticated for path '/api/roles/12' by 'AuthenticationTypes.Federation' scheme.' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPL4:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL4"}
-boiler-gateway | 2025-08-23T01:28:39.738816217Z [01:28:39 INF] requestId: 0HNF1SGFMEPL4:00000001, previousRequestId: No PreviousRequestId, message: 'route is authenticated scopes must be checked' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL4:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL4"}
-boiler-gateway | 2025-08-23T01:28:39.738831918Z [01:28:39 INF] requestId: 0HNF1SGFMEPL4:00000001, previousRequestId: No PreviousRequestId, message: 'user scopes is authorized calling next authorization checks' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL4:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL4"}
-boiler-gateway | 2025-08-23T01:28:39.738864020Z [01:28:39 INF] requestId: 0HNF1SGFMEPL4:00000001, previousRequestId: No PreviousRequestId, message: '/api/roles/{everything} route does not require user to be authorized' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL4:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL4"}
-boiler-user |   | 2025-08-23T01:28:39.744069124Z [01:28:39 INF] 🔍 All request headers: Accept=application/json, text/plain, */*; Connection=close; Host=boiler-user:7002; User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36; Accept-Encoding=gzip, deflate, br, zstd; Accept-Language=en-US,en;q=0.9; Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; Referer=https://localhost:3000/app/roles/12/edit; traceparent=00-a86323c48b75f7d12e7fb2676af1240b-be2c91935ebaf5b4-00; X-Real-IP=172.18.0.1; X-Forwarded-For=172.18.0.1; X-Forwarded-Proto=https; sec-ch-ua-platform="Windows"; sec-ch-ua="Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"; sec-ch-ua-mobile=?0; Sec-Fetch-Site=same-origin; Sec-Fetch-Mode=cors; Sec-Fetch-Dest=empty; X-Tenant-ID=1; X-Forwarded-Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; X-User-Context=eyJVc2VySWQiOm51bGwsIlRlbmFudElkIjoiMSIsIlJvbGVzIjpbXSwiUGVybWlzc2lvbnMiOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJFbWFpbCI6bnVsbH0=; X-Tenant-Context=1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1K:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGDV4P1K"}
-boiler-user |   | 2025-08-23T01:28:39.744181631Z [01:28:39 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1K:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGDV4P1K"}
-boiler-user |   | 2025-08-23T01:28:39.744197231Z [01:28:39 INF] 🔍 All request headers: Accept=application/json, text/plain, */*; Connection=close; Host=boiler-user:7002; User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36; Accept-Encoding=gzip, deflate, br, zstd; Accept-Language=en-US,en;q=0.9; Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; Referer=https://localhost:3000/app/roles/12/edit; traceparent=00-2f6e0ae054101ba390e44e186bb90e89-8e2bed148e0322b3-00; X-Real-IP=172.18.0.1; X-Forwarded-For=172.18.0.1; X-Forwarded-Proto=https; sec-ch-ua-platform="Windows"; sec-ch-ua="Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"; sec-ch-ua-mobile=?0; Sec-Fetch-Site=same-origin; Sec-Fetch-Mode=cors; Sec-Fetch-Dest=empty; X-Tenant-ID=1; X-Forwarded-Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; X-User-Context=eyJVc2VySWQiOm51bGwsIlRlbmFudElkIjoiMSIsIlJvbGVzIjpbXSwiUGVybWlzc2lvbnMiOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJFbWFpbCI6bnVsbH0=; X-Tenant-Context=1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1L:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1L"}
-boiler-user |   | 2025-08-23T01:28:39.744212132Z [01:28:39 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1L:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1L"}
-boiler-user |   | 2025-08-23T01:28:39.750998529Z [01:28:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1L:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1L"}
-boiler-user |   | 2025-08-23T01:28:39.751034731Z [01:28:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1L:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1L"}
-boiler-user |   | 2025-08-23T01:28:39.751038131Z [01:28:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF1SGDV4P1L:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1L"}
-boiler-user |   | 2025-08-23T01:28:39.751765073Z [01:28:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1K:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGDV4P1K"}
-boiler-user |   | 2025-08-23T01:28:39.751783875Z [01:28:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1K:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGDV4P1K"}
-boiler-user |   | 2025-08-23T01:28:39.751876980Z [01:28:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF1SGDV4P1K:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGDV4P1K"}
-boiler-gateway | 2025-08-23T01:28:39.761687353Z [01:28:39 INF] requestId: 0HNF1SGFMEPL4:00000001, previousRequestId: No PreviousRequestId, message: '200 (OK) status code of request URI: https://boiler-user:7002/api/roles/12.' {"SourceContext": "Ocelot.Requester.Middleware.HttpRequesterMiddleware", "RequestId": "0HNF1SGFMEPL4:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL4"}
-boiler-gateway | 2025-08-23T01:28:39.763124237Z [01:28:39 INF] requestId: 0HNF1SGFMEPL3:00000001, previousRequestId: No PreviousRequestId, message: '200 (OK) status code of request URI: https://boiler-user:7002/api/permissions/grouped.' {"SourceContext": "Ocelot.Requester.Middleware.HttpRequesterMiddleware", "RequestId": "0HNF1SGFMEPL3:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL3"}
-boiler-gateway | 2025-08-23T01:28:39.763711771Z [01:28:39 INF] RESPONSE f1770cab: 200 in 27ms | Size: Unknown {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL3:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL3"}
-boiler-gateway | 2025-08-23T01:28:39.763721572Z [01:28:39 INF] HTTP GET /api/permissions/grouped responded 200 in 27.4141 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL3:00000001", "ConnectionId": "0HNF1SGFMEPL3"}
-boiler-user |   | 2025-08-23T01:28:39.763052033Z [01:28:39 INF] HTTP GET /api/roles/12 responded 200 in 18.9731 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-user |   | 2025-08-23T01:28:39.763245844Z [01:28:39 INF] HTTP GET /api/permissions/grouped responded 200 in 19.5088 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-gateway | 2025-08-23T01:28:39.764203400Z [01:28:39 INF] RESPONSE 107d9413: 200 in 25ms | Size: Unknown {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL4:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL4"}
-boiler-gateway | 2025-08-23T01:28:39.764218001Z [01:28:39 INF] HTTP GET /api/roles/12 responded 200 in 26.2428 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL4:00000001", "ConnectionId": "0HNF1SGFMEPL4"}
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:39 +0000] "GET /api/permissions/grouped HTTP/1.1" 200 910 "https://localhost:3000/app/roles/12/edit" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:39 +0000] "GET /api/roles/12 HTTP/1.1" 200 275 "https://localhost:3000/app/roles/12/edit" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-gateway | 2025-08-23T01:28:39.770812086Z [01:28:39 INF] REQUEST d689cf4a: GET /api/roles/12/users from 172.18.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL5:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL5"}
-boiler-gateway | 2025-08-23T01:28:39.770878190Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:39.770882590Z    Path: /api/roles/12/users
-boiler-gateway | 2025-08-23T01:28:39.770884590Z    Method: GET
-boiler-gateway | 2025-08-23T01:28:39.770887090Z    Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodH...
-boiler-gateway | 2025-08-23T01:28:39.770992296Z ✅ JWT Token Validated Successfully:
-boiler-gateway | 2025-08-23T01:28:39.771024298Z    UserId: 6
-boiler-gateway | 2025-08-23T01:28:39.771026798Z    Email: mccrearyforward@gmail.com
-boiler-gateway | 2025-08-23T01:28:39.771028898Z    Issuer: AuthService
-boiler-gateway | 2025-08-23T01:28:39.771030899Z    Audience: StarterApp
-boiler-gateway | 2025-08-23T01:28:39.771032799Z    Claims Count: 50
-boiler-gateway | 2025-08-23T01:28:39.771034899Z [01:28:39 INF] ✅ Tenant resolved: 1 from jwt-claim {"SourceContext": "ApiGateway.Middleware.TenantResolutionMiddleware", "RequestId": "0HNF1SGFMEPL5:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL5"}
-boiler-gateway | 2025-08-23T01:28:39.771449523Z [01:28:39 INF] requestId: 0HNF1SGFMEPL5:00000001, previousRequestId: No PreviousRequestId, message: 'The path '/api/roles/12/users' is an authenticated route! AuthenticationMiddleware checking if client is authenticated...' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPL5:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL5"}
-boiler-gateway | 2025-08-23T01:28:39.771461524Z [01:28:39 INF] requestId: 0HNF1SGFMEPL5:00000001, previousRequestId: No PreviousRequestId, message: 'Client has been authenticated for path '/api/roles/12/users' by 'AuthenticationTypes.Federation' scheme.' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPL5:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL5"}
-boiler-gateway | 2025-08-23T01:28:39.771482625Z [01:28:39 INF] requestId: 0HNF1SGFMEPL5:00000001, previousRequestId: No PreviousRequestId, message: 'route is authenticated scopes must be checked' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL5:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL5"}
-boiler-gateway | 2025-08-23T01:28:39.771485425Z [01:28:39 INF] requestId: 0HNF1SGFMEPL5:00000001, previousRequestId: No PreviousRequestId, message: 'user scopes is authorized calling next authorization checks' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL5:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL5"}
-boiler-gateway | 2025-08-23T01:28:39.771487925Z [01:28:39 INF] requestId: 0HNF1SGFMEPL5:00000001, previousRequestId: No PreviousRequestId, message: '/api/roles/{everything} route does not require user to be authorized' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL5:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL5"}
-boiler-user |   | 2025-08-23T01:28:39.776168099Z [01:28:39 INF] 🔍 All request headers: Accept=application/json, text/plain, */*; Connection=close; Host=boiler-user:7002; User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36; Accept-Encoding=gzip, deflate, br, zstd; Accept-Language=en-US,en;q=0.9; Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; Referer=https://localhost:3000/app/roles/12/edit; traceparent=00-4f215c7a3091a37e40743fce66a3c1e3-5c798dc5aaa4461b-00; X-Real-IP=172.18.0.1; X-Forwarded-For=172.18.0.1; X-Forwarded-Proto=https; sec-ch-ua-platform="Windows"; sec-ch-ua="Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"; sec-ch-ua-mobile=?0; Sec-Fetch-Site=same-origin; Sec-Fetch-Mode=cors; Sec-Fetch-Dest=empty; X-Tenant-ID=1; X-Forwarded-Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; X-User-Context=eyJVc2VySWQiOm51bGwsIlRlbmFudElkIjoiMSIsIlJvbGVzIjpbXSwiUGVybWlzc2lvbnMiOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJFbWFpbCI6bnVsbH0=; X-Tenant-Context=1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1M:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGDV4P1M"}
-boiler-user |   | 2025-08-23T01:28:39.776260004Z [01:28:39 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1M:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGDV4P1M"}
-boiler-user |   | 2025-08-23T01:28:39.780135430Z [01:28:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1M:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGDV4P1M"}
-boiler-user |   | 2025-08-23T01:28:39.780185933Z [01:28:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1M:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGDV4P1M"}
-boiler-user |   | 2025-08-23T01:28:39.780221735Z [01:28:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF1SGDV4P1M:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGDV4P1M"}
-boiler-gateway | 2025-08-23T01:28:39.783931652Z [01:28:39 INF] requestId: 0HNF1SGFMEPL5:00000001, previousRequestId: No PreviousRequestId, message: '200 (OK) status code of request URI: https://boiler-user:7002/api/roles/12/users.' {"SourceContext": "Ocelot.Requester.Middleware.HttpRequesterMiddleware", "RequestId": "0HNF1SGFMEPL5:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL5"}
-boiler-user |   | 2025-08-23T01:28:39.784245970Z [01:28:39 INF] HTTP GET /api/roles/12/users responded 200 in 8.3769 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-gateway | 2025-08-23T01:28:39.784571689Z [01:28:39 INF] RESPONSE d689cf4a: 200 in 13ms | Size: Unknown {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL5:00000001", "RequestPath": "/api/roles/12/users", "ConnectionId": "0HNF1SGFMEPL5"}
-boiler-gateway | 2025-08-23T01:28:39.784581190Z [01:28:39 INF] HTTP GET /api/roles/12/users responded 200 in 14.0264 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL5:00000001", "ConnectionId": "0HNF1SGFMEPL5"}
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:39 +0000] "GET /api/roles/12/users HTTP/1.1" 200 194 "https://localhost:3000/app/roles/12/edit" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-gateway | 2025-08-23T01:28:39.799939487Z [01:28:39 INF] REQUEST 5c4b6bfa: GET /api/permissions/grouped from 172.18.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL6:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL6"}
-boiler-gateway | 2025-08-23T01:28:39.799993390Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:39.799996890Z    Path: /api/permissions/grouped
-boiler-gateway | 2025-08-23T01:28:39.799998990Z    Method: GET
-boiler-gateway | 2025-08-23T01:28:39.800000990Z    Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodH...
-boiler-gateway | 2025-08-23T01:28:39.800073595Z ✅ JWT Token Validated Successfully:
-boiler-gateway | 2025-08-23T01:28:39.800080595Z    UserId: 6
-boiler-gateway | 2025-08-23T01:28:39.800083195Z    Email: mccrearyforward@gmail.com
-boiler-gateway | 2025-08-23T01:28:39.800101496Z    Issuer: AuthService
-boiler-gateway | 2025-08-23T01:28:39.800103896Z    Audience: StarterApp
-boiler-gateway | 2025-08-23T01:28:39.800105896Z    Claims Count: 50
-boiler-gateway | 2025-08-23T01:28:39.800129898Z [01:28:39 INF] ✅ Tenant resolved: 1 from jwt-claim {"SourceContext": "ApiGateway.Middleware.TenantResolutionMiddleware", "RequestId": "0HNF1SGFMEPL6:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL6"}
-boiler-gateway | 2025-08-23T01:28:39.800417815Z [01:28:39 INF] requestId: 0HNF1SGFMEPL6:00000001, previousRequestId: No PreviousRequestId, message: 'The path '/api/permissions/grouped' is an authenticated route! AuthenticationMiddleware checking if client is authenticated...' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPL6:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL6"}
-boiler-gateway | 2025-08-23T01:28:39.800481018Z [01:28:39 INF] requestId: 0HNF1SGFMEPL6:00000001, previousRequestId: No PreviousRequestId, message: 'Client has been authenticated for path '/api/permissions/grouped' by 'AuthenticationTypes.Federation' scheme.' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPL6:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL6"}
-boiler-gateway | 2025-08-23T01:28:39.800489719Z [01:28:39 INF] requestId: 0HNF1SGFMEPL6:00000001, previousRequestId: No PreviousRequestId, message: 'route is authenticated scopes must be checked' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL6:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL6"}
-boiler-gateway | 2025-08-23T01:28:39.800492619Z [01:28:39 INF] requestId: 0HNF1SGFMEPL6:00000001, previousRequestId: No PreviousRequestId, message: 'user scopes is authorized calling next authorization checks' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL6:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL6"}
-boiler-gateway | 2025-08-23T01:28:39.800495119Z [01:28:39 INF] requestId: 0HNF1SGFMEPL6:00000001, previousRequestId: No PreviousRequestId, message: '/api/permissions/{everything} route does not require user to be authorized' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL6:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL6"}
-boiler-user |   | 2025-08-23T01:28:39.804972681Z [01:28:39 INF] 🔍 All request headers: Accept=application/json, text/plain, */*; Connection=close; Host=boiler-user:7002; User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36; Accept-Encoding=gzip, deflate, br, zstd; Accept-Language=en-US,en;q=0.9; Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; Referer=https://localhost:3000/app/roles/12/edit; traceparent=00-829f8348d4c0cb75301db632ad8ffb95-1504f72b4de45637-00; X-Real-IP=172.18.0.1; X-Forwarded-For=172.18.0.1; X-Forwarded-Proto=https; sec-ch-ua-platform="Windows"; sec-ch-ua="Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"; sec-ch-ua-mobile=?0; Sec-Fetch-Site=same-origin; Sec-Fetch-Mode=cors; Sec-Fetch-Dest=empty; X-Tenant-ID=1; X-Forwarded-Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; X-User-Context=eyJVc2VySWQiOm51bGwsIlRlbmFudElkIjoiMSIsIlJvbGVzIjpbXSwiUGVybWlzc2lvbnMiOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJFbWFpbCI6bnVsbH0=; X-Tenant-Context=1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1N:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGDV4P1N"}
-boiler-user |   | 2025-08-23T01:28:39.805051585Z [01:28:39 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1N:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGDV4P1N"}
-boiler-user |   | 2025-08-23T01:28:39.808909511Z [01:28:39 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1N:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGDV4P1N"}
-boiler-user |   | 2025-08-23T01:28:39.808957113Z [01:28:39 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1N:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGDV4P1N"}
-boiler-user |   | 2025-08-23T01:28:39.809009816Z [01:28:39 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF1SGDV4P1N:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGDV4P1N"}
-boiler-gateway | 2025-08-23T01:28:39.811293950Z [01:28:39 INF] requestId: 0HNF1SGFMEPL6:00000001, previousRequestId: No PreviousRequestId, message: '200 (OK) status code of request URI: https://boiler-user:7002/api/permissions/grouped.' {"SourceContext": "Ocelot.Requester.Middleware.HttpRequesterMiddleware", "RequestId": "0HNF1SGFMEPL6:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL6"}
-boiler-user |   | 2025-08-23T01:28:39.811772678Z [01:28:39 INF] HTTP GET /api/permissions/grouped responded 200 in 6.9676 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-gateway | 2025-08-23T01:28:39.812520521Z [01:28:39 INF] RESPONSE 5c4b6bfa: 200 in 12ms | Size: Unknown {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL6:00000001", "RequestPath": "/api/permissions/grouped", "ConnectionId": "0HNF1SGFMEPL6"}
-boiler-gateway | 2025-08-23T01:28:39.812562924Z [01:28:39 INF] HTTP GET /api/permissions/grouped responded 200 in 12.8065 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL6:00000001", "ConnectionId": "0HNF1SGFMEPL6"}
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:39 +0000] "GET /api/permissions/grouped HTTP/1.1" 200 910 "https://localhost:3000/app/roles/12/edit" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-auth |   | 2025-08-23T01:28:40.005735805Z [01:28:40 INF] HTTP GET /health responded 200 in 0.3463 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-user |   | 2025-08-23T01:28:40.388741472Z [01:28:40 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId": {"Id": 9, "Name": "AuthenticationSchemeNotAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.393193332Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.393228934Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.393564353Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.393573254Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.394212891Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.394218792Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.395716579Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.395730780Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.396704937Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.396709637Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.397245268Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.397250469Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.397413978Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.397417078Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.397419478Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.397445580Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.397448180Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.397450580Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.397453080Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.397455581Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.397666893Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.397669993Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.397672493Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.397674793Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.397784200Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.397789800Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.398809560Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.398823360Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.398920266Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.398923666Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.400352350Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.400366551Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.400369051Z [01:28:40 ERR] An exception occurred while iterating over the results of a query for context type 'Common.Data.ApplicationDbContext'.
-boiler-user |   | 2025-08-23T01:28:40.400371551Z System.InvalidOperationException: A second operation was started on this context instance before a previous operation completed. This is usually caused by different threads concurrently using the same instance of DbContext. For more information on how to avoid threading issues with DbContext, see https://go.microsoft.com/fwlink/?linkid=2097913.
-boiler-user |   | 2025-08-23T01:28:40.400374051Z    at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync() {"EventId": {"Id": 10100, "Name": "Microsoft.EntityFrameworkCore.Query.QueryIterationFailed"}, "SourceContext": "Microsoft.EntityFrameworkCore.Query", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.400376851Z System.InvalidOperationException: A second operation was started on this context instance before a previous operation completed. This is usually caused by different threads concurrently using the same instance of DbContext. For more information on how to avoid threading issues with DbContext, see https://go.microsoft.com/fwlink/?linkid=2097913.
-boiler-user |   | 2025-08-23T01:28:40.400379251Z    at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
-boiler-user |   | 2025-08-23T01:28:40.400394852Z [01:28:40 ERR] Error checking permission users.view for user 3 {"SourceContext": "UserService.Services.CachedPermissionService", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.400397452Z System.InvalidOperationException: A second operation was started on this context instance before a previous operation completed. This is usually caused by different threads concurrently using the same instance of DbContext. For more information on how to avoid threading issues with DbContext, see https://go.microsoft.com/fwlink/?linkid=2097913.
-boiler-user |   | 2025-08-23T01:28:40.400399953Z    at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
-boiler-user |   | 2025-08-23T01:28:40.400402053Z    at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:40.400404053Z    at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:40.400406253Z    at UserService.Services.CachedPermissionService.LoadUserPermissionsFromDatabaseAsync(Int32 userId, Int32 tenantId, CancellationToken cancellationToken) in /src/services/UserService/Services/CachedPermissionService.cs:line 183
-boiler-user |   | 2025-08-23T01:28:40.400408453Z    at UserService.Services.CachedPermissionService.UserHasPermissionAsync(Int32 userId, String permission, CancellationToken cancellationToken) in /src/services/UserService/Services/CachedPermissionService.cs:line 65
-boiler-user |   | 2025-08-23T01:28:40.400410653Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.400415553Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.400520960Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.400524060Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.401147396Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.401154397Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.401162397Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.401164997Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.402634683Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.402644484Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.402646884Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.402649384Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.402651684Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.402654184Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.403675044Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.403690145Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.403760849Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.403915958Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.403921658Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.404036865Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.404043765Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.404979620Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.407367459Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.407411762Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.408654035Z [01:28:40 WRN] Health check enhanced_authorization with status Degraded completed after 18.9314ms with message 'Authorization performance issues: WARNING: Permission check performance inconsistent (std dev: 0.5ms)' {"EventId": {"Id": 103, "Name": "HealthCheckEnd"}, "SourceContext": "Microsoft.Extensions.Diagnostics.HealthChecks.DefaultHealthCheckService", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.410110120Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.410119620Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.411926326Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.411993030Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.412451256Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.412456657Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.413654727Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.413659427Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.414166856Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.414181457Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.414649285Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.414652785Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.415342325Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.415368027Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.415551137Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.415566638Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.416952019Z [01:28:40 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.416960620Z [01:28:40 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.417293139Z [01:28:40 WRN] Health check enhanced_database with status Degraded completed after 27.8477ms with message 'Database performance issues: WARNING: Found 6 orphaned user role assignments; WARNING: Found 366 orphaned role permissions' {"EventId": {"Id": 103, "Name": "HealthCheckEnd"}, "SourceContext": "Microsoft.Extensions.Diagnostics.HealthChecks.DefaultHealthCheckService", "RequestId": "0HNF1SGDV4P1O:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGDV4P1O"}
-boiler-user |   | 2025-08-23T01:28:40.424544563Z [01:28:40 INF] HTTP GET /health responded 200 in 38.4224 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-gateway | 2025-08-23T01:28:44.310079171Z [01:28:44 INF] REQUEST a8ef7ca9: PUT /api/roles/12 from 172.18.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL7:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL7"}
-boiler-gateway | 2025-08-23T01:28:44.310169476Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:44.310173876Z    Path: /api/roles/12
-boiler-gateway | 2025-08-23T01:28:44.310175976Z    Method: PUT
-boiler-gateway | 2025-08-23T01:28:44.310178176Z    Authorization Header: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodH...
-boiler-gateway | 2025-08-23T01:28:44.310360487Z ✅ JWT Token Validated Successfully:
-boiler-gateway | 2025-08-23T01:28:44.311923978Z    UserId: 6
-boiler-gateway | 2025-08-23T01:28:44.311957080Z    Email: mccrearyforward@gmail.com
-boiler-gateway | 2025-08-23T01:28:44.311959480Z    Issuer: AuthService
-boiler-gateway | 2025-08-23T01:28:44.311961580Z    Audience: StarterApp
-boiler-gateway | 2025-08-23T01:28:44.311964081Z    Claims Count: 50
-boiler-gateway | 2025-08-23T01:28:44.311966181Z [01:28:44 INF] ✅ Tenant resolved: 1 from jwt-claim {"SourceContext": "ApiGateway.Middleware.TenantResolutionMiddleware", "RequestId": "0HNF1SGFMEPL7:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL7"}
-boiler-gateway | 2025-08-23T01:28:44.311969281Z [01:28:44 INF] requestId: 0HNF1SGFMEPL7:00000001, previousRequestId: No PreviousRequestId, message: 'The path '/api/roles/12' is an authenticated route! AuthenticationMiddleware checking if client is authenticated...' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPL7:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL7"}
-boiler-gateway | 2025-08-23T01:28:44.311971981Z [01:28:44 INF] requestId: 0HNF1SGFMEPL7:00000001, previousRequestId: No PreviousRequestId, message: 'Client has been authenticated for path '/api/roles/12' by 'AuthenticationTypes.Federation' scheme.' {"SourceContext": "Ocelot.Authentication.Middleware.AuthenticationMiddleware", "RequestId": "0HNF1SGFMEPL7:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL7"}
-boiler-gateway | 2025-08-23T01:28:44.311974581Z [01:28:44 INF] requestId: 0HNF1SGFMEPL7:00000001, previousRequestId: No PreviousRequestId, message: 'route is authenticated scopes must be checked' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL7:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL7"}
-boiler-gateway | 2025-08-23T01:28:44.311977081Z [01:28:44 INF] requestId: 0HNF1SGFMEPL7:00000001, previousRequestId: No PreviousRequestId, message: 'user scopes is authorized calling next authorization checks' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL7:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL7"}
-boiler-gateway | 2025-08-23T01:28:44.311980682Z [01:28:44 INF] requestId: 0HNF1SGFMEPL7:00000001, previousRequestId: No PreviousRequestId, message: '/api/roles/{everything} route does not require user to be authorized' {"SourceContext": "Ocelot.Authorization.Middleware.AuthorizationMiddleware", "RequestId": "0HNF1SGFMEPL7:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL7"}
-boiler-user |   | 2025-08-23T01:28:44.317800221Z [01:28:44 INF] 🔍 All request headers: Accept=application/json, text/plain, */*; Connection=close; Host=boiler-user:7002; User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36; Accept-Encoding=gzip, deflate, br, zstd; Accept-Language=en-US,en;q=0.9; Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; Content-Type=application/json; Origin=https://localhost:3000; Referer=https://localhost:3000/app/roles/12/edit; traceparent=00-8f2580514704fff65a15b630ae00dcca-f7677ca76a0bc8b5-00; Content-Length=141; X-Real-IP=172.18.0.1; X-Forwarded-For=172.18.0.1; X-Forwarded-Proto=https; sec-ch-ua-platform="Windows"; sec-ch-ua="Not;A=Brand";v="99", "Google Chrome";v="139", "Chromium";v="139"; sec-ch-ua-mobile=?0; Sec-Fetch-Site=same-origin; Sec-Fetch-Mode=cors; Sec-Fetch-Dest=empty; X-Tenant-ID=1; X-Forwarded-Authorization=Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjYiLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3MvMjAwNS8wNS9pZGVudGl0eS9jbGFpbXMvZ2l2ZW5uYW1lIjoiSm9lIE1hZCBEb2ciLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9zdXJuYW1lIjoiTWFjRGFkZHkiLCJ0ZW5hbnRfaWQiOiIxIiwidGVuYW50X25hbWUiOiJEZWZhdWx0IFRlbmFudCIsInRlbmFudF9kb21haW4iOiJsb2NhbGhvc3QiLCJzdWIiOiI2IiwiZW1haWwiOiJtY2NyZWFyeWZvcndhcmRAZ21haWwuY29tIiwianRpIjoiYTczNGE5NjUtZWQwYS00YTdlLWExZWEtNDI0ZjY3NmUzNmE4IiwiaWF0IjoxNzU1OTEyNTA4LCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb24iOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJleHAiOjE3NTU5MTYxMDgsImlzcyI6IkF1dGhTZXJ2aWNlIiwiYXVkIjoiU3RhcnRlckFwcCJ9.KT4_-vISwy2TxfFfaaSJt3HlSPvYm6O3AvuzOlWchW0; X-User-Context=eyJVc2VySWQiOm51bGwsIlRlbmFudElkIjoiMSIsIlJvbGVzIjpbXSwiUGVybWlzc2lvbnMiOlsicGVybWlzc2lvbnMuZGVsZXRlIiwicm9sZXMuY3JlYXRlIiwicmVwb3J0cy52aWV3IiwidXNlcnMudmlld19hbGwiLCJzeXN0ZW0udmlld19tZXRyaWNzIiwidXNlcnMuZGVsZXRlIiwidGVuYW50cy52aWV3X2FsbCIsInVzZXJzLnZpZXciLCJ0ZW5hbnRzLmNyZWF0ZSIsImJpbGxpbmcudmlld19pbnZvaWNlcyIsInN5c3RlbS5tYW5hZ2VfYmFja3VwcyIsInJvbGVzLmFzc2lnbl91c2VycyIsImJpbGxpbmcudmlldyIsImJpbGxpbmcucHJvY2Vzc19wYXltZW50cyIsInJvbGVzLmRlbGV0ZSIsInRlbmFudHMuZWRpdCIsInRlbmFudHMuZGVsZXRlIiwidXNlcnMubWFuYWdlX3JvbGVzIiwiYmlsbGluZy5tYW5hZ2UiLCJyb2xlcy52aWV3IiwicmVwb3J0cy5zY2hlZHVsZSIsInBlcm1pc3Npb25zLm1hbmFnZSIsInJlcG9ydHMuZXhwb3J0IiwidXNlcnMuZWRpdCIsInJvbGVzLm1hbmFnZV9wZXJtaXNzaW9ucyIsInVzZXJzLmNyZWF0ZSIsInN5c3RlbS52aWV3X2xvZ3MiLCJyb2xlcy5lZGl0IiwicGVybWlzc2lvbnMudmlldyIsInRlbmFudHMudmlldyIsInBlcm1pc3Npb25zLmNyZWF0ZSIsInRlbmFudHMubWFuYWdlX3NldHRpbmdzIiwic3lzdGVtLm1hbmFnZV9zZXR0aW5ncyIsInJlcG9ydHMuY3JlYXRlIiwicGVybWlzc2lvbnMuZWRpdCJdLCJFbWFpbCI6bnVsbH0=; X-Tenant-Context=1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1P:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1P"}
-boiler-user |   | 2025-08-23T01:28:44.317871126Z [01:28:44 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "RequestId": "0HNF1SGDV4P1P:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1P"}
-boiler-user |   | 2025-08-23T01:28:44.323690765Z [01:28:44 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1P:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1P"}
-boiler-user |   | 2025-08-23T01:28:44.323751569Z [01:28:44 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF1SGDV4P1P:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1P"}
-boiler-user |   | 2025-08-23T01:28:44.323876076Z [01:28:44 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF1SGDV4P1P:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1P"}
-boiler-postgres | 2025-08-23 01:28:44.358 UTC [116] ERROR:  function set_config(unknown, integer, boolean) does not exist at character 8
-boiler-postgres | 2025-08-23 01:28:44.358 UTC [116] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
-boiler-postgres | 2025-08-23 01:28:44.358 UTC [116] STATEMENT:  SELECT set_config('app.tenant_id', $1, false)
-boiler-user |   | 2025-08-23T01:28:44.364946375Z [01:28:44 ERR] Failed executing DbCommand (4ms) [Parameters=[@p0='1'], CommandType='Text', CommandTimeout='30']
-boiler-user |   | 2025-08-23T01:28:44.365019379Z SELECT set_config('app.tenant_id', @p0, false) {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command", "ActionId": "f78624c6-eb5f-47b0-8d3a-e3866df875dc", "ActionName": "UserService.Controllers.RolesController.UpdateRole (UserService)", "RequestId": "0HNF1SGDV4P1P:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1P"}
-boiler-postgres | 2025-08-23 01:28:44.447 UTC [42] ERROR:  function set_config(unknown, integer, boolean) does not exist at character 8
-boiler-postgres | 2025-08-23 01:28:44.447 UTC [42] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
-boiler-postgres | 2025-08-23 01:28:44.447 UTC [42] STATEMENT:  SELECT set_config('app.tenant_id', $1, false)
-boiler-user |   | 2025-08-23T01:28:44.449188107Z [01:28:44 ERR] Failed executing DbCommand (1ms) [Parameters=[@p0='1'], CommandType='Text', CommandTimeout='30']
-boiler-user |   | 2025-08-23T01:28:44.449307414Z SELECT set_config('app.tenant_id', @p0, false) {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command", "ActionId": "f78624c6-eb5f-47b0-8d3a-e3866df875dc", "ActionName": "UserService.Controllers.RolesController.UpdateRole (UserService)", "RequestId": "0HNF1SGDV4P1P:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1P"}
-boiler-user |   | 2025-08-23T01:28:44.466685951Z [01:28:44 INF] 📝 AUDIT: PermissionGranted - role:12 - Success: True {"SourceContext": "Common.Services.EnhancedAuditService", "ActionId": "f78624c6-eb5f-47b0-8d3a-e3866df875dc", "ActionName": "UserService.Controllers.RolesController.UpdateRole (UserService)", "RequestId": "0HNF1SGDV4P1P:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1P"}
-boiler-user |   | 2025-08-23T01:28:44.477989726Z [01:28:44 ERR] Failed executing DbCommand (0ms) [Parameters=[@p0='1'], CommandType='Text', CommandTimeout='30']
-boiler-user |   | 2025-08-23T01:28:44.478028428Z SELECT set_config('app.tenant_id', @p0, false) {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command", "ActionId": "f78624c6-eb5f-47b0-8d3a-e3866df875dc", "ActionName": "UserService.Controllers.RolesController.UpdateRole (UserService)", "RequestId": "0HNF1SGDV4P1P:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1P"}
-boiler-postgres | 2025-08-23 01:28:44.477 UTC [42] ERROR:  function set_config(unknown, integer, boolean) does not exist at character 8
-boiler-postgres | 2025-08-23 01:28:44.477 UTC [42] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
-boiler-postgres | 2025-08-23 01:28:44.477 UTC [42] STATEMENT:  SELECT set_config('app.tenant_id', $1, false)
-boiler-postgres | 2025-08-23 01:28:44.483 UTC [42] ERROR:  current transaction is aborted, commands ignored until end of transaction block
-boiler-postgres | 2025-08-23 01:28:44.483 UTC [42] STATEMENT:  SAVEPOINT "__EFSavePoint"
-boiler-user |   | 2025-08-23T01:28:44.484156294Z [01:28:44 ERR] An error occurred using a transaction. {"EventId": {"Id": 20205, "Name": "Microsoft.EntityFrameworkCore.Database.Transaction.TransactionError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Transaction", "ActionId": "f78624c6-eb5f-47b0-8d3a-e3866df875dc", "ActionName": "UserService.Controllers.RolesController.UpdateRole (UserService)", "RequestId": "0HNF1SGDV4P1P:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1P"}
-boiler-user |   | 2025-08-23T01:28:44.488801271Z [01:28:44 ERR] An exception occurred in the database while saving changes for context type 'Common.Data.ApplicationDbContext'.
-boiler-user |   | 2025-08-23T01:28:44.488857075Z Npgsql.PostgresException (0x80004005): 25P02: current transaction is aborted, commands ignored until end of transaction block
-boiler-user |   | 2025-08-23T01:28:44.488860075Z    at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
-boiler-user |   | 2025-08-23T01:28:44.488862375Z    at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
-boiler-user |   | 2025-08-23T01:28:44.488865075Z    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488867675Z    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488869975Z    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488872075Z    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488874176Z    at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488876076Z    at Microsoft.EntityFrameworkCore.Storage.RelationalTransaction.CreateSavepointAsync(String name, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488878376Z    at Microsoft.EntityFrameworkCore.Storage.RelationalTransaction.CreateSavepointAsync(String name, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488880376Z    at Microsoft.EntityFrameworkCore.Storage.RelationalTransaction.CreateSavepointAsync(String name, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488882476Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488884676Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488887476Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488889577Z    at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488926279Z    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488928979Z    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488931179Z    at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488933279Z    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488935379Z   Exception data:
-boiler-user |   | 2025-08-23T01:28:44.488937579Z     Severity: ERROR
-boiler-user |   | 2025-08-23T01:28:44.488939579Z     SqlState: 25P02
-boiler-user |   | 2025-08-23T01:28:44.488941480Z     MessageText: current transaction is aborted, commands ignored until end of transaction block
-boiler-user |   | 2025-08-23T01:28:44.488943580Z     File: postgres.c
-boiler-user |   | 2025-08-23T01:28:44.488945580Z     Line: 1439
-boiler-user |   | 2025-08-23T01:28:44.488947380Z     Routine: exec_parse_message {"EventId": {"Id": 10000, "Name": "Microsoft.EntityFrameworkCore.Update.SaveChangesFailed"}, "SourceContext": "Microsoft.EntityFrameworkCore.Update", "ActionId": "f78624c6-eb5f-47b0-8d3a-e3866df875dc", "ActionName": "UserService.Controllers.RolesController.UpdateRole (UserService)", "RequestId": "0HNF1SGDV4P1P:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1P"}
-boiler-user |   | 2025-08-23T01:28:44.488950580Z Npgsql.PostgresException (0x80004005): 25P02: current transaction is aborted, commands ignored until end of transaction block
-boiler-user |   | 2025-08-23T01:28:44.488952580Z    at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
-boiler-user |   | 2025-08-23T01:28:44.488954780Z    at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
-boiler-user |   | 2025-08-23T01:28:44.488957381Z    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488959581Z    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488961581Z    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488963581Z    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488965681Z    at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488967681Z    at Microsoft.EntityFrameworkCore.Storage.RelationalTransaction.CreateSavepointAsync(String name, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488969781Z    at Microsoft.EntityFrameworkCore.Storage.RelationalTransaction.CreateSavepointAsync(String name, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488974282Z    at Microsoft.EntityFrameworkCore.Storage.RelationalTransaction.CreateSavepointAsync(String name, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488976482Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488978782Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488980882Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488983082Z    at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488985082Z    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488987182Z    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488989582Z    at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488991783Z    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.488993783Z   Exception data:
-boiler-user |   | 2025-08-23T01:28:44.488995683Z     Severity: ERROR
-boiler-user |   | 2025-08-23T01:28:44.488997583Z     SqlState: 25P02
-boiler-user |   | 2025-08-23T01:28:44.488999883Z     MessageText: current transaction is aborted, commands ignored until end of transaction block
-boiler-user |   | 2025-08-23T01:28:44.489001983Z     File: postgres.c
-boiler-user |   | 2025-08-23T01:28:44.489003983Z     Line: 1439
-boiler-user |   | 2025-08-23T01:28:44.489005883Z     Routine: exec_parse_message
-boiler-user |   | 2025-08-23T01:28:44.497334781Z [01:28:44 ERR] Failed executing DbCommand (1ms) [Parameters=[@p0='1'], CommandType='Text', CommandTimeout='30']
-boiler-postgres | 2025-08-23 01:28:44.496 UTC [116] ERROR:  function set_config(unknown, integer, boolean) does not exist at character 8
-boiler-user |   | 2025-08-23T01:28:44.497372083Z SELECT set_config('app.tenant_id', @p0, false) {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command", "ActionId": "f78624c6-eb5f-47b0-8d3a-e3866df875dc", "ActionName": "UserService.Controllers.RolesController.UpdateRole (UserService)", "RequestId": "0HNF1SGDV4P1P:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1P"}
-boiler-postgres | 2025-08-23 01:28:44.496 UTC [116] HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
-boiler-postgres | 2025-08-23 01:28:44.496 UTC [116] STATEMENT:  SELECT set_config('app.tenant_id', $1, false)
-boiler-user |   | 2025-08-23T01:28:44.508321836Z [01:28:44 INF] 📝 AUDIT: RoleUpdated - role:12 - Success: False {"SourceContext": "Common.Services.EnhancedAuditService", "ActionId": "f78624c6-eb5f-47b0-8d3a-e3866df875dc", "ActionName": "UserService.Controllers.RolesController.UpdateRole (UserService)", "RequestId": "0HNF1SGDV4P1P:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1P"}
-boiler-user |   | 2025-08-23T01:28:44.511014597Z [01:28:44 ERR] Error updating role 12 {"SourceContext": "Common.Services.RoleService", "ActionId": "f78624c6-eb5f-47b0-8d3a-e3866df875dc", "ActionName": "UserService.Controllers.RolesController.UpdateRole (UserService)", "RequestId": "0HNF1SGDV4P1P:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1P"}
-boiler-user |   | 2025-08-23T01:28:44.511067100Z Npgsql.PostgresException (0x80004005): 25P02: current transaction is aborted, commands ignored until end of transaction block
-boiler-user |   | 2025-08-23T01:28:44.511070100Z    at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
-boiler-user |   | 2025-08-23T01:28:44.511073201Z    at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
-boiler-user |   | 2025-08-23T01:28:44.511075801Z    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.511078001Z    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.511080001Z    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.511082201Z    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.511084301Z    at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.511086301Z    at Microsoft.EntityFrameworkCore.Storage.RelationalTransaction.CreateSavepointAsync(String name, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.511088401Z    at Microsoft.EntityFrameworkCore.Storage.RelationalTransaction.CreateSavepointAsync(String name, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.511090602Z    at Microsoft.EntityFrameworkCore.Storage.RelationalTransaction.CreateSavepointAsync(String name, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.511092802Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.511095802Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.511098502Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.511100602Z    at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.511102802Z    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.511104902Z    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.511107103Z    at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.511112803Z    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
-boiler-frontend | 172.18.0.1 - - [23/Aug/2025:01:28:44 +0000] "PUT /api/roles/12 HTTP/1.1" 500 121 "https://localhost:3000/app/roles/12/edit" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
-boiler-gateway | 2025-08-23T01:28:44.514385498Z [01:28:44 WRN] requestId: 0HNF1SGFMEPL7:00000001, previousRequestId: No PreviousRequestId, message: '500 (Internal Server Error) status code of request URI: https://boiler-user:7002/api/roles/12.' {"SourceContext": "Ocelot.Requester.Middleware.HttpRequesterMiddleware", "RequestId": "0HNF1SGFMEPL7:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL7"}
-boiler-gateway | 2025-08-23T01:28:44.515050238Z [01:28:44 INF] RESPONSE a8ef7ca9: 500 in 205ms | Size: Unknown {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL7:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGFMEPL7"}
-boiler-gateway | 2025-08-23T01:28:44.515088240Z [01:28:44 ERR] HTTP PUT /api/roles/12 responded 500 in 212.2147 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL7:00000001", "ConnectionId": "0HNF1SGFMEPL7"}
-boiler-user |   | 2025-08-23T01:28:44.511114803Z    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.511117003Z    at Common.Data.ApplicationDbContext.SaveChangesAsync(CancellationToken cancellationToken) in /src/shared/Common/Data/ApplicationDbContext.cs:line 223
-boiler-user |   | 2025-08-23T01:28:44.511119203Z    at Common.Services.RoleService.AssignPermissionsInternalAsync(Int32 roleId, List`1 permissionNames, CancellationToken cancellationToken) in /src/shared/Common/Services/RoleService.cs:line 888
-boiler-user |   | 2025-08-23T01:28:44.511121603Z    at Common.Services.RoleService.AssignPermissionsToRoleAsync(Int32 roleId, List`1 permissionNames, CancellationToken cancellationToken) in /src/shared/Common/Services/RoleService.cs:line 860
-boiler-user |   | 2025-08-23T01:28:44.511123904Z    at Common.Services.RoleService.AssignPermissionsToRoleAsync(Int32 roleId, List`1 permissionNames, CancellationToken cancellationToken) in /src/shared/Common/Services/RoleService.cs:line 866
-boiler-user |   | 2025-08-23T01:28:44.511126204Z    at Common.Services.RoleService.UpdateRolePermissionsAsync(Int32 roleId, List`1 permissions, CancellationToken cancellationToken) in /src/shared/Common/Services/RoleService.cs:line 805
-boiler-user |   | 2025-08-23T01:28:44.511128404Z    at Common.Services.RoleService.UpdateRoleAsync(Int32 roleId, String name, String description, List`1 permissions, CancellationToken cancellationToken) in /src/shared/Common/Services/RoleService.cs:line 181
-boiler-user |   | 2025-08-23T01:28:44.511130704Z   Exception data:
-boiler-user |   | 2025-08-23T01:28:44.511132604Z     Severity: ERROR
-boiler-user |   | 2025-08-23T01:28:44.511134704Z     SqlState: 25P02
-boiler-user |   | 2025-08-23T01:28:44.511136604Z     MessageText: current transaction is aborted, commands ignored until end of transaction block
-boiler-user |   | 2025-08-23T01:28:44.511138704Z     File: postgres.c
-boiler-user |   | 2025-08-23T01:28:44.511140605Z     Line: 1439
-boiler-user |   | 2025-08-23T01:28:44.511154805Z     Routine: exec_parse_message
-boiler-user |   | 2025-08-23T01:28:44.512684197Z [01:28:44 ERR] Error updating role 12 {"SourceContext": "UserService.Controllers.RolesController", "ActionId": "f78624c6-eb5f-47b0-8d3a-e3866df875dc", "ActionName": "UserService.Controllers.RolesController.UpdateRole (UserService)", "RequestId": "0HNF1SGDV4P1P:00000001", "RequestPath": "/api/roles/12", "ConnectionId": "0HNF1SGDV4P1P"}
-boiler-user |   | 2025-08-23T01:28:44.512698498Z Npgsql.PostgresException (0x80004005): 25P02: current transaction is aborted, commands ignored until end of transaction block
-boiler-user |   | 2025-08-23T01:28:44.512700698Z    at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
-boiler-user |   | 2025-08-23T01:28:44.512702898Z    at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
-boiler-user |   | 2025-08-23T01:28:44.512705098Z    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512714699Z    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512716799Z    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512718799Z    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512720999Z    at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512723099Z    at Microsoft.EntityFrameworkCore.Storage.RelationalTransaction.CreateSavepointAsync(String name, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512725199Z    at Microsoft.EntityFrameworkCore.Storage.RelationalTransaction.CreateSavepointAsync(String name, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512727299Z    at Microsoft.EntityFrameworkCore.Storage.RelationalTransaction.CreateSavepointAsync(String name, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512729299Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512731800Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512734400Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512736500Z    at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512738600Z    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512740700Z    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512742900Z    at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512745000Z    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512747100Z    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
-boiler-user |   | 2025-08-23T01:28:44.512749301Z    at Common.Data.ApplicationDbContext.SaveChangesAsync(CancellationToken cancellationToken) in /src/shared/Common/Data/ApplicationDbContext.cs:line 223
-boiler-user |   | 2025-08-23T01:28:44.512751401Z    at Common.Services.RoleService.AssignPermissionsInternalAsync(Int32 roleId, List`1 permissionNames, CancellationToken cancellationToken) in /src/shared/Common/Services/RoleService.cs:line 888
-boiler-user |   | 2025-08-23T01:28:44.512753501Z    at Common.Services.RoleService.AssignPermissionsToRoleAsync(Int32 roleId, List`1 permissionNames, CancellationToken cancellationToken) in /src/shared/Common/Services/RoleService.cs:line 860
-boiler-user |   | 2025-08-23T01:28:44.512758501Z    at Common.Services.RoleService.AssignPermissionsToRoleAsync(Int32 roleId, List`1 permissionNames, CancellationToken cancellationToken) in /src/shared/Common/Services/RoleService.cs:line 866
-boiler-user |   | 2025-08-23T01:28:44.512760901Z    at Common.Services.RoleService.UpdateRolePermissionsAsync(Int32 roleId, List`1 permissions, CancellationToken cancellationToken) in /src/shared/Common/Services/RoleService.cs:line 805
-boiler-user |   | 2025-08-23T01:28:44.512764802Z    at Common.Services.RoleService.UpdateRoleAsync(Int32 roleId, String name, String description, List`1 permissions, CancellationToken cancellationToken) in /src/shared/Common/Services/RoleService.cs:line 181
-boiler-user |   | 2025-08-23T01:28:44.512767002Z    at Common.Services.RoleService.UpdateRoleAsync(Int32 roleId, String name, String description, List`1 permissions, CancellationToken cancellationToken) in /src/shared/Common/Services/RoleService.cs:line 203
-boiler-user |   | 2025-08-23T01:28:44.512769202Z    at UserService.Controllers.RolesController.UpdateRole(Int32 id, UpdateRoleDto request) in /src/services/UserService/Controllers/RolesController.cs:line 288
-boiler-user |   | 2025-08-23T01:28:44.512771302Z   Exception data:
-boiler-user |   | 2025-08-23T01:28:44.512773502Z     Severity: ERROR
-boiler-user |   | 2025-08-23T01:28:44.512775402Z     SqlState: 25P02
-boiler-user |   | 2025-08-23T01:28:44.512777602Z     MessageText: current transaction is aborted, commands ignored until end of transaction block
-boiler-user |   | 2025-08-23T01:28:44.512779602Z     File: postgres.c
-boiler-user |   | 2025-08-23T01:28:44.512781703Z     Line: 1439
-boiler-user |   | 2025-08-23T01:28:44.512783503Z     Routine: exec_parse_message
-boiler-user |   | 2025-08-23T01:28:44.514494605Z [01:28:44 ERR] HTTP PUT /api/roles/12 responded 500 in 197.5070 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-boiler-gateway | 2025-08-23T01:28:45.759865937Z [01:28:45 INF] REQUEST d0aac27f: GET /health from 127.0.0.1 | Tenant: Unknown | User: Anonymous {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL8:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGFMEPL8"}
-boiler-gateway | 2025-08-23T01:28:45.759917140Z 🔍 JWT OnMessageReceived:
-boiler-gateway | 2025-08-23T01:28:45.759920440Z    Path: /health
-boiler-gateway | 2025-08-23T01:28:45.759922740Z    Method: GET
-boiler-gateway | 2025-08-23T01:28:45.759924640Z    Authorization Header: MISSING
-boiler-gateway | 2025-08-23T01:28:45.760135653Z [01:28:45 INF] RESPONSE d0aac27f: 200 in 0ms | Size: Unknown {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL8:00000001", "RequestPath": "/health", "ConnectionId": "0HNF1SGFMEPL8"}
-boiler-gateway | 2025-08-23T01:28:45.760462772Z [01:28:45 INF] HTTP GET /health responded 200 in 0.4669 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF1SGFMEPL8:00000001", "ConnectionId": "0HNF1SGFMEPL8"}
+Building Test Projects
+Starting test discovery for requested test run
+========== Starting test discovery ==========
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 9.0.7)
+[xUnit.net 00:00:00.07]   Discovering: UserService.IntegrationTests
+[xUnit.net 00:00:00.10]   Discovered:  UserService.IntegrationTests
+========== Test discovery finished: 180 Tests found in 557.4 ms ==========
+========== Starting test run ==========
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 9.0.7)
+[xUnit.net 00:00:00.06]   Starting:    UserService.IntegrationTests
+=== UserService Startup Diagnostics ===
+Environment: Testing
+Application Name: UserService
+Content Root: C:\Users\mccre\dev\boiler\src\services\UserService
+Running in Container: 
+[Startup] Monitoring:Enabled raw config value = 'True'
+?? Registering base services...
+? Base services registered
+?? Configuring Swagger...
+? Swagger configured
+?? Registering common services...
+? Common services registered
+?? Configuring Redis...
+?? Redis connection string resolved to: localhost:6379
+?? Running in container: 
+? Redis configured
+?? Registering database services...
+? Database services registered
+?? Registering user services...
+? User services registered
+?? Registering Enhanced Security and Monitoring services...
+? Enhanced Security and Monitoring services registered successfully
+?? Registering Compliance and Alert services...
+? Compliance and Alert services registered successfully
+?? Registering Enhanced Health Checks...
+? Enhanced Health Checks registered
+?? Configuring authorization policies...
+? Authorization policies configured
+?? Configuring CORS...
+? CORS configured
+?? Registering additional services...
+? Additional services registered
+??? Building application...
+? Application built successfully
+?? Configuring middleware pipeline...
+?? Configuring Enhanced Security middleware...
+[09:15:14 INF] Configuring Enhanced Security middleware {}
+? Enhanced Security middleware configured successfully
+[09:15:14 INF] Enhanced Security middleware configured successfully {}
+? Middleware pipeline configured
+?? Mapping Enhanced Health Check endpoints...
+? Enhanced Health Check endpoints mapped
+[09:15:14 INF] Starting UserService with Phase 11 Enhanced Security & Monitoring {}
+=== UserService Starting with Phase 11 Enhanced Security & Monitoring ===
+?? Testing Redis connection...
+[09:15:14 INF] Redis connection status: Connected {}
+? Redis connection successful: 8/23/2025 2:15:14 PM
+[09:15:14 INF] Redis connection test successful: 8/23/2025 2:15:14 PM {}
+?? Seeding database...
+[09:15:14 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId": {"Id": 10400, "Name": "Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
+? Database seeded
+?? Seeding monitoring user...
+[09:15:15 INF] Config snapshot: Monitoring:Enabled='True' {"SourceContext": "MonitoringUserSeeder"}
+[09:15:15 INF] Seeding system-wide monitoring account (Email: monitor@local) {"SourceContext": "MonitoringUserSeeder"}
+[09:15:15 INF] Created new system Monitor role {"SourceContext": "MonitoringUserSeeder"}
+[09:15:15 INF] Linked system Monitor role to permission system.view_metrics {"SourceContext": "MonitoringUserSeeder"}
+[09:15:15 INF] Assigned system Monitor role to monitoring user {"SourceContext": "MonitoringUserSeeder"}
+[09:15:15 INF] Monitoring user ready. login_email=monitor@local password=ChangeMe123! {"SourceContext": "MonitoringUserSeeder"}
+? Monitoring user seeded (monitor@local / ChangeMe123!)
+?? Starting application...
+?? Enhanced Health Check endpoints available:
+  - GET /health (comprehensive overview)
+  - GET /health/critical (database + Redis status)
+  - GET /health/enhanced (Phase 11 enhanced monitoring)
+  - GET /health/performance (cache and performance metrics)
+  - GET /health/system (overall system health score)
+  - GET /health/ready (Kubernetes readiness)
+  - GET /health/live (Kubernetes liveness)
+?? Enhanced Security & Monitoring features:
+  - Rate limiting with tenant awareness
+  - Security event detection and logging
+  - Performance metrics collection with Redis storage
+  - Enhanced audit trail for all actions
+  - Comprehensive health monitoring with performance scoring
+  - Real-time system metrics and alerts
+[09:15:15 INF] Enhanced Security & Monitoring (Phase 11) configured and operational {}
+?? Ensuring clean database state...
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? Testing two-phase flow for admin@tenant2.com  Tenant 2
+[09:15:15 WRN] Failed to determine the https port for redirect. {"EventId": {"Id": 3, "Name": "FailedToDeterminePort"}, "SourceContext": "Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware", "RequestId": "0HNF29TTNSAV2", "RequestPath": "/api/auth/login"}
+[09:15:15 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId": {"Id": 9, "Name": "AuthenticationSchemeNotAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF29TTNSAV2", "RequestPath": "/api/auth/login"}
+[09:15:15 INF] HTTP POST /api/auth/login responded 404 in 110.4187 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+?? Ensuring clean database state...
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+[xUnit.net 00:00:01.70]     UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.PermissionCheck_ShouldEnforceProperAccess(userEmail: "admin@tenant2.com", tenantId: 2, shouldHaveAccess: True) [FAIL]
+? Created 2 tenants
+?? Creating permissions...
+[xUnit.net 00:00:01.70]       System.Net.Http.HttpRequestException : Response status code does not indicate success: 404 (Not Found).
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+[xUnit.net 00:00:01.70]       Stack Trace:
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+[xUnit.net 00:00:01.70]            at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+[xUnit.net 00:00:01.70]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(42,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantTokenViaTwoPhaseFlow(HttpClient client, ApplicationDbContext dbContext, String email, Int32 preferredTenantId)
+   - tenants.view_all (Tenants)
+[xUnit.net 00:00:01.70]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(278,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantAwareJwtAsync(HttpClient client, ApplicationDbContext dbContext, String email, Nullable`1 preferredTenantId)
+   - users.create (Users)
+[xUnit.net 00:00:01.70]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Controllers\TwoPhaseAuthTests.cs(177,0): at UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.PermissionCheck_ShouldEnforceProperAccess(String userEmail, Int32 tenantId, Boolean shouldHaveAccess)
+   - users.delete (Users)
+[xUnit.net 00:00:01.70]         --- End of stack trace from previous location ---
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? Testing two-phase flow for user@tenant1.com  Tenant 1
+[09:15:16 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId": {"Id": 9, "Name": "AuthenticationSchemeNotAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF29TTNSAV3", "RequestPath": "/api/auth/login"}
+[09:15:16 INF] HTTP POST /api/auth/login responded 404 in 8.8457 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[xUnit.net 00:00:01.74]     UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.PermissionCheck_ShouldEnforceProperAccess(userEmail: "user@tenant1.com", tenantId: 1, shouldHaveAccess: False) [FAIL]
+[xUnit.net 00:00:01.74]       System.Net.Http.HttpRequestException : Response status code does not indicate success: 404 (Not Found).
+?? Ensuring clean database state...
+[xUnit.net 00:00:01.74]       Stack Trace:
+[xUnit.net 00:00:01.74]            at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+[xUnit.net 00:00:01.74]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(42,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantTokenViaTwoPhaseFlow(HttpClient client, ApplicationDbContext dbContext, String email, Int32 preferredTenantId)
+[xUnit.net 00:00:01.74]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(278,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantAwareJwtAsync(HttpClient client, ApplicationDbContext dbContext, String email, Nullable`1 preferredTenantId)
+[xUnit.net 00:00:01.74]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Controllers\TwoPhaseAuthTests.cs(177,0): at UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.PermissionCheck_ShouldEnforceProperAccess(String userEmail, Int32 tenantId, Boolean shouldHaveAccess)
+[xUnit.net 00:00:01.74]         --- End of stack trace from previous location ---
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? Testing two-phase flow for admin@tenant1.com  Tenant 1
+[09:15:16 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId": {"Id": 9, "Name": "AuthenticationSchemeNotAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF29TTNSAV4", "RequestPath": "/api/auth/login"}
+[09:15:16 INF] HTTP POST /api/auth/login responded 404 in 7.9991 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[xUnit.net 00:00:01.77]     UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.PermissionCheck_ShouldEnforceProperAccess(userEmail: "admin@tenant1.com", tenantId: 1, shouldHaveAccess: True) [FAIL]
+[xUnit.net 00:00:01.77]       System.Net.Http.HttpRequestException : Response status code does not indicate success: 404 (Not Found).
+[xUnit.net 00:00:01.77]       Stack Trace:
+[xUnit.net 00:00:01.77]            at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+[xUnit.net 00:00:01.77]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(42,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantTokenViaTwoPhaseFlow(HttpClient client, ApplicationDbContext dbContext, String email, Int32 preferredTenantId)
+[xUnit.net 00:00:01.77]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(278,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantAwareJwtAsync(HttpClient client, ApplicationDbContext dbContext, String email, Nullable`1 preferredTenantId)
+[xUnit.net 00:00:01.77]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Controllers\TwoPhaseAuthTests.cs(177,0): at UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.PermissionCheck_ShouldEnforceProperAccess(String userEmail, Int32 tenantId, Boolean shouldHaveAccess)
+[xUnit.net 00:00:01.77]         --- End of stack trace from previous location ---
+?? Ensuring clean database state...
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? Testing two-phase flow for admin@tenant1.com  Tenant 1
+[09:15:16 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId": {"Id": 9, "Name": "AuthenticationSchemeNotAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF29TTNSAV5", "RequestPath": "/api/auth/login"}
+[09:15:16 INF] HTTP POST /api/auth/login responded 404 in 5.8482 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[xUnit.net 00:00:01.80]     UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.UserService_WithTenantToken_CanAccessUsers [FAIL]
+[xUnit.net 00:00:01.80]       System.Net.Http.HttpRequestException : Response status code does not indicate success: 404 (Not Found).
+[xUnit.net 00:00:01.80]       Stack Trace:
+[xUnit.net 00:00:01.80]            at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+[xUnit.net 00:00:01.80]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(42,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantTokenViaTwoPhaseFlow(HttpClient client, ApplicationDbContext dbContext, String email, Int32 preferredTenantId)
+?? Ensuring clean database state...
+[xUnit.net 00:00:01.80]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(278,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantAwareJwtAsync(HttpClient client, ApplicationDbContext dbContext, String email, Nullable`1 preferredTenantId)
+[xUnit.net 00:00:01.80]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Controllers\TwoPhaseAuthTests.cs(79,0): at UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.UserService_WithTenantToken_CanAccessUsers()
+[xUnit.net 00:00:01.80]         --- End of stack trace from previous location ---
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? Testing two-phase flow for admin@tenant2.com  Tenant 2
+[09:15:16 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId": {"Id": 9, "Name": "AuthenticationSchemeNotAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF29TTNSAV6", "RequestPath": "/api/auth/login"}
+[09:15:16 INF] HTTP POST /api/auth/login responded 404 in 5.6428 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[xUnit.net 00:00:01.83]     UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.TenantIsolation_Tenant2Admin_CannotSeeTenant1Users [FAIL]
+[xUnit.net 00:00:01.83]       System.Net.Http.HttpRequestException : Response status code does not indicate success: 404 (Not Found).
+[xUnit.net 00:00:01.83]       Stack Trace:
+[xUnit.net 00:00:01.83]            at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+[xUnit.net 00:00:01.83]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(42,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantTokenViaTwoPhaseFlow(HttpClient client, ApplicationDbContext dbContext, String email, Int32 preferredTenantId)
+?? Ensuring clean database state...
+[xUnit.net 00:00:01.83]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(278,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantAwareJwtAsync(HttpClient client, ApplicationDbContext dbContext, String email, Nullable`1 preferredTenantId)
+[xUnit.net 00:00:01.83]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Controllers\TwoPhaseAuthTests.cs(125,0): at UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.TenantIsolation_Tenant2Admin_CannotSeeTenant1Users()
+[xUnit.net 00:00:01.83]         --- End of stack trace from previous location ---
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? Testing two-phase flow for admin@tenant1.com  Tenant 2
+[09:15:16 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId": {"Id": 9, "Name": "AuthenticationSchemeNotAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF29TTNSAV7", "RequestPath": "/api/auth/login"}
+[09:15:16 INF] HTTP POST /api/auth/login responded 404 in 5.7713 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+?? Testing two-phase flow for admin@tenant2.com  Tenant 1
+[09:15:16 INF] HTTP POST /api/auth/login responded 429 in 22.7659 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+? Security Utility Test: Cross-tenant access properly blocked
+?? Ensuring clean database state...
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+? Phase 1 JWT Test: Token generated without tenant context
+?? Ensuring clean database state...
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? Testing two-phase flow for admin@tenant1.com  Tenant 1
+[09:15:16 INF] HTTP POST /api/auth/login responded 429 in 8.4833 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[xUnit.net 00:00:01.97]     UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.AuthenticationHelper_CanGenerateTenantAwareJwt [FAIL]
+?? Ensuring clean database state...
+[xUnit.net 00:00:01.97]       System.Net.Http.HttpRequestException : Response status code does not indicate success: 429 (Too Many Requests).
+[xUnit.net 00:00:01.97]       Stack Trace:
+[xUnit.net 00:00:01.97]            at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+[xUnit.net 00:00:01.97]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(42,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantTokenViaTwoPhaseFlow(HttpClient client, ApplicationDbContext dbContext, String email, Int32 preferredTenantId)
+[xUnit.net 00:00:01.97]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(278,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantAwareJwtAsync(HttpClient client, ApplicationDbContext dbContext, String email, Nullable`1 preferredTenantId)
+[xUnit.net 00:00:01.97]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Controllers\TwoPhaseAuthTests.cs(58,0): at UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.AuthenticationHelper_CanGenerateTenantAwareJwt()
+[xUnit.net 00:00:01.97]         --- End of stack trace from previous location ---
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? Testing two-phase flow for admin@tenant1.com  Tenant 1
+[09:15:16 INF] HTTP POST /api/auth/login responded 429 in 6.7287 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[xUnit.net 00:00:02.00]     UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.TenantIsolation_Tenant1Admin_CannotSeeTenant2Users [FAIL]
+[xUnit.net 00:00:02.00]       System.Net.Http.HttpRequestException : Response status code does not indicate success: 429 (Too Many Requests).
+[xUnit.net 00:00:02.00]       Stack Trace:
+[xUnit.net 00:00:02.00]            at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+[xUnit.net 00:00:02.00]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(42,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantTokenViaTwoPhaseFlow(HttpClient client, ApplicationDbContext dbContext, String email, Int32 preferredTenantId)
+[xUnit.net 00:00:02.00]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(278,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantAwareJwtAsync(HttpClient client, ApplicationDbContext dbContext, String email, Nullable`1 preferredTenantId)
+?? Ensuring clean database state...
+[xUnit.net 00:00:02.00]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Controllers\TwoPhaseAuthTests.cs(102,0): at UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.TenantIsolation_Tenant1Admin_CannotSeeTenant2Users()
+[xUnit.net 00:00:02.00]         --- End of stack trace from previous location ---
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? Testing two-phase flow for admin@tenant1.com  Tenant 1
+[09:15:16 INF] HTTP POST /api/auth/login responded 429 in 7.0710 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[xUnit.net 00:00:02.03]     UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.Roles_TenantSpecific_ShouldBeIsolated [FAIL]
+?? Ensuring clean database state...
+[xUnit.net 00:00:02.03]       System.Net.Http.HttpRequestException : Response status code does not indicate success: 429 (Too Many Requests).
+[xUnit.net 00:00:02.03]       Stack Trace:
+[xUnit.net 00:00:02.03]            at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+[xUnit.net 00:00:02.03]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(42,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantTokenViaTwoPhaseFlow(HttpClient client, ApplicationDbContext dbContext, String email, Int32 preferredTenantId)
+[xUnit.net 00:00:02.03]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(278,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantAwareJwtAsync(HttpClient client, ApplicationDbContext dbContext, String email, Nullable`1 preferredTenantId)
+[xUnit.net 00:00:02.03]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Controllers\TwoPhaseAuthTests.cs(148,0): at UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.Roles_TenantSpecific_ShouldBeIsolated()
+[xUnit.net 00:00:02.03]         --- End of stack trace from previous location ---
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignmeBuilding Test Projects
+Starting test discovery for requested test run
+========== Starting test discovery ==========
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 9.0.7)
+[xUnit.net 00:00:00.07]   Discovering: UserService.IntegrationTests
+[xUnit.net 00:00:00.11]   Discovered:  UserService.IntegrationTests
+========== Test discovery finished: 180 Tests found in 578.2 ms ==========
+========== Starting test run ==========
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 9.0.7)
+[xUnit.net 00:00:00.06]   Starting:    UserService.IntegrationTests
+=== UserService Startup Diagnostics ===
+Environment: Testing
+Application Name: UserService
+Content Root: C:\Users\mccre\dev\boiler\src\services\UserService
+Running in Container: 
+[Startup] Monitoring:Enabled raw config value = 'True'
+?? Registering base services...
+? Base services registered
+?? Configuring Swagger...
+? Swagger configured
+?? Registering common services...
+? Common services registered
+?? Configuring Redis...
+?? Redis connection string resolved to: localhost:6379
+?? Running in container: 
+? Redis configured
+?? Registering database services...
+? Database services registered
+?? Registering user services...
+? User services registered
+?? Registering Enhanced Security and Monitoring services...
+? Enhanced Security and Monitoring services registered successfully
+?? Registering Compliance and Alert services...
+? Compliance and Alert services registered successfully
+?? Registering Enhanced Health Checks...
+? Enhanced Health Checks registered
+?? Configuring authorization policies...
+? Authorization policies configured
+?? Configuring CORS...
+? CORS configured
+?? Registering additional services...
+? Additional services registered
+??? Building application...
+? Application built successfully
+?? Configuring middleware pipeline...
+?? Configuring Enhanced Security middleware...
+[09:19:10 INF] Configuring Enhanced Security middleware {}
+? Enhanced Security middleware configured successfully
+[09:19:10 INF] Enhanced Security middleware configured successfully {}
+? Middleware pipeline configured
+?? Mapping Enhanced Health Check endpoints...
+? Enhanced Health Check endpoints mapped
+[09:19:10 INF] Starting UserService with Phase 11 Enhanced Security & Monitoring {}
+=== UserService Starting with Phase 11 Enhanced Security & Monitoring ===
+?? Testing Redis connection...
+[09:19:10 INF] Redis connection status: Connected {}
+? Redis connection successful: 8/23/2025 2:19:10 PM
+[09:19:10 INF] Redis connection test successful: 8/23/2025 2:19:10 PM {}
+?? Seeding database...
+[09:19:10 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId": {"Id": 10400, "Name": "Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
+? Database seeded
+?? Seeding monitoring user...
+[09:19:10 INF] Config snapshot: Monitoring:Enabled='True' {"SourceContext": "MonitoringUserSeeder"}
+[09:19:10 INF] Seeding system-wide monitoring account (Email: monitor@local) {"SourceContext": "MonitoringUserSeeder"}
+[09:19:10 INF] Created new system Monitor role {"SourceContext": "MonitoringUserSeeder"}
+[09:19:10 INF] Linked system Monitor role to permission system.view_metrics {"SourceContext": "MonitoringUserSeeder"}
+[09:19:11 INF] Assigned system Monitor role to monitoring user {"SourceContext": "MonitoringUserSeeder"}
+[09:19:11 INF] Monitoring user ready. login_email=monitor@local password=ChangeMe123! {"SourceContext": "MonitoringUserSeeder"}
+? Monitoring user seeded (monitor@local / ChangeMe123!)
+?? Starting application...
+?? Enhanced Health Check endpoints available:
+  - GET /health (comprehensive overview)
+  - GET /health/critical (database + Redis status)
+  - GET /health/enhanced (Phase 11 enhanced monitoring)
+  - GET /health/performance (cache and performance metrics)
+  - GET /health/system (overall system health score)
+  - GET /health/ready (Kubernetes readiness)
+  - GET /health/live (Kubernetes liveness)
+?? Enhanced Security & Monitoring features:
+  - Rate limiting with tenant awareness
+  - Security event detection and logging
+  - Performance metrics collection with Redis storage
+  - Enhanced audit trail for all actions
+  - Comprehensive health monitoring with performance scoring
+  - Real-time system metrics and alerts
+[09:19:11 INF] Enhanced Security & Monitoring (Phase 11) configured and operational {}
+?? Ensuring clean database state...
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? MOCKING two-phase flow for admin@tenant2.com  Tenant 2
+? Phase 1 simulated: User admin@tenant2.com authenticated (mocked)
+? Phase 2 simulated: Tenant access verified for tenant 2
+?? Generated tenant-aware JWT for admin@tenant2.com:
+   - Tenant: Test Tenant 2 (ID: 2)
+   - Roles: Admin
+   - Permissions: 28
+? Two-phase flow simulation completed successfully
+[09:19:11 WRN] Failed to determine the https port for redirect. {"EventId": {"Id": 3, "Name": "FailedToDeterminePort"}, "SourceContext": "Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware", "RequestId": "0HNF2A03T5ON6", "RequestPath": "/api/users"}
+[09:19:11 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2A03T5ON6", "RequestPath": "/api/users"}
+[09:19:11 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2A03T5ON6", "RequestPath": "/api/users"}
+[09:19:11 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF2A03T5ON6", "RequestPath": "/api/users"}
+[09:19:11 INF] HTTP GET /api/users responded 200 in 259.3547 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+? Permission Test: admin@tenant2.com access = OK
+?? Ensuring clean database state...
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? MOCKING two-phase flow for user@tenant1.com  Tenant 1
+? Phase 1 simulated: User user@tenant1.com authenticated (mocked)
+? Phase 2 simulated: Tenant access verified for tenant 1
+?? Generated tenant-aware JWT for user@tenant1.com:
+   - Tenant: Test Tenant 1 (ID: 1)
+   - Roles: User
+   - Permissions: 3
+? Two-phase flow simulation completed successfully
+[09:19:11 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2A03T5ON7", "RequestPath": "/api/users"}
+[09:19:11 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2A03T5ON7", "RequestPath": "/api/users"}
+[09:19:11 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF2A03T5ON7", "RequestPath": "/api/users"}
+[09:19:11 WRN] User 2 attempted to access users list without users.view permission {"SourceContext": "UserService.Controllers.UsersController", "ActionId": "16a017a0-b8c5-4103-b5f0-818228b01a6b", "ActionName": "UserService.Controllers.UsersController.GetUsers (UserService)", "RequestId": "0HNF2A03T5ON7", "RequestPath": "/api/users"}
+[09:19:11 INF] HTTP GET /api/users responded 403 in 32.3550 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+? Permission Test: user@tenant1.com access = Forbidden
+?? Ensuring clean database state...
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? MOCKING two-phase flow for admin@tenant1.com  Tenant 1
+? Phase 1 simulated: User admin@tenant1.com authenticated (mocked)
+? Phase 2 simulated: Tenant access verified for tenant 1
+?? Generated tenant-aware JWT for admin@tenant1.com:
+   - Tenant: Test Tenant 1 (ID: 1)
+   - Roles: Admin
+   - Permissions: 28
+? Two-phase flow simulation completed successfully
+[09:19:11 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2A03T5ON8", "RequestPath": "/api/users"}
+[09:19:11 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2A03T5ON8", "RequestPath": "/api/users"}
+[09:19:11 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF2A03T5ON8", "RequestPath": "/api/users"}
+[09:19:11 INF] HTTP GET /api/users responded 200 in 31.8810 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+? Permission Test: admin@tenant1.com access = OK
+?? Ensuring clean database state...
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? MOCKING two-phase flow for admin@tenant1.com  Tenant 1
+? Phase 1 simulated: User admin@tenant1.com authenticated (mocked)
+? Phase 2 simulated: Tenant access verified for tenant 1
+?? Generated tenant-aware JWT for admin@tenant1.com:
+   - Tenant: Test Tenant 1 (ID: 1)
+   - Roles: Admin
+   - Permissions: 28
+? Two-phase flow simulation completed successfully
+[09:19:11 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2A03T5ON9", "RequestPath": "/api/users"}
+[09:19:11 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2A03T5ON9", "RequestPath": "/api/users"}
+[09:19:11 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF2A03T5ON9", "RequestPath": "/api/users"}
+[09:19:11 INF] HTTP GET /api/users responded 200 in 8.5462 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+? UserService Access Test: Retrieved 5 users
+?? Ensuring clean database state...
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? MOCKING two-phase flow for admin@tenant2.com  Tenant 2
+? Phase 1 simulated: User admin@tenant2.com authenticated (mocked)
+? Phase 2 simulated: Tenant access verified for tenant 2
+?? Generated tenant-aware JWT for admin@tenant2.com:
+   - Tenant: Test Tenant 2 (ID: 2)
+   - Roles: Admin
+   - Permissions: 28
+? Two-phase flow simulation completed successfully
+[09:19:11 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2A03T5ONA", "RequestPath": "/api/users"}
+[09:19:11 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2A03T5ONA", "RequestPath": "/api/users"}
+[09:19:11 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF2A03T5ONA", "RequestPath": "/api/users"}
+[09:19:11 INF] HTTP GET /api/users responded 200 in 8.1433 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+? Tenant Isolation Test: Tenant 2 admin sees 2 users (tenant 2 only)
+?? Ensuring clean database state...
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? MOCKING two-phase flow for admin@tenant1.com  Tenant 2
+? Phase 1 simulated: User admin@tenant1.com authenticated (mocked)
+?? MOCKING two-phase flow for admin@tenant2.com  Tenant 1
+? Phase 1 simulated: User admin@tenant2.com authenticated (mocked)
+? Security Utility Test: Cross-tenant access properly blocked
+?? Ensuring clean database state...
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+? Phase 1 JWT Test: Token generated without tenant context
+?? Ensuring clean database state...
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? MOCKING two-phase flow for admin@tenant1.com  Tenant 1
+? Phase 1 simulated: User admin@tenant1.com authenticated (mocked)
+? Phase 2 simulated: Tenant access verified for tenant 1
+?? Generated tenant-aware JWT for admin@tenant1.com:
+   - Tenant: Test Tenant 1 (ID: 1)
+   - Roles: Admin
+   - Permissions: 28
+? Two-phase flow simulation completed successfully
+? Phase 2 JWT Test: Token generated with tenant context
+?? Ensuring clean database state...
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? MOCKING two-phase flow for admin@tenant1.com  Tenant 1
+? Phase 1 simulated: User admin@tenant1.com authenticated (mocked)
+? Phase 2 simulated: Tenant access verified for tenant 1
+?? Generated tenant-aware JWT for admin@tenant1.com:
+   - Tenant: Test Tenant 1 (ID: 1)
+   - Roles: Admin
+   - Permissions: 28
+? Two-phase flow simulation completed successfully
+[09:19:11 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2A03T5ONB", "RequestPath": "/api/users"}
+[09:19:11 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2A03T5ONB", "RequestPath": "/api/users"}
+[09:19:11 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF2A03T5ONB", "RequestPath": "/api/users"}
+[09:19:11 INF] HTTP GET /api/users responded 200 in 10.0696 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+? Tenant Isolation Test: Tenant 1 admin sees 5 users (tenant 1 only)
+?? Ensuring clean database state...
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+? Created 38 permissions
+?? Creating roles...
+?? CreateRoles DEBUG:
+   - tenant1.Id = 1
+   - tenant2.Id = 2
+?? Roles to be created (8):
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+   3. User (TenantId: 1)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? MOCKING two-phase flow for admin@tenant1.com  Tenant 1
+? Phase 1 simulated: User admin@tenant1.com authenticated (mocked)
+? Phase 2 simulated: Tenant access verified for tenant 1
+?? Generated tenant-aware JWT for admin@tenant1.com:
+   - Tenant: Test Tenant 1 (ID: 1)
+   - Roles: Admin
+   - Permissions: 28
+? Two-phase flow simulation completed successfully
+[09:19:11 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2A03T5ONC", "RequestPath": "/api/roles"}
+[09:19:11 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2A03T5ONC", "RequestPath": "/api/roles"}
+[09:19:11 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF2A03T5ONC", "RequestPath": "/api/roles"}
+[09:19:11 INF] HTTP GET /api/roles responded 200 in 51.2740 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+?? Ensuring clean database state...
+? Database recreated with clean state
+?? TestDataSeeder: Starting test data seeding
+?? Creating tenants...
+? Created 2 tenants
+?? Creating permissions...
+?? Creating 38 permissions from actual business requirements
+   - billing.manage (Billing)
+   - billing.process_payments (Billing)
+   - billing.view (Billing)
+   - billing.view_invoices (Billing)
+   - permissions.create (Permissions)
+   - permissions.delete (Permissions)
+   - permissions.edit (Permissions)
+   - permissions.manage (Permissions)
+   - permissions.view (Permissions)
+   - reports.create (Reports)
+   - reports.export (Reports)
+   - reports.schedule (Reports)
+   - reports.view (Reports)
+   - roles.assign_users (Roles)
+   - roles.create (Roles)
+   - roles.delete (Roles)
+   - roles.edit (Roles)
+   - roles.manage_permissions (Roles)
+   - roles.view (Roles)
+   - system.manage (System)
+   - system.manage_backups (System)
+   - system.manage_settings (System)
+   - system.monitor (System)
+   - system.view_logs (System)
+   - system.view_metrics (System)
+   - tenants.create (Tenants)
+   - tenants.delete (Tenants)
+   - tenants.edit (Tenants)
+   - tenants.initialize (Tenants)
+   - tenants.manage_settings (Tenants)
+   - tenants.view (Tenants)
+   - tenants.view_all (Tenants)
+[xUnit.net 00:00:02.27]     UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.Roles_TenantSpecific_ShouldBeIsolated [FAIL]
+   - users.create (Users)
+   - users.delete (Users)
+   - users.edit (Users)
+   - users.manage_roles (Users)
+   - users.view (Users)
+   - users.view_all (Users)
+[xUnit.net 00:00:02.27]       System.Text.Json.JsonException : The JSON value could not be converted to System.Collections.Generic.List`1[DTOs.Auth.RoleDto]. Path: $.data | LineNumber: 0 | BytePositionInLine: 24.
+[xUnit.net 00:00:02.27]       Stack Trace:
+? Created 38 permissions
+?? Creating roles...
+[xUnit.net 00:00:02.27]            at System.Text.Json.ThrowHelper.ThrowJsonException_DeserializeUnableToConvertValue(Type propertyType)
+[xUnit.net 00:00:02.27]            at System.Text.Json.Serialization.JsonCollectionConverter`2.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, TCollection& value)
+[xUnit.net 00:00:02.27]            at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+?? CreateRoles DEBUG:
+[xUnit.net 00:00:02.27]            at System.Text.Json.Serialization.Metadata.JsonPropertyInfo`1.ReadJsonAndSetMember(Object obj, ReadStack& state, Utf8JsonReader& reader)
+[xUnit.net 00:00:02.27]            at System.Text.Json.Serialization.Converters.ObjectDefaultConverter`1.OnTryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value)
+   - tenant1.Id = 1
+[xUnit.net 00:00:02.27]            at System.Text.Json.Serialization.JsonConverter`1.TryRead(Utf8JsonReader& reader, Type typeToConvert, JsonSerializerOptions options, ReadStack& state, T& value, Boolean& isPopulatedValue)
+   - tenant2.Id = 2
+?? Roles to be created (8):
+[xUnit.net 00:00:02.27]            at System.Text.Json.Serialization.JsonConverter`1.ReadCore(Utf8JsonReader& reader, T& value, JsonSerializerOptions options, ReadStack& state)
+   1. SuperAdmin (TenantId: )
+   2. Admin (TenantId: 1)
+[xUnit.net 00:00:02.27]            at System.Text.Json.Serialization.Metadata.JsonTypeInfo`1.ContinueDeserialize(ReadBufferState& bufferState, JsonReaderState& jsonReaderState, ReadStack& readStack, T& value)
+   3. User (TenantId: 1)
+[xUnit.net 00:00:02.27]            at System.Text.Json.Serialization.Metadata.JsonTypeInfo`1.DeserializeAsync(Stream utf8Json, CancellationToken cancellationToken)
+   4. Manager (TenantId: 1)
+   5. Viewer (TenantId: 1)
+   6. Editor (TenantId: 1)
+[xUnit.net 00:00:02.27]            at System.Net.Http.Json.HttpContentJsonExtensions.ReadFromJsonAsyncCore[T](HttpContent content, JsonSerializerOptions options, CancellationToken cancellationToken)
+   7. Admin (TenantId: 2)
+   8. User (TenantId: 2)
+[xUnit.net 00:00:02.27]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Controllers\TwoPhaseAuthTests.cs(157,0): at UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.Roles_TenantSpecific_ShouldBeIsolated()
+[xUnit.net 00:00:02.27]         --- End of stack trace from previous location ---
+? Created 8 roles
+?? Verification - Created roles:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Successfully created all 8 roles including 2 Tenant 2 roles
+?? Creating role permissions...
+?? Found 38 permissions and 8 roles
+?? ALL LOADED ROLES:
+   - ID=8, Name='User', TenantId=2
+   - ID=7, Name='Admin', TenantId=2
+   - ID=6, Name='Editor', TenantId=1
+   - ID=5, Name='Viewer', TenantId=1
+   - ID=4, Name='Manager', TenantId=1
+   - ID=3, Name='User', TenantId=1
+   - ID=2, Name='Admin', TenantId=1
+   - ID=1, Name='SuperAdmin', TenantId=
+? Assigned 38 permissions to SuperAdmin
+? Assigned 28 permissions to Tenant1 Admin
+? Assigned 3 permissions to Tenant1 User
+? Assigned 6 permissions to Tenant1 Manager
+? Assigned 3 permissions to Viewer
+?? TENANT 2 ADMIN DEBUG:
+   - tenant2.Id = 2
+   - All roles count: 8
+   - Roles with TenantId = 2: 2
+   - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
+   - tenant2AdminRole found: True
+   - tenant2AdminRole.Id = 7
+?? DEBUG: Found 28 permissions for Tenant2 Admin
+? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
+? Assigned 3 permissions to Tenant2 User
+? Created 109 role permissions using only actual business-defined permissions
+?? Creating users...
+?? Adding 7 users to main context
+? All users created successfully
+? Final user count: 7
+? Verified required user exists: admin@tenant1.com (ID:  1)
+? Verified required user exists: user@tenant1.com (ID:  2)
+? Verified required user exists: admin@tenant2.com (ID:  6)
+? Verified required user exists: user@tenant2.com (ID:  7)
+?? All users created and verified successfully!
+?? Creating user role assignments...
+?? Found 7 users and 8 roles for assignment
+?? Adding 8 user role assignments...
+? Created 8 user role assignments
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? MOCKING two-phase flow for admin@tenant1.com  Tenant 1
+? Phase 1 simulated: User admin@tenant1.com authenticated (mocked)
+? Phase 2 simulated: Tenant access verified for tenant 1
+?? Generated tenant-aware JWT for admin@tenant1.com:
+   - Tenant: Test Tenant 1 (ID: 1)
+   - Roles: Admin
+   - Permissions: 28
+? Two-phase flow simulation completed successfully
+[xUnit.net 00:00:02.29]     UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.JwtValidation_ShouldWork [FAIL]
+[xUnit.net 00:00:02.29]       Assert.Equal() Failure: Strings differ
+[xUnit.net 00:00:02.29]                  ↓ (pos 0)
+[xUnit.net 00:00:02.29]       Expected: "admin@tenant1.com"
+[xUnit.net 00:00:02.29]       Actual:   "["admin@tenant1.com","admin@tenant1.com"]"
+[xUnit.net 00:00:02.29]                  ↑ (pos 0)
+[xUnit.net 00:00:02.29]       Stack Trace:
+[xUnit.net 00:00:02.29]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(203,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.ValidateJwtClaims(String jwt, Dictionary`2 expectedClaims)
+[xUnit.net 00:00:02.29]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Controllers\TwoPhaseAuthTests.cs(205,0): at UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.JwtValidation_ShouldWork()
+[xUnit.net 00:00:02.29]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:02.30]   Finished:    UserService.IntegrationTests
+========== Test run finished: 11 Tests (9 Passed, 2 Failed, 0 Skipped) run in 2.3 sec ==========
+nts
+?? Creating legacy tenant users...
+? Created 7 legacy tenant users
+?? Verifying test data...
+?? Temporarily disabling query filters for verification...
+?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109
+? Verified user: admin@tenant1.com (ID: 1)
+? Verified user: user@tenant1.com (ID: 2)
+? Verified user: admin@tenant2.com (ID: 6)
+? admin@tenant1.com has 1 role assignments
+? TestDataSeeder: Test data seeding completed successfully
+?? Testing two-phase flow for admin@tenant1.com  Tenant 1
+[09:15:16 INF] HTTP POST /api/auth/login responded 429 in 5.8233 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[xUnit.net 00:00:02.06]     UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.JwtValidation_ShouldWork [FAIL]
+[xUnit.net 00:00:02.06]       System.Net.Http.HttpRequestException : Response status code does not indicate success: 429 (Too Many Requests).
+[xUnit.net 00:00:02.06]       Stack Trace:
+[xUnit.net 00:00:02.06]            at System.Net.Http.HttpResponseMessage.EnsureSuccessStatusCode()
+[xUnit.net 00:00:02.06]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(42,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantTokenViaTwoPhaseFlow(HttpClient client, ApplicationDbContext dbContext, String email, Int32 preferredTenantId)
+[xUnit.net 00:00:02.06]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\AuthenticationHelper.cs(278,0): at UserService.IntegrationTests.TestUtilities.AuthenticationHelper.GetTenantAwareJwtAsync(HttpClient client, ApplicationDbContext dbContext, String email, Nullable`1 preferredTenantId)
+[xUnit.net 00:00:02.06]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Controllers\TwoPhaseAuthTests.cs(201,0): at UserService.IntegrationTests.Controllers.TwoPhaseAuthTests.JwtValidation_ShouldWork()
+[xUnit.net 00:00:02.06]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:02.07]   Finished:    UserService.IntegrationTests
+========== Test run finished: 11 Tests (2 Passed, 9 Failed, 0 Skipped) run in 2.1 sec ==========
