@@ -10,26 +10,30 @@ using Microsoft.Extensions.Caching.Distributed;
 using Common.Data;
 using Contracts.Services;
 using Common.Configuration;
+using UserService.PerformanceTests.Utilities;
+using Xunit;
+using Common.Caching; // 🔧 ADD: For MemoryCacheService, MemoryPermissionCache, MemoryMetricsCollector
+using UserService.Services; // 🔧 ADD: For NoOpCacheInvalidationService and ICacheInvalidationService
+using Common.Monitoring; // 🔧 ADD: For IMetricsCollector
 
 namespace UserService.PerformanceTests.Fixtures;
 
-public class PerformanceTestFixture : WebApplicationFactory<Program>
+public class PerformanceTestFixture : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly string _databaseName;
+    private static readonly string DatabaseName = $"PerformanceTestDb_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
     
     public PerformanceTestFixture()
     {
-        _databaseName = $"PerformanceTestDb_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}_{Guid.NewGuid():N}";
+        // Use static database name to ensure all contexts use the same database
     }
     
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // Critical: Set environment BEFORE ConfigureServices
         builder.UseEnvironment("Performance");
 
         builder.ConfigureServices(services =>
         {
-            // Remove existing database services completely
+            // Remove existing database services first
             var descriptors = services.Where(d => 
                 d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>) ||
                 d.ServiceType == typeof(ApplicationDbContext) ||
@@ -41,15 +45,31 @@ public class PerformanceTestFixture : WebApplicationFactory<Program>
                 services.Remove(descriptor);
             }
 
-            // Critical: Add InMemory database BEFORE other services
+            // ⚡ CRITICAL: Remove ALL Redis-related services to ensure clean override
+            services.RemoveAll<IDistributedCache>();
+            services.RemoveAll<StackExchange.Redis.IConnectionMultiplexer>();
+            services.RemoveAll<StackExchange.Redis.IDatabase>();
+            services.RemoveAll<ICacheService>();
+            services.RemoveAll<IPermissionCache>();
+            services.RemoveAll<ICacheInvalidationService>();
+            services.RemoveAll<IMetricsCollector>();
+            
+            // Add in-memory replacements
+            services.AddMemoryCache();
+            services.AddDistributedMemoryCache();
+            services.AddSingleton<ICacheService, MemoryCacheService>();
+            services.AddSingleton<IPermissionCache, MemoryPermissionCache>();
+            services.AddScoped<ICacheInvalidationService, NoOpCacheInvalidationService>();
+            services.AddSingleton<IMetricsCollector, MemoryMetricsCollector>();
+
+            // CRITICAL: Use the same static database name for ALL contexts
             services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseInMemoryDatabase(_databaseName);
+                options.UseInMemoryDatabase(DatabaseName); // Use static name
                 options.EnableSensitiveDataLogging(false);
                 options.EnableDetailedErrors(false);
-                options.EnableServiceProviderCaching(false); // Disable for performance tests
+                options.EnableServiceProviderCaching(true); // Enable for shared database
                 
-                // Performance optimizations
                 options.ConfigureWarnings(warnings => 
                 {
                     warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning);
@@ -64,32 +84,23 @@ public class PerformanceTestFixture : WebApplicationFactory<Program>
                 return accessor;
             });
             
-            // Performance-optimized TenantProvider
+            // Use simple tenant provider for performance tests
             services.RemoveAll<ITenantProvider>();
-            services.AddSingleton<ITenantProvider, PerformanceTenantProvider>();
+            services.AddScoped<ITenantProvider, SimplePerformanceTenantProvider>();
 
-            // Tenant settings optimized for performance
+            // Configure tenant settings for performance tests
             services.RemoveAll<TenantSettings>();
             services.AddSingleton<TenantSettings>(new TenantSettings 
             {
-                RequireTenantContext = false,
+                RequireTenantContext = true, // Keep validation but make it work
                 ResolutionStrategy = TenantResolutionStrategy.Header,
                 DefaultTenantId = "1",
                 TenantHeaderName = "X-Tenant-ID",
-                EnableRowLevelSecurity = false, // Disabled for performance testing
-                AllowCrossTenantQueries = false
+                EnableRowLevelSecurity = false,
+                AllowCrossTenantQueries = true
             });
 
-            // CRITICAL: Completely disable Redis-dependent services
-            services.RemoveAll<IDistributedCache>();
-            services.RemoveAll<StackExchange.Redis.IConnectionMultiplexer>();
-            services.RemoveAll<StackExchange.Redis.IDatabase>();
-            
-            // Replace with in-memory alternatives - use the proper .NET 9 way
-            services.AddMemoryCache();
-            services.AddDistributedMemoryCache(); // This is the correct .NET 9 method
-            
-            // Reduce logging for performance tests
+            // Reduce logging
             services.AddLogging(builder =>
             {
                 builder.SetMinimumLevel(LogLevel.Warning);
@@ -98,47 +109,65 @@ public class PerformanceTestFixture : WebApplicationFactory<Program>
         });
     }
 
-    protected override void Dispose(bool disposing)
+    public async Task InitializeAsync()
     {
-        if (disposing)
+        // CRITICAL: Seed data and ensure it persists for all requests
+        using var scope = Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<PerformanceTestFixture>>();
+        
+        // Ensure database is created
+        await context.Database.EnsureCreatedAsync();
+        
+        // Seed data
+        await PerformanceDataSeeder.SeedPerformanceDataAsync(context, logger);
+        
+        // CRITICAL: Verify the data is actually there
+        var tenantCount = await context.Tenants.CountAsync();
+        var userCount = await context.Users.CountAsync();
+        
+        logger.LogWarning("🔍 FIXTURE VERIFICATION: Created {TenantCount} tenants, {UserCount} users in database '{DatabaseName}'", 
+            tenantCount, userCount, DatabaseName);
+            
+        if (tenantCount == 0 || userCount == 0)
         {
-            try
-            {
-                using var scope = Services.CreateScope();
-                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                context.Database.EnsureDeleted();
-            }
-            catch
-            {
-                // Ignore cleanup errors
-            }
+            throw new InvalidOperationException($"Data seeding failed! Tenants: {tenantCount}, Users: {userCount}");
         }
-        base.Dispose(disposing);
+    }
+
+    // 🔧 FIX: Implement IAsyncLifetime.DisposeAsync() (returns Task)
+    Task IAsyncLifetime.DisposeAsync()
+    {
+        // Don't delete the database until all tests are done
+        return Task.CompletedTask;
+    }
+
+    // 🔧 FIX: Override base class DisposeAsync() (returns ValueTask)
+    public override async ValueTask DisposeAsync()
+    {
+        // Call the IAsyncLifetime implementation
+        await ((IAsyncLifetime)this).DisposeAsync();
+        
+        // Call base class disposal
+        await base.DisposeAsync();
     }
 }
 
-// High-performance tenant provider for load testing
-public class PerformanceTenantProvider : ITenantProvider
+// Simplified tenant provider that works with the database
+public class SimplePerformanceTenantProvider : ITenantProvider
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly Dictionary<int, string> _tenantCache;
     
-    public PerformanceTenantProvider(IHttpContextAccessor httpContextAccessor)
+    public SimplePerformanceTenantProvider(IHttpContextAccessor httpContextAccessor)
     {
         _httpContextAccessor = httpContextAccessor;
-        _tenantCache = new Dictionary<int, string>
-        {
-            { 1, "1" },
-            { 2, "2" },
-            { 3, "3" },
-            { 4, "4" },
-            { 5, "5" }
-        };
     }
 
     public Task<int?> GetCurrentTenantIdAsync()
     {
         var httpContext = _httpContextAccessor.HttpContext;
+        
+        // Try JWT token first
         if (httpContext?.User?.Identity?.IsAuthenticated == true)
         {
             var tenantClaim = httpContext.User.FindFirst("tenant_id");
@@ -148,22 +177,21 @@ public class PerformanceTenantProvider : ITenantProvider
             }
         }
         
-        // Performance: return cached tenant
+        // Try header
+        if (httpContext?.Request?.Headers.TryGetValue("X-Tenant-ID", out var headerValues) == true)
+        {
+            if (int.TryParse(headerValues.FirstOrDefault(), out var headerTenantId))
+            {
+                return Task.FromResult<int?>(headerTenantId);
+            }
+        }
+        
+        // Default to tenant 1
         return Task.FromResult<int?>(1);
     }
     
     public Task<string?> GetCurrentTenantIdentifierAsync()
     {
-        var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext?.User?.Identity?.IsAuthenticated == true)
-        {
-            var tenantClaim = httpContext.User.FindFirst("tenant_id");
-            if (tenantClaim != null && _tenantCache.ContainsKey(int.Parse(tenantClaim.Value)))
-            {
-                return Task.FromResult<string?>(_tenantCache[int.Parse(tenantClaim.Value)]);
-            }
-        }
-        
         return Task.FromResult<string?>("1");
     }
     

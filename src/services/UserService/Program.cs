@@ -11,7 +11,7 @@ using Contracts.User;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using UserService.Mappings;
-using UserService.Services;
+using UserService.Services; // 🔧 FIX: Add this using directive for ICacheInvalidationService
 using UserService.Middleware;
 using UserService.HealthChecks;
 using StackExchange.Redis;
@@ -39,6 +39,14 @@ builder.Host.UseSerilog((context, configuration) =>
 var monitoringEnabledRaw = builder.Configuration["Monitoring:Enabled"];
 Console.WriteLine($"[Startup] Monitoring:Enabled raw config value = '{monitoringEnabledRaw}'");
 Log.Information("Monitoring:Enabled = {Value}", monitoringEnabledRaw);
+
+// 🔧 FIX: Declare variables at the correct scope before the try block
+var redisConnectionString = Environment.GetEnvironmentVariable("Redis__ConnectionString")
+    ?? builder.Configuration["Redis:ConnectionString"]
+    ?? builder.Configuration.GetConnectionString("Redis");
+
+var isPerformanceOrTesting = builder.Environment.EnvironmentName == "Performance" 
+                           || builder.Environment.EnvironmentName == "Testing";
 
 try
 {
@@ -90,47 +98,59 @@ try
     Console.WriteLine("✅ Common services registered");
 
     Console.WriteLine("🔧 Configuring Redis...");
-    var redisConnectionString = Environment.GetEnvironmentVariable("Redis__ConnectionString")
-        ?? builder.Configuration["Redis:ConnectionString"]
-        ?? builder.Configuration.GetConnectionString("Redis")
-        ?? (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development" &&
-            Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") == "true"
-            ? "redis:6379"
-            : "localhost:6379");
-
     Console.WriteLine($"🔍 Redis connection string resolved to: {redisConnectionString}");
-    Console.WriteLine($"🐳 Running in container: {Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER")}");
+    Console.WriteLine($"🧪 Performance/Testing environment: {isPerformanceOrTesting}");
 
-    builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+    // Only configure Redis if we have a connection string AND we're not in performance/testing
+    if (!string.IsNullOrEmpty(redisConnectionString) && !isPerformanceOrTesting)
     {
-        var configuration = ConfigurationOptions.Parse(redisConnectionString);
-        configuration.AbortOnConnectFail = false;
-        configuration.ConnectTimeout = 15000;
-        configuration.SyncTimeout = 15000;
-        configuration.ConnectRetry = 3;
-        configuration.AllowAdmin = true;
-
-        var logger = sp.GetRequiredService<ILogger<Program>>();
-        try
+        Console.WriteLine("✅ Configuring full Redis services");
+        
+        builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
-            logger.LogInformation("Attempting to connect to Redis at: {ConnectionString}", redisConnectionString);
-            var connection = ConnectionMultiplexer.Connect(configuration);
-            logger.LogInformation("Redis connection status: {Status} to {EndPoint}",
-                connection.IsConnected ? "Connected" : "Disconnected", redisConnectionString);
-            return connection;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to connect to Redis at: {ConnectionString}", redisConnectionString);
-            throw;
-        }
-    });
+            var configuration = ConfigurationOptions.Parse(redisConnectionString);
+            configuration.AbortOnConnectFail = false;
+            configuration.ConnectTimeout = 15000;
+            configuration.SyncTimeout = 15000;
+            configuration.ConnectRetry = 3;
+            configuration.AllowAdmin = true;
 
-    builder.Services.AddSingleton<ICacheService, RedisCacheService>();
-    builder.Services.AddSingleton<IPermissionCache, RedisPermissionCache>();
-    builder.Services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
-    builder.Services.AddStackExchangeRedisCache(o => o.Configuration = redisConnectionString);
-    Console.WriteLine("✅ Redis configured");
+            var logger = sp.GetRequiredService<ILogger<Program>>();
+            try
+            {
+                logger.LogInformation("Attempting to connect to Redis at: {ConnectionString}", redisConnectionString);
+                var connection = ConnectionMultiplexer.Connect(configuration);
+                logger.LogInformation("Redis connection status: {Status} to {EndPoint}",
+                    connection.IsConnected ? "Connected" : "Disconnected", redisConnectionString);
+                return connection;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to connect to Redis at: {ConnectionString}", redisConnectionString);
+                throw;
+            }
+        });
+
+        builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+        builder.Services.AddSingleton<IPermissionCache, RedisPermissionCache>();
+        builder.Services.AddScoped<ICacheInvalidationService, CacheInvalidationService>();
+        builder.Services.AddSingleton<IMetricsCollector, RedisMetricsCollector>();
+        builder.Services.AddStackExchangeRedisCache(o => o.Configuration = redisConnectionString);
+    }
+    else
+    {
+        Console.WriteLine("⚡ Using in-memory cache services (Performance/Testing mode)");
+        
+        // Use in-memory implementations for performance tests and when Redis is not available
+        builder.Services.AddMemoryCache();
+        builder.Services.AddDistributedMemoryCache();
+        builder.Services.AddSingleton<ICacheService, MemoryCacheService>();
+        builder.Services.AddSingleton<IPermissionCache, MemoryPermissionCache>();
+        builder.Services.AddScoped<ICacheInvalidationService, NoOpCacheInvalidationService>(); // 🔧 FIX: Use correct implementation
+        builder.Services.AddSingleton<IMetricsCollector, MemoryMetricsCollector>();
+    }
+
+    Console.WriteLine("✅ Cache services configured");
 
     Console.WriteLine("🔧 Registering database services...");
     builder.Services.AddDatabase(builder.Configuration);
@@ -153,9 +173,6 @@ try
     // Enhanced Security
     builder.Services.AddEnhancedSecurity();
     builder.Services.AddEnhancedAuthorizationPolicies();
-    
-    // 🆕 ADD: Metrics Collection Service
-    builder.Services.AddSingleton<IMetricsCollector, RedisMetricsCollector>();
     
     // 🆕 ADD: Monitoring Service
     builder.Services.AddScoped<IMonitoringService, MonitoringService>();
@@ -553,29 +570,39 @@ try
 
     try
     {
-        Console.WriteLine("🔧 Testing Redis connection...");
-        var redis = app.Services.GetRequiredService<IConnectionMultiplexer>();
-        Log.Information("Redis connection status: {Status}", redis.IsConnected ? "Connected" : "Disconnected");
-
-        if (redis.IsConnected)
+        Console.WriteLine("🔧 Testing cache connection...");
+        
+        // Only test Redis if we actually configured it
+        if (!isPerformanceOrTesting && !string.IsNullOrEmpty(redisConnectionString))
         {
-            var db = redis.GetDatabase();
-            var testKey = $"startup-test:{Environment.MachineName}:{DateTime.UtcNow:yyyyMMddHHmmss}";
-            await db.StringSetAsync(testKey, DateTime.UtcNow.ToString(), TimeSpan.FromSeconds(10));
-            var test = await db.StringGetAsync(testKey);
-            Console.WriteLine($"✅ Redis connection successful: {test}");
-            Log.Information("Redis connection test successful: {TestValue}", test);
+            var redis = app.Services.GetRequiredService<IConnectionMultiplexer>();
+            Log.Information("Redis connection status: {Status}", redis.IsConnected ? "Connected" : "Disconnected");
+
+            if (redis.IsConnected)
+            {
+                var db = redis.GetDatabase();
+                var testKey = $"startup-test:{Environment.MachineName}:{DateTime.UtcNow:yyyyMMddHHmmss}";
+                await db.StringSetAsync(testKey, DateTime.UtcNow.ToString(), TimeSpan.FromSeconds(10));
+                var test = await db.StringGetAsync(testKey);
+                Console.WriteLine($"✅ Redis connection successful: {test}");
+                Log.Information("Redis connection test successful: {TestValue}", test);
+            }
+        }
+        else
+        {
+            Console.WriteLine("✅ In-memory cache configured (Performance/Testing mode)");
+            Log.Information("In-memory cache configured for Performance/Testing environment");
         }
     }
-    catch (RedisConnectionException ex)
+    catch (Exception ex) when (ex.GetType().Name.Contains("Redis"))
     {
         Console.WriteLine($"⚠️  Redis connection failed: {ex.Message}");
-        Log.Warning(ex, "Redis connection test failed, caching will be unavailable");
+        Log.Warning(ex, "Redis connection test failed, using fallback caching");
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"⚠️  Redis connection test error: {ex.Message}");
-        Log.Warning(ex, "Redis connection test failed with unexpected error");
+        Console.WriteLine($"⚠️  Cache connection test error: {ex.Message}");
+        Log.Warning(ex, "Cache connection test failed with unexpected error");
     }
 
     Console.WriteLine("🔧 Seeding database...");

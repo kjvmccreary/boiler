@@ -344,63 +344,65 @@ public class UsersControllerTests : TestBase
     [Fact]
     public async Task DeleteUser_CrossTenantAttempt_ReturnsNotFound()
     {
-        // Arrange - Get actual tenant-specific user IDs
-        var tenant1Token = await GetAuthTokenAsync("admin@tenant1.com");
-        var tenant2Token = await GetAuthTokenAsync("admin@tenant2.com");
+        // Arrange - Get actual admin user ID from Tenant 1
+        var tenant1AdminUser = await _dbContext.Users
+            .FirstOrDefaultAsync(u => u.Email == "admin@tenant1.com");
+    
+        var tenant1UserId = tenant1AdminUser?.Id ?? 1; // Use actual user ID or fallback to 1
+    
+        // 🔧 FIX: Use admin@tenant2.com with their OWN tenant (tenant 2)
+        var tenant2AdminToken = await GetAuthTokenAsync("admin@tenant2.com", 2); // Use tenant 2
+        _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant2AdminToken);
+        _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
+        _client.DefaultRequestHeaders.Add("X-Tenant-ID", "2"); // Use tenant 2
 
-        // First, get Tenant 2 users to find a Tenant 2 specific user
-        _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant2Token);
-        var tenant2UsersResponse = await _client.GetAsync("/api/users");
-        if (tenant2UsersResponse.StatusCode == HttpStatusCode.OK)
-        {
-            var tenant2UsersResult = await tenant2UsersResponse.Content.ReadFromJsonAsync<ApiResponseDto<PagedResultDto<UserDto>>>();
-            var tenant2User = tenant2UsersResult!.Data!.Items.FirstOrDefault(u => u.TenantId == 2);
+        // Act - Try to delete user from tenant 1 while authenticated for tenant 2
+        var response = await _client.DeleteAsync($"/api/users/{tenant1UserId}");
 
-            if (tenant2User != null)
-            {
-                // Now try to delete that Tenant 2 user from Tenant 1 context
-                _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant1Token);
-
-                // Act - Try to delete Tenant 2 user from Tenant 1 context
-                var response = await _client.DeleteAsync($"/api/users/{tenant2User.Id}");
-
-                // Assert
-                response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-                return;
-            }
-        }
-
-        // Skip test if no Tenant 2 users found
-        _logger.LogWarning("No Tenant 2 specific users found, skipping cross-tenant test");
+        // Assert - Should return NotFound because tenant 2 admin can't see tenant 1 users
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task GetUser_CrossTenantAccess_ReturnsNotFound()
     {
-        // Same pattern as above - get actual Tenant 2 user ID and try to access from Tenant 1
-        var tenant1Token = await GetAuthTokenAsync("admin@tenant1.com");
-        var tenant2Token = await GetAuthTokenAsync("admin@tenant2.com");
+        // Arrange - Get Tenant 1 admin token and Tenant 2 admin token
+        var tenant1Token = await GetAuthTokenAsync("admin@tenant1.com", 1);
+        var tenant2Token = await GetAuthTokenAsync("admin@tenant2.com", 2);
 
-        // Get Tenant 2 user
+        // Get Tenant 2 users first
         _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant2Token);
+        _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
+        _client.DefaultRequestHeaders.Add("X-Tenant-ID", "2");
+    
         var tenant2UsersResponse = await _client.GetAsync("/api/users");
         if (tenant2UsersResponse.StatusCode == HttpStatusCode.OK)
         {
             var tenant2UsersResult = await tenant2UsersResponse.Content.ReadFromJsonAsync<ApiResponseDto<PagedResultDto<UserDto>>>();
-            var tenant2User = tenant2UsersResult!.Data!.Items.FirstOrDefault(u => u.TenantId == 2);
+            var tenant2User = tenant2UsersResult?.Data?.Items?.FirstOrDefault();
 
             if (tenant2User != null)
             {
-                // Try to access from Tenant 1 context
+                // Try to access Tenant 2 user from Tenant 1 context
                 _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant1Token);
+                _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
+                _client.DefaultRequestHeaders.Add("X-Tenant-ID", "1");
+            
                 var response = await _client.GetAsync($"/api/users/{tenant2User.Id}");
 
+                // Should return NotFound due to tenant isolation
                 response.StatusCode.Should().Be(HttpStatusCode.NotFound);
                 return;
             }
         }
 
-        _logger.LogWarning("No Tenant 2 specific users found, skipping cross-tenant test");
+        // If no Tenant 2 users found, test that Tenant 1 admin can't access arbitrary high IDs
+        _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant1Token);
+        _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
+        _client.DefaultRequestHeaders.Add("X-Tenant-ID", "1");
+    
+        var fallbackResponse = await _client.GetAsync("/api/users/999");
+        fallbackResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     #endregion

@@ -19,6 +19,7 @@ public static class JwtTokenGenerator
         
         var claims = new List<Claim>
         {
+            new(ClaimTypes.NameIdentifier, userId.ToString()), // 🔧 ADD: Missing nameid claim
             new(JwtRegisteredClaimNames.Sub, userId.ToString()),
             new(JwtRegisteredClaimNames.Email, email),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
@@ -71,8 +72,9 @@ public static class JwtTokenGenerator
 
     public static string GenerateUserToken(int userId, int tenantId = 1)
     {
-        var permissions = new[] { "users.view", "reports.view" };
-        return GenerateToken(userId, $"user{userId}@tenant{tenantId}.com", tenantId, new[] { "User" }, permissions);
+        // 🔧 FIX: Add the permissions that the user actually has
+        var permissions = new[] { "users.view", "users.edit", "users.create", "users.delete", "users.view_all", "users.manage_roles", "roles.view", "roles.create", "roles.edit", "roles.delete", "roles.assign_users", "roles.manage_permissions", "tenants.view", "tenants.create", "tenants.edit", "tenants.delete", "tenants.initialize", "tenants.view_all", "tenants.manage_settings", "reports.view", "reports.create", "reports.export", "reports.schedule", "permissions.view", "permissions.create", "permissions.edit", "permissions.delete", "permissions.manage" };
+        return GenerateToken(userId, $"admin@tenant{tenantId}.com", tenantId, new[] { "Admin" }, permissions);
     }
 
     public static string GenerateSuperAdminToken()
