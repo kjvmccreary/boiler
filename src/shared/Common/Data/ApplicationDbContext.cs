@@ -203,10 +203,10 @@ public class ApplicationDbContext : DbContext
         {
             try
             {
-                // ✅ FIX: Properly handle parameters to avoid warning - provide parameters array
+                // ✅ FIX: Convert tenant ID to string for PostgreSQL set_config function
                 await Database.ExecuteSqlRawAsync(
                     "SELECT set_config('app.tenant_id', {0}, false)", 
-                    new object[] { tenantId.Value }); // Fix: Explicit object array
+                    tenantId.Value.ToString()); // 🔧 FIXED: Convert to string
             }
             catch
             {

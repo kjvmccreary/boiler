@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations;
 namespace DTOs.Entities;
 
 /// <summary>
-/// Audit entry specifically for permission checks with performance metrics
-/// Phase 11 - Enhanced Security & Monitoring
+/// Audit entry specifically for permission checks with performance metrics.
+/// Phase 11 - Enhanced Security and Monitoring.
 /// </summary>
 public class PermissionAuditEntry : BaseEntity
 {

@@ -163,6 +163,18 @@ try
     Console.WriteLine("✅ Enhanced Security and Monitoring services registered successfully");
     Log.Information("Enhanced Security and Monitoring services registered successfully");
 
+    // 🆕 ADD: Phase 11 Session 3 - Compliance and Alert Services
+    Console.WriteLine("📋 Registering Compliance and Alert services...");
+    Log.Information("Registering Compliance and Alert services");
+
+    builder.Services.AddScoped<IComplianceReportingService, ComplianceReportingService>();
+    builder.Services.AddScoped<ISecurityAlertService, SecurityAlertService>();
+    builder.Services.AddScoped<IEmailService, EmailService>();
+    builder.Services.AddHttpClient<ISecurityAlertService, SecurityAlertService>();
+
+    Console.WriteLine("✅ Compliance and Alert services registered successfully");
+    Log.Information("Compliance and Alert services registered successfully");
+
     // 🔧 PHASE 11: Enhanced Health Checks
     Console.WriteLine("🩺 Registering Enhanced Health Checks...");
     builder.Services.AddHealthChecks()
@@ -224,6 +236,18 @@ try
             policy.RequireClaim("permission", "system.monitor"));
         options.AddPolicy("SystemAdmin", policy =>
             policy.RequireClaim("permission", "system.manage"));
+        
+        // 🆕 ADD: Compliance-specific policies (add to existing options.AddPolicy calls)
+        options.AddPolicy("ComplianceReports", policy =>
+            policy.RequireClaim("permission", "compliance.generate_reports"));
+        options.AddPolicy("ComplianceView", policy =>
+            policy.RequireClaim("permission", "compliance.view_reports"));
+        options.AddPolicy("ComplianceExport", policy =>
+            policy.RequireClaim("permission", "compliance.export_reports"));
+        options.AddPolicy("SecurityAlerts", policy =>
+            policy.RequireClaim("permission", "security.view_alerts"));
+        options.AddPolicy("SecurityAlertManage", policy =>
+            policy.RequireClaim("permission", "security.manage_alerts"));
     });
     Console.WriteLine("✅ Authorization policies configured");
 

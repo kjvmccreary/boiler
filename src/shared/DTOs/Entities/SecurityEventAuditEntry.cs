@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations;
 namespace DTOs.Entities;
 
 /// <summary>
-/// Audit entry for security events and violations
-/// Phase 11 - Enhanced Security & Monitoring
+/// Audit entry for security events and violations.
+/// Phase 11 - Enhanced Security and Monitoring.
 /// </summary>
 public class SecurityEventAuditEntry : BaseEntity
 {

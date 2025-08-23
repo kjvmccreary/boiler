@@ -276,8 +276,8 @@ public class EnhancedRateLimitingMiddleware
     private async Task HandleRateLimitExceeded(HttpContext context, RateLimitStatus status)
     {
         context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-        context.Response.Headers.Add("Retry-After", "60"); // 1 minute
-        
+        context.Response.Headers["Retry-After"] = "60"; // 🔧 FIX: Use indexer instead of Add
+
         AddRateLimitHeaders(context, status);
 
         var response = new
@@ -293,11 +293,12 @@ public class EnhancedRateLimitingMiddleware
 
     private void AddRateLimitHeaders(HttpContext context, RateLimitStatus status)
     {
-        context.Response.Headers.Add("X-RateLimit-Limit", status.Limit.ToString());
-        context.Response.Headers.Add("X-RateLimit-Remaining", Math.Max(0, status.Limit - status.CurrentCount).ToString());
-        context.Response.Headers.Add("X-RateLimit-Reset", ((DateTimeOffset)status.ResetTime).ToUnixTimeSeconds().ToString());
-        context.Response.Headers.Add("X-RateLimit-Burst-Limit", status.BurstLimit.ToString());
-        context.Response.Headers.Add("X-RateLimit-Burst-Remaining", Math.Max(0, status.BurstLimit - status.BurstCount).ToString());
+        // 🔧 FIX: Use indexer instead of Add to avoid ArgumentException on duplicate keys
+        context.Response.Headers["X-RateLimit-Limit"] = status.Limit.ToString();
+        context.Response.Headers["X-RateLimit-Remaining"] = Math.Max(0, status.Limit - status.CurrentCount).ToString();
+        context.Response.Headers["X-RateLimit-Reset"] = ((DateTimeOffset)status.ResetTime).ToUnixTimeSeconds().ToString();
+        context.Response.Headers["X-RateLimit-Burst-Limit"] = status.BurstLimit.ToString();
+        context.Response.Headers["X-RateLimit-Burst-Remaining"] = Math.Max(0, status.BurstLimit - status.BurstCount).ToString();
     }
 
     #region Helper Classes

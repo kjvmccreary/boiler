@@ -34,8 +34,8 @@ public class SystemHealthCheck : IHealthCheck
         try
         {
             // Get system metrics and health status
-            var systemMetrics = await _metricsCollector.GetSystemMetricsAsync(TimeSpan.FromMinutes(5));
-            var monitoringHealthStatus = await _metricsCollector.GetHealthStatusAsync(); // 🔧 FIX: Renamed to avoid ambiguity
+            var systemMetrics = await _metricsCollector.GetSummaryAsync(TimeSpan.FromMinutes(5)); // 🔧 FIX: Use GetSummaryAsync instead of GetSystemMetricsAsync
+            var monitoringHealthStatus = await _metricsCollector.GetHealthStatusAsync();
             var realtimeMetrics = await _metricsCollector.GetRealTimeMetricsAsync();
             
             stopwatch.Stop();
@@ -90,7 +90,7 @@ public class SystemHealthCheck : IHealthCheck
             var isSystemHealthy = healthScore >= 80; // 80% threshold for healthy
             _metricsCollector.RecordHealthCheck("system_overall", isSystemHealthy, stopwatch.Elapsed);
             
-            // Determine overall status and message - using Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus
+            // Determine overall status and message
             if (healthScore >= 95)
             {
                 return HealthCheckResult.Healthy(
@@ -138,7 +138,7 @@ public class SystemHealthCheck : IHealthCheck
 
     private double CalculateSystemHealthScore(
         MetricsSummary systemMetrics, 
-        Common.Monitoring.HealthStatus monitoringHealthStatus, // 🔧 FIX: Fully qualified type name
+        Common.Monitoring.HealthStatus monitoringHealthStatus,
         Dictionary<string, object> realtimeMetrics, 
         List<string> issues)
     {

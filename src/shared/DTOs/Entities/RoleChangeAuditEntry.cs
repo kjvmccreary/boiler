@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations;
 namespace DTOs.Entities;
 
 /// <summary>
-/// Audit entry for role modifications with before/after snapshots
-/// Phase 11 - Enhanced Security & Monitoring
+/// Audit entry for role modifications with before/after snapshots.
+/// Phase 11 - Enhanced Security and Monitoring.
 /// </summary>
 public class RoleChangeAuditEntry : BaseEntity
 {
