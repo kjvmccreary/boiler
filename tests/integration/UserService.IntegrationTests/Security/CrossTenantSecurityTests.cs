@@ -183,48 +183,29 @@ public class CrossTenantSecurityTests : TestBase
     [Fact]
     public async Task RemoveRoleFromUser_CrossTenantRole_ShouldFail()
     {
-        // Arrange - Get actual tenant-specific role IDs dynamically
-        var tenant1Token = await GetAuthTokenAsync("admin@tenant1.com");
-        var tenant2Token = await GetAuthTokenAsync("admin@tenant2.com");
+        // Arrange - Use proper tenant contexts
+        var tenant1Token = await GetAuthTokenAsync("admin@tenant1.com", 1);
+        var tenant2Token = await GetAuthTokenAsync("admin@tenant2.com", 2);
 
-        // First get Tenant 2 roles to find an actual Tenant 2 role
-        _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant2Token);
-        var tenant2RolesResponse = await _client.GetAsync("/api/roles");
-        
-        // ✅ CRITICAL FIX: Add null safety check
-        if (!tenant2RolesResponse.IsSuccessStatusCode)
-        {
-            _logger.LogWarning("Could not get Tenant 2 roles. Response: {StatusCode}", tenant2RolesResponse.StatusCode);
-            // Still test the cross-tenant behavior with a hardcoded role ID
-            _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant1Token);
-            var response = await _client.DeleteAsync($"/api/roles/7/users/1");
-            response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
-            return;
-        }
-
-        var tenant2RolesResult = await tenant2RolesResponse.Content.ReadFromJsonAsync<ApiResponseDto<PagedResultDto<RoleDto>>>();
-        var tenant2Role = tenant2RolesResult?.Data?.Items?.FirstOrDefault(r => r.TenantId == 2);
-
-        if (tenant2Role == null)
-        {
-            _logger.LogWarning("No Tenant 2 specific roles found, using fallback test");
-            // Fallback test with known role ID
-            _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant1Token);
-            var response = await _client.DeleteAsync($"/api/roles/7/users/1");
-            response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
-            return;
-        }
-
-        // Switch back to Tenant 1 context and try cross-tenant operation
+        // Get a tenant 1 user
         _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant1Token);
+        _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
+        _client.DefaultRequestHeaders.Add("X-Tenant-ID", "1");
+        
+        var usersResponse = await _client.GetAsync("/api/users");
+        var usersResult = await usersResponse.Content.ReadFromJsonAsync<ApiResponseDto<PagedResultDto<UserDto>>>();
+        var tenant1UserId = usersResult?.Data?.Items?.FirstOrDefault()?.Id ?? 1;
 
-        // Act - Try to remove Tenant 2 role from Tenant 1 user (admin@tenant1.com = user ID 1)
-        var crossTenantResponse = await _client.DeleteAsync($"/api/roles/{tenant2Role.Id}/users/1");
+        // Try to remove role from tenant 2 context
+        _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant2Token);
+        _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
+        _client.DefaultRequestHeaders.Add("X-Tenant-ID", "2");
 
-        // Assert
-        crossTenantResponse.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
-        var result = await crossTenantResponse.Content.ReadFromJsonAsync<ApiResponseDto<bool>>();
-        result!.Success.Should().BeFalse();
+        // Act - Try to remove role from tenant 1 user using tenant 2 admin
+        var response = await _client.DeleteAsync($"/api/users/{tenant1UserId}/roles/2");
+
+        // Assert - Should fail due to tenant isolation
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]

@@ -265,15 +265,15 @@ public class UsersControllerTests : TestBase
     [Fact]
     public async Task GetUser_UserAccessingOtherUser_ReturnsForbidden() // ✅ CORRECT: User should NOT access other users
     {
-        // Arrange - ✅ FIX: Use Tenant 2 user to avoid test contamination from role assignment tests
-        var token = await GetUserTokenAsync("user@tenant2.com");
+        // Arrange - Use user@tenant1.com to access another user in the SAME tenant
+        var token = await GetUserTokenAsync("user@tenant1.com"); // This will get tenant 1 context automatically
         _client.DefaultRequestHeaders.Authorization = new("Bearer", token);
 
-        // Act - ✅ FIX: Try to access Tenant 2 admin - should be forbidden
-        var response = await _client.GetAsync("/api/users/4");
+        // Act - Try to access admin user (user ID 1) from the same tenant
+        var response = await _client.GetAsync("/api/users/1");
 
-        // Assert
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden); // ✅ CORRECT: Expect forbidden for security
+        // Assert - Should be forbidden because regular users can't access other users
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     [Fact]

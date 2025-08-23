@@ -137,9 +137,14 @@ public abstract class TestBase : IClassFixture<WebApplicationTestFixture>, IAsyn
         return await AuthenticationHelper.GetTenantAwareJwtAsync(_client, _dbContext, email, tenantId ?? 1);
     }
 
+    /// <summary>
+    /// Gets a user token for the user's default tenant
+    /// </summary>
     protected async Task<string> GetUserTokenAsync(string email = "user@tenant1.com")
     {
-        return await AuthenticationHelper.GetTenantAwareJwtAsync(_client, _dbContext, email, 1);
+        // Determine tenant from email
+        int tenantId = email.Contains("tenant2") ? 2 : 1;
+        return await GetAuthTokenAsync(email, tenantId);
     }
 
     protected async Task<string> GetManagerTokenAsync(string email = "manager@tenant1.com")

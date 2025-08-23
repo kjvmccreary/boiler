@@ -443,44 +443,32 @@ public class RolesControllerTests : TestBase
     [Fact]
     public async Task GetRolePermissions_CrossTenantAttempt_ReturnsNotFound()
     {
-        // Arrange - Get roles from each tenant to find cross-tenant role
-        var tenant1Token = await GetAuthTokenAsync("admin@tenant1.com");
-        var tenant2Token = await GetAuthTokenAsync("admin@tenant2.com");
-
-        // Get Tenant 2 roles
+        // Arrange - Use tenant 2 admin with correct tenant context
+        var tenant2Token = await GetAuthTokenAsync("admin@tenant2.com", 2); // Use tenant 2
         _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant2Token);
-        var tenant2RolesResponse = await _client.GetAsync("/api/roles");
-        
-        // ✅ CRITICAL FIX: Add null safety check
-        if (!tenant2RolesResponse.IsSuccessStatusCode)
-        {
-            _logger.LogWarning("Could not get Tenant 2 roles. Response: {StatusCode}", tenant2RolesResponse.StatusCode);
-            _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant1Token);
-            var response = await _client.GetAsync($"/api/roles/7/permissions");
-            response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
-            return;
-        }
+        _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
+        _client.DefaultRequestHeaders.Add("X-Tenant-ID", "2");
 
-        var tenant2RolesResult = await tenant2RolesResponse.Content.ReadFromJsonAsync<ApiResponseDto<PagedResultDto<RoleDto>>>();
-        var tenant2Role = tenant2RolesResult?.Data?.Items?.FirstOrDefault(r => r.TenantId == 2);
-
-        if (tenant2Role == null)
-        {
-            _logger.LogWarning("No Tenant 2 specific roles found, using fallback test");
-            _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant1Token);
-            var response = await _client.GetAsync($"/api/roles/7/permissions");
-            response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
-            return;
-        }
-
-        // Switch to Tenant 1 context and try to access Tenant 2 role
+        // Get a tenant 1 role ID first
+        var tenant1Token = await GetAuthTokenAsync("admin@tenant1.com", 1);
         _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant1Token);
+        _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
+        _client.DefaultRequestHeaders.Add("X-Tenant-ID", "1");
+        
+        var rolesResponse = await _client.GetAsync("/api/roles");
+        var rolesResult = await rolesResponse.Content.ReadFromJsonAsync<ApiResponseDto<PagedResultDto<RoleDto>>>();
+        var tenant1RoleId = rolesResult?.Data?.Items?.FirstOrDefault()?.Id ?? 2; // Use Admin role ID 2
 
-        // Act - Try to access Tenant 2 role from Tenant 1 context
-        var crossTenantResponse = await _client.GetAsync($"/api/roles/{tenant2Role.Id}/permissions");
+        // Now try to access tenant 1 role from tenant 2 context
+        _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant2Token);
+        _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
+        _client.DefaultRequestHeaders.Add("X-Tenant-ID", "2");
 
-        // Assert
-        crossTenantResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        // Act - Try to access tenant 1 role permissions from tenant 2 context
+        var response = await _client.GetAsync($"/api/roles/{tenant1RoleId}/permissions");
+
+        // Assert - Should return NotFound due to tenant isolation
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     #endregion

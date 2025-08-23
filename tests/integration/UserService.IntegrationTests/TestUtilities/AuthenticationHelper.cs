@@ -148,7 +148,7 @@ public static class AuthenticationHelper
 
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, user.Id.ToString()), // 🔧 ADD: This provides the 'nameid' claim
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()), // 🔧 ADD: Missing nameid claim
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
             new(JwtRegisteredClaimNames.GivenName, user.FirstName),
