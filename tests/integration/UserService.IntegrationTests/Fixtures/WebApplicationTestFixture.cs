@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Http;
 using Contracts.Services;
 using Common.Configuration;
 using Common.Caching;
+using Common.Services; // ✅ For IEnhancedAuditService, IAuditService, AuditAction
+using DTOs.Entities; // ✅ For audit entry entities
 using UserService.IntegrationTests.TestUtilities;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
@@ -27,25 +29,39 @@ public class WebApplicationTestFixture : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // 🔧 CRITICAL FIX: Configure test-specific settings to disable rate limiting
+        // ✅ CRITICAL FIX: Configure test-specific settings to disable rate limiting
         builder.ConfigureAppConfiguration((context, config) =>
         {
-            // 🔧 FIX: Cast to IEnumerable<KeyValuePair<string, string?>> to fix nullability warning
             var testConfiguration = new KeyValuePair<string, string?>[]
             {
-                // Disable rate limiting for tests
+                // ✅ DISABLE RATE LIMITING FOR TESTS
                 new("RateLimiting:Enabled", "false"),
+                new("Security:EnableRateLimiting", "false"),
                 new("RateLimiting:GlobalOptions:PermitLimit", "10000"),
                 new("RateLimiting:GlobalOptions:Window", "01:00:00"),
                 new("RateLimiting:GlobalOptions:QueueLimit", "1000"),
                 new("RateLimiting:AuthOptions:PermitLimit", "10000"),
                 new("RateLimiting:AuthOptions:Window", "01:00:00"),
                 
+                // ✅ DISABLE ENHANCED SECURITY FEATURES FOR TESTS
+                new("Security:EnableAuditLogging", "false"),
+                new("Security:EnableSecurityHeaders", "false"),
+                new("Security:EnableSuspiciousActivityDetection", "false"),
+                new("Security:EnableEnhancedSecurity", "false"),
+                new("Security:EnableInTesting", "false"),
+                new("Monitoring:Enabled", "false"),
+                
                 // Ensure testing environment
                 new("ASPNETCORE_ENVIRONMENT", "Testing"),
                 
                 // Disable HTTPS redirection warnings
                 new("ASPNETCORE_HTTPS_PORT", ""),
+                
+                // Test-friendly JWT settings
+                new("JwtSettings:Issuer", "TestIssuer"),
+                new("JwtSettings:Audience", "TestAudience"),
+                new("JwtSettings:SecretKey", "TestSecretKeyThatIsLongEnoughForHS256Algorithm"),
+                new("JwtSettings:ExpiryMinutes", "60"),
             };
             
             config.AddInMemoryCollection(testConfiguration);
@@ -125,6 +141,68 @@ public class WebApplicationTestFixture : WebApplicationFactory<Program>
 
             // Add mock cache service if needed by other components
             services.AddSingleton<Common.Caching.ICacheService, MockCacheService>();
+
+            // ✅ CRITICAL FIX: Mock enhanced security services using the real interfaces
+            services.RemoveAll<IEnhancedAuditService>();
+            services.AddSingleton<IEnhancedAuditService>(provider =>
+            {
+                var mock = new Mock<IEnhancedAuditService>();
+                
+                // ✅ FIX: Mock all methods from IEnhancedAuditService interface
+                mock.Setup(x => x.LogSecurityEventAsync(It.IsAny<SecurityEventAuditEntry>()))
+                    .Returns(Task.CompletedTask);
+                    
+                mock.Setup(x => x.LogPermissionCheckAsync(It.IsAny<PermissionAuditEntry>()))
+                    .Returns(Task.CompletedTask);
+                    
+                mock.Setup(x => x.LogRoleChangeAsync(It.IsAny<RoleChangeAuditEntry>()))
+                    .Returns(Task.CompletedTask);
+                    
+                // ✅ FIX: Mock the base IAuditService.LogAsync method with ALL required parameters
+                mock.Setup(x => x.LogAsync(
+                    It.IsAny<AuditAction>(), 
+                    It.IsAny<string>(), // resource parameter - REQUIRED
+                    It.IsAny<object?>(), // details parameter - optional
+                    It.IsAny<bool>(), // success parameter - optional (default true)
+                    It.IsAny<string?>())) // errorMessage parameter - optional
+                    .Returns(Task.CompletedTask);
+                    
+                // ✅ FIX: Mock other IAuditService methods
+                mock.Setup(x => x.LogSecurityViolationAsync(It.IsAny<string>(), It.IsAny<object?>()))
+                    .Returns(Task.CompletedTask);
+                    
+                mock.Setup(x => x.LogPermissionCheckAsync(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<bool>()))
+                    .Returns(Task.CompletedTask);
+                    
+                mock.Setup(x => x.LogUnauthorizedAccessAsync(It.IsAny<string>(), It.IsAny<object?>()))
+                    .Returns(Task.CompletedTask);
+                    
+                mock.Setup(x => x.GetAuditLogAsync(It.IsAny<int?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>()))
+                    .ReturnsAsync(new List<AuditEntry>());
+                    
+                // ✅ FIX: Mock IEnhancedAuditService specific methods
+                mock.Setup(x => x.GetPermissionAuditLogAsync(It.IsAny<int?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>()))
+                    .ReturnsAsync(new List<PermissionAuditEntry>());
+                    
+                mock.Setup(x => x.GetRoleChangeAuditLogAsync(It.IsAny<int?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>()))
+                    .ReturnsAsync(new List<RoleChangeAuditEntry>());
+                    
+                mock.Setup(x => x.GetSecurityEventLogAsync(It.IsAny<string?>(), It.IsAny<DateTime?>(), It.IsAny<DateTime?>(), It.IsAny<int>()))
+                    .ReturnsAsync(new List<SecurityEventAuditEntry>());
+                    
+                mock.Setup(x => x.GetSecurityMetricsAsync(It.IsAny<TimeSpan>()))
+                    .ReturnsAsync(new Dictionary<string, object>());
+
+                return mock.Object;
+            });
+
+            // ✅ Also mock any other enhanced security services that might be needed
+            services.RemoveAll<IMonitoringService>();
+            services.AddSingleton<IMonitoringService>(provider =>
+            {
+                var mock = new Mock<IMonitoringService>();
+                return mock.Object;
+            });
 
             // ✅ Use regular ApplicationDbContext with proper test configuration
             services.AddDbContext<ApplicationDbContext>(options =>
@@ -222,7 +300,7 @@ public class TestTenantProvider : ITenantProvider
     }
 }
 
-// 🔧 FIX: Correct return type to match interface
+// Mock cache service for testing
 public class MockCacheService : Common.Caching.ICacheService
 {
     private readonly ConcurrentDictionary<string, object?> _cache = new();
@@ -261,7 +339,6 @@ public class MockCacheService : Common.Caching.ICacheService
         return Task.CompletedTask;
     }
 
-    // 🔧 FIX: Change return type to Task<T> to match interface
     public async Task<T> GetOrSetAsync<T>(string key, Func<Task<T>> factory, TimeSpan? expiration = null)
     {
         if (_cache.TryGetValue(key, out var existing) && existing is T existingT)

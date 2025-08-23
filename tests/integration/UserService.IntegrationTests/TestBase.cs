@@ -30,6 +30,9 @@ public abstract class TestBase : IClassFixture<WebApplicationTestFixture>, IAsyn
     {
         try 
         {
+            // ✅ CRITICAL FIX: Clear any potential rate limiting cache before test
+            await RateLimitingTestUtilities.ClearRateLimitCacheAsync(_fixture.Services);
+            
             // ✅ FIX: Initialize database with clean seeding
             await InitializeDatabaseAsync();
             
@@ -175,6 +178,18 @@ public abstract class TestBase : IClassFixture<WebApplicationTestFixture>, IAsyn
             .Select(rp => rp.Permission.Name)
             .Distinct()
             .ToList();
+    }
+
+    #endregion
+
+    #region Rate Limiting Protection for Tests
+
+    /// <summary>
+    /// Add a small delay between API calls to prevent any potential rate limiting
+    /// </summary>
+    protected async Task DelayForRateLimitAsync(int milliseconds = 50)
+    {
+        await RateLimitingTestUtilities.DelayForRateLimitingAsync(milliseconds);
     }
 
     #endregion

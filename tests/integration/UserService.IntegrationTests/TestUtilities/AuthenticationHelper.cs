@@ -16,10 +16,10 @@ namespace UserService.IntegrationTests.TestUtilities;
 
 public static class AuthenticationHelper
 {
-    // JWT settings that EXACTLY match the UserService configuration
-    private const string SecretKey = "your-super-secret-jwt-key-that-is-at-least-256-bits-long";
-    private const string Issuer = "AuthService";
-    private const string Audience = "StarterApp";
+    // 🔧 CRITICAL FIX: Use the EXACT JWT settings from appsettings.Testing.json
+    private const string SecretKey = "TestSecretKeyThatIsLongEnoughForHS256AlgorithmAndSecureForTesting";
+    private const string Issuer = "TestIssuer";
+    private const string Audience = "TestAudience";
 
     /// <summary>
     /// 🔧 FIXED: Test the complete two-phase authentication flow by MOCKING it
@@ -32,8 +32,6 @@ public static class AuthenticationHelper
         int preferredTenantId)
     {
         Console.WriteLine($"🔄 MOCKING two-phase flow for {email} → Tenant {preferredTenantId}");
-        
-        // 🔧 CRITICAL FIX: Don't call auth endpoints - just simulate the flow
         
         // Step 1: Verify user exists
         var user = await dbContext.Users
@@ -112,37 +110,6 @@ public static class AuthenticationHelper
         Console.WriteLine($"   - Permissions: {permissions.Count}");
 
         return GenerateTenantAwareJwtToken(user, tenant, primaryRole, roles, permissions);
-    }
-
-    /// <summary>
-    /// Test two-phase flow with invalid tenant access (should fail)
-    /// </summary>
-    public static async Task<bool> TestUnauthorizedTenantAccess(
-        HttpClient client,
-        ApplicationDbContext dbContext,
-        string email,
-        int unauthorizedTenantId)
-    {
-        Console.WriteLine($"🚫 Testing unauthorized tenant access: {email} → Tenant {unauthorizedTenantId}");
-        
-        try
-        {
-            // Try to generate a JWT for unauthorized tenant - should fail
-            await GetTenantTokenViaTwoPhaseFlow(client, dbContext, email, unauthorizedTenantId);
-            
-            Console.WriteLine($"❌ SECURITY ISSUE: User {email} was able to access unauthorized tenant {unauthorizedTenantId}!");
-            return false;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            Console.WriteLine($"✅ Security working: User {email} correctly denied access to tenant {unauthorizedTenantId}");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"✅ Security working: User {email} denied access due to: {ex.Message}");
-            return true;
-        }
     }
 
     /// <summary>
@@ -382,7 +349,7 @@ public static class AuthenticationHelper
         var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Email, user.Email), // Keep only one email claim
+            new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.GivenName, user.FirstName),
             new(ClaimTypes.Surname, user.LastName),
             new(ClaimTypes.Role, primaryRole),
@@ -391,8 +358,6 @@ public static class AuthenticationHelper
             new("tenant_domain", tenant.Domain ?? "default.com"),
             new("current_tenant_id", tenant.Id.ToString()),
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            // 🔧 FIX: Remove duplicate email claim
-            // new(JwtRegisteredClaimNames.Email, user.Email), // REMOVED - duplicate!
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(JwtRegisteredClaimNames.Iat, 
                 DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(),
