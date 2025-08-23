@@ -7,7 +7,7 @@ namespace UserService.PerformanceTests.TestUtilities;
 
 public static class JwtTokenGenerator
 {
-    // ✅ FIX: Match the exact JWT configuration from UserService appsettings.json
+    // ✅ CRITICAL FIX: Use EXACT same JWT settings as appsettings.Performance.json
     private static readonly string SecretKey = "your-super-secret-jwt-key-that-is-at-least-256-bits-long";
     private static readonly string Issuer = "AuthService";
     private static readonly string Audience = "StarterApp";
@@ -15,7 +15,7 @@ public static class JwtTokenGenerator
     public static string GenerateToken(int userId, string email, int tenantId, string[] roles, string[] permissions)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(SecretKey); // ✅ FIX: Use UTF8 encoding to match production
+        var key = Encoding.UTF8.GetBytes(SecretKey);
         
         var claims = new List<Claim>
         {

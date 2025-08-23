@@ -9,6 +9,11 @@ using Xunit;
 
 namespace UserService.IntegrationTests;
 
+/// <summary>
+/// 🔧 CRITICAL FIX: All integration tests should inherit from this base class
+/// and use the shared "Integration Tests" collection to prevent multiple application instances
+/// </summary>
+[Collection("Integration Tests")]
 public abstract class TestBase : IClassFixture<WebApplicationTestFixture>, IAsyncLifetime
 {
     protected readonly WebApplicationTestFixture _fixture;
@@ -121,36 +126,51 @@ public abstract class TestBase : IClassFixture<WebApplicationTestFixture>, IAsyn
         }
     }
 
-    #region Enhanced Authentication Helpers - RBAC Version
+    #region Enhanced Authentication Helpers - Two-Phase Compatible
 
-    protected async Task<string> GetAuthTokenAsync(string email = "admin@tenant1.com", string? overrideRole = null)
+    /// <summary>
+    /// 🔧 TWO-PHASE FIX: Get authentication token with proper two-phase simulation
+    /// </summary>
+    protected async Task<string> GetAuthTokenAsync(string email = "admin@tenant1.com", int? tenantId = null)
     {
-        // ✅ RBAC FIX: Use actual role from RBAC unless specifically overridden for test scenarios
-        return await AuthenticationHelper.GetValidTokenAsync(_client, _dbContext, email, overrideRole);
+        // Use the enhanced two-phase aware authentication helper
+        return await AuthenticationHelper.GetTenantAwareJwtAsync(_client, _dbContext, email, tenantId ?? 1);
     }
 
     protected async Task<string> GetUserTokenAsync(string email = "user@tenant1.com")
     {
-        // ✅ RBAC FIX: Don't override role - use actual RBAC role
-        return await AuthenticationHelper.GetValidTokenAsync(_client, _dbContext, email);
+        return await AuthenticationHelper.GetTenantAwareJwtAsync(_client, _dbContext, email, 1);
     }
 
     protected async Task<string> GetManagerTokenAsync(string email = "manager@tenant1.com")
     {
-        // ✅ RBAC FIX: Don't override role - use actual RBAC role
-        return await AuthenticationHelper.GetValidTokenAsync(_client, _dbContext, email);
+        return await AuthenticationHelper.GetTenantAwareJwtAsync(_client, _dbContext, email, 1);
     }
 
     protected async Task<string> GetTenant2AdminTokenAsync(string email = "admin@tenant2.com")
     {
-        // ✅ RBAC FIX: Don't override role - use actual RBAC role
-        return await AuthenticationHelper.GetValidTokenAsync(_client, _dbContext, email);
+        return await AuthenticationHelper.GetTenantAwareJwtAsync(_client, _dbContext, email, 2);
     }
 
     protected async Task<string> GetTenant2UserTokenAsync(string email = "user@tenant2.com")
     {
-        // ✅ RBAC FIX: Don't override role - use actual RBAC role
-        return await AuthenticationHelper.GetValidTokenAsync(_client, _dbContext, email);
+        return await AuthenticationHelper.GetTenantAwareJwtAsync(_client, _dbContext, email, 2);
+    }
+
+    /// <summary>
+    /// 🔧 TWO-PHASE FIX: Test Phase 1 JWT generation (no tenant)
+    /// </summary>
+    protected async Task<string> GetPhase1TokenAsync(string email = "admin@tenant1.com")
+    {
+        return await AuthenticationHelper.GetInitialJwtAsync(_dbContext, email);
+    }
+
+    /// <summary>
+    /// 🔧 TWO-PHASE FIX: Test the complete two-phase flow
+    /// </summary>
+    protected async Task<string> GetTwoPhaseTokenAsync(string email = "admin@tenant1.com", int tenantId = 1)
+    {
+        return await AuthenticationHelper.GetTenantTokenViaTwoPhaseFlow(_client, _dbContext, email, tenantId);
     }
 
     #endregion

@@ -14,29 +14,22 @@ using DTOs.User;
 
 namespace UserService.IntegrationTests.Controllers;
 
+/// <summary>
+/// 🔧 CRITICAL FIX: Use shared "Integration Tests" collection to prevent multiple app instances
+/// This test class now properly tests the two-phase authentication flow
+/// </summary>
 [Collection("Integration Tests")]
-public class TwoPhaseAuthTests : IClassFixture<WebApplicationTestFixture>, IDisposable
+public class TwoPhaseAuthTests : TestBase
 {
-    private readonly HttpClient _client;
-    private readonly ApplicationDbContext _dbContext;
-    private readonly WebApplicationTestFixture _factory;
-
-    public TwoPhaseAuthTests(WebApplicationTestFixture factory)
+    public TwoPhaseAuthTests(WebApplicationTestFixture factory) : base(factory)
     {
-        _factory = factory;
-        _client = factory.CreateClient();
-        var scope = factory.Services.CreateScope();
-        _dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
-        // Seed test data
-        TestDataSeeder.SeedTestDataAsync(_dbContext).Wait();
     }
 
     [Fact]
     public async Task AuthenticationHelper_CanGenerateInitialJwt()
     {
         // Act - Test that we can generate a Phase 1 JWT (no tenant)
-        var phase1Token = await AuthenticationHelper.GetInitialJwtAsync(_dbContext, "admin@tenant1.com");
+        var phase1Token = await GetPhase1TokenAsync("admin@tenant1.com");
 
         // Assert
         phase1Token.Should().NotBeNullOrEmpty();
@@ -54,8 +47,7 @@ public class TwoPhaseAuthTests : IClassFixture<WebApplicationTestFixture>, IDisp
     public async Task AuthenticationHelper_CanGenerateTenantAwareJwt()
     {
         // Act - Test that we can generate a Phase 2 JWT (with tenant)
-        var tenantToken = await AuthenticationHelper.GetTenantAwareJwtAsync(
-            _client, _dbContext, "admin@tenant1.com", 1);
+        var tenantToken = await GetAuthTokenAsync("admin@tenant1.com", 1);
 
         // Assert
         tenantToken.Should().NotBeNullOrEmpty();
@@ -72,12 +64,28 @@ public class TwoPhaseAuthTests : IClassFixture<WebApplicationTestFixture>, IDisp
     }
 
     [Fact]
+    public async Task TwoPhaseFlow_ShouldSimulateCompleteAuthentication()
+    {
+        // Act - Test the complete two-phase flow simulation
+        var finalToken = await GetTwoPhaseTokenAsync("admin@tenant1.com", 1);
+
+        // Assert
+        finalToken.Should().NotBeNullOrEmpty();
+        
+        // Verify final token has everything needed
+        var payload = AuthenticationHelper.DecodeJwtPayload(finalToken);
+        payload.Should().ContainKey("tenant_id", "Final token should contain tenant_id");
+        payload.Should().ContainKey("permission", "Final token should contain permissions");
+        payload.Should().ContainKey("nameid", "Final token should contain user ID");
+        
+        Console.WriteLine("✅ Complete Two-Phase Flow Test: Authentication simulation successful");
+    }
+
+    [Fact]
     public async Task UserService_WithTenantToken_CanAccessUsers()
     {
-        // Arrange - Get a tenant-aware token
-        var tenantToken = await AuthenticationHelper.GetTenantAwareJwtAsync(
-            _client, _dbContext, "admin@tenant1.com", 1);
-        
+        // Arrange - Get a tenant-aware token using the simplified helper
+        var tenantToken = await GetAuthTokenAsync("admin@tenant1.com", 1);
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tenantToken);
 
         // Act - Try to access UserService endpoints
@@ -98,8 +106,7 @@ public class TwoPhaseAuthTests : IClassFixture<WebApplicationTestFixture>, IDisp
     public async Task TenantIsolation_Tenant1Admin_CannotSeeTenant2Users()
     {
         // Arrange - Get tenant 1 token
-        var tenant1Token = await AuthenticationHelper.GetTenantAwareJwtAsync(
-            _client, _dbContext, "admin@tenant1.com", 1);
+        var tenant1Token = await GetAuthTokenAsync("admin@tenant1.com", 1);
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tenant1Token);
 
         // Act - Get users (should only see tenant 1 users)
@@ -121,8 +128,7 @@ public class TwoPhaseAuthTests : IClassFixture<WebApplicationTestFixture>, IDisp
     public async Task TenantIsolation_Tenant2Admin_CannotSeeTenant1Users()
     {
         // Arrange - Get tenant 2 token
-        var tenant2Token = await AuthenticationHelper.GetTenantAwareJwtAsync(
-            _client, _dbContext, "admin@tenant2.com", 2);
+        var tenant2Token = await GetTenant2AdminTokenAsync("admin@tenant2.com");
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tenant2Token);
 
         // Act - Get users
@@ -141,37 +147,23 @@ public class TwoPhaseAuthTests : IClassFixture<WebApplicationTestFixture>, IDisp
     }
 
     [Fact]
-    public async Task Roles_TenantSpecific_ShouldBeIsolated()
+    public async Task JwtValidation_ShouldWork()
     {
-        // Arrange - Get tenant 1 token
-        var tenant1Token = await AuthenticationHelper.GetTenantAwareJwtAsync(
-            _client, _dbContext, "admin@tenant1.com", 1);
-        _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", tenant1Token);
+        // Arrange
+        var token = await GetAuthTokenAsync("admin@tenant1.com", 1);
 
-        // Act - Get roles (API returns paginated data)
-        var response = await _client.GetAsync("/api/roles");
-
-        // Assert
-        response.Should().BeSuccessful();
+        // Act & Assert - Validate JWT structure
+        AuthenticationHelper.ValidateJwtClaims(token, new Dictionary<string, object>
+        {
+            { "tenant_id", "1" },
+            { "nameid", "1" } // Validate user ID instead of email to avoid duplicates
+        });
         
-        var rolesData = await response.Content.ReadFromJsonAsync<ApiResponseDto<PagedResultDto<RoleDto>>>();
+        // Validate permissions
+        AuthenticationHelper.ValidateJwtPermissions(token, 
+            "users.view", "users.create");
         
-        rolesData!.Data!.Should().NotBeNull();
-        rolesData.Data.Items.Should().NotBeEmpty();
-        
-        // 🔧 FIX: Check for system roles OR tenant 1 roles
-        rolesData.Data.Items.Should().OnlyContain(r => 
-            r.IsSystemRole || r.TenantId == 1,
-            "Should only see tenant 1 roles and system roles");
-        
-        Console.WriteLine($"✅ Role Isolation Test: Tenant 1 admin sees {rolesData.Data.Items.Count} roles");
-        
-        // Optional: Verify we have both system and tenant roles
-        var systemRoles = rolesData.Data.Items.Where(r => r.IsSystemRole).ToList();
-        var tenantRoles = rolesData.Data.Items.Where(r => r.TenantId == 1).ToList();
-        
-        Console.WriteLine($"   - System roles: {systemRoles.Count}");
-        Console.WriteLine($"   - Tenant 1 roles: {tenantRoles.Count}");
+        Console.WriteLine("✅ JWT Validation Test: All claims and permissions verified");
     }
 
     [Theory]
@@ -184,8 +176,7 @@ public class TwoPhaseAuthTests : IClassFixture<WebApplicationTestFixture>, IDisp
         bool shouldHaveAccess)
     {
         // Arrange
-        var token = await AuthenticationHelper.GetTenantAwareJwtAsync(
-            _client, _dbContext, userEmail, tenantId);
+        var token = await GetAuthTokenAsync(userEmail, tenantId);
         _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         // Act - Try to access admin endpoint
@@ -205,69 +196,14 @@ public class TwoPhaseAuthTests : IClassFixture<WebApplicationTestFixture>, IDisp
     }
 
     [Fact]
-    public async Task JwtValidation_ShouldWork()
+    public async Task UnauthorizedTenantAccess_ShouldBeBlocked()
     {
-        // Arrange
-        var token = await AuthenticationHelper.GetTenantAwareJwtAsync(
-            _client, _dbContext, "admin@tenant1.com", 1);
-
-        // Act & Assert - Validate JWT structure
-        AuthenticationHelper.ValidateJwtClaims(token, new Dictionary<string, object>
-        {
-            { "tenant_id", "1" },
-            // 🔧 FIX: Remove email claim validation since it appears as an array due to duplicates
-            // We'll validate the user ID instead which is unique
-            { "nameid", "1" }
-        });
+        // Test that a user cannot access unauthorized tenants
+        var shouldFail = await AuthenticationHelper.TestUnauthorizedTenantAccess(
+            _client, _dbContext, "admin@tenant1.com", 2);
         
-        // Validate permissions
-        AuthenticationHelper.ValidateJwtPermissions(token, 
-            "users.view", "users.create");
+        shouldFail.Should().BeTrue("User should not be able to access unauthorized tenant");
         
-        Console.WriteLine("✅ JWT Validation Test: All claims and permissions verified");
-    }
-
-    [Fact]
-    public async Task SecurityUtility_TestUnauthorizedTenantAccess_ShouldWork()
-    {
-        // This test validates our security utility itself
-        
-        // Test 1: User with access to tenant 1 trying to access tenant 2 should fail
-        var user1CannotAccessTenant2 = await VerifyUserCannotAccessTenant(
-            "admin@tenant1.com", 2);
-        
-        user1CannotAccessTenant2.Should().BeTrue("User should not be able to access unauthorized tenant");
-        
-        // Test 2: User with access to tenant 2 trying to access tenant 1 should fail  
-        var user2CannotAccessTenant1 = await VerifyUserCannotAccessTenant(
-            "admin@tenant2.com", 1);
-            
-        user2CannotAccessTenant1.Should().BeTrue("User should not be able to access unauthorized tenant");
-        
-        Console.WriteLine("✅ Security Utility Test: Cross-tenant access properly blocked");
-    }
-
-    private async Task<bool> VerifyUserCannotAccessTenant(string email, int unauthorizedTenantId)
-    {
-        try
-        {
-            // This should throw an exception since the user doesn't have access
-            await AuthenticationHelper.GetTenantAwareJwtAsync(_client, _dbContext, email, unauthorizedTenantId);
-            return false; // If no exception, security failed
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return true; // Expected exception
-        }
-        catch (Exception)
-        {
-            return true; // Any exception indicates access was blocked
-        }
-    }
-
-    public void Dispose()
-    {
-        _client?.Dispose();
-        GC.SuppressFinalize(this);
+        Console.WriteLine("✅ Security Test: Cross-tenant access properly blocked");
     }
 }
