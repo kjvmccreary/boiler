@@ -187,22 +187,33 @@ public class CrossTenantSecurityTests : TestBase
         var tenant1Token = await GetAuthTokenAsync("admin@tenant1.com", 1);
         var tenant2Token = await GetAuthTokenAsync("admin@tenant2.com", 2);
 
-        // Get a tenant 1 user
+        // Get a tenant 1 user that actually exists and has roles
         _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant1Token);
         _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
         _client.DefaultRequestHeaders.Add("X-Tenant-ID", "1");
         
         var usersResponse = await _client.GetAsync("/api/users");
         var usersResult = await usersResponse.Content.ReadFromJsonAsync<ApiResponseDto<PagedResultDto<UserDto>>>();
-        var tenant1UserId = usersResult?.Data?.Items?.FirstOrDefault()?.Id ?? 1;
+        var tenant1User = usersResult?.Data?.Items?.FirstOrDefault(u => u.Email == "admin@tenant1.com");
+        var tenant1UserId = tenant1User?.Id ?? 1;
 
-        // Try to remove role from tenant 2 context
+        // Get the user's current roles to find one we can try to remove
+        var userRolesResponse = await _client.GetAsync($"/api/users/{tenant1UserId}/roles");
+        var userRolesResult = await userRolesResponse.Content.ReadFromJsonAsync<ApiResponseDto<List<string>>>();
+        
+        // Find a role ID by getting all roles and matching the name
+        var rolesResponse = await _client.GetAsync("/api/roles");
+        var rolesResult = await rolesResponse.Content.ReadFromJsonAsync<ApiResponseDto<PagedResultDto<RoleDto>>>();
+        var adminRole = rolesResult?.Data?.Items?.FirstOrDefault(r => r.Name == "Admin" && r.TenantId == 1);
+        var roleIdToRemove = adminRole?.Id ?? 2;
+
+        // Now try to remove role from tenant 2 context
         _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant2Token);
         _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
         _client.DefaultRequestHeaders.Add("X-Tenant-ID", "2");
 
         // Act - Try to remove role from tenant 1 user using tenant 2 admin
-        var response = await _client.DeleteAsync($"/api/users/{tenant1UserId}/roles/2");
+        var response = await _client.DeleteAsync($"/api/users/{tenant1UserId}/roles/{roleIdToRemove}");
 
         // Assert - Should fail due to tenant isolation
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);

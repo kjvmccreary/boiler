@@ -398,12 +398,15 @@ public class RolesControllerTests : TestBase
     [Fact]
     public async Task GetRoleUsers_CrossTenantAttempt_ReturnsNotFound()
     {
-        // Arrange - Get actual tenant-specific role IDs
-        var tenant1Token = await GetAuthTokenAsync("admin@tenant1.com");
-        var tenant2Token = await GetAuthTokenAsync("admin@tenant2.com");
+        // Arrange - Get actual tenant-specific role IDs using proper contexts
+        var tenant1Token = await GetAuthTokenAsync("admin@tenant1.com", 1);
+        var tenant2Token = await GetAuthTokenAsync("admin@tenant2.com", 2);
 
         // First, get Tenant 2 roles to find a Tenant 2 specific role
         _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant2Token);
+        _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
+        _client.DefaultRequestHeaders.Add("X-Tenant-ID", "2");
+        
         var tenant2RolesResponse = await _client.GetAsync("/api/roles");
         
         // ✅ CRITICAL FIX: Add null safety check
@@ -412,26 +415,34 @@ public class RolesControllerTests : TestBase
             _logger.LogWarning("Could not get Tenant 2 roles. Response: {StatusCode}", tenant2RolesResponse.StatusCode);
             // Still test the cross-tenant behavior with a hardcoded role ID
             _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant1Token);
-            var response = await _client.GetAsync($"/api/roles/7/users");
-            response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
+            _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
+            _client.DefaultRequestHeaders.Add("X-Tenant-ID", "1");
+            
+            var response = await _client.GetAsync($"/api/roles/7/users"); // Role 7 is Tenant 2 Admin
+            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
             return;
         }
 
         var tenant2RolesResult = await tenant2RolesResponse.Content.ReadFromJsonAsync<ApiResponseDto<PagedResultDto<RoleDto>>>();
-        var tenant2Role = tenant2RolesResult?.Data?.Items?.FirstOrDefault(r => r.TenantId == 2);
+        var tenant2Role = tenant2RolesResult?.Data?.Items?.FirstOrDefault(r => r.TenantId == 2 && r.Name == "Admin");
 
         // Skip test if no Tenant 2 specific roles found
         if (tenant2Role == null)
         {
             _logger.LogWarning("No Tenant 2 specific roles found, using fallback test");
             _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant1Token);
-            var response = await _client.GetAsync($"/api/roles/7/users");
-            response.StatusCode.Should().BeOneOf(HttpStatusCode.NotFound, HttpStatusCode.InternalServerError);
+            _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
+            _client.DefaultRequestHeaders.Add("X-Tenant-ID", "1");
+            
+            var response = await _client.GetAsync($"/api/roles/7/users"); // Hardcoded Tenant 2 Admin role
+            response.StatusCode.Should().Be(HttpStatusCode.NotFound);
             return;
         }
 
         // Now try to access that Tenant 2 role from Tenant 1 context
         _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant1Token);
+        _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
+        _client.DefaultRequestHeaders.Add("X-Tenant-ID", "1");
 
         // Act - Try to get users for a Tenant 2 role from Tenant 1 context
         var crossTenantResponse = await _client.GetAsync($"/api/roles/{tenant2Role.Id}/users");
@@ -444,12 +455,12 @@ public class RolesControllerTests : TestBase
     public async Task GetRolePermissions_CrossTenantAttempt_ReturnsNotFound()
     {
         // Arrange - Use tenant 2 admin with correct tenant context
-        var tenant2Token = await GetAuthTokenAsync("admin@tenant2.com", 2); // Use tenant 2
+        var tenant2Token = await GetAuthTokenAsync("admin@tenant2.com", 2);
         _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant2Token);
         _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
         _client.DefaultRequestHeaders.Add("X-Tenant-ID", "2");
 
-        // Get a tenant 1 role ID first
+        // Get a tenant 1 specific role ID (Admin role for tenant 1 = ID 2)
         var tenant1Token = await GetAuthTokenAsync("admin@tenant1.com", 1);
         _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant1Token);
         _client.DefaultRequestHeaders.Remove("X-Tenant-ID");
@@ -457,7 +468,8 @@ public class RolesControllerTests : TestBase
         
         var rolesResponse = await _client.GetAsync("/api/roles");
         var rolesResult = await rolesResponse.Content.ReadFromJsonAsync<ApiResponseDto<PagedResultDto<RoleDto>>>();
-        var tenant1RoleId = rolesResult?.Data?.Items?.FirstOrDefault()?.Id ?? 2; // Use Admin role ID 2
+        var tenant1AdminRole = rolesResult?.Data?.Items?.FirstOrDefault(r => r.Name == "Admin" && r.TenantId == 1);
+        var tenant1RoleId = tenant1AdminRole?.Id ?? 2; // Fallback to Admin role ID 2
 
         // Now try to access tenant 1 role from tenant 2 context
         _client.DefaultRequestHeaders.Authorization = new("Bearer", tenant2Token);
