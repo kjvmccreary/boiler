@@ -32,11 +32,12 @@ public interface IMetricsCollector
     
     // Reporting
     Task<MetricsSummary> GetSummaryAsync(TimeSpan period);
+    Task<MetricsSummary> GetSystemMetricsAsync(TimeSpan period); // 🔧 ADD: Missing method
     Task<Dictionary<string, object>> GetRealTimeMetricsAsync();
     Task<List<MetricTrend>> GetTrendsAsync(string metricName, TimeSpan period);
     
     // Health & Status
-    Task<HealthStatus> GetHealthStatusAsync();
+    Task<Common.Monitoring.HealthStatus> GetHealthStatusAsync(); // 🔧 FIX: Fully qualified type
     void RecordHealthCheck(string checkName, bool healthy, TimeSpan duration);
 }
 
@@ -63,6 +64,7 @@ public class MetricsSummary
     public long DeniedPermissions { get; set; }
     public double PermissionGrantRate { get; set; }
     public double AveragePermissionCheckTime { get; set; }
+    public double PermissionCacheHitRate { get; set; } // 🔧 ADD: Missing property
     
     // Cache Metrics
     public long TotalCacheOperations { get; set; }

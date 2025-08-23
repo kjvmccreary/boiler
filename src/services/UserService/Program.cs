@@ -4,6 +4,7 @@ using Common.Middleware;
 using Common.Services;
 using Common.Caching;
 using Common.Performance;
+using Common.Monitoring; // 🔧 ADD: Monitoring namespace
 using Contracts.Repositories;
 using Contracts.Services;
 using Contracts.User;
@@ -19,6 +20,7 @@ using Common.Constants;
 using UserService.Infrastructure;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using HealthStatus = Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus; // 🔧 FIX: Alias to resolve ambiguity
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -144,28 +146,54 @@ try
     builder.Services.AddFluentValidation();
     Console.WriteLine("✅ User services registered");
 
-    // ✅ PHASE 11: Enhanced Security and Monitoring
-    Console.WriteLine("🔐 Registering Enhanced Security services...");
-    Log.Information("Registering Enhanced Security services");
+    // 🔧 PHASE 11: Enhanced Security and Monitoring Services
+    Console.WriteLine("🔐 Registering Enhanced Security and Monitoring services...");
+    Log.Information("Registering Enhanced Security and Monitoring services");
     
+    // Enhanced Security
     builder.Services.AddEnhancedSecurity();
     builder.Services.AddEnhancedAuthorizationPolicies();
     
-    Console.WriteLine("✅ Enhanced Security services registered successfully");
-    Log.Information("Enhanced Security services registered successfully");
+    // 🆕 ADD: Metrics Collection Service
+    builder.Services.AddSingleton<IMetricsCollector, RedisMetricsCollector>();
+    
+    // 🆕 ADD: Monitoring Service
+    builder.Services.AddScoped<IMonitoringService, MonitoringService>();
+    
+    Console.WriteLine("✅ Enhanced Security and Monitoring services registered successfully");
+    Log.Information("Enhanced Security and Monitoring services registered successfully");
 
-    Console.WriteLine("🔧 Registering health checks...");
+    // 🔧 PHASE 11: Enhanced Health Checks
+    Console.WriteLine("🩺 Registering Enhanced Health Checks...");
     builder.Services.AddHealthChecks()
+        // Basic infrastructure health checks
         .AddCheck<RedisHealthCheck>("redis", 
-            failureStatus: HealthStatus.Unhealthy,
-            tags: new[] { "cache", "redis", "infrastructure" })
+            failureStatus: HealthStatus.Unhealthy, // 🔧 FIX: Now uses Microsoft's HealthStatus
+            tags: new[] { "cache", "redis", "infrastructure", "critical" })
         .AddCheck<DatabaseHealthCheck>("database", 
-            failureStatus: HealthStatus.Unhealthy,
-            tags: new[] { "db", "sql", "infrastructure" })
+            failureStatus: HealthStatus.Unhealthy, // 🔧 FIX: Now uses Microsoft's HealthStatus
+            tags: new[] { "db", "sql", "infrastructure", "critical" })
+        
+        // 🆕 ADD: Enhanced health checks from Phase 11
+        .AddCheck<EnhancedDatabaseHealthCheck>("enhanced_database",
+            failureStatus: HealthStatus.Degraded, // 🔧 FIX: Now uses Microsoft's HealthStatus
+            tags: new[] { "db", "enhanced", "performance", "monitoring" })
+        .AddCheck<EnhancedPermissionCacheHealthCheck>("enhanced_cache",
+            failureStatus: HealthStatus.Degraded, // 🔧 FIX: Now uses Microsoft's HealthStatus
+            tags: new[] { "cache", "enhanced", "performance", "monitoring" })
+        .AddCheck<EnhancedAuthorizationHealthCheck>("enhanced_authorization",
+            failureStatus: HealthStatus.Degraded, // 🔧 FIX: Now uses Microsoft's HealthStatus
+            tags: new[] { "auth", "enhanced", "performance", "monitoring" })
+        .AddCheck<SystemHealthCheck>("system_overall",
+            failureStatus: HealthStatus.Degraded, // 🔧 FIX: Now uses Microsoft's HealthStatus
+            tags: new[] { "system", "overall", "monitoring", "comprehensive" })
+        
+        // Performance metrics health check
         .AddCheck<PerformanceHealthCheck>("performance",
-            failureStatus: HealthStatus.Degraded,
+            failureStatus: HealthStatus.Degraded, // 🔧 FIX: Now uses Microsoft's HealthStatus
             tags: new[] { "performance", "cache", "metrics" });
-    Console.WriteLine("✅ Health checks registered");
+    
+    Console.WriteLine("✅ Enhanced Health Checks registered");
 
     Console.WriteLine("🔧 Configuring authorization policies...");
     builder.Services.AddAuthorization(options =>
@@ -190,6 +218,12 @@ try
                 var path = context.Resource as Microsoft.AspNetCore.Http.DefaultHttpContext;
                 return path?.Request.Path.StartsWithSegments("/health") == true;
             }));
+            
+        // 🆕 ADD: Monitoring-specific policies
+        options.AddPolicy("SystemMonitor", policy =>
+            policy.RequireClaim("permission", "system.monitor"));
+        options.AddPolicy("SystemAdmin", policy =>
+            policy.RequireClaim("permission", "system.manage"));
     });
     Console.WriteLine("✅ Authorization policies configured");
 
@@ -247,7 +281,7 @@ try
 
     app.UseTenantResolution();
 
-    // ✅ PHASE 11: Enhanced Security Middleware
+    // 🔧 PHASE 11: Enhanced Security Middleware
     Console.WriteLine("🔐 Configuring Enhanced Security middleware...");
     Log.Information("Configuring Enhanced Security middleware");
     
@@ -261,16 +295,18 @@ try
     app.MapControllers();
     Console.WriteLine("✅ Middleware pipeline configured");
 
-    Console.WriteLine("🔧 Mapping health check endpoints...");
-    // Basic health endpoint (public access)
+    // 🔧 PHASE 11: Enhanced Health Check Endpoints
+    Console.WriteLine("🩺 Mapping Enhanced Health Check endpoints...");
+    
+    // 1. Primary health endpoint (comprehensive overview)
     app.MapHealthChecks("/health", new HealthCheckOptions
     {
         AllowCachingResponses = false,
         ResultStatusCodes =
         {
-            [HealthStatus.Healthy] = StatusCodes.Status200OK,
-            [HealthStatus.Degraded] = StatusCodes.Status200OK,
-            [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
+            [HealthStatus.Healthy] = StatusCodes.Status200OK, // 🔧 FIX: Microsoft's HealthStatus
+            [HealthStatus.Degraded] = StatusCodes.Status200OK, // 🔧 FIX: Microsoft's HealthStatus
+            [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable // 🔧 FIX: Microsoft's HealthStatus
         },
         ResponseWriter = async (context, report) =>
         {
@@ -280,12 +316,17 @@ try
                 status = report.Status.ToString(),
                 timestamp = DateTime.UtcNow,
                 duration = report.TotalDuration,
+                environment = app.Environment.EnvironmentName,
+                service = "UserService",
+                version = "1.0.0-Phase11",
                 checks = report.Entries.Select(e => new
                 {
                     name = e.Key,
                     status = e.Value.Status.ToString(),
                     duration = e.Value.Duration,
-                    description = e.Value.Description
+                    description = e.Value.Description,
+                    tags = e.Value.Tags,
+                    data = e.Value.Data
                 })
             };
             await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response, new System.Text.Json.JsonSerializerOptions
@@ -296,10 +337,10 @@ try
         }
     });
 
-    // Detailed cache health endpoint
-    app.MapHealthChecks("/health/cache", new HealthCheckOptions
+    // 2. Critical infrastructure health (database + redis)
+    app.MapHealthChecks("/health/critical", new HealthCheckOptions
     {
-        Predicate = check => check.Tags.Contains("cache"),
+        Predicate = check => check.Tags.Contains("critical"),
         AllowCachingResponses = false,
         ResponseWriter = async (context, report) =>
         {
@@ -309,6 +350,7 @@ try
                 status = report.Status.ToString(),
                 timestamp = DateTime.UtcNow,
                 duration = report.TotalDuration,
+                message = report.Status == HealthStatus.Healthy ? "All critical systems operational" : "Critical system issues detected", // 🔧 FIX: Microsoft's HealthStatus
                 checks = report.Entries.Select(e => new
                 {
                     name = e.Key,
@@ -326,10 +368,10 @@ try
         }
     });
 
-    // Infrastructure health endpoint (database + redis)
-    app.MapHealthChecks("/health/infrastructure", new HealthCheckOptions
+    // 3. Enhanced monitoring health checks
+    app.MapHealthChecks("/health/enhanced", new HealthCheckOptions
     {
-        Predicate = check => check.Tags.Contains("infrastructure"),
+        Predicate = check => check.Tags.Contains("enhanced") || check.Tags.Contains("monitoring"),
         AllowCachingResponses = false,
         ResponseWriter = async (context, report) =>
         {
@@ -339,13 +381,16 @@ try
                 status = report.Status.ToString(),
                 timestamp = DateTime.UtcNow,
                 duration = report.TotalDuration,
+                message = "Enhanced Security & Monitoring Health Status",
+                phase = "Phase 11 - Enhanced Security & Monitoring",
                 checks = report.Entries.Select(e => new
                 {
                     name = e.Key,
                     status = e.Value.Status.ToString(),
                     duration = e.Value.Duration,
                     description = e.Value.Description,
-                    data = e.Value.Data
+                    data = e.Value.Data,
+                    tags = e.Value.Tags
                 })
             };
             await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response, new System.Text.Json.JsonSerializerOptions
@@ -356,10 +401,10 @@ try
         }
     });
 
-    // Performance metrics health endpoint
+    // 4. Performance and cache health
     app.MapHealthChecks("/health/performance", new HealthCheckOptions
     {
-        Predicate = check => check.Tags.Contains("performance"),
+        Predicate = check => check.Tags.Contains("performance") || check.Tags.Contains("cache"),
         AllowCachingResponses = false,
         ResponseWriter = async (context, report) =>
         {
@@ -369,6 +414,7 @@ try
                 status = report.Status.ToString(),
                 timestamp = DateTime.UtcNow,
                 duration = report.TotalDuration,
+                message = "Performance and Caching Health Status",
                 checks = report.Entries.Select(e => new
                 {
                     name = e.Key,
@@ -386,9 +432,58 @@ try
         }
     });
 
-    // Legacy simple health endpoint (keeping for backward compatibility)
-    app.MapGet("/health/simple", () => Results.Ok(new { Status = "Healthy", Timestamp = DateTime.UtcNow }));
-    Console.WriteLine("✅ Health check endpoints mapped");
+    // 5. System overview health check
+    app.MapHealthChecks("/health/system", new HealthCheckOptions
+    {
+        Predicate = check => check.Tags.Contains("system"),
+        AllowCachingResponses = false,
+        ResponseWriter = async (context, report) =>
+        {
+            context.Response.ContentType = "application/json";
+            var response = new
+            {
+                status = report.Status.ToString(),
+                timestamp = DateTime.UtcNow,
+                duration = report.TotalDuration,
+                message = "Overall System Health with Performance Scoring",
+                checks = report.Entries.Select(e => new
+                {
+                    name = e.Key,
+                    status = e.Value.Status.ToString(),
+                    duration = e.Value.Duration,
+                    description = e.Value.Description,
+                    data = e.Value.Data
+                })
+            };
+            await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response, new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase,
+                WriteIndented = true
+            }));
+        }
+    });
+
+    // 6. Kubernetes/Container health endpoints
+    app.MapHealthChecks("/health/ready", new HealthCheckOptions
+    {
+        Predicate = check => check.Tags.Contains("critical"),
+        AllowCachingResponses = false
+    });
+
+    app.MapHealthChecks("/health/live", new HealthCheckOptions
+    {
+        Predicate = _ => false // Only checks if the app is running
+    });
+
+    // 7. Legacy simple health endpoint (keeping for backward compatibility)
+    app.MapGet("/health/simple", () => Results.Ok(new { 
+        Status = "Healthy", 
+        Timestamp = DateTime.UtcNow,
+        Service = "UserService",
+        Phase = "Phase 11 - Enhanced Security & Monitoring"
+    }));
+
+    Console.WriteLine("✅ Enhanced Health Check endpoints mapped");
 
     app.Lifetime.ApplicationStarted.Register(() =>
     {
@@ -401,17 +496,22 @@ try
             Log.Information("Now listening on: {Address}", address);
         }
         
-        Console.WriteLine("Health check endpoints available:");
-        Console.WriteLine("  - GET /health (basic health status)");
-        Console.WriteLine("  - GET /health/cache (Redis and cache status)");
-        Console.WriteLine("  - GET /health/infrastructure (database + Redis)");
-        Console.WriteLine("  - GET /health/performance (performance metrics)");
-        Console.WriteLine("Enhanced Security & Monitoring features:");
+        Console.WriteLine("🩺 Enhanced Health Check endpoints available:");
+        Console.WriteLine("  - GET /health (comprehensive overview)");
+        Console.WriteLine("  - GET /health/critical (database + Redis status)");
+        Console.WriteLine("  - GET /health/enhanced (Phase 11 enhanced monitoring)");
+        Console.WriteLine("  - GET /health/performance (cache and performance metrics)");
+        Console.WriteLine("  - GET /health/system (overall system health score)");
+        Console.WriteLine("  - GET /health/ready (Kubernetes readiness)");
+        Console.WriteLine("  - GET /health/live (Kubernetes liveness)");
+        Console.WriteLine("📊 Enhanced Security & Monitoring features:");
         Console.WriteLine("  - Rate limiting with tenant awareness");
         Console.WriteLine("  - Security event detection and logging");
-        Console.WriteLine("  - Performance metrics collection");
+        Console.WriteLine("  - Performance metrics collection with Redis storage");
         Console.WriteLine("  - Enhanced audit trail for all actions");
-        Log.Information("Health check endpoints and Enhanced Security features configured and available");
+        Console.WriteLine("  - Comprehensive health monitoring with performance scoring");
+        Console.WriteLine("  - Real-time system metrics and alerts");
+        Log.Information("Enhanced Security & Monitoring (Phase 11) configured and operational");
     });
 }
 catch (Exception ex)
@@ -424,8 +524,8 @@ catch (Exception ex)
 
 try
 {
-    Log.Information("Starting UserService with Redis caching and Enhanced Security enabled");
-    Console.WriteLine("=== UserService Starting with Redis Caching and Enhanced Security ===");
+    Log.Information("Starting UserService with Phase 11 Enhanced Security & Monitoring");
+    Console.WriteLine("=== UserService Starting with Phase 11 Enhanced Security & Monitoring ===");
 
     try
     {
@@ -460,7 +560,7 @@ try
 
     Console.WriteLine("🔧 Seeding monitoring user...");
     await MonitoringUserSeeder.SeedAsync(app.Services);
-    Console.WriteLine("✅ Monitoring user seeded");
+    Console.WriteLine("✅ Monitoring user seeded (monitor@local / ChangeMe123!)");
 
     Console.WriteLine("🚀 Starting application...");
     app.Run();

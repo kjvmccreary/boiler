@@ -32,7 +32,7 @@ public class TestEnhancedAuthController : ControllerBase
     /// </summary>
     [HttpGet("test-users-view")]
     [RequiresPermission("users.view")]
-    public async Task<IActionResult> TestUsersView()
+    public IActionResult TestUsersView() // 🔧 FIX: Remove async since no await is used
     {
         try
         {
@@ -58,7 +58,7 @@ public class TestEnhancedAuthController : ControllerBase
     /// </summary>
     [HttpPost("test-users-edit")]
     [RequiresPermission("users.edit")]
-    public async Task<IActionResult> TestUsersEdit()
+    public IActionResult TestUsersEdit() // 🔧 FIX: Remove async since no await is used
     {
         try
         {
@@ -84,7 +84,7 @@ public class TestEnhancedAuthController : ControllerBase
     /// </summary>
     [HttpDelete("test-admin-only")]
     [RequiresPermission("users.delete")]
-    public async Task<IActionResult> TestAdminOnly()
+    public IActionResult TestAdminOnly() // 🔧 FIX: Remove async since no await is used
     {
         try
         {
@@ -166,7 +166,7 @@ public class TestEnhancedAuthController : ControllerBase
     /// </summary>
     [HttpGet("test-cache-performance")]
     [RequiresPermission("users.view")]
-    public async Task<IActionResult> TestCachePerformance()
+    public IActionResult TestCachePerformance() // 🔧 FIX: Remove async since no real async work is done
     {
         try
         {
@@ -177,7 +177,7 @@ public class TestEnhancedAuthController : ControllerBase
             {
                 var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                 
-                // This will trigger permission checks each time
+                // This will trigger permission checks each time (through the authorization handler)
                 var testResult = new
                 {
                     Iteration = i + 1,

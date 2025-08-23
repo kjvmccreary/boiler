@@ -157,7 +157,7 @@ public class MonitoringController : ControllerBase
     /// </summary>
     [HttpPost("reset-metrics")]
     [RequiresPermission("system.manage")]
-    public async Task<IActionResult> ResetMetrics()
+    public IActionResult ResetMetrics() // 🔧 FIX: Remove async since no await is used
     {
         try
         {

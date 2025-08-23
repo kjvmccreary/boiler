@@ -399,6 +399,14 @@ public class RedisMetricsCollector : IMetricsCollector
         return summary;
     }
 
+    // 🔧 ADD: Missing GetSystemMetricsAsync method
+    public async Task<MetricsSummary> GetSystemMetricsAsync(TimeSpan period)
+    {
+        // For now, this is an alias for GetSummaryAsync
+        // In the future, this could provide a more system-focused view
+        return await GetSummaryAsync(period);
+    }
+
     public async Task<Dictionary<string, object>> GetRealTimeMetricsAsync()
     {
         var metrics = new Dictionary<string, object>();
@@ -489,9 +497,9 @@ public class RedisMetricsCollector : IMetricsCollector
         return trends.OrderBy(t => t.Timestamp).ToList();
     }
 
-    public async Task<HealthStatus> GetHealthStatusAsync()
+    public async Task<Common.Monitoring.HealthStatus> GetHealthStatusAsync() // 🔧 FIX: Fully qualified type
     {
-        var healthStatus = new HealthStatus
+        var healthStatus = new Common.Monitoring.HealthStatus
         {
             Timestamp = DateTime.UtcNow
         };
@@ -511,7 +519,7 @@ public class RedisMetricsCollector : IMetricsCollector
                     var successRate = check.Value.SuccessCount / (double)check.Value.Count;
                     var avgDuration = check.Value.TotalDuration / check.Value.Count;
                     
-                    healthStatus.Checks[check.Key] = new HealthStatus.HealthCheckResult
+                    healthStatus.Checks[check.Key] = new Common.Monitoring.HealthStatus.HealthCheckResult
                     {
                         IsHealthy = successRate > 0.95, // 95% success rate threshold
                         Status = successRate > 0.95 ? "Healthy" : 
@@ -641,6 +649,9 @@ public class RedisMetricsCollector : IMetricsCollector
         summary.DeniedPermissions = totalChecks - grantedChecks;
         summary.PermissionGrantRate = totalChecks > 0 ? (double)grantedChecks / totalChecks * 100 : 0;
         summary.AveragePermissionCheckTime = totalChecks > 0 ? totalDuration / totalChecks : 0;
+        
+        // 🔧 ADD: Calculate PermissionCacheHitRate
+        summary.PermissionCacheHitRate = totalChecks > 0 ? (double)cacheHits / totalChecks * 100 : 0;
     }
 
     private async Task CollectCacheMetrics(MetricsSummary summary, int hours)
