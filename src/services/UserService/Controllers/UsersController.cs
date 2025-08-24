@@ -8,12 +8,13 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Common.Data;
 using DTOs.Tenant;
+using Common.Authorization; // ✅ ADD
 
 namespace UserService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize] // All endpoints require authentication
+[Authorize]
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
@@ -34,9 +35,10 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Get current user's profile information
+    /// Get current user's profile information - No additional permission needed (own profile)
     /// </summary>
     [HttpGet("profile")]
+    // ✅ NO PERMISSION ATTRIBUTE: Users can always access their own profile
     public async Task<ActionResult<ApiResponseDto<UserDto>>> GetCurrentUserProfile()
     {
         try
@@ -84,10 +86,10 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Get list of users (requires users.view permission)
+    /// Get list of users - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpGet]
-    [Authorize] // 🔧 .NET 9 FIX: Remove role requirement
+    [RequirePermission("users.view")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<PagedResultDto<UserDto>>>> GetUsers(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -97,17 +99,6 @@ public class UsersController : ControllerBase
     {
         try
         {
-            // 🔧 .NET 9 FIX: Check for users.view permission instead of Admin role
-            var hasUsersViewPermission = User.Claims.Any(c => 
-                c.Type == "permission" && c.Value == "users.view");
-                
-            if (!hasUsersViewPermission)
-            {
-                _logger.LogWarning("User {UserId} attempted to access users list without users.view permission", 
-                    GetCurrentUserId());
-                return StatusCode(403, ApiResponseDto<PagedResultDto<UserDto>>.ErrorResult("You don't have permission to view users"));
-            }
-
             // Validate parameters and map to DTO
             if (page <= 0)
             {
@@ -146,7 +137,7 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Get specific user by ID (requires users.view permission or own user)
+    /// Get specific user by ID - SECURE: Mixed permission logic
     /// </summary>
     [HttpGet("{id:int}")]
     public async Task<ActionResult<ApiResponseDto<UserDto>>> GetUser(int id)
@@ -155,11 +146,10 @@ public class UsersController : ControllerBase
         {
             var currentUserId = GetCurrentUserId();
             
-            // 🔧 .NET 9 FIX: Use permission-based check instead of role-based
+            // ✅ KEEP: This permission logic - users can view their own profile OR need users.view permission
             var hasUsersViewPermission = User.Claims.Any(c => 
                 c.Type == "permission" && c.Value == "users.view");
 
-            // Users can view their own profile, users with users.view permission can view any user in their tenant
             if (id != currentUserId && !hasUsersViewPermission)
             {
                 _logger.LogWarning("User {UserId} attempted to view user {TargetUserId} without users.view permission", 
@@ -184,10 +174,10 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Delete user (requires users.delete permission, cannot delete self)
+    /// Delete user - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpDelete("{id:int}")]
-    [Authorize] // 🔧 .NET 9 FIX: Remove role requirement, use permission check
+    [RequirePermission("users.delete")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<bool>>> DeleteUser(int id)
     {
         try
@@ -200,20 +190,8 @@ public class UsersController : ControllerBase
                 return BadRequest(ApiResponseDto<bool>.ErrorResult("You cannot delete your own account"));
             }
 
-            // 🔧 .NET 9 FIX: Check for users.delete permission instead of Admin role
-            var hasUsersDeletePermission = User.Claims.Any(c => 
-                c.Type == "permission" && c.Value == "users.delete");
-                
-            if (!hasUsersDeletePermission)
-            {
-                _logger.LogWarning("User {UserId} attempted to delete user {TargetUserId} without users.delete permission", 
-                    currentUserId, id);
-                return StatusCode(403, ApiResponseDto<bool>.ErrorResult("You don't have permission to delete users"));
-            }
-
             var result = await _userService.DeleteUserAsync(id);
             
-            // ✅ FIXED: Check if user was found and return appropriate status
             if (!result.Success)
             {
                 if (result.Message?.Contains("not found") == true)
@@ -281,25 +259,14 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Create a new user (requires users.create permission)
+    /// Create a new user - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpPost]
-    [Authorize] // 🔧 .NET 9 FIX: Remove role requirement, use permission check
+    [RequirePermission("users.create")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<UserDto>>> CreateUser([FromBody] CreateUserDto createUserDto)
     {
         try
         {
-            // 🔧 .NET 9 FIX: Check for users.create permission instead of Admin role
-            var hasUsersCreatePermission = User.Claims.Any(c => 
-                c.Type == "permission" && c.Value == "users.create");
-                
-            if (!hasUsersCreatePermission)
-            {
-                _logger.LogWarning("User {UserId} attempted to create user without users.create permission", 
-                    GetCurrentUserId());
-                return StatusCode(403, ApiResponseDto<UserDto>.ErrorResult("You don't have permission to create users"));
-            }
-
             var result = await _userService.CreateUserAsync(createUserDto);
             
             if (!result.Success)
@@ -356,25 +323,14 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Assign role to user (requires users.manage_roles permission)
+    /// Assign role to user - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpPost("{id:int}/roles")]
-    [Authorize] // 🔧 .NET 9 FIX: Remove role requirement, use permission check
+    [RequirePermission("users.manage_roles")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<bool>>> AssignRoleToUser(int id, [FromBody] AssignUserRoleDto assignRoleDto)
     {
         try
         {
-            // 🔧 .NET 9 FIX: Check for users.manage_roles permission instead of Admin role
-            var hasUsersManageRolesPermission = User.Claims.Any(c => 
-                c.Type == "permission" && c.Value == "users.manage_roles");
-                
-            if (!hasUsersManageRolesPermission)
-            {
-                _logger.LogWarning("User {UserId} attempted to assign role to user {TargetUserId} without users.manage_roles permission", 
-                    GetCurrentUserId(), id);
-                return StatusCode(403, ApiResponseDto<bool>.ErrorResult("You don't have permission to manage user roles"));
-            }
-
             var result = await _userService.AssignRoleToUserAsync(id, assignRoleDto.RoleId);
             
             if (!result.Success)
@@ -392,25 +348,14 @@ public class UsersController : ControllerBase
     }
 
     /// <summary>
-    /// Remove role from user (requires users.manage_roles permission)
+    /// Remove role from user - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpDelete("{id:int}/roles/{roleId:int}")]
-    [Authorize] // 🔧 .NET 9 FIX: Remove role requirement, use permission check
+    [RequirePermission("users.manage_roles")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<bool>>> RemoveRoleFromUser(int id, int roleId)
     {
         try
         {
-            // 🔧 .NET 9 FIX: Check for users.manage_roles permission instead of Admin role
-            var hasUsersManageRolesPermission = User.Claims.Any(c => 
-                c.Type == "permission" && c.Value == "users.manage_roles");
-                
-            if (!hasUsersManageRolesPermission)
-            {
-                _logger.LogWarning("User {UserId} attempted to remove role from user {TargetUserId} without users.manage_roles permission", 
-                    GetCurrentUserId(), id);
-                return StatusCode(403, ApiResponseDto<bool>.ErrorResult("You don't have permission to manage user roles"));
-            }
-
             var result = await _userService.RemoveRoleFromUserAsync(id, roleId);
             
             if (!result.Success)

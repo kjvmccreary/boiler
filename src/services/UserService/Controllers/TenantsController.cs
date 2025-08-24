@@ -3,6 +3,7 @@ using DTOs.Common;
 using DTOs.Tenant;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Common.Authorization; // ✅ ADD
 using System.Security.Claims;
 
 namespace UserService.Controllers;
@@ -78,10 +79,10 @@ public class TenantsController : ControllerBase
     }
 
     /// <summary>
-    /// Create a new tenant with admin user (requires admin permissions)
+    /// Create a new tenant with admin user - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpPost]
-    [Authorize(Policy = "RequiresPermission:tenants.create")]
+    [RequirePermission("tenants.create")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<TenantDto>>> CreateTenant([FromBody] CreateTenantDto createDto)
     {
         if (!ModelState.IsValid)
@@ -106,10 +107,10 @@ public class TenantsController : ControllerBase
     }
 
     /// <summary>
-    /// Get tenant by ID
+    /// Get tenant by ID - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpGet("{tenantId:int}")]
-    [Authorize(Policy = "RequiresPermission:tenants.view")]
+    [RequirePermission("tenants.view")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<TenantDto>>> GetTenant(int tenantId)
     {
         var result = await _tenantService.GetTenantAsync(tenantId);
@@ -123,10 +124,10 @@ public class TenantsController : ControllerBase
     }
 
     /// <summary>
-    /// Get all tenants (paginated)
+    /// Get all tenants (paginated) - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpGet]
-    [Authorize(Policy = "RequiresPermission:tenants.view")]
+    [RequirePermission("tenants.view")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<PagedResultDto<TenantDto>>>> GetTenants(
         [FromQuery] int page = 1, 
         [FromQuery] int pageSize = 20)
@@ -142,10 +143,10 @@ public class TenantsController : ControllerBase
     }
 
     /// <summary>
-    /// Update tenant
+    /// Update tenant - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpPut("{tenantId:int}")]
-    [Authorize(Policy = "RequiresPermission:tenants.edit")]
+    [RequirePermission("tenants.edit")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<TenantDto>>> UpdateTenant(
         int tenantId, 
         [FromBody] UpdateTenantDto updateDto)
@@ -172,10 +173,10 @@ public class TenantsController : ControllerBase
     }
 
     /// <summary>
-    /// Delete tenant (only if no users)
+    /// Delete tenant - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpDelete("{tenantId:int}")]
-    [Authorize(Policy = "RequiresPermission:tenants.delete")]
+    [RequirePermission("tenants.delete")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<bool>>> DeleteTenant(int tenantId)
     {
         var result = await _tenantService.DeleteTenantAsync(tenantId);
@@ -189,10 +190,10 @@ public class TenantsController : ControllerBase
     }
 
     /// <summary>
-    /// Activate tenant
+    /// Activate tenant - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpPost("{tenantId:int}/activate")]
-    [Authorize(Policy = "RequiresPermission:tenants.manage")]
+    [RequirePermission("tenants.manage")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<bool>>> ActivateTenant(int tenantId)
     {
         var result = await _tenantService.ActivateTenantAsync(tenantId);
@@ -206,10 +207,10 @@ public class TenantsController : ControllerBase
     }
 
     /// <summary>
-    /// Deactivate tenant
+    /// Deactivate tenant - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpPost("{tenantId:int}/deactivate")]
-    [Authorize(Policy = "RequiresPermission:tenants.manage")]
+    [RequirePermission("tenants.manage")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<bool>>> DeactivateTenant(int tenantId)
     {
         var result = await _tenantService.DeactivateTenantAsync(tenantId);
@@ -223,10 +224,10 @@ public class TenantsController : ControllerBase
     }
 
     /// <summary>
-    /// Initialize tenant with default roles and permissions
+    /// Initialize tenant - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpPost("{tenantId:int}/initialize")]
-    [Authorize(Policy = "RequiresPermission:tenants.initialize")]
+    [RequirePermission("tenants.initialize")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<TenantDto>>> InitializeTenant(
         int tenantId,
         [FromBody] TenantInitializationDto? initDto = null)
@@ -245,10 +246,10 @@ public class TenantsController : ControllerBase
     }
 
     /// <summary>
-    /// Get available role templates
+    /// Get available role templates - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpGet("role-templates")]
-    [Authorize(Policy = "RequiresPermission:tenants.view")]
+    [RequirePermission("tenants.view")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<List<RoleTemplateDto>>>> GetRoleTemplates()
     {
         try

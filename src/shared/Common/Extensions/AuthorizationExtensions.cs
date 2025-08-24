@@ -2,6 +2,7 @@ using Common.Constants;
 using Contracts.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
+using Common.Authorization;
 
 namespace Common.Extensions;
 
@@ -81,5 +82,19 @@ public static class AuthorizationExtensions
 
         // For Phase 2, return failure
         return Contracts.Services.AuthorizationResult.Failure("Authorization service not available");
+    }
+
+    /// <summary>
+    /// Add enhanced permission-based authorization with dynamic policies
+    /// </summary>
+    public static IServiceCollection AddEnhancedAuthorizationPolicies(this IServiceCollection services)
+    {
+        // Replace the default policy provider with our permission-aware one
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+        
+        // The EnhancedPermissionAuthorizationHandler should already be registered
+        // services.AddScoped<IAuthorizationHandler, EnhancedPermissionAuthorizationHandler>();
+        
+        return services;
     }
 }

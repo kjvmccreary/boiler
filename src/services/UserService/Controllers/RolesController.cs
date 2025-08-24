@@ -6,13 +6,14 @@ using DTOs.Auth;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Common.Data;
+using Common.Authorization; // ✅ ADD: Import our custom authorization
 using System.ComponentModel.DataAnnotations;
 
 namespace UserService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize] // Base authentication requirement
 public class RolesController : ControllerBase
 {
     private readonly IRoleService _roleService;
@@ -33,10 +34,10 @@ public class RolesController : ControllerBase
     }
 
     /// <summary>
-    /// Get all roles for the current tenant (requires roles.view permission)
+    /// Get all roles for the current tenant - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpGet]
-    [Authorize]
+    [RequirePermission("roles.view")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<PagedResultDto<RoleDto>>>> GetRoles(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10,
@@ -44,7 +45,12 @@ public class RolesController : ControllerBase
     {
         try
         {
-            // 🔧 FIX: Add input validation
+            // ✅ REMOVED: Manual permission checking - now handled by framework
+            // var hasRolesViewPermission = User.Claims.Any(c => 
+            //     c.Type == "permission" && c.Value == "roles.view");
+            // if (!hasRolesViewPermission) { ... }
+            
+            // 🔧 ADD: Input validation
             if (page <= 0)
             {
                 return BadRequest(ApiResponseDto<PagedResultDto<RoleDto>>.ErrorResult("Page number must be greater than 0"));
@@ -53,17 +59,6 @@ public class RolesController : ControllerBase
             if (pageSize <= 0 || pageSize > 100)
             {
                 return BadRequest(ApiResponseDto<PagedResultDto<RoleDto>>.ErrorResult("Page size must be between 1 and 100"));
-            }
-
-            // Check for roles.view permission
-            var hasRolesViewPermission = User.Claims.Any(c => 
-                c.Type == "permission" && c.Value == "roles.view");
-                
-            if (!hasRolesViewPermission)
-            {
-                _logger.LogWarning("User {UserId} attempted to access roles list without roles.view permission", 
-                    GetCurrentUserId());
-                return StatusCode(403, ApiResponseDto<PagedResultDto<RoleDto>>.ErrorResult("You don't have permission to view roles"));
             }
 
             var roles = await _roleService.GetTenantRolesAsync();
@@ -104,28 +99,20 @@ public class RolesController : ControllerBase
     }
 
     /// <summary>
-    /// Get a specific role by ID (requires roles.view permission)
+    /// Get a specific role by ID - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpGet("{id:int}")]
-    [Authorize]
+    [RequirePermission("roles.view")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<RoleDto>>> GetRole(int id)
     {
         try
         {
-            // 🔧 FIX: Return NotFound for zero/negative IDs to match test expectations
+            // ✅ REMOVED: Manual permission checking
+            // var hasRolesViewPermission = User.Claims.Any(...);
+            
             if (id <= 0)
             {
                 return NotFound(ApiResponseDto<RoleDto>.ErrorResult("Role not found"));
-            }
-
-            var hasRolesViewPermission = User.Claims.Any(c => 
-                c.Type == "permission" && c.Value == "roles.view");
-            
-            if (!hasRolesViewPermission)
-            {
-                _logger.LogWarning("User {UserId} attempted to view role {RoleId} without roles.view permission", 
-                    GetCurrentUserId(), id);
-                return StatusCode(403, ApiResponseDto<RoleDto>.ErrorResult("You don't have permission to view roles"));
             }
 
             var role = await _roleService.GetRoleByIdAsync(id);
@@ -139,7 +126,6 @@ public class RolesController : ControllerBase
         }
         catch (UnauthorizedAccessException)
         {
-            // 🔧 FIX: Return 404 for cross-tenant attempts (security through obscurity)
             return NotFound(ApiResponseDto<RoleDto>.ErrorResult("Role not found"));
         }
         catch (Exception ex)
@@ -150,15 +136,17 @@ public class RolesController : ControllerBase
     }
 
     /// <summary>
-    /// Create a new role (requires roles.create permission)
+    /// Create a new role - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpPost]
-    [Authorize]
+    [RequirePermission("roles.create")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<RoleDto>>> CreateRole([FromBody] CreateRoleDto createRoleDto)
     {
         try
         {
-            // 🔧 FIX: Add comprehensive input validation
+            // ✅ REMOVED: Manual permission checking
+            // var hasRolesCreatePermission = User.Claims.Any(...);
+            
             if (createRoleDto == null)
             {
                 return BadRequest(ApiResponseDto<RoleDto>.ErrorResult("Role data is required"));
@@ -186,16 +174,6 @@ public class RolesController : ControllerBase
                 createRoleDto.Description = System.Net.WebUtility.HtmlEncode(createRoleDto.Description);
             }
 
-            var hasRolesCreatePermission = User.Claims.Any(c => 
-                c.Type == "permission" && c.Value == "roles.create");
-                
-            if (!hasRolesCreatePermission)
-            {
-                _logger.LogWarning("User {UserId} attempted to create role without roles.create permission", 
-                    GetCurrentUserId());
-                return StatusCode(403, ApiResponseDto<RoleDto>.ErrorResult("You don't have permission to create roles"));
-            }
-
             var role = await _roleService.CreateRoleAsync(createRoleDto.Name, createRoleDto.Description ?? "", createRoleDto.Permissions ?? new List<string>());
             var roleDto = MapToRoleDto(role);
 
@@ -204,7 +182,6 @@ public class RolesController : ControllerBase
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("already exists"))
         {
-            // 🔧 FIX: Return 409 Conflict for duplicate names instead of 500
             return Conflict(ApiResponseDto<RoleDto>.ErrorResult("A role with this name already exists"));
         }
         catch (Exception ex)
@@ -215,10 +192,10 @@ public class RolesController : ControllerBase
     }
 
     /// <summary>
-    /// Update a specific role (requires roles.edit permission)
+    /// Update a specific role - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpPut("{id:int}")]
-    [Authorize]
+    [RequirePermission("roles.edit")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<RoleDto>>> UpdateRole(int id, [FromBody] UpdateRoleDto request)
     {
         try
@@ -254,16 +231,6 @@ public class RolesController : ControllerBase
             if (!string.IsNullOrEmpty(request.Description))
             {
                 request.Description = System.Net.WebUtility.HtmlEncode(request.Description);
-            }
-
-            var hasRolesEditPermission = User.Claims.Any(c => 
-                c.Type == "permission" && c.Value == "roles.edit");
-                
-            if (!hasRolesEditPermission)
-            {
-                _logger.LogWarning("User {UserId} attempted to update role {RoleId} without roles.edit permission", 
-                    GetCurrentUserId(), id);
-                return StatusCode(403, ApiResponseDto<RoleDto>.ErrorResult("You don't have permission to edit roles"));
             }
 
             // 🔧 FIX: Check for system role BEFORE tenant access check
@@ -316,10 +283,10 @@ public class RolesController : ControllerBase
     }
 
     /// <summary>
-    /// Delete a role (requires roles.delete permission)
+    /// Delete a role - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpDelete("{id:int}")]
-    [Authorize]
+    [RequirePermission("roles.delete")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<bool>>> DeleteRole(int id)
     {
         try
@@ -328,16 +295,6 @@ public class RolesController : ControllerBase
             if (id <= 0)
             {
                 return BadRequest(ApiResponseDto<bool>.ErrorResult("Role ID must be greater than 0"));
-            }
-
-            var hasRolesDeletePermission = User.Claims.Any(c => 
-                c.Type == "permission" && c.Value == "roles.delete");
-                
-            if (!hasRolesDeletePermission)
-            {
-                _logger.LogWarning("User {UserId} attempted to delete role {RoleId} without roles.delete permission", 
-                    GetCurrentUserId(), id);
-                return StatusCode(403, ApiResponseDto<bool>.ErrorResult("You don't have permission to delete roles"));
             }
 
             var success = await _roleService.DeleteRoleAsync(id);
@@ -369,10 +326,10 @@ public class RolesController : ControllerBase
     }
 
     /// <summary>
-    /// Get permissions for a specific role (requires roles.view permission)
+    /// Get permissions for a specific role - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpGet("{id:int}/permissions")]
-    [Authorize]
+    [RequirePermission("roles.view")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<List<string>>>> GetRolePermissions(int id)
     {
         try
@@ -381,16 +338,6 @@ public class RolesController : ControllerBase
             if (id <= 0)
             {
                 return BadRequest(ApiResponseDto<List<string>>.ErrorResult("Role ID must be greater than 0"));
-            }
-
-            var hasRolesViewPermission = User.Claims.Any(c => 
-                c.Type == "permission" && c.Value == "roles.view");
-                
-            if (!hasRolesViewPermission)
-            {
-                _logger.LogWarning("User {UserId} attempted to view permissions for role {RoleId} without roles.view permission", 
-                    GetCurrentUserId(), id);
-                return StatusCode(403, ApiResponseDto<List<string>>.ErrorResult("You don't have permission to view role permissions"));
             }
 
             var role = await _roleService.GetRoleWithPermissionsAsync(id);
@@ -415,10 +362,11 @@ public class RolesController : ControllerBase
     }
 
     /// <summary>
-    /// Update permissions for a specific role (requires roles.manage_permissions permission)
+    /// Update permissions for a specific role - SECURE: Multiple permissions required
     /// </summary>
     [HttpPut("{id:int}/permissions")]
-    [Authorize]
+    [RequirePermission("roles.edit")]
+    [RequirePermission("roles.manage_permissions")] // ✅ SECURE: Can stack multiple requirements
     public async Task<ActionResult<ApiResponseDto<bool>>> UpdateRolePermissions(int id, [FromBody] List<string> permissions)
     {
         try
@@ -432,16 +380,6 @@ public class RolesController : ControllerBase
             if (permissions == null)
             {
                 return BadRequest(ApiResponseDto<bool>.ErrorResult("Permissions list is required"));
-            }
-
-            var hasRolesManagePermissionsPermission = User.Claims.Any(c => 
-                c.Type == "permission" && c.Value == "roles.manage_permissions");
-            
-            if (!hasRolesManagePermissionsPermission)
-            {
-                _logger.LogWarning("User {UserId} attempted to update permissions for role {RoleId} without roles.manage_permissions permission", 
-                    GetCurrentUserId(), id);
-                return StatusCode(403, ApiResponseDto<bool>.ErrorResult("You don't have permission to manage role permissions"));
             }
 
             // 🔧 FIX: Check if role exists and belongs to tenant before updating
@@ -482,10 +420,10 @@ public class RolesController : ControllerBase
     }
 
     /// <summary>
-    /// Assign a role to a user (requires users.manage_roles permission)
+    /// Assign a role to a user - SECURE: Framework-enforced permission check
     /// </summary>
     [HttpPost("assign")]
-    [Authorize]
+    [RequirePermission("users.manage_roles")] // ✅ SECURE: Framework-enforced permission check
     public async Task<ActionResult<ApiResponseDto<bool>>> AssignRoleToUser([FromBody] AssignRoleDto assignRoleDto)
     {
         try
@@ -504,16 +442,6 @@ public class RolesController : ControllerBase
             if (assignRoleDto.RoleId <= 0)
             {
                 return BadRequest(ApiResponseDto<bool>.ErrorResult("Role ID must be greater than 0"));
-            }
-
-            var hasUsersManageRolesPermission = User.Claims.Any(c => 
-                c.Type == "permission" && c.Value == "users.manage_roles");
-                
-            if (!hasUsersManageRolesPermission)
-            {
-                _logger.LogWarning("User {UserId} attempted to assign role {RoleId} to user {TargetUserId} without users.manage_roles permission", 
-                    GetCurrentUserId(), assignRoleDto.RoleId, assignRoleDto.UserId);
-                return StatusCode(403, ApiResponseDto<bool>.ErrorResult("You don't have permission to manage user roles"));
             }
 
             await _roleService.AssignRoleToUserAsync(assignRoleDto.UserId, assignRoleDto.RoleId);
@@ -548,16 +476,6 @@ public class RolesController : ControllerBase
             if (userId <= 0)
             {
                 return BadRequest(ApiResponseDto<bool>.ErrorResult("User ID must be greater than 0"));
-            }
-
-            var hasUsersManageRolesPermission = User.Claims.Any(c => 
-                c.Type == "permission" && c.Value == "users.manage_roles");
-                
-            if (!hasUsersManageRolesPermission)
-            {
-                _logger.LogWarning("User {UserId} attempted to remove role {RoleId} from user {TargetUserId} without users.manage_roles permission", 
-                    GetCurrentUserId(), roleId, userId);
-                return StatusCode(403, ApiResponseDto<bool>.ErrorResult("You don't have permission to manage user roles"));
             }
 
             // 🔧 NEW: Add cross-tenant security check BEFORE calling service

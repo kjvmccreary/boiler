@@ -98,9 +98,10 @@ public static class SecurityExtensions
     }
 
     /// <summary>
-    /// Add enhanced authorization policies with audit support
+    /// Add legacy authorization policies with audit support
+    /// ✅ RENAMED: From AddEnhancedAuthorizationPolicies to avoid naming conflict
     /// </summary>
-    public static IServiceCollection AddEnhancedAuthorizationPolicies(this IServiceCollection services)
+    public static IServiceCollection AddLegacySecurityPolicies(this IServiceCollection services)
     {
         services.AddAuthorization(options =>
         {

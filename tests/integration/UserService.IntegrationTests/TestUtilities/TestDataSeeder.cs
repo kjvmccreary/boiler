@@ -626,6 +626,15 @@ public static class TestDataSeeder
                 Console.WriteLine($"✅ Assigned {viewerPermissions.Count} permissions to Viewer");
             }
 
+            // ✅ FIXED: Editor role permissions - add this missing section!
+            var editorRole = roles.FirstOrDefault(r => r.Name == "Editor" && r.TenantId == tenant1.Id);
+            if (editorRole != null)
+            {
+                // Editor gets NO permissions intentionally (for testing permission boundaries)
+                // This role represents a user with zero permissions to test authorization failures
+                Console.WriteLine($"✅ Assigned 0 permissions to Editor (intentionally for testing)");
+            }
+
             // ✅ FIXED: Tenant 2 Admin gets COMPLETE admin permissions
             // ✅ CRITICAL DEBUG: Check if tenant2AdminRole lookup is working
             Console.WriteLine($"🔍 TENANT 2 ADMIN DEBUG:");
@@ -852,9 +861,6 @@ public static class TestDataSeeder
                 new UserRole { UserId = editorUser1.Id, RoleId = tenant1EditorRole.Id, TenantId = tenant1.Id, AssignedAt = DateTime.UtcNow, AssignedBy = "System", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
                 new UserRole { UserId = adminUser2.Id, RoleId = tenant2AdminRole.Id, TenantId = tenant2.Id, AssignedAt = DateTime.UtcNow, AssignedBy = "System", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
                 new UserRole { UserId = regularUser2.Id, RoleId = tenant2UserRole.Id, TenantId = tenant2.Id, AssignedAt = DateTime.UtcNow, AssignedBy = "System", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
-                
-                // Additional role assignments for multi-role scenarios
-                new UserRole { UserId = editorUser1.Id, RoleId = tenant1ViewerRole.Id, TenantId = tenant1.Id, AssignedAt = DateTime.UtcNow, AssignedBy = "System", IsActive = true, CreatedAt = DateTime.UtcNow, UpdatedAt = DateTime.UtcNow },
             };
 
             Console.WriteLine($"🔍 Adding {userRoles.Length} user role assignments...");

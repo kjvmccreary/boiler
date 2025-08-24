@@ -1,7 +1,16 @@
 Building Test Projects
+Starting test discovery for requested test run
+========== Starting test discovery ==========
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 9.0.7)
+[xUnit.net 00:00:00.07]   Discovering: UserService.IntegrationTests
+[xUnit.net 00:00:00.11]   Discovered:  UserService.IntegrationTests
+========== Test discovery finished: 210 Tests found in 532.7 ms ==========
 ========== Starting test run ==========
 [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.06]   Starting:    UserService.IntegrationTests
+[xUnit.net 00:00:00.03]   Starting:    ApiGateway.Tests
+[xUnit.net 00:00:00.82]   Finished:    ApiGateway.Tests
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 9.0.7)
+[xUnit.net 00:00:00.05]   Starting:    UserService.IntegrationTests
 === UserService Startup Diagnostics ===
 Environment: Testing
 Application Name: UserService
@@ -39,23 +48,23 @@ Running in Container:
 ? Application built successfully
 ?? Configuring middleware pipeline...
 ?? Configuring Enhanced Security middleware...
-[20:54:54 INF] Configuring Enhanced Security middleware {}
-[20:54:54 INF] ?? Enhanced security middleware DISABLED in testing environment {"SourceContext": "SecurityExtensions"}
+[17:02:51 INF] Configuring Enhanced Security middleware {}
+[17:02:51 INF] ?? Enhanced security middleware DISABLED in testing environment {"SourceContext": "SecurityExtensions"}
 ? Enhanced Security middleware configured successfully
-[20:54:54 INF] Enhanced Security middleware configured successfully {}
+[17:02:51 INF] Enhanced Security middleware configured successfully {}
 ? Middleware pipeline configured
 ?? Mapping Enhanced Health Check endpoints...
 ? Enhanced Health Check endpoints mapped
-[20:54:54 INF] Starting UserService with Phase 11 Enhanced Security & Monitoring {}
+[17:02:51 INF] Starting UserService with Phase 11 Enhanced Security & Monitoring {}
 === UserService Starting with Phase 11 Enhanced Security & Monitoring ===
 ?? Testing cache connection...
 ? In-memory cache configured (Performance/Testing mode)
-[20:54:54 INF] In-memory cache configured for Performance/Testing environment {}
+[17:02:51 INF] In-memory cache configured for Performance/Testing environment {}
 ?? Seeding database...
-[20:54:54 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId": {"Id": 10400, "Name": "Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
+[17:02:51 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId": {"Id": 10400, "Name": "Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
 ? Database seeded
 ?? Seeding monitoring user...
-[20:54:54 INF] Monitoring.Enabled = 'false' (evaluated false); skipping seeding. {"SourceContext": "MonitoringUserSeeder"}
+[17:02:51 INF] Monitoring.Enabled = 'false' (evaluated false); skipping seeding. {"SourceContext": "MonitoringUserSeeder"}
 ? Monitoring user seeded (monitor@local / ChangeMe123!)
 ?? Starting application...
 ?? Enhanced Health Check endpoints available:
@@ -73,7 +82,7 @@ Running in Container:
   - Enhanced audit trail for all actions
   - Comprehensive health monitoring with performance scoring
   - Real-time system metrics and alerts
-[20:54:54 INF] Enhanced Security & Monitoring (Phase 11) configured and operational {}
+[17:02:51 INF] Enhanced Security & Monitoring (Phase 11) configured and operational {}
 ?? Ensuring clean database state...
 ? Database recreated with clean state
 ?? TestDataSeeder: Starting test data seeding
@@ -160,6 +169,7 @@ Running in Container:
 ? Assigned 3 permissions to Tenant1 User
 ? Assigned 6 permissions to Tenant1 Manager
 ? Assigned 3 permissions to Viewer
+? Assigned 0 permissions to Editor (intentionally for testing)
 ?? TENANT 2 ADMIN DEBUG:
    - tenant2.Id = 2
    - All roles count: 8
@@ -194,40 +204,45 @@ Running in Container:
 ? Verified user: admin@tenant2.com (ID: 6)
 ? admin@tenant1.com has 1 role assignments
 ? TestDataSeeder: Test data seeding completed successfully
-[20:54:54 INF] ?? Test Data Status: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:54 INF] ?? Tenant IDs: Tenant1=1, Tenant2=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:54 INF] ?? User IDs: Admin=1, User=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:54 INF] ?? Admin user analysis: {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:54 INF]    - Email: admin@tenant1.com {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:54 INF]    - UserRoles count: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:54 INF]    - Active UserRoles: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:54 INF]    - Permissions: 28 [users.view, users.edit, users.create, users.delete, users.view_all, users.manage_roles, roles.view, roles.create, roles.edit, roles.delete, roles.assign_users, roles.manage_permissions, tenants.view, tenants.create, tenants.edit, tenants.delete, tenants.initialize, tenants.view_all, tenants.manage_settings, reports.view, reports.create, reports.export, reports.schedule, permissions.view, permissions.create, permissions.edit, permissions.delete, permissions.manage] {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:54 INF]    - Tenant: Test Tenant 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:51 INF] ?? Test Data Status: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:51 INF] ?? Tenant IDs: Tenant1=1, Tenant2=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:51 INF] ?? User IDs: Admin=1, User=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:51 INF] ?? Admin user analysis: {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:51 INF]    - Email: admin@tenant1.com {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:51 INF]    - UserRoles count: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:51 INF]    - Active UserRoles: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:51 INF]    - Permissions: 28 [users.view, users.edit, users.create, users.delete, users.view_all, users.manage_roles, roles.view, roles.create, roles.edit, roles.delete, roles.assign_users, roles.manage_permissions, tenants.view, tenants.create, tenants.edit, tenants.delete, tenants.initialize, tenants.view_all, tenants.manage_settings, reports.view, reports.create, reports.export, reports.schedule, permissions.view, permissions.create, permissions.edit, permissions.delete, permissions.manage] {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:51 INF]    - Tenant: Test Tenant 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
 ?? MOCKING two-phase flow for editor@tenant1.com  Tenant 1
 ? Phase 1 simulated: User editor@tenant1.com authenticated (mocked)
 ? Phase 2 simulated: Tenant access verified for tenant 1
-[20:54:54 WRN] Failed to determine the https port for redirect. {"EventId": {"Id": 3, "Name": "FailedToDeterminePort"}, "SourceContext": "Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware", "RequestId": "0HNF2M4SE9CM1", "RequestPath": "/api/roles"}
-[20:54:54 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2M4SE9CM1", "RequestPath": "/api/roles"}
-[20:54:54 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2M4SE9CM1", "RequestPath": "/api/roles"}
-[20:54:54 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF2M4SE9CM1", "RequestPath": "/api/roles"}
-[20:54:54 INF] HTTP GET /api/roles responded 200 in 120.6747 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+?? DEBUG: editor@tenant1.com has 3 permissions: [roles.view, reports.view, permissions.view]
+?? DEBUG: Looking for permission: roles.view
+?? DEBUG: Has permission in token: True
+[17:02:51 WRN] Failed to determine the https port for redirect. {"EventId": {"Id": 3, "Name": "FailedToDeterminePort"}, "SourceContext": "Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware", "RequestId": "0HNF3B7S9LCSD", "RequestPath": "/api/roles"}
+[17:02:51 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF3B7S9LCSD", "RequestPath": "/api/roles"}
+[17:02:51 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF3B7S9LCSD", "RequestPath": "/api/roles"}
+[17:02:52 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF3B7S9LCSD", "RequestPath": "/api/roles"}
+[17:02:52 INF] HTTP GET /api/roles responded 200 in 161.2691 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+?? DEBUG: Response status: OK
+?? DEBUG: Response body: {"success":true,"data":{"items":[{"id":1,"tenantId":0,"name":"SuperAdmin","description":"System super admin","isSystemRole":true,"isDefault":false,"userCount":0,"permissions":["users.view_all","users.view","users.manage_roles","users.edit","users.delete","users.create","tenants.view_all","tenants.view","tenants.manage_settings","tenants.initialize","tenants.edit","tenants.delete","tenants.create","system.view_metrics","system.view_logs","system.monitor","system.manage_settings","system.manage_backups","system.manage","roles.view","roles.manage_permissions","roles.edit","roles.delete","roles.create","roles.assign_users","reports.view","reports.schedule","reports.export","reports.create","permissions.view","permissions.manage","permissions.edit","permissions.delete","permissions.create","billing.view_invoices","billing.view","billing.manage","billing.process_payments"],"createdAt":"2025-08-24T22:02:51.6722885Z","updatedAt":"2025-08-24T22:02:51.6722885Z"},{"id":2,"tenantId":1,"name":"Admin","description":"Tenant admin","isSystemRole":false,"isDefault":false,"userCount":1,"permissions":["users.view","users.edit","users.create","users.delete","users.view_all","users.manage_roles","roles.view","roles.create","roles.edit","roles.delete","roles.assign_users","roles.manage_permissions","tenants.view","tenants.create","tenants.edit","tenants.delete","tenants.initialize","tenants.view_all","tenants.manage_settings","reports.view","reports.create","reports.export","reports.schedule","permissions.view","permissions.create","permissions.edit","permissions.delete","permissions.manage"],"createdAt":"2025-08-24T22:02:51.6722885Z","updatedAt":"2025-08-24T22:02:51.6722885Z"},{"id":6,"tenantId":1,"name":"Editor","description":"Content editor","isSystemRole":false,"isDefault":false,"userCount":1,"permissions":[],"createdAt":"2025-08-24T22:02:51.6722885Z","updatedAt":"2025-08-24T22:02:51.6722885Z"},{"id":4,"tenantId":1,"name":"Manager","description":"Department manager","isSystemRole":false,"isDefault":false,"userCount":1,"permissions":["users.view","users.edit","users.manage_roles","roles.view","reports.view","reports.create"],"createdAt":"2025-08-24T22:02:51.6722885Z","updatedAt":"2025-08-24T22:02:51.6722885Z"},{"id":3,"tenantId":1,"name":"User","description":"Regular user","isSystemRole":false,"isDefault":true,"userCount":1,"permissions":["roles.view","reports.view","permissions.view"],"createdAt":"2025-08-24T22:02:51.6722885Z","updatedAt":"2025-08-24T22:02:51.6722885Z"},{"id":5,"tenantId":1,"name":"Viewer","description":"Read-only access","isSystemRole":false,"isDefault":false,"userCount":2,"permissions":["roles.view","reports.view","permissions.view"],"createdAt":"2025-08-24T22:02:51.6722885Z","updatedAt":"2025-08-24T22:02:51.6722885Z"}],"totalCount":6,"pageNumber":1,"pageSize":10,"totalPages":1,"hasPreviousPage":false,"hasNextPage":false},"message":"Roles retrieved successfully","errors":[],"traceId":null}
 ?? Ensuring clean database state...
-[xUnit.net 00:00:01.27]     UserService.IntegrationTests.Security.PermissionBoundaryTests.PermissionCheck_WithTenantContext_ShouldEnforceProperAccess(userEmail: "editor@tenant1.com", endpoint: "/api/roles", requiredPermission: "roles.view", shouldHaveAccess: False) [FAIL]
-[xUnit.net 00:00:01.27]       Expected response.StatusCode to be one of {HttpStatusCode.Forbidden {value: 403}, HttpStatusCode.Unauthorized {value: 401}}, but found HttpStatusCode.OK {value: 200}.
-[xUnit.net 00:00:01.27]       Stack Trace:
-[xUnit.net 00:00:01.27]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:01.27]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:01.27]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:01.27]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:01.27]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:01.27]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[xUnit.net 00:00:01.27]            at FluentAssertions.Primitives.EnumAssertions`2.BeOneOf(IEnumerable`1 validValues, String because, Object[] becauseArgs)
-[xUnit.net 00:00:01.27]            at FluentAssertions.Primitives.EnumAssertions`2.BeOneOf(TEnum[] validValues)
-[xUnit.net 00:00:01.27]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Security\PermissionBoundaryTests.cs(113,0): at UserService.IntegrationTests.Security.PermissionBoundaryTests.PermissionCheck_WithTenantContext_ShouldEnforceProperAccess(String userEmail, String endpoint, String requiredPermission, Boolean shouldHaveAccess)
-[xUnit.net 00:00:01.27]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:01.32]     UserService.IntegrationTests.Security.PermissionBoundaryTests.PermissionCheck_WithTenantContext_ShouldEnforceProperAccess(userEmail: "editor@tenant1.com", endpoint: "/api/roles", requiredPermission: "roles.view", shouldHaveAccess: False) [FAIL]
+[xUnit.net 00:00:01.32]       Expected response.StatusCode to be one of {HttpStatusCode.Forbidden {value: 403}, HttpStatusCode.Unauthorized {value: 401}}, but found HttpStatusCode.OK {value: 200}.
+[xUnit.net 00:00:01.32]       Stack Trace:
+[xUnit.net 00:00:01.32]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+[xUnit.net 00:00:01.32]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+[xUnit.net 00:00:01.32]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+[xUnit.net 00:00:01.32]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:01.32]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:01.32]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+[xUnit.net 00:00:01.32]            at FluentAssertions.Primitives.EnumAssertions`2.BeOneOf(IEnumerable`1 validValues, String because, Object[] becauseArgs)
+[xUnit.net 00:00:01.32]            at FluentAssertions.Primitives.EnumAssertions`2.BeOneOf(TEnum[] validValues)
+[xUnit.net 00:00:01.32]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Security\PermissionBoundaryTests.cs(127,0): at UserService.IntegrationTests.Security.PermissionBoundaryTests.PermissionCheck_WithTenantContext_ShouldEnforceProperAccess(String userEmail, String endpoint, String requiredPermission, Boolean shouldHaveAccess)
 ? Database recreated with clean state
 ?? TestDataSeeder: Starting test data seeding
 ?? Creating tenants...
+[xUnit.net 00:00:01.32]         --- End of stack trace from previous location ---
 ? Created 2 tenants
 ?? Creating permissions...
 ?? Creating 38 permissions from actual business requirements
@@ -310,6 +325,7 @@ Running in Container:
 ? Assigned 3 permissions to Tenant1 User
 ? Assigned 6 permissions to Tenant1 Manager
 ? Assigned 3 permissions to Viewer
+? Assigned 0 permissions to Editor (intentionally for testing)
 ?? TENANT 2 ADMIN DEBUG:
    - tenant2.Id = 2
    - All roles count: 8
@@ -344,35 +360,40 @@ Running in Container:
 ? Verified user: admin@tenant2.com (ID: 6)
 ? admin@tenant1.com has 1 role assignments
 ? TestDataSeeder: Test data seeding completed successfully
-[20:54:55 INF] ?? Test Data Status: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:55 INF] ?? Tenant IDs: Tenant1=1, Tenant2=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:55 INF] ?? User IDs: Admin=1, User=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:55 INF] ?? Admin user analysis: {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:55 INF]    - Email: admin@tenant1.com {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:55 INF]    - UserRoles count: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:55 INF]    - Active UserRoles: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:55 INF]    - Permissions: 28 [users.view, users.edit, users.create, users.delete, users.view_all, users.manage_roles, roles.view, roles.create, roles.edit, roles.delete, roles.assign_users, roles.manage_permissions, tenants.view, tenants.create, tenants.edit, tenants.delete, tenants.initialize, tenants.view_all, tenants.manage_settings, reports.view, reports.create, reports.export, reports.schedule, permissions.view, permissions.create, permissions.edit, permissions.delete, permissions.manage] {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:55 INF]    - Tenant: Test Tenant 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF] ?? Test Data Status: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF] ?? Tenant IDs: Tenant1=1, Tenant2=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF] ?? User IDs: Admin=1, User=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF] ?? Admin user analysis: {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF]    - Email: admin@tenant1.com {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF]    - UserRoles count: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF]    - Active UserRoles: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF]    - Permissions: 28 [users.view, users.edit, users.create, users.delete, users.view_all, users.manage_roles, roles.view, roles.create, roles.edit, roles.delete, roles.assign_users, roles.manage_permissions, tenants.view, tenants.create, tenants.edit, tenants.delete, tenants.initialize, tenants.view_all, tenants.manage_settings, reports.view, reports.create, reports.export, reports.schedule, permissions.view, permissions.create, permissions.edit, permissions.delete, permissions.manage] {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF]    - Tenant: Test Tenant 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
 ?? MOCKING two-phase flow for viewer@tenant1.com  Tenant 1
 ? Phase 1 simulated: User viewer@tenant1.com authenticated (mocked)
 ? Phase 2 simulated: Tenant access verified for tenant 1
-[20:54:55 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2M4SE9CM2", "RequestPath": "/api/roles"}
-[20:54:55 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2M4SE9CM2", "RequestPath": "/api/roles"}
-[20:54:55 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF2M4SE9CM2", "RequestPath": "/api/roles"}
-[20:54:55 INF] HTTP GET /api/roles responded 200 in 4.8560 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[xUnit.net 00:00:01.30]     UserService.IntegrationTests.Security.PermissionBoundaryTests.PermissionCheck_WithTenantContext_ShouldEnforceProperAccess(userEmail: "viewer@tenant1.com", endpoint: "/api/roles", requiredPermission: "roles.create", shouldHaveAccess: False) [FAIL]
-[xUnit.net 00:00:01.30]       Expected response.StatusCode to be one of {HttpStatusCode.Forbidden {value: 403}, HttpStatusCode.Unauthorized {value: 401}}, but found HttpStatusCode.OK {value: 200}.
-[xUnit.net 00:00:01.30]       Stack Trace:
-[xUnit.net 00:00:01.30]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:01.30]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:01.30]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:01.30]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:01.30]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:01.30]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[xUnit.net 00:00:01.30]            at FluentAssertions.Primitives.EnumAssertions`2.BeOneOf(IEnumerable`1 validValues, String because, Object[] becauseArgs)
-[xUnit.net 00:00:01.30]            at FluentAssertions.Primitives.EnumAssertions`2.BeOneOf(TEnum[] validValues)
-[xUnit.net 00:00:01.30]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Security\PermissionBoundaryTests.cs(113,0): at UserService.IntegrationTests.Security.PermissionBoundaryTests.PermissionCheck_WithTenantContext_ShouldEnforceProperAccess(String userEmail, String endpoint, String requiredPermission, Boolean shouldHaveAccess)
-[xUnit.net 00:00:01.30]         --- End of stack trace from previous location ---
+?? DEBUG: viewer@tenant1.com has 3 permissions: [roles.view, reports.view, permissions.view]
+?? DEBUG: Looking for permission: roles.create
+?? DEBUG: Has permission in token: False
+[17:02:52 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF3B7S9LCSE", "RequestPath": "/api/roles"}
+[17:02:52 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF3B7S9LCSE", "RequestPath": "/api/roles"}
+[17:02:52 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF3B7S9LCSE", "RequestPath": "/api/roles"}
+[17:02:52 INF] HTTP GET /api/roles responded 200 in 14.5110 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+?? DEBUG: Response status: OK
+?? DEBUG: Response body: {"success":true,"data":{"items":[{"id":1,"tenantId":0,"name":"SuperAdmin","description":"System super admin","isSystemRole":true,"isDefault":false,"userCount":0,"permissions":["users.view_all","users.view","users.manage_roles","users.edit","users.delete","users.create","tenants.view_all","tenants.view","tenants.manage_settings","tenants.initialize","tenants.edit","tenants.delete","tenants.create","system.view_metrics","system.view_logs","system.monitor","system.manage_settings","system.manage_backups","system.manage","roles.view","roles.manage_permissions","roles.edit","roles.delete","roles.create","roles.assign_users","reports.view","reports.schedule","reports.export","reports.create","permissions.view","permissions.manage","permissions.edit","permissions.delete","permissions.create","billing.view_invoices","billing.view","billing.manage","billing.process_payments"],"createdAt":"2025-08-24T22:02:52.1457158Z","updatedAt":"2025-08-24T22:02:52.1457158Z"},{"id":2,"tenantId":1,"name":"Admin","description":"Tenant admin","isSystemRole":false,"isDefault":false,"userCount":1,"permissions":["users.view","users.edit","users.create","users.delete","users.view_all","users.manage_roles","roles.view","roles.create","roles.edit","roles.delete","roles.assign_users","roles.manage_permissions","tenants.view","tenants.create","tenants.edit","tenants.delete","tenants.initialize","tenants.view_all","tenants.manage_settings","reports.view","reports.create","reports.export","reports.schedule","permissions.view","permissions.create","permissions.edit","permissions.delete","permissions.manage"],"createdAt":"2025-08-24T22:02:52.1457158Z","updatedAt":"2025-08-24T22:02:52.1457158Z"},{"id":6,"tenantId":1,"name":"Editor","description":"Content editor","isSystemRole":false,"isDefault":false,"userCount":1,"permissions":[],"createdAt":"2025-08-24T22:02:52.1457158Z","updatedAt":"2025-08-24T22:02:52.1457158Z"},{"id":4,"tenantId":1,"name":"Manager","description":"Department manager","isSystemRole":false,"isDefault":false,"userCount":1,"permissions":["users.view","users.edit","users.manage_roles","roles.view","reports.view","reports.create"],"createdAt":"2025-08-24T22:02:52.1457158Z","updatedAt":"2025-08-24T22:02:52.1457158Z"},{"id":3,"tenantId":1,"name":"User","description":"Regular user","isSystemRole":false,"isDefault":true,"userCount":1,"permissions":["roles.view","reports.view","permissions.view"],"createdAt":"2025-08-24T22:02:52.1457158Z","updatedAt":"2025-08-24T22:02:52.1457158Z"},{"id":5,"tenantId":1,"name":"Viewer","description":"Read-only access","isSystemRole":false,"isDefault":false,"userCount":2,"permissions":["roles.view","reports.view","permissions.view"],"createdAt":"2025-08-24T22:02:52.1457158Z","updatedAt":"2025-08-24T22:02:52.1457158Z"}],"totalCount":6,"pageNumber":1,"pageSize":10,"totalPages":1,"hasPreviousPage":false,"hasNextPage":false},"message":"Roles retrieved successfully","errors":[],"traceId":null}
+[xUnit.net 00:00:01.36]     UserService.IntegrationTests.Security.PermissionBoundaryTests.PermissionCheck_WithTenantContext_ShouldEnforceProperAccess(userEmail: "viewer@tenant1.com", endpoint: "/api/roles", requiredPermission: "roles.create", shouldHaveAccess: False) [FAIL]
+[xUnit.net 00:00:01.36]       Expected response.StatusCode to be one of {HttpStatusCode.Forbidden {value: 403}, HttpStatusCode.Unauthorized {value: 401}}, but found HttpStatusCode.OK {value: 200}.
+[xUnit.net 00:00:01.36]       Stack Trace:
+[xUnit.net 00:00:01.36]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+[xUnit.net 00:00:01.36]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+[xUnit.net 00:00:01.36]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+[xUnit.net 00:00:01.36]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:01.36]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:01.36]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+[xUnit.net 00:00:01.36]            at FluentAssertions.Primitives.EnumAssertions`2.BeOneOf(IEnumerable`1 validValues, String because, Object[] becauseArgs)
+[xUnit.net 00:00:01.36]            at FluentAssertions.Primitives.EnumAssertions`2.BeOneOf(TEnum[] validValues)
+[xUnit.net 00:00:01.36]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Security\PermissionBoundaryTests.cs(127,0): at UserService.IntegrationTests.Security.PermissionBoundaryTests.PermissionCheck_WithTenantContext_ShouldEnforceProperAccess(String userEmail, String endpoint, String requiredPermission, Boolean shouldHaveAccess)
+[xUnit.net 00:00:01.36]         --- End of stack trace from previous location ---
 ?? Ensuring clean database state...
 ? Database recreated with clean state
 ?? TestDataSeeder: Starting test data seeding
@@ -459,6 +480,7 @@ Running in Container:
 ? Assigned 3 permissions to Tenant1 User
 ? Assigned 6 permissions to Tenant1 Manager
 ? Assigned 3 permissions to Viewer
+? Assigned 0 permissions to Editor (intentionally for testing)
 ?? TENANT 2 ADMIN DEBUG:
    - tenant2.Id = 2
    - All roles count: 8
@@ -493,35 +515,35 @@ Running in Container:
 ? Verified user: admin@tenant2.com (ID: 6)
 ? admin@tenant1.com has 1 role assignments
 ? TestDataSeeder: Test data seeding completed successfully
-[20:54:55 INF] ?? Test Data Status: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:55 INF] ?? Tenant IDs: Tenant1=1, Tenant2=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:55 INF] ?? User IDs: Admin=1, User=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:55 INF] ?? Admin user analysis: {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:55 INF]    - Email: admin@tenant1.com {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:55 INF]    - UserRoles count: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:55 INF]    - Active UserRoles: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:55 INF]    - Permissions: 28 [users.view, users.edit, users.create, users.delete, users.view_all, users.manage_roles, roles.view, roles.create, roles.edit, roles.delete, roles.assign_users, roles.manage_permissions, tenants.view, tenants.create, tenants.edit, tenants.delete, tenants.initialize, tenants.view_all, tenants.manage_settings, reports.view, reports.create, reports.export, reports.schedule, permissions.view, permissions.create, permissions.edit, permissions.delete, permissions.manage] {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[20:54:55 INF]    - Tenant: Test Tenant 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF] ?? Test Data Status: Tenants=2, Users=7, Roles=8, Permissions=38, UserRoles=8, RolePermissions=109 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF] ?? Tenant IDs: Tenant1=1, Tenant2=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF] ?? User IDs: Admin=1, User=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF] ?? Admin user analysis: {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF]    - Email: admin@tenant1.com {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF]    - UserRoles count: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF]    - Active UserRoles: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF]    - Permissions: 28 [users.view, users.edit, users.create, users.delete, users.view_all, users.manage_roles, roles.view, roles.create, roles.edit, roles.delete, roles.assign_users, roles.manage_permissions, tenants.view, tenants.create, tenants.edit, tenants.delete, tenants.initialize, tenants.view_all, tenants.manage_settings, reports.view, reports.create, reports.export, reports.schedule, permissions.view, permissions.create, permissions.edit, permissions.delete, permissions.manage] {"SourceContext": "UserService.IntegrationTests.TestBase"}
+[17:02:52 INF]    - Tenant: Test Tenant 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
 ?? MOCKING two-phase flow for editor@tenant1.com  Tenant 1
 ? Phase 1 simulated: User editor@tenant1.com authenticated (mocked)
 ? Phase 2 simulated: Tenant access verified for tenant 1
-[20:54:55 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2M4SE9CM3", "RequestPath": "/api/roles"}
-[20:54:55 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF2M4SE9CM3", "RequestPath": "/api/roles"}
-[20:54:55 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF2M4SE9CM3", "RequestPath": "/api/roles"}
-[20:54:55 INF] HTTP GET /api/roles responded 200 in 6.7320 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[xUnit.net 00:00:01.33]     UserService.IntegrationTests.Security.PermissionBoundaryTests.UserWithoutPermissions_ShouldBeRejected [FAIL]
-[xUnit.net 00:00:01.33]       Expected response.StatusCode to be one of {HttpStatusCode.Forbidden {value: 403}, HttpStatusCode.Unauthorized {value: 401}}, but found HttpStatusCode.OK {value: 200}.
-[xUnit.net 00:00:01.33]       Stack Trace:
-[xUnit.net 00:00:01.33]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:01.33]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:01.33]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:01.33]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:01.33]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:01.33]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[xUnit.net 00:00:01.33]            at FluentAssertions.Primitives.EnumAssertions`2.BeOneOf(IEnumerable`1 validValues, String because, Object[] becauseArgs)
-[xUnit.net 00:00:01.33]            at FluentAssertions.Primitives.EnumAssertions`2.BeOneOf(TEnum[] validValues)
-[xUnit.net 00:00:01.33]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Security\PermissionBoundaryTests.cs(150,0): at UserService.IntegrationTests.Security.PermissionBoundaryTests.UserWithoutPermissions_ShouldBeRejected()
-[xUnit.net 00:00:01.33]         --- End of stack trace from previous location ---
+[17:02:52 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF3B7S9LCSF", "RequestPath": "/api/roles"}
+[17:02:52 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF3B7S9LCSF", "RequestPath": "/api/roles"}
+[17:02:52 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNF3B7S9LCSF", "RequestPath": "/api/roles"}
+[17:02:52 INF] HTTP GET /api/roles responded 200 in 7.6281 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[xUnit.net 00:00:01.39]     UserService.IntegrationTests.Security.PermissionBoundaryTests.UserWithoutPermissions_ShouldBeRejected [FAIL]
+[xUnit.net 00:00:01.39]       Expected response.StatusCode to be one of {HttpStatusCode.Forbidden {value: 403}, HttpStatusCode.Unauthorized {value: 401}}, but found HttpStatusCode.OK {value: 200}.
+[xUnit.net 00:00:01.39]       Stack Trace:
+[xUnit.net 00:00:01.39]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+[xUnit.net 00:00:01.39]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+[xUnit.net 00:00:01.39]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+[xUnit.net 00:00:01.39]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:01.39]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:01.39]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+[xUnit.net 00:00:01.39]            at FluentAssertions.Primitives.EnumAssertions`2.BeOneOf(IEnumerable`1 validValues, String because, Object[] becauseArgs)
+[xUnit.net 00:00:01.39]            at FluentAssertions.Primitives.EnumAssertions`2.BeOneOf(TEnum[] validValues)
+[xUnit.net 00:00:01.39]         C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Security\PermissionBoundaryTests.cs(164,0): at UserService.IntegrationTests.Security.PermissionBoundaryTests.UserWithoutPermissions_ShouldBeRejected()
+[xUnit.net 00:00:01.39]         --- End of stack trace from previous location ---
 === UserService Startup Diagnostics ===
 Environment: Testing
 Application Name: UserService
@@ -559,22 +581,22 @@ Running in Container:
 ? Application built successfully
 ?? Configuring middleware pipeline...
 ?? Configuring Enhanced Security middleware...
-[20:54:55 INF] Configuring Enhanced Security middleware {}
-[20:54:55 INF] ?? Enhanced security middleware DISABLED in testing environment {"SourceContext": "SecurityExtensions"}
+[17:02:52 INF] Configuring Enhanced Security middleware {}
+[17:02:52 INF] ?? Enhanced security middleware DISABLED in testing environment {"SourceContext": "SecurityExtensions"}
 ? Enhanced Security middleware configured successfully
-[20:54:55 INF] Enhanced Security middleware configured successfully {}
+[17:02:52 INF] Enhanced Security middleware configured successfully {}
 ? Middleware pipeline configured
 ?? Mapping Enhanced Health Check endpoints...
 ? Enhanced Health Check endpoints mapped
-[20:54:55 INF] Starting UserService with Phase 11 Enhanced Security & Monitoring {}
+[17:02:52 INF] Starting UserService with Phase 11 Enhanced Security & Monitoring {}
 === UserService Starting with Phase 11 Enhanced Security & Monitoring ===
 ?? Testing cache connection...
 ? In-memory cache configured (Performance/Testing mode)
-[20:54:55 INF] In-memory cache configured for Performance/Testing environment {}
+[17:02:52 INF] In-memory cache configured for Performance/Testing environment {}
 ?? Seeding database...
 ? Database seeded
 ?? Seeding monitoring user...
-[20:54:55 INF] Monitoring.Enabled = 'false' (evaluated false); skipping seeding. {"SourceContext": "MonitoringUserSeeder"}
+[17:02:52 INF] Monitoring.Enabled = 'false' (evaluated false); skipping seeding. {"SourceContext": "MonitoringUserSeeder"}
 ? Monitoring user seeded (monitor@local / ChangeMe123!)
 ?? Starting application...
 ?? Enhanced Health Check endpoints available:
@@ -592,6 +614,6 @@ Running in Container:
   - Enhanced audit trail for all actions
   - Comprehensive health monitoring with performance scoring
   - Real-time system metrics and alerts
-[20:54:55 INF] Enhanced Security & Monitoring (Phase 11) configured and operational {}
-[xUnit.net 00:00:01.38]   Finished:    UserService.IntegrationTests
-========== Test run finished: 3 Tests (0 Passed, 3 Failed, 0 Skipped) run in 1.4 sec ==========
+[17:02:52 INF] Enhanced Security & Monitoring (Phase 11) configured and operational {}
+[xUnit.net 00:00:01.44]   Finished:    UserService.IntegrationTests
+========== Test run finished: 4 Tests (1 Passed, 3 Failed, 0 Skipped) run in 1.5 sec ==========

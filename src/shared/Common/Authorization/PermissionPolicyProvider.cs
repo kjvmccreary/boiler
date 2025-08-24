@@ -4,10 +4,14 @@ using Microsoft.Extensions.Options;
 
 namespace Common.Authorization;
 
+/// <summary>
+/// Dynamic policy provider that creates authorization policies on-demand for permissions
+/// </summary>
 public class PermissionPolicyProvider : IAuthorizationPolicyProvider
 {
     private readonly AuthorizationOptions _options;
     private readonly ILogger<PermissionPolicyProvider> _logger;
+    private const string PermissionPrefix = "Permission:";
     private const string RequiresPermissionPrefix = "RequiresPermission:";
 
     public PermissionPolicyProvider(IOptions<AuthorizationOptions> options, ILogger<PermissionPolicyProvider> logger)
@@ -22,8 +26,28 @@ public class PermissionPolicyProvider : IAuthorizationPolicyProvider
 
     public Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
     {
-        // ✅ CRITICAL FIX: Handle RequiresPermission: prefixed policy names
-        if (policyName.StartsWith(RequiresPermissionPrefix))
+        // ✅ CRITICAL FIX: Handle Permission: prefixed policy names (used by RequirePermissionAttribute)
+        if (policyName.StartsWith(PermissionPrefix))
+        {
+            var permission = policyName.Substring(PermissionPrefix.Length);
+            
+            // Check if this is a valid permission
+            if (Permissions.IsValidPermission(permission))
+            {
+                var policy = new AuthorizationPolicyBuilder()
+                    .AddRequirements(new PermissionRequirement(permission))
+                    .Build();
+
+                _logger.LogDebug("Created dynamic permission policy for: {PolicyName} (permission: {Permission})", policyName, permission);
+                return Task.FromResult<AuthorizationPolicy?>(policy);
+            }
+            else
+            {
+                _logger.LogWarning("Invalid permission requested in policy: {PolicyName} (permission: {Permission})", policyName, permission);
+            }
+        }
+        // ✅ Also handle RequiresPermission: prefixed policy names (for backward compatibility)
+        else if (policyName.StartsWith(RequiresPermissionPrefix))
         {
             var permission = policyName.Substring(RequiresPermissionPrefix.Length);
             
