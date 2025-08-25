@@ -1,17 +1,16 @@
 using System.ComponentModel.DataAnnotations;
 using DTOs.Entities;
-using WorkflowTaskStatus = WorkflowService.Domain.Enums.TaskStatus; // Use alias to avoid conflict
+using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus; // ✅ ALIAS: Avoid conflict
 
 namespace WorkflowService.Domain.Models;
 
 public class WorkflowTask : BaseEntity
 {
     [Required]
-    public int WorkflowInstanceId { get; set; }
-    
-    // ✅ ADD: Direct TenantId for proper isolation
-    [Required]
     public int TenantId { get; set; }
+    
+    [Required]
+    public int WorkflowInstanceId { get; set; }
     
     [Required]
     [MaxLength(100)]
@@ -22,7 +21,7 @@ public class WorkflowTask : BaseEntity
     public string TaskName { get; set; } = string.Empty;
     
     [Required]
-    public WorkflowTaskStatus Status { get; set; } = WorkflowTaskStatus.Pending; // Use alias
+    public WorkflowTaskStatus Status { get; set; } = WorkflowTaskStatus.Created; // ✅ FIXED: Using alias
     
     public int? AssignedToUserId { get; set; }
     
@@ -38,8 +37,7 @@ public class WorkflowTask : BaseEntity
     
     public DateTime? CompletedAt { get; set; }
     
-    [MaxLength(1000)]
-    public string? CompletionData { get; set; } // JSON completion result
+    public string? CompletionData { get; set; } // JSON completion data
     
     [MaxLength(1000)]
     public string? ErrorMessage { get; set; }

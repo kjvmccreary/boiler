@@ -8,20 +8,19 @@ public class WorkflowEvent : BaseEntity
     [Required]
     public int WorkflowInstanceId { get; set; }
     
-    // ✅ ADD: Direct TenantId for proper isolation  
     [Required]
     public int TenantId { get; set; }
     
     [Required]
     [MaxLength(100)]
-    public string Type { get; set; } = string.Empty; // e.g., "NodeEntered", "TaskCompleted", "InstanceStarted"
+    public string Type { get; set; } = string.Empty; // e.g., "NodeEntered", "TaskCompleted"
     
     [Required]
     [MaxLength(255)]
     public string Name { get; set; } = string.Empty;
     
     [Required]
-    public string Data { get; set; } = "{}"; // JSON event data
+    public string Data { get; set; } = string.Empty; // JSON event data
     
     public DateTime OccurredAt { get; set; } = DateTime.UtcNow;
     

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using DTOs.Entities;
-using WorkflowService.Domain.Enums;
+using DTOs.Workflow.Enums; // ✅ FIXED: Use shared enums
 
 namespace WorkflowService.Domain.Models;
 
@@ -19,7 +19,7 @@ public class WorkflowInstance : BaseEntity
     public InstanceStatus Status { get; set; } = InstanceStatus.Running;
     
     [Required]
-    public string CurrentNodeIds { get; set; } = "[]"; // JSON array of current node IDs
+    public string CurrentNodeIds { get; set; } = string.Empty; // JSON array of current node IDs
     
     [Required]
     public string Context { get; set; } = "{}"; // JSON context data
