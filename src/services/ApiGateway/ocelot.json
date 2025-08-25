@@ -41,6 +41,26 @@
       "Key": "user-service-health"
     },
     {
+      "DownstreamPathTemplate": "/health",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "boiler-workflow",
+          "Port": 7003
+        }
+      ],
+      "UpstreamPathTemplate": "/api/workflow/health",
+      "UpstreamHttpMethod": ["GET"],
+      "DangerousAcceptAnyServerCertificateValidator": true,
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 200
+      },
+      "Key": "workflow-service-health"
+    },
+    {
       "DownstreamPathTemplate": "/api/auth/login",
       "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
@@ -162,6 +182,98 @@
         "Limit": 20
       },
       "Key": "auth-reset-password"
+    },
+    {
+      "DownstreamPathTemplate": "/api/workflow/definitions/{everything}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "boiler-workflow",
+          "Port": 7003
+        }
+      ],
+      "UpstreamPathTemplate": "/api/workflow/definitions/{everything}",
+      "UpstreamHttpMethod": ["GET", "POST", "PUT", "DELETE"],
+      "DangerousAcceptAnyServerCertificateValidator": true,
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 100
+      },
+      "Key": "workflow-definitions"
+    },
+    {
+      "DownstreamPathTemplate": "/api/workflow/instances/{everything}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "boiler-workflow",
+          "Port": 7003
+        }
+      ],
+      "UpstreamPathTemplate": "/api/workflow/instances/{everything}",
+      "UpstreamHttpMethod": ["GET", "POST", "PUT", "DELETE"],
+      "DangerousAcceptAnyServerCertificateValidator": true,
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 150
+      },
+      "Key": "workflow-instances"
+    },
+    {
+      "DownstreamPathTemplate": "/api/workflow/tasks/{everything}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "boiler-workflow",
+          "Port": 7003
+        }
+      ],
+      "UpstreamPathTemplate": "/api/workflow/tasks/{everything}",
+      "UpstreamHttpMethod": ["GET", "POST", "PUT", "DELETE"],
+      "DangerousAcceptAnyServerCertificateValidator": true,
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 200
+      },
+      "Key": "workflow-tasks"
+    },
+    {
+      "DownstreamPathTemplate": "/api/workflow/admin/{everything}",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "boiler-workflow",
+          "Port": 7003
+        }
+      ],
+      "UpstreamPathTemplate": "/api/workflow/admin/{everything}",
+      "UpstreamHttpMethod": ["GET", "POST", "PUT", "DELETE"],
+      "DangerousAcceptAnyServerCertificateValidator": true,
+      "AuthenticationOptions": {
+        "AuthenticationProviderKey": "Bearer"
+      },
+      "RateLimitOptions": {
+        "EnableRateLimiting": true,
+        "Period": "1m",
+        "PeriodTimespan": 60,
+        "Limit": 50
+      },
+      "Key": "workflow-admin"
     },
     {
       "DownstreamPathTemplate": "/api/users/{everything}",

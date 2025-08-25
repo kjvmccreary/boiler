@@ -69,32 +69,23 @@ public class RoleService : IRoleService
                 throw new InvalidOperationException($"Role name '{name}' already exists in this tenant");
             }
 
-            // Create the role
-            var role = new Role
+            // 🔧 CRITICAL FIX: Use execution strategy for the entire create operation
+            var isInMemory = _context.Database.ProviderName?.Contains("InMemory") == true;
+            
+            if (isInMemory)
             {
-                TenantId = tenantId.Value,
-                Name = name,
-                Description = description,
-                IsSystemRole = false,
-                IsDefault = false,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            };
-
-            await _roleRepository.AddAsync(role, cancellationToken);
-
-            // Add permissions if provided
-            if (permissions.Any())
-            {
-                await UpdateRolePermissionsAsync(role.Id, permissions, cancellationToken);
+                // For in-memory database, use direct execution
+                return await CreateRoleInternalAsync(name, description, permissions, tenantId.Value, cancellationToken);
             }
-
-            await _auditService.LogAsync(AuditAction.RoleCreated, $"role:{role.Id}", 
-                new { RoleName = name, Description = description, Permissions = permissions }, true);
-
-            _logger.LogInformation("Created role {RoleName} for tenant {TenantId}", name, tenantId);
-            return await MapToRoleInfoAsync(role, cancellationToken);
+            else
+            {
+                // For PostgreSQL with retry strategy, use execution strategy
+                var executionStrategy = _context.Database.CreateExecutionStrategy();
+                return await executionStrategy.ExecuteAsync(async () =>
+                {
+                    return await CreateRoleInternalAsync(name, description, permissions, tenantId.Value, cancellationToken);
+                });
+            }
         }
         catch (Exception ex)
         {
@@ -102,6 +93,37 @@ public class RoleService : IRoleService
                 new { RoleName = name, Error = ex.Message }, false, ex.Message);
             throw;
         }
+    }
+
+    // 🔧 NEW: Extract internal create logic for execution strategy
+    private async Task<RoleInfo> CreateRoleInternalAsync(string name, string description, List<string> permissions, int tenantId, CancellationToken cancellationToken)
+    {
+        // Create the role
+        var role = new Role
+        {
+            TenantId = tenantId,
+            Name = name,
+            Description = description,
+            IsSystemRole = false,
+            IsDefault = false,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        await _roleRepository.AddAsync(role, cancellationToken);
+
+        // Add permissions if provided
+        if (permissions.Any())
+        {
+            await AssignPermissionsInternalAsync(role.Id, permissions, cancellationToken);
+        }
+
+        await _auditService.LogAsync(AuditAction.RoleCreated, $"role:{role.Id}", 
+            new { RoleName = name, Description = description, Permissions = permissions }, true);
+
+        _logger.LogInformation("Created role {RoleName} for tenant {TenantId}", name, tenantId);
+        return await MapToRoleInfoAsync(role, cancellationToken);
     }
 
     public async Task<bool> UpdateRoleAsync(int roleId, string name, string description, List<string> permissions, CancellationToken cancellationToken = default)
@@ -130,69 +152,23 @@ public class RoleService : IRoleService
                 throw new InvalidOperationException("Tenant context not found");
             }
 
-            // First check if role exists globally
-            var roleExists = await _context.Roles.AnyAsync(r => r.Id == roleId, cancellationToken);
-            if (!roleExists)
+            // 🔧 CRITICAL FIX: Use execution strategy for the entire update operation
+            var isInMemory = _context.Database.ProviderName?.Contains("InMemory") == true;
+            
+            if (isInMemory)
             {
-                return false; // Role doesn't exist at all
+                // For in-memory database, use direct execution
+                return await UpdateRoleInternalAsync(roleId, name, description, permissions, tenantId.Value, cancellationToken);
             }
-
-            // Then check tenant ownership and get the role
-            var role = await _roleRepository.Query()
-                .FirstOrDefaultAsync(r => r.Id == roleId && r.TenantId == tenantId.Value, cancellationToken);
-
-            if (role == null)
+            else
             {
-                // 🔧 FIX: Role exists but doesn't belong to this tenant - this is a cross-tenant attempt
-                await _auditService.LogAsync(AuditAction.UnauthorizedAccess, $"role:{roleId}", 
-                    new { RoleId = roleId, AttemptedAction = "Update", Reason = "CrossTenantAccess" }, false);
-                    
-                throw new UnauthorizedAccessException($"Access denied to role {roleId}");
+                // For PostgreSQL with retry strategy, use execution strategy
+                var executionStrategy = _context.Database.CreateExecutionStrategy();
+                return await executionStrategy.ExecuteAsync(async () =>
+                {
+                    return await UpdateRoleInternalAsync(roleId, name, description, permissions, tenantId.Value, cancellationToken);
+                });
             }
-
-            // 🔧 FIX: Check if it's a system role
-            if (role.IsSystemRole)
-            {
-                await _auditService.LogAsync(AuditAction.UnauthorizedAccess, $"role:{roleId}", 
-                    new { RoleId = roleId, AttemptedAction = "Update", Reason = "SystemRoleProtection" }, false);
-                    
-                throw new InvalidOperationException("System roles cannot be modified");
-            }
-
-            // Check if name is available (excluding current role)
-            if (!await IsRoleNameAvailableAsync(name, roleId, cancellationToken))
-            {
-                throw new InvalidOperationException($"Role name '{name}' already exists in this tenant");
-            }
-
-            // Get old permissions for audit
-            var oldPermissions = await GetRolePermissionsAsync(roleId, cancellationToken);
-
-            // Update role properties
-            var oldName = role.Name;
-            var oldDescription = role.Description;
-            role.Name = name;
-            role.Description = description;
-            role.UpdatedAt = DateTime.UtcNow;
-
-            await _roleRepository.UpdateAsync(role, cancellationToken);
-
-            // Update permissions
-            await UpdateRolePermissionsAsync(roleId, permissions, cancellationToken);
-
-            await _auditService.LogAsync(AuditAction.RoleUpdated, $"role:{roleId}", 
-                new { 
-                    RoleId = roleId,
-                    OldName = oldName, 
-                    NewName = name,
-                    OldDescription = oldDescription,
-                    NewDescription = description,
-                    OldPermissions = oldPermissions,
-                    NewPermissions = permissions
-                }, true);
-
-            _logger.LogInformation("Updated role {RoleId} for tenant {TenantId}", roleId, tenantId);
-            return true;
         }
         catch (Exception ex)
         {
@@ -202,6 +178,74 @@ public class RoleService : IRoleService
             _logger.LogError(ex, "Error updating role {RoleId}", roleId);
             throw;
         }
+    }
+
+    // 🔧 NEW: Extract internal update logic for execution strategy
+    private async Task<bool> UpdateRoleInternalAsync(int roleId, string name, string description, List<string> permissions, int tenantId, CancellationToken cancellationToken)
+    {
+        // First check if role exists globally
+        var roleExists = await _context.Roles.AnyAsync(r => r.Id == roleId, cancellationToken);
+        if (!roleExists)
+        {
+            return false; // Role doesn't exist at all
+        }
+
+        // Then check tenant ownership and get the role
+        var role = await _roleRepository.Query()
+            .FirstOrDefaultAsync(r => r.Id == roleId && r.TenantId == tenantId, cancellationToken);
+
+        if (role == null)
+        {
+            // 🔧 FIX: Role exists but doesn't belong to this tenant - this is a cross-tenant attempt
+            await _auditService.LogAsync(AuditAction.UnauthorizedAccess, $"role:{roleId}", 
+                new { RoleId = roleId, AttemptedAction = "Update", Reason = "CrossTenantAccess" }, false);
+                
+            throw new UnauthorizedAccessException($"Access denied to role {roleId}");
+        }
+
+        // 🔧 FIX: Check if it's a system role
+        if (role.IsSystemRole)
+        {
+            await _auditService.LogAsync(AuditAction.UnauthorizedAccess, $"role:{roleId}", 
+                new { RoleId = roleId, AttemptedAction = "Update", Reason = "SystemRoleProtection" }, false);
+                
+            throw new InvalidOperationException("System roles cannot be modified");
+        }
+
+        // Check if name is available (excluding current role)
+        if (!await IsRoleNameAvailableAsync(name, roleId, cancellationToken))
+        {
+            throw new InvalidOperationException($"Role name '{name}' already exists in this tenant");
+        }
+
+        // Get old permissions for audit
+        var oldPermissions = await GetRolePermissionsAsync(roleId, cancellationToken);
+
+        // Update role properties
+        var oldName = role.Name;
+        var oldDescription = role.Description;
+        role.Name = name;
+        role.Description = description;
+        role.UpdatedAt = DateTime.UtcNow;
+
+        await _roleRepository.UpdateAsync(role, cancellationToken);
+
+        // Update permissions (this is now safe to call within execution strategy)
+        await AssignPermissionsInternalAsync(roleId, permissions, cancellationToken);
+
+        await _auditService.LogAsync(AuditAction.RoleUpdated, $"role:{roleId}", 
+            new { 
+                RoleId = roleId,
+                OldName = oldName, 
+                NewName = name,
+                OldDescription = oldDescription,
+                NewDescription = description,
+                OldPermissions = oldPermissions,
+                NewPermissions = permissions
+            }, true);
+
+        _logger.LogInformation("Updated role {RoleId} for tenant {TenantId}", roleId, tenantId);
+        return true;
     }
 
     public async Task<RoleInfo?> GetRoleByIdAsync(int roleId, CancellationToken cancellationToken = default)
@@ -704,6 +748,7 @@ public class RoleService : IRoleService
         }
     }
 
+    // 🔧 PERFORMANCE FIX: Fix N+1 query problem in GetTenantRolesPagedAsync
     public async Task<PagedResult<RoleInfo>> GetTenantRolesPagedAsync(int page, int pageSize, string? searchTerm = null, CancellationToken cancellationToken = default)
     {
         try
@@ -714,7 +759,9 @@ public class RoleService : IRoleService
                 return new PagedResult<RoleInfo>();
             }
 
-            var query = _roleRepository.Query()
+            var query = _context.Roles
+                .Include(r => r.RolePermissions)
+                    .ThenInclude(rp => rp.Permission)
                 .Where(r => (r.TenantId == tenantId.Value || r.IsSystemRole) && r.IsActive);
 
             // Apply search filter
@@ -728,7 +775,7 @@ public class RoleService : IRoleService
             // Get total count
             var totalCount = await query.CountAsync(cancellationToken);
 
-            // Apply pagination and ordering
+            // Apply pagination and ordering with Include for permissions
             var roles = await query
                 .OrderBy(r => r.IsSystemRole ? 0 : 1)
                 .ThenBy(r => r.Name)
@@ -736,11 +783,19 @@ public class RoleService : IRoleService
                 .Take(pageSize)
                 .ToListAsync(cancellationToken);
 
-            var roleInfos = new List<RoleInfo>();
-            foreach (var role in roles)
+            // 🔧 PERFORMANCE FIX: Map using already loaded data instead of individual queries
+            var roleInfos = roles.Select(role => new RoleInfo
             {
-                roleInfos.Add(await MapToRoleInfoAsync(role, cancellationToken));
-            }
+                Id = role.Id,
+                Name = role.Name,
+                Description = role.Description,
+                IsSystemRole = role.IsSystemRole,
+                IsDefault = role.IsDefault,
+                TenantId = role.TenantId ?? 0,
+                Permissions = role.RolePermissions.Select(rp => rp.Permission.Name).ToList(),
+                CreatedAt = role.CreatedAt,
+                UpdatedAt = role.UpdatedAt
+            }).ToList();
 
             return new PagedResult<RoleInfo>
             {
@@ -757,117 +812,71 @@ public class RoleService : IRoleService
         }
     }
 
-    public async Task<List<string>> GetRolePermissionsAsync(int roleId, CancellationToken cancellationToken = default)
+    // 🔧 FIX: Remove the retry logic from UpdateRolePermissionsAsync since we handle it at higher levels
+    public async Task<bool> UpdateRolePermissionsAsync(int roleId, List<string> permissions, CancellationToken cancellationToken = default)
     {
         try
         {
-            var permissions = await _context.RolePermissions
-                .Where(rp => rp.RoleId == roleId)
-                .Join(_context.Permissions,
-                    rp => rp.PermissionId,
-                    p => p.Id,
-                    (rp, p) => p.Name)
-                .ToListAsync(cancellationToken);
+            var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
 
-            return permissions;
+            var role = await _roleRepository.GetByIdAsync(roleId, cancellationToken);
+            if (role == null || (role.TenantId != currentTenantId && !role.IsSystemRole))
+            {
+                return false;
+            }
+
+            if (role.IsSystemRole)
+            {
+                throw new InvalidOperationException("System role permissions cannot be modified");
+            }
+
+            await _auditService.LogAsync(AuditAction.PermissionGranted, $"role:{roleId}", 
+                new { RoleId = roleId, Permissions = permissions }, true);
+
+            // 🔧 CRITICAL FIX: Use execution strategy here too
+            var isInMemory = _context.Database.ProviderName?.Contains("InMemory") == true;
+            
+            if (isInMemory)
+            {
+                await _concurrencySemaphore.WaitAsync(cancellationToken);
+                try
+                {
+                    await AssignPermissionsInternalAsync(roleId, permissions, cancellationToken);
+                }
+                finally
+                {
+                    _concurrencySemaphore.Release();
+                }
+            }
+            else
+            {
+                var executionStrategy = _context.Database.CreateExecutionStrategy();
+                await executionStrategy.ExecuteAsync(async () =>
+                {
+                    await AssignPermissionsInternalAsync(roleId, permissions, cancellationToken);
+                });
+            }
+
+            return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting permissions for role {RoleId}", roleId);
-            return new List<string>();
+            _logger.LogError(ex, "Error updating role permissions for role {RoleId}", roleId);
+            throw;
         }
-    }
-
-    public async Task<bool> UpdateRolePermissionsAsync(int roleId, List<string> permissions, CancellationToken cancellationToken = default)
-    {
-        var currentTenantId = await _tenantProvider.GetCurrentTenantIdAsync();
-
-        // 🔧 FIX: Add retry logic for concurrent updates with better exception handling
-        const int maxRetries = 5;
-        for (int attempt = 0; attempt < maxRetries; attempt++)
-        {
-            try
-            {
-                var role = await _roleRepository.GetByIdAsync(roleId, cancellationToken);
-                if (role == null || (role.TenantId != currentTenantId && !role.IsSystemRole))
-                {
-                    return false;
-                }
-
-                if (role.IsSystemRole)
-                {
-                    throw new InvalidOperationException("System role permissions cannot be modified");
-                }
-
-                await _auditService.LogAsync(AuditAction.PermissionGranted, $"role:{roleId}", 
-                    new { RoleId = roleId, Permissions = permissions }, true);
-
-                await AssignPermissionsToRoleAsync(roleId, permissions, cancellationToken);
-                return true;
-            }
-            catch (DbUpdateConcurrencyException) when (attempt < maxRetries - 1)
-            {
-                // 🔧 FIX: Wait with exponential backoff before retrying
-                await Task.Delay(TimeSpan.FromMilliseconds(100 * Math.Pow(2, attempt)), cancellationToken);
-                continue;
-            }
-            catch (ArgumentException ex) when (ex.Message.Contains("same key has already been added") && attempt < maxRetries - 1)
-            {
-                // 🔧 FIX: This is InMemory DB concurrency - wait and retry with exponential backoff
-                _logger.LogWarning("InMemory DB concurrency conflict on attempt {Attempt}: {Message}", attempt + 1, ex.Message);
-                await Task.Delay(TimeSpan.FromMilliseconds(200 * Math.Pow(2, attempt)), cancellationToken);
-                continue;
-            }
-            catch (InvalidOperationException ex) when (ex.Message.Contains("An item with the same key has already been added") && attempt < maxRetries - 1)
-            {
-                // 🔧 FIX: Another variation of the same InMemory DB issue
-                _logger.LogWarning("InMemory DB operation conflict on attempt {Attempt}: {Message}", attempt + 1, ex.Message);
-                await Task.Delay(TimeSpan.FromMilliseconds(150 * Math.Pow(2, attempt)), cancellationToken);
-                continue;
-            }
-        }
-        
-        _logger.LogError("Failed to update role permissions after {MaxRetries} attempts for role {RoleId}", maxRetries, roleId);
-        return false;
     }
 
     private static readonly SemaphoreSlim _concurrencySemaphore = new(1, 1);
     
+    // 🔧 FIX: Remove the execution strategy logic from this method since it's handled by callers
     private async Task AssignPermissionsToRoleAsync(int roleId, List<string> permissionNames, CancellationToken cancellationToken)
     {
-        // 🔧 FIX: Better detection for InMemory database
-        var isInMemory = _context.Database.ProviderName?.Contains("InMemory") == true;
-        
-        if (isInMemory)
-        {
-            // 🔧 FIX: For InMemory database, use semaphore to serialize access
-            await _concurrencySemaphore.WaitAsync(cancellationToken);
-            try
-            {
-                await AssignPermissionsInternalAsync(roleId, permissionNames, cancellationToken);
-            }
-            finally
-            {
-                _concurrencySemaphore.Release();
-            }
-        }
-        else
-        {
-            // Real database: Use transaction for atomicity
-            using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-            try
-            {
-                await AssignPermissionsInternalAsync(roleId, permissionNames, cancellationToken);
-                await transaction.CommitAsync(cancellationToken);
-            }
-            catch
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                throw;
-            }
-        }
+        // This method is now only called by CreateDefaultRolesForTenantAsync 
+        // For other calls, use AssignPermissionsInternalAsync directly
+        await AssignPermissionsInternalAsync(roleId, permissionNames, cancellationToken);
     }
 
+    // 🔧 RENAME: Make this the main internal method for assigning permissions
     private async Task AssignPermissionsInternalAsync(int roleId, List<string> permissionNames, CancellationToken cancellationToken)
     {
         // 🔧 FIX: Add small delay for InMemory database to reduce race conditions
@@ -949,4 +958,53 @@ public class RoleService : IRoleService
     }
 
     #endregion
+
+    public async Task<List<string>> GetRolePermissionsAsync(int roleId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // 🔒 SECURITY FIX: Add tenant boundary check for role access
+            var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!tenantId.HasValue)
+            {
+                return new List<string>();
+            }
+
+            // First verify the role exists and belongs to current tenant or is a system role
+            var role = await _roleRepository.GetByIdAsync(roleId, cancellationToken);
+            if (role == null)
+            {
+                return new List<string>();
+            }
+
+            // Check tenant boundaries - only allow access to own tenant roles or system roles
+            if (role.TenantId.HasValue && role.TenantId.Value != tenantId.Value)
+            {
+                await _auditService.LogAsync(AuditAction.UnauthorizedAccess, $"role:{roleId}", 
+                    new { RoleId = roleId, AttemptedAction = "ViewPermissions", Reason = "CrossTenantAccess" }, false);
+            
+                throw new UnauthorizedAccessException($"Access denied to role {roleId}");
+            }
+
+            // Get permissions for the role
+            var permissions = await _context.RolePermissions
+                .Where(rp => rp.RoleId == roleId)
+                .Join(_context.Permissions,
+                    rp => rp.PermissionId,
+                    p => p.Id,
+                    (rp, p) => p.Name)
+                .ToListAsync(cancellationToken);
+
+            return permissions;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            throw; // Re-throw security exceptions
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting permissions for role {RoleId}", roleId);
+            return new List<string>();
+        }
+    }
 }

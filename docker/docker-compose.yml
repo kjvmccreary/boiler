@@ -40,7 +40,7 @@ services:
     container_name: boiler-pgadmin
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGLADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_DEFAULT_PASSWORD: admin123
     ports:
       - "8080:80"
     volumes:
@@ -107,6 +107,36 @@ services:
       retries: 3
       start_period: 40s
 
+  # ✅ FIXED: WorkflowService with proper health check
+  workflow-service:
+    build:
+      context: ..
+      dockerfile: docker/services/WorkflowService.Dockerfile
+    container_name: boiler-workflow
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=postgres;Database=${POSTGRES_DB:-boiler_dev};Username=${POSTGRES_USER:-boiler_app};Password=${POSTGRES_PASSWORD:-dev_password123}"
+      JwtSettings__SecretKey: ${JWT_SECRET_KEY:-super-secret-jwt-key-for-testing-that-is-at-least-256-bits-long-for-security-purposes}
+      Redis__ConnectionString: "redis:6379"
+      TenantSettings__DefaultTenantId: "1"
+      TenantSettings__RequireTenantContext: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "5003:5003"  # HTTP
+      - "7003:7003"  # HTTPS
+    networks:
+      - boiler-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f -k https://localhost:7003/health || curl -f http://localhost:5003/health"]
+      interval: 30s
+      timeout: 15s  # 🔧 Increased timeout
+      retries: 5
+      start_period: 90s  # 🔧 Increased start period - workflow takes longer to start
+
   api-gateway:
     build:
       context: ..
@@ -117,10 +147,13 @@ services:
       JwtSettings__SecretKey: ${JWT_SECRET_KEY:-super-secret-jwt-key-for-testing-that-is-at-least-256-bits-long-for-security-purposes}
       Services__AuthService: "https://auth-service:7001"
       Services__UserService: "https://user-service:7002"
+      Services__WorkflowService: "https://workflow-service:7003"
     depends_on:
       auth-service:
         condition: service_healthy
       user-service:
+        condition: service_healthy
+      workflow-service:
         condition: service_healthy
     ports:
       - "5000:5000"  # HTTP
@@ -134,7 +167,7 @@ services:
       retries: 3
       start_period: 40s
 
-  # Add this frontend service to your existing docker-compose.yml
+  # 🔧 FIXED: Frontend service with correct dependencies
   frontend:
     build:
       context: ..
@@ -144,7 +177,14 @@ services:
       - "3000:443"  # HTTPS port
       - "3080:80"   # HTTP redirect port
     depends_on:
-      - api-gateway
+      api-gateway:
+        condition: service_healthy  # 🔧 Fixed: Added condition
+      auth-service:  # 🔧 Fixed: Correct service name
+        condition: service_healthy
+      user-service:  # 🔧 Fixed: Correct service name
+        condition: service_healthy
+      workflow-service:  # 🔧 Fixed: Correct service name
+        condition: service_healthy
     networks:
       - boiler-network
     environment:

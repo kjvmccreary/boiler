@@ -58,21 +58,21 @@ Write-Host "Building and starting all services..." -ForegroundColor Yellow
 docker-compose -f docker/docker-compose.yml --env-file .env up -d --build
 
 Write-Host "Waiting for services to start..." -ForegroundColor Yellow
-Start-Sleep -Seconds 50
+Start-Sleep -Seconds 60  # ✅ INCREASE: More time for WorkflowService
 
 Write-Host "Checking service health..." -ForegroundColor Yellow
 $healthyServices = 0
-$maxRetries = 6
+$maxRetries = 8  # ✅ INCREASE: More retries for additional service
 $retryCount = 0
 
 do {
     $healthyServices = (docker ps --filter "health=healthy" --format "table {{.Names}}" | Measure-Object -Line).Lines - 1
-    if ($healthyServices -lt 6) {
-        Write-Host "  $healthyServices/6 services healthy. Waiting..." -ForegroundColor Yellow
+    if ($healthyServices -lt 7) {  # ✅ UPDATE: Now expecting 7 services (added WorkflowService)
+        Write-Host "  $healthyServices/7 services healthy. Waiting..." -ForegroundColor Yellow
         Start-Sleep -Seconds 10
         $retryCount++
     }
-} while ($healthyServices -lt 6 -and $retryCount -lt $maxRetries)
+} while ($healthyServices -lt 7 -and $retryCount -lt $maxRetries)
 
 Write-Host "Complete stack started successfully!" -ForegroundColor Green
 Write-Host ""
@@ -80,12 +80,14 @@ Write-Host "Services available:" -ForegroundColor Cyan
 Write-Host "  Frontend HTTPS:       https://localhost:3000" -ForegroundColor White
 Write-Host "  AuthService HTTPS:    https://localhost:7001/swagger" -ForegroundColor White
 Write-Host "  UserService HTTPS:    https://localhost:7002/swagger" -ForegroundColor White  
+Write-Host "  WorkflowService HTTPS: https://localhost:7003/swagger" -ForegroundColor White  # ✅ ADD: Workflow service
 Write-Host "  API Gateway HTTPS:    https://localhost:7000/gateway/info" -ForegroundColor White
 Write-Host "  PgAdmin:              http://localhost:8080" -ForegroundColor White
 Write-Host ""
 Write-Host "Test credentials (sample tenant admin):" -ForegroundColor Cyan
 Write-Host "  Email:    admin@tenant1.com" -ForegroundColor Gray
 Write-Host "  Password: Admin123!" -ForegroundColor Gray
+Write-Host "  Permissions: Users, Roles, Reports, AND all Workflow permissions! " -ForegroundColor Gray
 Write-Host ""
 Write-Host "Monitoring credentials:" -ForegroundColor Cyan
 Write-Host "  Email:    monitor@local" -ForegroundColor Gray
@@ -98,3 +100,4 @@ Write-Host "  View logs:    docker-compose -f docker/docker-compose.yml logs -f"
 Write-Host "  Stop stack:   .\scripts\stop-full-stack.ps1" -ForegroundColor Gray
 Write-Host "  Check status: docker-compose -f docker/docker-compose.yml ps" -ForegroundColor Gray
 Write-Host "  Restart svc:  docker-compose -f docker/docker-compose.yml restart <service-name>" -ForegroundColor Gray
+Write-Host "  Workflow logs: docker-compose -f docker/docker-compose.yml logs -f workflow-service" -ForegroundColor Gray  # ✅ ADD: Workflow-specific logs

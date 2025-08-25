@@ -260,41 +260,47 @@ public class UserServiceImplementation : Contracts.User.IUserService
                 };
 
                 // Use transaction to ensure both User and TenantUser are created together
-                using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
-                try
+                var strategy = _context.Database.CreateExecutionStrategy();
+                var result = await strategy.ExecuteAsync(async () =>
                 {
-                    // Create the user
-                    await _userRepository.AddAsync(user, cancellationToken);
-
-                    // Create TenantUser relationship
-                    var tenantUser = new TenantUser
+                    using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+                    try
                     {
-                        UserId = user.Id,
-                        TenantId = currentTenantId.Value,
-                        Role = "User", // Default role - can be updated later
-                        IsActive = true,
-                        JoinedAt = DateTime.UtcNow,
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow
-                    };
+                        // Create the user
+                        await _userRepository.AddAsync(user, cancellationToken);
 
-                    _context.TenantUsers.Add(tenantUser);
-                    await _context.SaveChangesAsync(cancellationToken);
+                        // Create TenantUser relationship
+                        var tenantUser = new TenantUser
+                        {
+                            UserId = user.Id,
+                            TenantId = currentTenantId.Value,
+                            Role = "User", // Default role - can be updated later
+                            IsActive = true,
+                            JoinedAt = DateTime.UtcNow,
+                            CreatedAt = DateTime.UtcNow,
+                            UpdatedAt = DateTime.UtcNow
+                        };
 
-                    await transaction.CommitAsync(cancellationToken);
+                        _context.TenantUsers.Add(tenantUser);
+                        await _context.SaveChangesAsync(cancellationToken);
 
-                    _logger.LogInformation("Successfully created new user {Email} (ID: {UserId}) for tenant {TenantId}", 
-                        request.Email, user.Id, currentTenantId.Value);
+                        await transaction.CommitAsync(cancellationToken);
 
-                    var userDto = _mapper.Map<UserDto>(user);
-                    return ApiResponseDto<UserDto>.SuccessResult(userDto, "User created successfully");
-                }
-                catch (Exception ex)
-                {
-                    await transaction.RollbackAsync(cancellationToken);
-                    _logger.LogError(ex, "Transaction failed while creating user {Email}", request.Email);
-                    throw; // Re-throw to be caught by outer catch block
-                }
+                        _logger.LogInformation("Successfully created new user {Email} (ID: {UserId}) for tenant {TenantId}", 
+                            request.Email, user.Id, currentTenantId.Value);
+
+                        var userDto = _mapper.Map<UserDto>(user);
+                        return ApiResponseDto<UserDto>.SuccessResult(userDto, "User created successfully");
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync(cancellationToken);
+                        _logger.LogError(ex, "Transaction failed while creating user {Email}", request.Email);
+                        throw;
+                    }
+                });
+
+                return result;
             }
         }
         catch (Exception ex)

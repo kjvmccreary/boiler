@@ -8,6 +8,8 @@ using DTOs.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Http; // 🔧 ADD: Missing using directive for IHttpContextAccessor
+using Microsoft.Extensions.Logging; // 🔧 ADD: For LogLevel.Information
 
 namespace Common.Extensions;
 
@@ -15,16 +17,17 @@ public static class DatabaseExtensions
 {
     public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
     {
-        // Database configuration
+        var connectionString = configuration.GetConnectionString("DefaultConnection")
+            ?? throw new InvalidOperationException("Database connection string 'DefaultConnection' not found.");
+
+        // 🔧 ONLY THIS REGISTRATION - remove any DbContextFactory registration
         services.AddDbContext<ApplicationDbContext>(options =>
         {
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), npgsqlOptions =>
+            options.UseNpgsql(connectionString, npgsqlOptions =>
             {
-                npgsqlOptions.MigrationsAssembly("Common");
-                npgsqlOptions.CommandTimeout(30);
+                npgsqlOptions.EnableRetryOnFailure();
             });
-
-            // Enable in development only
+            
             if (Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development")
             {
                 options.EnableSensitiveDataLogging();
@@ -88,8 +91,9 @@ public static class DatabaseExtensions
     public static async Task<IServiceProvider> SeedDatabaseAsync(this IServiceProvider serviceProvider)
     {
         using var scope = serviceProvider.CreateScope();
+        
+        // Use scoped context directly for seeding (avoids factory dependency issues)
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
         await SeedInitialDataAsync(context);
 
         return serviceProvider;
@@ -270,12 +274,13 @@ public static class DatabaseExtensions
             GrantedBy = "System"
         }));
 
-        // Tenant Admin gets user and role management permissions
+        // ✅ FIX: Tenant Admin gets user, role, reports AND workflow management permissions
         var adminRole = roles.First(r => r.Name == "Admin" && r.TenantId != null);
         var adminPermissions = permissions.Where(p => 
             p.Category == "Users" || 
             p.Category == "Roles" || 
-            p.Category == "Reports").ToList();
+            p.Category == "Reports" ||
+            p.Category == "Workflow").ToList();  // ✅ ADD: Workflow category
         rolePermissions.AddRange(adminPermissions.Select(p => new RolePermission
         {
             RoleId = adminRole.Id,
@@ -284,11 +289,14 @@ public static class DatabaseExtensions
             GrantedBy = "System"
         }));
 
-        // User gets basic permissions
+        // ✅ FIX: User gets basic permissions including workflow viewing
         var userRole = roles.First(r => r.Name == "User" && r.TenantId != null);
         var userPermissions = permissions.Where(p => 
             p.Name == "users.view" || 
-            p.Name == "reports.view").ToList();
+            p.Name == "reports.view" ||
+            p.Name == "workflow.view_definitions" ||  // ✅ ADD: View workflow definitions
+            p.Name == "workflow.view_instances" ||   // ✅ ADD: View workflow instances  
+            p.Name == "workflow.view_tasks").ToList(); // ✅ ADD: View workflow tasks
         rolePermissions.AddRange(userPermissions.Select(p => new RolePermission
         {
             RoleId = userRole.Id,

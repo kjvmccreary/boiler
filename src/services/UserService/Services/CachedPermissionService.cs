@@ -4,6 +4,7 @@ using Common.Services;
 using Contracts.Services;
 using DTOs.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -19,18 +20,18 @@ namespace UserService.Services
     /// </summary>
     public class CachedPermissionService : IPermissionService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IServiceProvider _serviceProvider;
         private readonly ITenantProvider _tenantProvider;
         private readonly IPermissionCache _cache;
         private readonly ILogger<CachedPermissionService> _logger;
         
         public CachedPermissionService(
-            ApplicationDbContext context,
+            IServiceProvider serviceProvider,
             ITenantProvider tenantProvider,
             IPermissionCache cache,
             ILogger<CachedPermissionService> logger)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             _tenantProvider = tenantProvider ?? throw new ArgumentNullException(nameof(tenantProvider));
             _cache = cache ?? throw new ArgumentNullException(nameof(cache));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -177,17 +178,19 @@ namespace UserService.Services
             int tenantId, 
             CancellationToken cancellationToken = default)
         {
+            using var scope = _serviceProvider.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            
             _logger.LogDebug("Loading permissions from database for user {UserId} in tenant {TenantId}", userId, tenantId);
             
-            // Single optimized query to get all permissions for a user in a tenant
-            var permissions = await _context.UserRoles
-                .IgnoreQueryFilters() // Bypass global query filters since we're specifying tenant explicitly
+            var permissions = await context.UserRoles
+                .IgnoreQueryFilters()
                 .Where(ur => ur.UserId == userId && ur.TenantId == tenantId && ur.IsActive)
-                .Join(_context.RolePermissions,
+                .Join(context.RolePermissions,
                     ur => ur.RoleId,
                     rp => rp.RoleId,
                     (ur, rp) => rp)
-                .Join(_context.Permissions,
+                .Join(context.Permissions,
                     rp => rp.PermissionId,
                     p => p.Id,
                     (rp, p) => p.Name)
@@ -268,15 +271,17 @@ namespace UserService.Services
             int tenantId,
             CancellationToken cancellationToken = default)
         {
-            // Single query to load all permissions for multiple users
-            var userPermissions = await _context.UserRoles
-                .IgnoreQueryFilters() // Bypass global query filters since we're specifying tenant explicitly
+            using var scope = _serviceProvider.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            
+            var userPermissions = await context.UserRoles
+                .IgnoreQueryFilters()
                 .Where(ur => userIds.Contains(ur.UserId) && ur.TenantId == tenantId && ur.IsActive)
-                .Join(_context.RolePermissions,
+                .Join(context.RolePermissions,
                     ur => ur.RoleId,
                     rp => rp.RoleId,
                     (ur, rp) => new { ur.UserId, rp.PermissionId })
-                .Join(_context.Permissions,
+                .Join(context.Permissions,
                     urp => urp.PermissionId,
                     p => p.Id,
                     (urp, p) => new { urp.UserId, PermissionName = p.Name })
@@ -291,7 +296,7 @@ namespace UserService.Services
                     .Select(up => up.PermissionName)
                     .Distinct()
                     .ToList();
-                
+
                 result[userId] = permissions;
             }
 
@@ -313,7 +318,10 @@ namespace UserService.Services
         // These methods don't need caching as they're admin/setup operations and called infrequently
         public async Task<IEnumerable<PermissionInfo>> GetAllAvailablePermissionsAsync(CancellationToken cancellationToken = default)
         {
-            var permissions = await _context.Permissions
+            using var scope = _serviceProvider.CreateScope();
+            var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            
+            var permissions = await context.Permissions
                 .Where(p => p.IsActive)
                 .Select(p => new PermissionInfo
                 {
@@ -339,7 +347,10 @@ namespace UserService.Services
         {
             try
             {
-                var categories = await _context.Permissions
+                using var scope = _serviceProvider.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                
+                var categories = await context.Permissions
                     .Where(p => p.IsActive)
                     .Select(p => p.Category)
                     .Distinct()
@@ -359,7 +370,10 @@ namespace UserService.Services
         {
             try
             {
-                var permissions = await _context.Permissions
+                using var scope = _serviceProvider.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                
+                var permissions = await context.Permissions
                     .Where(p => p.IsActive && p.Category == category)
                     .Select(p => new PermissionInfo
                     {
@@ -409,8 +423,10 @@ namespace UserService.Services
             
             try
             {
-                // Load all active users for tenant
-                var activeUsers = await _context.UserRoles
+                using var scope = _serviceProvider.CreateScope();
+                var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                
+                var activeUsers = await context.UserRoles
                     .IgnoreQueryFilters()
                     .Where(ur => ur.TenantId == tenantId && ur.IsActive)
                     .Select(ur => ur.UserId)
