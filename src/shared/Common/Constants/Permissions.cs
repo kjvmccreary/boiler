@@ -97,6 +97,27 @@ public static class Permissions
     }
 
     /// <summary>
+    /// Workflow management permissions
+    /// </summary>
+    public static class Workflow
+    {
+        public const string Read = "workflow.read";
+        public const string Write = "workflow.write";
+        public const string Admin = "workflow.admin";
+        public const string ViewDefinitions = "workflow.view_definitions";
+        public const string CreateDefinitions = "workflow.create_definitions";
+        public const string PublishDefinitions = "workflow.publish_definitions";
+        public const string ViewInstances = "workflow.view_instances";
+        public const string StartInstances = "workflow.start_instances";
+        public const string ManageInstances = "workflow.manage_instances";
+        public const string ViewTasks = "workflow.view_tasks";
+        public const string ClaimTasks = "workflow.claim_tasks";
+        public const string CompleteTasks = "workflow.complete_tasks";
+        public const string ViewAllTasks = "workflow.view_all_tasks";
+        public const string AdminOperations = "workflow.admin_operations";
+    }
+
+    /// <summary>
     /// Get all permission values as a list for seeding database
     /// </summary>
     public static List<string> GetAllPermissions()

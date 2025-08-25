@@ -1,0 +1,312 @@
+boiler-auth | [13:51:13 INF] Starting AuthService {}
+boiler-auth | === AuthService Starting ===
+boiler-auth | [13:51:14 WRN] Entity 'Role' has a global query filter defined and is the required end of a relationship with the entity 'RolePermission'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information. {"EventId": {"Id": 10622, "Name": "Microsoft.EntityFrameworkCore.Model.Validation.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
+boiler-auth | [13:51:14 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId": {"Id": 10400, "Name": "Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
+boiler-auth | [13:51:14 WRN] Using an in-memory repository. Keys will not be persisted to storage. {"EventId": {"Id": 50, "Name": "UsingInMemoryRepository"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.Repositories.EphemeralXmlRepository"}
+boiler-auth | [13:51:14 WRN] Neither user profile nor HKLM registry available. Using an ephemeral key repository. Protected data will be unavailable when application exits. {"EventId": {"Id": 59, "Name": "UsingEphemeralKeyRepository"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"}
+boiler-auth | [13:51:14 WRN] No XML encryptor configured. Key {fe0dbe6f-5d27-49eb-9b63-958b9fad8d6b} may be persisted to storage in unencrypted form. {"EventId": {"Id": 35, "Name": "NoXMLEncryptorConfiguredKeyMayBePersistedToStorageInUnencryptedForm"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"}
+boiler-auth | [13:51:14 WRN] Overriding HTTP_PORTS '8080' and HTTPS_PORTS ''. Binding to values defined by URLS instead 'http://0.0.0.0:5001;https://0.0.0.0:7001'. {"EventId": {"Id": 15}, "SourceContext": "Microsoft.AspNetCore.Hosting.Diagnostics"}
+boiler-auth | Now listening on: http://0.0.0.0:5001
+boiler-auth | [13:51:14 INF] Now listening on: http://0.0.0.0:5001 {}
+boiler-auth | Now listening on: https://0.0.0.0:7001
+boiler-auth | [13:51:14 INF] Now listening on: https://0.0.0.0:7001 {}
+boiler-auth | [13:51:18 INF] HTTP GET /health responded 200 in 17.8292 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-auth | [13:51:48 INF] HTTP GET /health responded 200 in 4.6725 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-pgadmin | postfix/postlog: starting the Postfix mail system
+boiler-pgadmin | /venv/lib/python3.12/site-packages/passlib/pwd.py:16: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+boiler-pgadmin |   import pkg_resources
+boiler-pgadmin | /venv/lib/python3.12/site-packages/passlib/pwd.py:16: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+boiler-pgadmin |   import pkg_resources
+boiler-pgadmin | [2025-08-25 13:51:11 +0000] [1] [INFO] Starting gunicorn 23.0.0
+boiler-redis | | 2025-08-25T13:51:02.748092557Z 1:C 25 Aug 2025 13:51:02.747 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+boiler-postgres | 
+boiler-user |   | 2025-08-25T13:51:13.670657994Z === UserService Startup Diagnostics ===
+boiler-postgres | PostgreSQL Database directory appears to contain a database; Skipping initialization
+boiler-postgres | 
+boiler-redis |  | 2025-08-25T13:51:02.748142763Z 1:C 25 Aug 2025 13:51:02.747 * Redis version=7.4.5, bits=64, commit=00000000, modified=0, pid=1, just started
+boiler-redis |  | 2025-08-25T13:51:02.748145864Z 1:C 25 Aug 2025 13:51:02.747 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+boiler-redis |  | 2025-08-25T13:51:02.748412195Z 1:M 25 Aug 2025 13:51:02.748 * monotonic clock: POSIX clock_gettime
+boiler-redis |  | 2025-08-25T13:51:02.749189086Z 1:M 25 Aug 2025 13:51:02.748 * Running mode=standalone, port=6379.
+boiler-redis |  | 2025-08-25T13:51:02.749417412Z 1:M 25 Aug 2025 13:51:02.749 * Server initialized
+boiler-redis |  | 2025-08-25T13:51:02.749427113Z 1:M 25 Aug 2025 13:51:02.749 * Loading RDB produced by version 7.4.5
+boiler-postgres | 2025-08-25 13:51:02.823 UTC [1] LOG:  starting PostgreSQL 15.14 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 14.2.0) 14.2.0, 64-bit
+boiler-postgres | 2025-08-25 13:51:02.823 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+boiler-postgres | 2025-08-25 13:51:02.823 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+boiler-postgres | 2025-08-25 13:51:02.825 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+boiler-postgres | 2025-08-25 13:51:02.830 UTC [29] LOG:  database system was shut down at 2025-08-25 13:49:12 UTC
+boiler-postgres | 2025-08-25 13:51:02.835 UTC [1] LOG:  database system is ready to accept connections
+boiler-postgres | 2025-08-25 13:51:14.637 UTC [41] ERROR:  duplicate key value violates unique constraint "IX_Permissions_Name"
+boiler-postgres | 2025-08-25 13:51:14.637 UTC [41] DETAIL:  Key ("Name")=(system.manage) already exists.
+boiler-postgres | 2025-08-25 13:51:14.637 UTC [41] STATEMENT:  INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-postgres | 	VALUES ($1, $2, $3, $4, $5, $6)
+boiler-redis |  | 2025-08-25T13:51:02.749429314Z 1:M 25 Aug 2025 13:51:02.749 * RDB age 111 seconds
+boiler-redis |  | 2025-08-25T13:51:02.749431314Z 1:M 25 Aug 2025 13:51:02.749 * RDB memory usage when created 0.97 Mb
+boiler-postgres | 	RETURNING "Id"
+boiler-pgadmin | 2025-08-25T13:51:11.007731558Z [2025-08-25 13:51:11 +0000] [1] [INFO] Listening at: http://[::]:80 (1)
+boiler-pgadmin | 2025-08-25T13:51:11.007753157Z [2025-08-25 13:51:11 +0000] [1] [INFO] Using worker: gthread
+boiler-pgadmin | 2025-08-25T13:51:11.017400978Z [2025-08-25 13:51:11 +0000] [88] [INFO] Booting worker with pid: 88
+boiler-redis |  | 2025-08-25T13:51:02.749534326Z 1:M 25 Aug 2025 13:51:02.749 * Done loading RDB, keys loaded: 15, keys expired: 0.
+boiler-redis |  | 2025-08-25T13:51:02.749540627Z 1:M 25 Aug 2025 13:51:02.749 * DB loaded from disk: 0.000 seconds
+boiler-redis |  | 2025-08-25T13:51:02.749542927Z 1:M 25 Aug 2025 13:51:02.749 * Ready to accept connections tcp
+boiler-pgadmin | 2025-08-25T13:51:15.875983185Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:15 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:15.876943827Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:15 +0000] "GET /dashboard/dashboard_stats/3/16384?chart_names=session_stats,tps_stats,ti_stats,to_stats,bio_stats HTTP/1.1" 401 127 "http://localhost:8080/browser/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-user |   | 2025-08-25T13:51:13.670714990Z Environment: Development
+boiler-pgadmin | 2025-08-25T13:51:15.880300026Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:15 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:16.436022710Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:16 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-user |   | 2025-08-25T13:51:13.670717690Z Application Name: UserService
+boiler-pgadmin | 2025-08-25T13:51:18.439822299Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:18 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:19.266811341Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:19 +0000] "GET /dashboard/dashboard_stats/3/16384?chart_names=session_stats,tps_stats,ti_stats,to_stats,bio_stats HTTP/1.1" 401 127 "http://localhost:8080/browser/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:20.443735997Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:20 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:22.441289937Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:22 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:24.268451092Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:24 +0000] "GET /dashboard/dashboard_stats/3/16384?chart_names=session_stats,tps_stats,ti_stats,to_stats,bio_stats HTTP/1.1" 401 127 "http://localhost:8080/browser/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:24.456860685Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:24 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:26.430678616Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:26 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:28.452504125Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:28 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:29.267378408Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:29 +0000] "GET /dashboard/dashboard_stats/3/16384?chart_names=session_stats,tps_stats,ti_stats,to_stats,bio_stats HTTP/1.1" 401 127 "http://localhost:8080/browser/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:30.438440840Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:30 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-user |   | 2025-08-25T13:51:13.670719690Z Content Root: /app
+boiler-pgadmin | 2025-08-25T13:51:32.463018126Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:32 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:34.268061380Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:34 +0000] "GET /dashboard/dashboard_stats/3/16384?chart_names=session_stats,tps_stats,ti_stats,to_stats,bio_stats HTTP/1.1" 401 127 "http://localhost:8080/browser/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-user |   | 2025-08-25T13:51:13.670721790Z Running in Container: true
+boiler-user |   | 2025-08-25T13:51:13.671598037Z [Startup] Monitoring:Enabled raw config value = 'True'
+boiler-pgadmin | 2025-08-25T13:51:34.446392332Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:34 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-user |   | 2025-08-25T13:51:13.671728530Z 🔧 Registering base services...
+boiler-user |   | 2025-08-25T13:51:13.677876861Z ✅ Base services registered
+boiler-user |   | 2025-08-25T13:51:13.677911359Z 🔧 Configuring Swagger...
+boiler-pgadmin | 2025-08-25T13:51:36.441406079Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:36 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-user |   | 2025-08-25T13:51:13.678462326Z ✅ Swagger configured
+boiler-pgadmin | 2025-08-25T13:51:38.432609130Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:38 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:39.265619848Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:39 +0000] "GET /dashboard/dashboard_stats/3/16384?chart_names=session_stats,tps_stats,ti_stats,to_stats,bio_stats HTTP/1.1" 401 127 "http://localhost:8080/browser/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-user |   | 2025-08-25T13:51:13.678468926Z 🔧 Registering common services...
+boiler-pgadmin | 2025-08-25T13:51:40.442321038Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:40 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-user |   | 2025-08-25T13:51:13.688454627Z ✅ Common services registered
+boiler-user |   | 2025-08-25T13:51:13.688480525Z 🔧 Configuring Redis...
+boiler-user |   | 2025-08-25T13:51:13.688482825Z 🔍 Redis connection string resolved to: redis:6379
+boiler-user |   | 2025-08-25T13:51:13.688484925Z 🧪 Performance/Testing environment: False
+boiler-user |   | 2025-08-25T13:51:13.688486925Z ✅ Configuring full Redis services
+boiler-pgadmin | 2025-08-25T13:51:42.438236826Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:42 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:44.278376790Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:44 +0000] "GET /dashboard/dashboard_stats/3/16384?chart_names=session_stats,tps_stats,ti_stats,to_stats,bio_stats HTTP/1.1" 401 127 "http://localhost:8080/browser/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-user |   | 2025-08-25T13:51:13.689785147Z ✅ Cache services configured
+boiler-pgadmin | 2025-08-25T13:51:44.432581371Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:44 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:46.438856328Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:46 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:48.453853472Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:48 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:49.275484283Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:49 +0000] "GET /dashboard/dashboard_stats/3/16384?chart_names=session_stats,tps_stats,ti_stats,to_stats,bio_stats HTTP/1.1" 401 127 "http://localhost:8080/browser/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-pgadmin | 2025-08-25T13:51:50.448401340Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:50 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-user |   | 2025-08-25T13:51:13.689798046Z 🔧 Registering database services...
+boiler-pgadmin | 2025-08-25T13:51:52.428325700Z ::ffff:172.18.0.1 - - [25/Aug/2025:13:51:52 +0000] "GET /sqleditor/status/1658408 HTTP/1.1" 401 127 "http://localhost:8080/sqleditor/panel/1658408?is_query_tool=false&cmd_type=3&obj_type=table&obj_id=16549&sgid=1&sid=3&did=16384&server_type=pg&server_cursor=false" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36"
+boiler-user |   | 2025-08-25T13:51:13.693219541Z ✅ Database services registered
+boiler-user |   | 2025-08-25T13:51:13.693247940Z 🔧 Registering user services...
+boiler-user |   | 2025-08-25T13:51:13.701986116Z ✅ User services registered
+boiler-user |   | 2025-08-25T13:51:13.702047412Z 🔐 Registering Enhanced Security and Monitoring services...
+boiler-user |   | 2025-08-25T13:51:13.702077210Z ✅ Enhanced Security and Monitoring services registered successfully
+boiler-user |   | 2025-08-25T13:51:13.702079710Z 📋 Registering Compliance and Alert services...
+boiler-user |   | 2025-08-25T13:51:13.702802167Z ✅ Compliance and Alert services registered successfully
+boiler-user |   | 2025-08-25T13:51:13.702809466Z 🩺 Registering Enhanced Health Checks...
+boiler-user |   | 2025-08-25T13:51:13.703061851Z ✅ Enhanced Health Checks registered
+boiler-user |   | 2025-08-25T13:51:13.703067151Z 🔧 Configuring authorization policies...
+boiler-user |   | 2025-08-25T13:51:13.703069151Z ✅ Authorization policies configured
+boiler-user |   | 2025-08-25T13:51:13.703071151Z 🔧 Configuring CORS...
+boiler-user |   | 2025-08-25T13:51:13.703073051Z ✅ CORS configured
+boiler-user |   | 2025-08-25T13:51:13.703075250Z 🔧 Registering additional services...
+boiler-user |   | 2025-08-25T13:51:13.703077250Z ✅ Additional services registered
+boiler-user |   | 2025-08-25T13:51:13.703079150Z 🏗️ Building application...
+boiler-user |   | 2025-08-25T13:51:13.814919945Z ✅ Application built successfully
+boiler-user |   | 2025-08-25T13:51:13.814958143Z 🔧 Configuring middleware pipeline...
+boiler-user |   | 2025-08-25T13:51:13.815957883Z 🔧 Adding development middleware...
+boiler-user |   | 2025-08-25T13:51:13.818599225Z ✅ Development middleware added
+boiler-user |   | 2025-08-25T13:51:13.819239186Z 🔐 Configuring Enhanced Security middleware...
+boiler-user |   | 2025-08-25T13:51:13.827605485Z [13:51:13 INF] Configuring Enhanced Security middleware {}
+boiler-user |   | 2025-08-25T13:51:13.831545249Z ✅ Enhanced Security middleware configured successfully
+boiler-user |   | 2025-08-25T13:51:13.831625344Z [13:51:13 INF] Enhanced Security middleware configured successfully {}
+boiler-user |   | 2025-08-25T13:51:13.875802095Z ✅ Middleware pipeline configured
+boiler-user |   | 2025-08-25T13:51:13.875833494Z 🩺 Mapping Enhanced Health Check endpoints...
+boiler-user |   | 2025-08-25T13:51:13.879012903Z ✅ Enhanced Health Check endpoints mapped
+boiler-user |   | 2025-08-25T13:51:13.879051901Z [13:51:13 INF] Starting UserService with Phase 11 Enhanced Security & Monitoring {}
+boiler-user |   | 2025-08-25T13:51:13.879054700Z === UserService Starting with Phase 11 Enhanced Security & Monitoring ===
+boiler-user |   | 2025-08-25T13:51:13.879056900Z 🔧 Testing cache connection...
+boiler-user |   | 2025-08-25T13:51:13.884155295Z [13:51:13 INF] Attempting to connect to Redis at: redis:6379 {"SourceContext": "Program"}
+boiler-user |   | 2025-08-25T13:51:13.943522936Z [13:51:13 INF] Redis connection status: Connected to redis:6379 {"SourceContext": "Program"}
+boiler-user |   | 2025-08-25T13:51:13.943940611Z [13:51:13 INF] Redis connection status: Connected {}
+boiler-user |   | 2025-08-25T13:51:13.950606011Z ✅ Redis connection successful: 08/25/2025 13:51:13
+boiler-user |   | 2025-08-25T13:51:13.951166777Z [13:51:13 INF] Redis connection test successful: 08/25/2025 13:51:13 {}
+boiler-user |   | 2025-08-25T13:51:13.951174577Z 🔧 Seeding database...
+boiler-user |   | 2025-08-25T13:51:14.266435877Z [13:51:14 WRN] Entity 'Role' has a global query filter defined and is the required end of a relationship with the entity 'RolePermission'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information. {"EventId": {"Id": 10622, "Name": "Microsoft.EntityFrameworkCore.Model.Validation.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
+boiler-user |   | 2025-08-25T13:51:14.268886830Z [13:51:14 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId": {"Id": 10400, "Name": "Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
+boiler-user |   | 2025-08-25T13:51:14.648359981Z [13:51:14 ERR] Failed executing DbCommand (5ms) [Parameters=[@p0='System' (Nullable = false), @p1='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p2='Permission to system manage' (Nullable = false), @p3='True', @p4='system.manage' (Nullable = false), @p5='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p6='System' (Nullable = false), @p7='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p8='Permission to system monitor' (Nullable = false), @p9='True', @p10='system.monitor' (Nullable = false), @p11='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p12='Workflow' (Nullable = false), @p13='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p14='Permission to workflow admin' (Nullable = false), @p15='True', @p16='workflow.admin' (Nullable = false), @p17='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p18='Workflow' (Nullable = false), @p19='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p20='Permission to workflow admin_operations' (Nullable = false), @p21='True', @p22='workflow.admin_operations' (Nullable = false), @p23='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p24='Workflow' (Nullable = false), @p25='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p26='Permission to workflow claim_tasks' (Nullable = false), @p27='True', @p28='workflow.claim_tasks' (Nullable = false), @p29='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p30='Workflow' (Nullable = false), @p31='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p32='Permission to workflow complete_tasks' (Nullable = false), @p33='True', @p34='workflow.complete_tasks' (Nullable = false), @p35='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p36='Workflow' (Nullable = false), @p37='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p38='Permission to workflow create_definitions' (Nullable = false), @p39='True', @p40='workflow.create_definitions' (Nullable = false), @p41='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p42='Workflow' (Nullable = false), @p43='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p44='Permission to workflow manage_instances' (Nullable = false), @p45='True', @p46='workflow.manage_instances' (Nullable = false), @p47='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p48='Workflow' (Nullable = false), @p49='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p50='Permission to workflow publish_definitions' (Nullable = false), @p51='True', @p52='workflow.publish_definitions' (Nullable = false), @p53='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p54='Workflow' (Nullable = false), @p55='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p56='Permission to workflow read' (Nullable = false), @p57='True', @p58='workflow.read' (Nullable = false), @p59='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p60='Workflow' (Nullable = false), @p61='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p62='Permission to workflow start_instances' (Nullable = false), @p63='True', @p64='workflow.start_instances' (Nullable = false), @p65='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p66='Workflow' (Nullable = false), @p67='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p68='Permission to workflow view_all_tasks' (Nullable = false), @p69='True', @p70='workflow.view_all_tasks' (Nullable = false), @p71='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p72='Workflow' (Nullable = false), @p73='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p74='Permission to workflow view_definitions' (Nullable = false), @p75='True', @p76='workflow.view_definitions' (Nullable = false), @p77='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p78='Workflow' (Nullable = false), @p79='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p80='Permission to workflow view_instances' (Nullable = false), @p81='True', @p82='workflow.view_instances' (Nullable = false), @p83='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p84='Workflow' (Nullable = false), @p85='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p86='Permission to workflow view_tasks' (Nullable = false), @p87='True', @p88='workflow.view_tasks' (Nullable = false), @p89='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p90='Workflow' (Nullable = false), @p91='2025-08-25T13:51:14.6050972Z' (DbType = DateTime), @p92='Permission to workflow write' (Nullable = false), @p93='True', @p94='workflow.write' (Nullable = false), @p95='2025-08-25T13:51:14.6050972Z' (DbType = DateTime)], CommandType='Text', CommandTimeout='30']
+boiler-user |   | 2025-08-25T13:51:14.648395778Z INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-user |   | 2025-08-25T13:51:14.648398678Z VALUES (@p0, @p1, @p2, @p3, @p4, @p5)
+boiler-user |   | 2025-08-25T13:51:14.648400978Z RETURNING "Id";
+boiler-user |   | 2025-08-25T13:51:14.648402978Z INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-user |   | 2025-08-25T13:51:14.648406578Z VALUES (@p6, @p7, @p8, @p9, @p10, @p11)
+boiler-user |   | 2025-08-25T13:51:14.648408578Z RETURNING "Id";
+boiler-user |   | 2025-08-25T13:51:14.648410478Z INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-user |   | 2025-08-25T13:51:14.648412677Z VALUES (@p12, @p13, @p14, @p15, @p16, @p17)
+boiler-user |   | 2025-08-25T13:51:14.648414577Z RETURNING "Id";
+boiler-user |   | 2025-08-25T13:51:14.648416477Z INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-user |   | 2025-08-25T13:51:14.648418577Z VALUES (@p18, @p19, @p20, @p21, @p22, @p23)
+boiler-user |   | 2025-08-25T13:51:14.648420577Z RETURNING "Id";
+boiler-user |   | 2025-08-25T13:51:14.648422477Z INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-user |   | 2025-08-25T13:51:14.648424677Z VALUES (@p24, @p25, @p26, @p27, @p28, @p29)
+boiler-user |   | 2025-08-25T13:51:14.648426577Z RETURNING "Id";
+boiler-user |   | 2025-08-25T13:51:14.648428477Z INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-user |   | 2025-08-25T13:51:14.648430876Z VALUES (@p30, @p31, @p32, @p33, @p34, @p35)
+boiler-user |   | 2025-08-25T13:51:14.648432776Z RETURNING "Id";
+boiler-user |   | 2025-08-25T13:51:14.648434776Z INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-user |   | 2025-08-25T13:51:14.648436876Z VALUES (@p36, @p37, @p38, @p39, @p40, @p41)
+boiler-user |   | 2025-08-25T13:51:14.648438776Z RETURNING "Id";
+boiler-user |   | 2025-08-25T13:51:14.648440776Z INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-user |   | 2025-08-25T13:51:14.648442776Z VALUES (@p42, @p43, @p44, @p45, @p46, @p47)
+boiler-user |   | 2025-08-25T13:51:14.648444676Z RETURNING "Id";
+boiler-user |   | 2025-08-25T13:51:14.648446675Z INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-user |   | 2025-08-25T13:51:14.648448775Z VALUES (@p48, @p49, @p50, @p51, @p52, @p53)
+boiler-user |   | 2025-08-25T13:51:14.648450675Z RETURNING "Id";
+boiler-user |   | 2025-08-25T13:51:14.648452575Z INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-user |   | 2025-08-25T13:51:14.648454675Z VALUES (@p54, @p55, @p56, @p57, @p58, @p59)
+boiler-user |   | 2025-08-25T13:51:14.648456575Z RETURNING "Id";
+boiler-user |   | 2025-08-25T13:51:14.648458775Z INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-user |   | 2025-08-25T13:51:14.648460875Z VALUES (@p60, @p61, @p62, @p63, @p64, @p65)
+boiler-user |   | 2025-08-25T13:51:14.648463574Z RETURNING "Id";
+boiler-user |   | 2025-08-25T13:51:14.648465474Z INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-user |   | 2025-08-25T13:51:14.648467574Z VALUES (@p66, @p67, @p68, @p69, @p70, @p71)
+boiler-user |   | 2025-08-25T13:51:14.648469574Z RETURNING "Id";
+boiler-user |   | 2025-08-25T13:51:14.648472974Z INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-user |   | 2025-08-25T13:51:14.648475174Z VALUES (@p72, @p73, @p74, @p75, @p76, @p77)
+boiler-user |   | 2025-08-25T13:51:14.648477074Z RETURNING "Id";
+boiler-user |   | 2025-08-25T13:51:14.648478974Z INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-user |   | 2025-08-25T13:51:14.648481073Z VALUES (@p78, @p79, @p80, @p81, @p82, @p83)
+boiler-user |   | 2025-08-25T13:51:14.648483073Z RETURNING "Id";
+boiler-user |   | 2025-08-25T13:51:14.648484973Z INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-user |   | 2025-08-25T13:51:14.648487073Z VALUES (@p84, @p85, @p86, @p87, @p88, @p89)
+boiler-user |   | 2025-08-25T13:51:14.648488973Z RETURNING "Id";
+boiler-user |   | 2025-08-25T13:51:14.648490973Z INSERT INTO "Permissions" ("Category", "CreatedAt", "Description", "IsActive", "Name", "UpdatedAt")
+boiler-user |   | 2025-08-25T13:51:14.648492973Z VALUES (@p90, @p91, @p92, @p93, @p94, @p95)
+boiler-user |   | 2025-08-25T13:51:14.648494973Z RETURNING "Id"; {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command"}
+boiler-user |   | 2025-08-25T13:51:14.663042100Z [13:51:14 ERR] An exception occurred in the database while saving changes for context type 'Common.Data.ApplicationDbContext'.
+boiler-user |   | 2025-08-25T13:51:14.663063599Z Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+boiler-user |   | 2025-08-25T13:51:14.663066099Z  ---> Npgsql.PostgresException (0x80004005): 23505: duplicate key value violates unique constraint "IX_Permissions_Name"
+boiler-user |   | 2025-08-25T13:51:14.663068699Z 
+boiler-user |   | 2025-08-25T13:51:14.663070699Z DETAIL: Detail redacted as it may contain sensitive data. Specify 'Include Error Detail' in the connection string to include this information.
+boiler-user |   | 2025-08-25T13:51:14.663072799Z    at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+boiler-user |   | 2025-08-25T13:51:14.663075098Z    at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+boiler-user |   | 2025-08-25T13:51:14.663077298Z    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.663079398Z    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.663081498Z    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.663083498Z    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.663085498Z    at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.663087698Z    at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.663101597Z    at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.663104197Z    at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.663106297Z   Exception data:
+boiler-user |   | 2025-08-25T13:51:14.663108196Z     Severity: ERROR
+boiler-user |   | 2025-08-25T13:51:14.663110196Z     SqlState: 23505
+boiler-user |   | 2025-08-25T13:51:14.663112696Z     MessageText: duplicate key value violates unique constraint "IX_Permissions_Name"
+boiler-user |   | 2025-08-25T13:51:14.663114796Z     Detail: Detail redacted as it may contain sensitive data. Specify 'Include Error Detail' in the connection string to include this information.
+boiler-user |   | 2025-08-25T13:51:14.663116896Z     SchemaName: public
+boiler-user |   | 2025-08-25T13:51:14.663118796Z     TableName: Permissions
+boiler-user |   | 2025-08-25T13:51:14.663945546Z     ConstraintName: IX_Permissions_Name
+boiler-user |   | 2025-08-25T13:51:14.663959345Z     File: nbtinsert.c
+boiler-user |   | 2025-08-25T13:51:14.663961545Z     Line: 664
+boiler-user |   | 2025-08-25T13:51:14.663963545Z     Routine: _bt_check_unique
+boiler-user |   | 2025-08-25T13:51:14.663965445Z    --- End of inner exception stack trace ---
+boiler-user |   | 2025-08-25T13:51:14.663967445Z    at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.663969545Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.663971745Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.663973845Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.663975944Z    at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.663978444Z    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.663980444Z    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.663983344Z    at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.663985644Z    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken) {"EventId": {"Id": 10000, "Name": "Microsoft.EntityFrameworkCore.Update.SaveChangesFailed"}, "SourceContext": "Microsoft.EntityFrameworkCore.Update"}
+boiler-user |   | 2025-08-25T13:51:14.663993243Z Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+boiler-user |   | 2025-08-25T13:51:14.663995943Z  ---> Npgsql.PostgresException (0x80004005): 23505: duplicate key value violates unique constraint "IX_Permissions_Name"
+boiler-user |   | 2025-08-25T13:51:14.663998143Z 
+boiler-user |   | 2025-08-25T13:51:14.664000043Z DETAIL: Detail redacted as it may contain sensitive data. Specify 'Include Error Detail' in the connection string to include this information.
+boiler-user |   | 2025-08-25T13:51:14.664002243Z    at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+boiler-user |   | 2025-08-25T13:51:14.664004343Z    at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+boiler-user |   | 2025-08-25T13:51:14.664006543Z    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.664008543Z    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.664010642Z    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.664012642Z    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.664014742Z    at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.664016742Z    at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.664029741Z    at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.664031841Z    at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.664034041Z   Exception data:
+boiler-user |   | 2025-08-25T13:51:14.664035941Z     Severity: ERROR
+boiler-user |   | 2025-08-25T13:51:14.664037841Z     SqlState: 23505
+boiler-user |   | 2025-08-25T13:51:14.664039741Z     MessageText: duplicate key value violates unique constraint "IX_Permissions_Name"
+boiler-user |   | 2025-08-25T13:51:14.664041741Z     Detail: Detail redacted as it may contain sensitive data. Specify 'Include Error Detail' in the connection string to include this information.
+boiler-user |   | 2025-08-25T13:51:14.664043840Z     SchemaName: public
+boiler-user |   | 2025-08-25T13:51:14.664045840Z     TableName: Permissions
+boiler-user |   | 2025-08-25T13:51:14.664047640Z     ConstraintName: IX_Permissions_Name
+boiler-user |   | 2025-08-25T13:51:14.664049640Z     File: nbtinsert.c
+boiler-user |   | 2025-08-25T13:51:14.664051540Z     Line: 664
+boiler-user |   | 2025-08-25T13:51:14.664055540Z     Routine: _bt_check_unique
+boiler-user |   | 2025-08-25T13:51:14.664058040Z    --- End of inner exception stack trace ---
+boiler-user |   | 2025-08-25T13:51:14.664060039Z    at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.664062539Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.664064739Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.664066839Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.664069039Z    at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.664071239Z    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.664073339Z    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.664075439Z    at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.664077638Z    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668619466Z [13:51:14 FTL] UserService terminated unexpectedly {}
+boiler-user |   | 2025-08-25T13:51:14.668642365Z Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+boiler-user |   | 2025-08-25T13:51:14.668644765Z  ---> Npgsql.PostgresException (0x80004005): 23505: duplicate key value violates unique constraint "IX_Permissions_Name"
+boiler-user |   | 2025-08-25T13:51:14.668647364Z 
+boiler-user |   | 2025-08-25T13:51:14.668649464Z DETAIL: Detail redacted as it may contain sensitive data. Specify 'Include Error Detail' in the connection string to include this information.
+boiler-user |   | 2025-08-25T13:51:14.668651464Z    at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+boiler-user |   | 2025-08-25T13:51:14.668653764Z    at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+boiler-user |   | 2025-08-25T13:51:14.668655964Z    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668658164Z    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668671763Z    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668673963Z    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668675963Z    at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668678763Z    at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668680962Z    at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668683162Z    at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668685162Z   Exception data:
+boiler-user |   | 2025-08-25T13:51:14.668687162Z     Severity: ERROR
+boiler-user |   | 2025-08-25T13:51:14.668689062Z     SqlState: 23505
+boiler-user |   | 2025-08-25T13:51:14.668690962Z     MessageText: duplicate key value violates unique constraint "IX_Permissions_Name"
+boiler-user |   | 2025-08-25T13:51:14.668693762Z     Detail: Detail redacted as it may contain sensitive data. Specify 'Include Error Detail' in the connection string to include this information.
+boiler-user |   | 2025-08-25T13:51:14.668695862Z     SchemaName: public
+boiler-user |   | 2025-08-25T13:51:14.668697661Z     TableName: Permissions
+boiler-user |   | 2025-08-25T13:51:14.668699761Z     ConstraintName: IX_Permissions_Name
+boiler-user |   | 2025-08-25T13:51:14.668701561Z     File: nbtinsert.c
+boiler-user |   | 2025-08-25T13:51:14.668703561Z     Line: 664
+boiler-user |   | 2025-08-25T13:51:14.668705561Z     Routine: _bt_check_unique
+boiler-user |   | 2025-08-25T13:51:14.668707361Z    --- End of inner exception stack trace ---
+boiler-user |   | 2025-08-25T13:51:14.668709461Z    at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668711761Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668714060Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668728760Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668730859Z    at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668733059Z    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668735059Z    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668743759Z    at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668746158Z    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668748258Z    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.668750658Z    at Common.Data.ApplicationDbContext.SaveChangesAsync(CancellationToken cancellationToken) in /src/shared/Common/Data/ApplicationDbContext.cs:line 223
+boiler-user |   | 2025-08-25T13:51:14.668752758Z    at Common.Extensions.DatabaseExtensions.SeedPermissionsAsync(ApplicationDbContext context) in /src/shared/Common/Extensions/DatabaseExtensions.cs:line 157
+boiler-user |   | 2025-08-25T13:51:14.668754858Z    at Common.Extensions.DatabaseExtensions.SeedInitialDataAsync(ApplicationDbContext context) in /src/shared/Common/Extensions/DatabaseExtensions.cs:line 101
+boiler-user |   | 2025-08-25T13:51:14.668757058Z    at Common.Extensions.DatabaseExtensions.SeedDatabaseAsync(IServiceProvider serviceProvider) in /src/shared/Common/Extensions/DatabaseExtensions.cs:line 93
+boiler-user |   | 2025-08-25T13:51:14.668759058Z    at Program.<Main>$(String[] args) in /src/services/UserService/Program.cs:line 609
+boiler-user |   | 2025-08-25T13:51:14.668761158Z FATAL ERROR: An error occurred while saving the entity changes. See the inner exception for details.
+boiler-user |   | 2025-08-25T13:51:14.669442317Z Stack trace:    at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.669448316Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.669450516Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.669452616Z    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.669454916Z    at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.669472715Z    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.669475015Z    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.669477315Z    at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.669479415Z    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.669485114Z    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+boiler-user |   | 2025-08-25T13:51:14.669487214Z    at Common.Data.ApplicationDbContext.SaveChangesAsync(CancellationToken cancellationToken) in /src/shared/Common/Data/ApplicationDbContext.cs:line 223
+boiler-user |   | 2025-08-25T13:51:14.669489414Z    at Common.Extensions.DatabaseExtensions.SeedPermissionsAsync(ApplicationDbContext context) in /src/shared/Common/Extensions/DatabaseExtensions.cs:line 157
+boiler-user |   | 2025-08-25T13:51:14.669491914Z    at Common.Extensions.DatabaseExtensions.SeedInitialDataAsync(ApplicationDbContext context) in /src/shared/Common/Extensions/DatabaseExtensions.cs:line 101
+boiler-user |   | 2025-08-25T13:51:14.669494014Z    at Common.Extensions.DatabaseExtensions.SeedDatabaseAsync(IServiceProvider serviceProvider) in /src/shared/Common/Extensions/DatabaseExtensions.cs:line 93
+boiler-user |   | 2025-08-25T13:51:14.669496114Z    at Program.<Main>$(String[] args) in /src/services/UserService/Program.cs:line 609

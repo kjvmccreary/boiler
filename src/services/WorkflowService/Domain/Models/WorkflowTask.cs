@@ -9,6 +9,10 @@ public class WorkflowTask : BaseEntity
     [Required]
     public int WorkflowInstanceId { get; set; }
     
+    // ✅ ADD: Direct TenantId for proper isolation
+    [Required]
+    public int TenantId { get; set; }
+    
     [Required]
     [MaxLength(100)]
     public string NodeId { get; set; } = string.Empty;

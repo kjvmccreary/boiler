@@ -4,8 +4,8 @@ using Common.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Serilog;
+using WorkflowService.Persistence; // ✅ UNCOMMENT: We have WorkflowDbContext
 // REMOVE: These namespaces don't exist yet - will add them later
-// using WorkflowService.Persistence;
 // using WorkflowService.Services;
 // using WorkflowService.Engine;
 // using WorkflowService.Background;
@@ -64,15 +64,18 @@ builder.Services.AddCommonServices(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddDynamicAuthorization();
 
-// TODO: Add WorkflowService database context when created
-// builder.Services.AddDbContext<WorkflowDbContext>(options =>
-// {
-//     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-//     options.UseNpgsql(connectionString, npgsqlOptions =>
-//     {
-//         npgsqlOptions.EnableRetryOnFailure();
-//     });
-// });
+// ✅ FIX: Add the main ApplicationDbContext (required by common services)
+builder.Services.AddDatabase(builder.Configuration);
+
+// ✅ UNCOMMENT: Add WorkflowService database context (NOW READY!)
+builder.Services.AddDbContext<WorkflowDbContext>(options =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    options.UseNpgsql(connectionString, npgsqlOptions =>
+    {
+        npgsqlOptions.EnableRetryOnFailure();
+    });
+});
 
 // TODO: Add Workflow Services when created
 // builder.Services.AddScoped<IDefinitionService, DefinitionService>();
@@ -112,9 +115,11 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Add Health Checks (basic for now)
+// ✅ ENHANCED: Add Health Checks with both database contexts
 builder.Services.AddHealthChecks()
-    .AddCheck("workflow-service", () =>
+    .AddDbContextCheck<ApplicationDbContext>("main-database")
+    .AddDbContextCheck<WorkflowDbContext>("workflow-database")
+    .AddCheck("workflow-service", () => 
         Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy("Workflow service operational"));
 
 var app = builder.Build();
@@ -154,30 +159,36 @@ app.Lifetime.ApplicationStarted.Register(() =>
 {
     var addresses = app.Services.GetRequiredService<Microsoft.AspNetCore.Hosting.Server.IServer>()
         .Features.Get<Microsoft.AspNetCore.Hosting.Server.Features.IServerAddressesFeature>()?.Addresses;
-
+    
     foreach (var address in addresses ?? Enumerable.Empty<string>())
     {
         Console.WriteLine($"Now listening on: {address}");
         Log.Information("Now listening on: {Address}", address);
     }
-
-    Console.WriteLine("🌊 WorkflowService started successfully (Basic setup)");
-    Log.Information("WorkflowService started - basic configuration loaded");
+    
+    Console.WriteLine("🌊 WorkflowService started with dual database contexts");
+    Log.Information("WorkflowService started - main and workflow database contexts operational");
 });
 
 try
 {
     Log.Information("Starting WorkflowService");
     Console.WriteLine("=== WorkflowService Starting ===");
-
-    // TODO: Run database migrations when DbContext is created
-    // using (var scope = app.Services.CreateScope())
-    // {
-    //     var context = scope.ServiceProvider.GetRequiredService<WorkflowDbContext>();
-    //     await context.Database.MigrateAsync();
-    //     Console.WriteLine("✅ Database migrations applied");
-    // }
-
+    
+    // ✅ UNCOMMENT: Run database migrations (NOW READY!)
+    using (var scope = app.Services.CreateScope())
+    {
+        // Migrate main ApplicationDbContext first
+        var mainContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        await mainContext.Database.MigrateAsync();
+        Console.WriteLine("✅ Main database migrations applied");
+        
+        // Migrate WorkflowDbContext
+        var workflowContext = scope.ServiceProvider.GetRequiredService<WorkflowDbContext>();
+        await workflowContext.Database.MigrateAsync();
+        Console.WriteLine("✅ Workflow database migrations applied");
+    }
+    
     app.Run();
 }
 catch (Exception ex)

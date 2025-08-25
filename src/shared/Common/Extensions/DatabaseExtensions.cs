@@ -97,7 +97,10 @@ public static class DatabaseExtensions
 
     private static async Task SeedInitialDataAsync(ApplicationDbContext context)
     {
-        // Check if we already have data
+        // Always check for missing permissions, even if tenants exist
+        await SeedPermissionsAsync(context);
+        
+        // Check if we already have data for OTHER seeding
         if (await context.Tenants.AnyAsync())
             return;
 
@@ -150,8 +153,32 @@ public static class DatabaseExtensions
         // Add only missing permissions
         if (missingPermissions.Any())
         {
-            context.Permissions.AddRange(missingPermissions);
-            await context.SaveChangesAsync();
+            try
+            {
+                context.Permissions.AddRange(missingPermissions);
+                await context.SaveChangesAsync();
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException ex) 
+                when (ex.InnerException?.Message?.Contains("duplicate key") == true)
+            {
+                // Handle any remaining duplicates by adding them one by one
+                foreach (var permission in missingPermissions)
+                {
+                    try
+                    {
+                        if (!await context.Permissions.AnyAsync(p => p.Name == permission.Name))
+                        {
+                            context.Permissions.Add(permission);
+                            await context.SaveChangesAsync();
+                        }
+                    }
+                    catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+                    {
+                        // Permission already exists, skip it
+                        context.Entry(permission).State = EntityState.Detached;
+                    }
+                }
+            }
         }
     }
 
