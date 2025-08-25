@@ -1,0 +1,112 @@
+=================================================================
+1) Backend service (sibling to AuthService & UserService)
+=================================================================
+src/services/WorkflowService/
+  WorkflowService.csproj
+  Program.cs
+  appsettings.json
+  appsettings.Development.json
+
+  Controllers/
+    DefinitionsController.cs      // draft, publish, list/get
+    InstancesController.cs        // start/get/signal/terminate
+    TasksController.cs            // mine/list, claim, complete
+    AdminController.cs            // retry, moveToNode (workflow.admin)
+
+  Domain/
+    Dsl/                          // JSON DSL contracts (nodes, edges, guards)
+      WorkflowDefinitionJson.cs
+      NodeTypes.cs                // Start, End, HumanTask, Automatic, Gateway, Timer
+    Models/
+      WorkflowDefinition.cs       // versioned, immutable JSON blob
+      WorkflowInstance.cs         // current node(s), status, context JSON
+      WorkflowTask.cs             // human-facing tasks
+      WorkflowEvent.cs            // persisted event stream
+      OutboxMessage.cs            // event-first outbox
+    Enums/
+      InstanceStatus.cs
+      TaskStatus.cs
+
+  Persistence/
+    WorkflowDbContext.cs
+    Configurations/               // EF mappings (jsonb, indexes)
+    Migrations/
+
+  Engine/
+    WorkflowRuntime.cs            // Stateless-based execution
+    ConditionEvaluator.cs         // JsonLogic/CEL (safe) evaluator
+    Executors/
+      AutomaticExecutor.cs
+      HumanTaskExecutor.cs
+      TimerExecutor.cs
+      GatewayEvaluator.cs
+
+  Background/
+    TimerWorker.cs                // polls due timers (MVP: DB polling)
+
+  Services/
+    DefinitionService.cs
+    InstanceService.cs
+    TaskService.cs
+    AdminService.cs
+    EventPublisher.cs             // writes WorkflowEvent + Outbox
+
+  Security/
+    Policies.cs                   // workflow.read/write/admin
+
+
+=================================================================
+2) Shared libraries (types used across services)
+=================================================================
+src/shared/DTOs/Workflow/
+  WorkflowDefinitionDto.cs
+  PublishDefinitionRequestDto.cs
+  StartInstanceRequestDto.cs
+  WorkflowInstanceDto.cs
+  TaskSummaryDto.cs
+  CompleteTaskRequestDto.cs
+
+src/shared/Contracts/Workflow/
+  IWorkflowReadService.cs         // narrow cross-service reads if needed
+  IWorkflowEvents.cs              // event contracts (names, payload schemas)
+
+
+=================================================================
+3) API Gateway routes (expose /workflow/*)
+=================================================================
+src/services/ApiGateway/ocelot.json
+  // Add route entries like:
+  // /workflow/definitions/*  → WorkflowService:5003
+  // /workflow/instances/*    → WorkflowService:5003
+  // /workflow/tasks/*        → WorkflowService:5003
+
+=================================================================
+4) Docker & environment
+=================================================================
+docker/services/WorkflowService.Dockerfile
+docker/docker-compose.yml
+  # add 'workflowservice' with ports 5003 (dev) / 7003 (https), env for:
+  # - DB connection
+  # - JWT authority (AuthService)
+  # - Redis (optional for future timers)
+
+=================================================================
+5) Tests (mirror your unit test layout)
+=================================================================
+tests/unit/WorkflowService.Tests/
+  WorkflowDefinitionsTests.cs
+  WorkflowInstancesTests.cs
+  WorkflowTasksTests.cs
+  WorkflowAdminOpsTests.cs
+
+=================================================================
+6) Frontend touchpoints (thin client for MVP)
+=================================================================
+frontend/react-app/src/services/workflowService.ts
+  // REST wrappers: list/publish definitions, start instance,
+  // get instance, list my tasks, claim/complete task
+
+frontend/react-app/src/components/workflow/
+  DefinitionsTable.tsx
+  InstanceDetails.tsx
+  MyTasks.tsx

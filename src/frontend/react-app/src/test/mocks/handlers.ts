@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
-import type { User } from '@/types/index.js'
-import { mockUsers, mockRoles, mockPermissions } from '../utils/test-utils.js'
+import type { User, Role } from '@/types/index'
+import { mockUsers, mockRoles, mockPermissions } from '../utils/test-utils.tsx' // ✅ Explicit extension
 
 const API_BASE_URL = 'http://localhost:5000/api'
 
@@ -27,23 +27,26 @@ const createPagedResponse = <T>(items: T[], page: number, pageSize: number, tota
   })
 }
 
-const enhancedMockUsers = Object.values(mockUsers).map(user => ({
-  ...user,
-  phoneNumber: user.phoneNumber || null,
-  timeZone: user.timeZone || 'UTC',
-  language: user.language || 'en',
-  lastLoginAt: user.lastLoginAt || null
-}))
+// ✅ Fixed: Remove the problematic map and use the exports directly
+const enhancedMockUsers: User[] = Object.values(mockUsers)
+const enhancedMockRoles: Role[] = Object.values(mockRoles)
 
-const enhancedMockRoles = Object.values(mockRoles)
-
-// 🔧 NEW: Mock tenant data
+// Mock tenant data
 const mockTenants = [
   {
     id: '1',
-    name: 'Default Tenant',
-    domain: 'localhost',
+    name: 'Test Tenant',
+    domain: 'test.local',
     subscriptionPlan: 'Development',
+    isActive: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: '2',
+    name: 'Test Tenant 2',
+    domain: 'test2.local',
+    subscriptionPlan: 'Premium',
     isActive: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -63,6 +66,35 @@ const mockTenantSettings = {
   subscriptionPlan: 'Development'
 }
 
+// Create complete User objects that match the User interface
+const createCompleteUser = (id: string, email: string, firstName: string, lastName: string): User => ({
+  id,
+  email,
+  firstName,
+  lastName,
+  fullName: `${firstName} ${lastName}`,
+  phoneNumber: undefined,
+  timeZone: 'UTC',
+  language: 'en',
+  lastLoginAt: undefined,
+  emailConfirmed: true,
+  isActive: true,
+  roles: ['User'],
+  tenantId: '1',
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  preferences: {
+    theme: 'light',
+    language: 'en',
+    timeZone: 'UTC',
+    notifications: {
+      email: true,
+      push: true,
+      sms: false
+    }
+  }
+})
+
 export const handlers = [
 
   // ========================================
@@ -74,6 +106,7 @@ export const handlers = [
 
     const loginMap: Record<string, any> = {
       'superadmin@test.com': { user: mockUsers.superAdmin, token: 'mock-superadmin-token' },
+      'systemadmin@test.com': { user: mockUsers.systemAdmin, token: 'mock-systemadmin-token' },
       'admin@test.com': { user: mockUsers.admin, token: 'mock-admin-token' },
       'manager@test.com': { user: mockUsers.manager, token: 'mock-manager-token' },
       'user@test.com': { user: mockUsers.user, token: 'mock-user-token' },
@@ -88,7 +121,8 @@ export const handlers = [
         refreshToken: 'mock-refresh-token',
         expiresAt: new Date(Date.now() + 3600000).toISOString(),
         tokenType: 'Bearer',
-        user: loginData.user
+        user: loginData.user,
+        tenant: mockTenants[0]
       }))
     }
 
@@ -162,6 +196,119 @@ export const handlers = [
   }),
 
   // ========================================
+  // 🔐 TWO-PHASE AUTHENTICATION ENDPOINTS
+  // ========================================
+
+  http.post(`${API_BASE_URL}/auth/select-tenant`, async ({ request }) => {
+    const body = await request.json() as { tenantId: string | number }
+    const tenantId = body.tenantId.toString()
+    
+    const selectedTenant = mockTenants.find(t => t.id === tenantId)
+    
+    if (!selectedTenant) {
+      return HttpResponse.json(
+        createApiResponse(null, false, 'Tenant not found'),
+        { status: 404 }
+      )
+    }
+    
+    const completeUser = createCompleteUser('3', 'admin@test.com', 'Admin', 'User')
+    
+    return HttpResponse.json(createApiResponse({
+      accessToken: `mock-phase2-token-tenant-${tenantId}`,
+      refreshToken: `mock-refresh-tenant-${tenantId}`,
+      expiresAt: new Date(Date.now() + 3600000).toISOString(),
+      tokenType: 'Bearer',
+      user: completeUser,
+      tenant: selectedTenant
+    }))
+  }),
+
+  http.post(`${API_BASE_URL}/auth/register`, async ({ request }) => {
+    const body = await request.json() as {
+      email: string;
+      password: string;
+      confirmPassword: string;
+      firstName: string;
+      lastName: string;
+      tenantName?: string;
+    }
+
+    // Validate request
+    if (body.password !== body.confirmPassword) {
+      return HttpResponse.json(
+        createApiResponse(null, false, 'Passwords do not match'),
+        { status: 400 }
+      )
+    }
+
+    // Check if user already exists
+    const existingUser = enhancedMockUsers.find(user => user.email === body.email)
+    
+    if (existingUser) {
+      return HttpResponse.json(
+        createApiResponse(null, false, 'User with this email already exists. Please sign in instead.'),
+        { status: 400 }
+      )
+    }
+
+    // Handle new user registration
+    const newUserId = (Math.max(...enhancedMockUsers.map(u => parseInt(u.id))) + 1).toString()
+    const newUser: User = {
+      id: newUserId,
+      firstName: body.firstName,
+      lastName: body.lastName,
+      fullName: `${body.firstName} ${body.lastName}`,
+      email: body.email,
+      phoneNumber: undefined,
+      timeZone: 'UTC',
+      language: 'en',
+      lastLoginAt: undefined,
+      emailConfirmed: false,
+      isActive: true,
+      roles: ['User'],
+      tenantId: '1',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      preferences: {
+        theme: 'light',
+        language: 'en',
+        timeZone: 'UTC',
+        notifications: {
+          email: true,
+          push: true,
+          sms: false
+        }
+      }
+    }
+
+    // If tenant name provided, create new tenant
+    let tenant = mockTenants[0]
+    if (body.tenantName) {
+      const newTenantId = (mockTenants.length + 1).toString()
+      tenant = {
+        id: newTenantId,
+        name: body.tenantName,
+        domain: `${body.tenantName.toLowerCase().replace(/\s+/g, '')}.local`,
+        subscriptionPlan: 'Basic',
+        isActive: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      mockTenants.push(tenant)
+    }
+
+    return HttpResponse.json(createApiResponse({
+      accessToken: `mock-new-user-token-${newUserId}`,
+      refreshToken: `mock-refresh-${newUserId}`,
+      expiresAt: new Date(Date.now() + 3600000).toISOString(),
+      tokenType: 'Bearer',
+      user: newUser,
+      tenant: tenant
+    }), { status: 201 })
+  }),
+
+  // ========================================
   // 👥 USER MANAGEMENT ENDPOINTS  
   // ========================================
 
@@ -172,11 +319,10 @@ export const handlers = [
     const searchTerm = url.searchParams.get('searchTerm')
     const auth = request.headers.get('Authorization')
 
-    // Role-based filtering for API permission integration tests
     let users = [...enhancedMockUsers]
 
     if (auth?.includes('viewer')) {
-      users = [] // Viewers can't see user list
+      users = []
     }
 
     if (searchTerm) {
@@ -191,6 +337,11 @@ export const handlers = [
     return HttpResponse.json(createPagedResponse(users, page, pageSize))
   }),
 
+  http.get(`${API_BASE_URL}/users/profile`, () => {
+    const completeUser = createCompleteUser('1', 'admin@test.com', 'Admin', 'User')
+    return HttpResponse.json(createApiResponse(completeUser))
+  }),
+
   http.post(`${API_BASE_URL}/users`, async ({ request }) => {
     const body = await request.json() as any
     const auth = request.headers.get('Authorization')
@@ -202,19 +353,8 @@ export const handlers = [
       )
     }
 
-    const newUser = {
-      id: (Math.max(...enhancedMockUsers.map(u => parseInt(u.id))) + 1).toString(),
-      firstName: body.firstName,
-      lastName: body.lastName,
-      fullName: `${body.firstName} ${body.lastName}`,
-      email: body.email,
-      emailConfirmed: false,
-      isActive: true,
-      roles: body.roles || ['User'],
-      tenantId: '1', // 🔧 FIX: Use string ID
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
+    const newUserId = (Math.max(...enhancedMockUsers.map(u => parseInt(u.id))) + 1).toString()
+    const newUser = createCompleteUser(newUserId, body.email, body.firstName, body.lastName)
 
     return HttpResponse.json(createApiResponse(newUser), { status: 201 })
   }),
@@ -241,7 +381,6 @@ export const handlers = [
     )
   }),
 
-  // 🔧 NEW: Add tenant endpoints for tests
   // ========================================
   // 🏢 TENANT MANAGEMENT ENDPOINTS
   // ========================================
@@ -249,7 +388,21 @@ export const handlers = [
   http.get(`${API_BASE_URL}/users/:userId/tenants`, ({ params }) => {
     const userId = params.userId as string
     
-    // Return mock tenant data for any user
+    if (userId === 'error-user') {
+      return HttpResponse.json(
+        createApiResponse(null, false, 'Failed to load tenants'),
+        { status: 500 }
+      )
+    }
+    
+    if (userId === 'no-tenant-user') {
+      return HttpResponse.json(createApiResponse([]))
+    }
+    
+    if (userId === 'single-tenant-user' || userId === '3') {
+      return HttpResponse.json(createApiResponse([mockTenants[0]]))
+    }
+    
     return HttpResponse.json(createApiResponse(mockTenants))
   }),
 
@@ -260,37 +413,87 @@ export const handlers = [
   }),
 
   http.post(`${API_BASE_URL}/auth/switch-tenant`, async ({ request }) => {
-    const body = await request.json() as { tenantId: string }
+    const body = await request.json() as { tenantId: string | number }
+    const tenantId = body.tenantId.toString()
     
-    return HttpResponse.json(createApiResponse(true, true, 'Tenant switched successfully'))
+    const targetTenant = mockTenants.find(t => t.id === tenantId)
+    
+    if (!targetTenant) {
+      return HttpResponse.json(
+        createApiResponse(null, false, 'Tenant not found'),
+        { status: 404 }
+      )
+    }
+    
+    const completeUser = createCompleteUser('3', 'admin@test.com', 'Admin', 'User')
+    
+    return HttpResponse.json(createApiResponse({
+      accessToken: `mock-switched-token-tenant-${tenantId}`,
+      refreshToken: `mock-switched-refresh-tenant-${tenantId}`,
+      expiresAt: new Date(Date.now() + 3600000).toISOString(),
+      tokenType: 'Bearer',
+      user: completeUser,
+      tenant: targetTenant
+    }))
   }),
 
   // ========================================
   // 🛡️ ROLE MANAGEMENT ENDPOINTS
   // ========================================
 
+  // 🔧 CRITICAL FIX: Add both role endpoint patterns
   http.get(`${API_BASE_URL}/roles`, ({ request }) => {
     const url = new URL(request.url)
     const page = parseInt(url.searchParams.get('page') || '1')
     const pageSize = parseInt(url.searchParams.get('pageSize') || '10')
     const searchTerm = url.searchParams.get('searchTerm')
 
+    console.log('🎯 MSW: Handling full URL roles request', { page, pageSize, searchTerm })
+
     let roles = [...enhancedMockRoles]
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
-      roles = roles.filter(role =>
+      roles = roles.filter((role: Role) =>
         role.name.toLowerCase().includes(term) ||
         (role.description && role.description.toLowerCase().includes(term))
       )
     }
 
-    return HttpResponse.json(createPagedResponse(roles, page, pageSize))
+    const response = createPagedResponse(roles, page, pageSize)
+    console.log('🎯 MSW: Returning full URL roles response', response)
+    
+    return HttpResponse.json(response)
+  }),
+
+  // 🔧 CRITICAL FIX: Direct /api/roles handler
+  http.get('/api/roles', ({ request }) => {
+    const url = new URL(request.url)
+    const page = parseInt(url.searchParams.get('page') || '1')
+    const pageSize = parseInt(url.searchParams.get('pageSize') || '10')
+    const searchTerm = url.searchParams.get('searchTerm')
+
+    console.log('🎯 MSW: Handling direct /api/roles request', { page, pageSize, searchTerm })
+
+    let roles = [...enhancedMockRoles]
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase()
+      roles = roles.filter((role: Role) =>
+        role.name.toLowerCase().includes(term) ||
+        (role.description && role.description.toLowerCase().includes(term))
+      )
+    }
+
+    const response = createPagedResponse(roles, page, pageSize)
+    console.log('🎯 MSW: Returning direct /api/roles response', response)
+    
+    return HttpResponse.json(response)
   }),
 
   http.get(`${API_BASE_URL}/roles/:id`, ({ params }) => {
     const roleId = parseInt(params.id as string)
-    const role = enhancedMockRoles.find(r => r.id === roleId)
+    const role = enhancedMockRoles.find((r: Role) => r.id === roleId)
 
     if (role) {
       return HttpResponse.json(createApiResponse(role))
@@ -319,30 +522,6 @@ export const handlers = [
   // 🔐 API INTEGRATION FIXES
   // ========================================
 
-  // Fix for API permission integration tests
-  http.post('/api/users', ({ request }) => {
-    const auth = request.headers.get('Authorization')
-    if (auth?.includes('admin')) {
-      return HttpResponse.json({ success: true, data: { id: '1', name: 'New User' } })
-    }
-    return HttpResponse.json(
-      { success: false, message: 'Insufficient permissions' },
-      { status: 403 }
-    )
-  }),
-
-  http.delete('/api/users/:id', ({ request }) => {
-    const auth = request.headers.get('Authorization')
-    if (auth?.includes('admin')) {
-      return HttpResponse.json({ success: true })
-    }
-    return HttpResponse.json(
-      { success: false, message: 'Insufficient permissions' },
-      { status: 403 }
-    )
-  }),
-
-  // Fix for missing GET /api/users handler
   http.get('/api/users', ({ request }) => {
     const auth = request.headers.get('Authorization')
 
@@ -372,8 +551,30 @@ export const handlers = [
     )
   }),
 
+  http.post('/api/users', ({ request }) => {
+    const auth = request.headers.get('Authorization')
+    if (auth?.includes('admin')) {
+      return HttpResponse.json({ success: true, data: { id: '1', name: 'New User' } })
+    }
+    return HttpResponse.json(
+      { success: false, message: 'Insufficient permissions' },
+      { status: 403 }
+    )
+  }),
+
+  http.delete('/api/users/:id', ({ request }) => {
+    const auth = request.headers.get('Authorization')
+    if (auth?.includes('admin')) {
+      return HttpResponse.json({ success: true })
+    }
+    return HttpResponse.json(
+      { success: false, message: 'Insufficient permissions' },
+      { status: 403 }
+    )
+  }),
+
   // ========================================
-  // 🧪 TEST ERROR SIMULATION
+  // 🧪 ERROR SIMULATION FOR TESTING
   // ========================================
 
   http.get(`${API_BASE_URL}/test/error`, () => {
@@ -383,89 +584,28 @@ export const handlers = [
     )
   }),
 
-  // Replace the registration handler around line 420:
-  http.post(`${API_BASE_URL}/auth/register`, async ({ request }) => {
-    const body = await request.json() as {
-      email: string;
-      password: string;
-      confirmPassword: string;
-      firstName: string;
-      lastName: string;
-      tenantName?: string;
-    }
-
-    // Validate request
-    if (body.password !== body.confirmPassword) {
-      return HttpResponse.json(
-        createApiResponse(null, false, 'Passwords do not match'),
-        { status: 400 }
-      )
-    }
-
-    // Check if user already exists
-    const existingUser = enhancedMockUsers.find(user => user.email === body.email)
-    
-    // 🔧 NEW: Handle existing user creating new tenant (consultant use case)
-    if (existingUser && body.tenantName) {
-      console.log(`🏢 CONSULTANT FLOW: ${body.email} creating tenant "${body.tenantName}"`)
-      
-      // Check if tenant already exists
-      const existingTenant = mockTenants.find(t => t.name === body.tenantName)
-      if (existingTenant) {
-        return HttpResponse.json(
-          createApiResponse(null, false, `Organization "${body.tenantName}" already exists`),
-          { status: 400 }
-        )
-      }
-      
-      // Create new tenant
-      const newTenantId = (mockTenants.length + 1).toString()
-      const newTenant = {
-        id: newTenantId,
-        name: body.tenantName,
-        domain: `${body.tenantName.toLowerCase().replace(/\s+/g, '')}.local`,
-        subscriptionPlan: 'Basic',
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
-      
-      mockTenants.push(newTenant)
-      
-      // 🔧 DECISION POINT: What to do with different personal info?
-      
-      // Option A: Keep existing user info (recommended)
-      console.log(`📝 KEEPING existing user info: ${existingUser.firstName} ${existingUser.lastName}`)
-      console.log(`📝 IGNORING form input: ${body.firstName} ${body.lastName}`)
-      
-      // Option B: Update user info (alternative)
-      // existingUser.firstName = body.firstName
-      // existingUser.lastName = body.lastName
-      // existingUser.fullName = `${body.firstName} ${body.lastName}`
-      // console.log(`📝 UPDATED user info to: ${body.firstName} ${body.lastName}`)
-      
-      // 🔧 NOTE: Password is NOT updated - existing user keeps their original password
-      
-      // Return success with existing user + new tenant
-      return HttpResponse.json(createApiResponse({
-        accessToken: `mock-consultant-token-${existingUser.id}-${newTenantId}`,
-        refreshToken: `mock-refresh-${existingUser.id}-${newTenantId}`,
-        expiresAt: new Date(Date.now() + 3600000).toISOString(),
-        tokenType: 'Bearer',
-        user: existingUser, // Using existing user info
-        tenant: newTenant
-      }), { status: 201 })
-    }
-    
-    // 🔧 EXISTING: Handle existing user without tenant creation
-    if (existingUser) {
-      return HttpResponse.json(
-        createApiResponse(null, false, 'User with this email already exists. Please sign in instead.'),
-        { status: 400 }
-      )
-    }
-
-    // 🔧 EXISTING: Continue with new user registration...
-    // ... rest of existing code for new users
+  // Simulate getUserTenants failure
+  http.get(`${API_BASE_URL}/users/error-user/tenants`, () => {
+    return HttpResponse.json(
+      createApiResponse(null, false, 'Failed to load tenants'),
+      { status: 500 }
+    )
   }),
+
+  // Simulate selectTenant failure
+  http.post(`${API_BASE_URL}/auth/select-tenant-error`, () => {
+    return HttpResponse.json(
+      createApiResponse(null, false, 'Failed to select tenant'),
+      { status: 500 }
+    )
+  }),
+
+  // Simulate switchTenant failure
+  http.post(`${API_BASE_URL}/auth/switch-tenant-error`, () => {
+    return HttpResponse.json(
+      createApiResponse(null, false, 'Failed to switch tenant'),
+      { status: 500 }
+    )
+  }),
+
 ]

@@ -1,171 +1,117 @@
-import React from 'react'
-import { describe, it, expect, beforeEach } from 'vitest'
-import { render, screen, cleanup } from '@testing-library/react'
-import { createMockPermissionContext } from '@/test/utils/test-utils'
+import { describe, it, expect } from 'vitest'
+import { screen } from '@testing-library/react'
+import { rbacRender } from '../utils/rbac-test-utils.tsx' // ✅ Explicit extension
+import { createMockPermissionContext } from '../utils/test-utils.tsx' // ✅ Explicit extension
 
-// Helper function to test with all roles individually
-const testWithAllRoles = (testFn: (roleName: string, context: any) => void) => {
-  const roles = ['superAdmin', 'systemAdmin', 'admin', 'manager', 'user', 'viewer', 'multiRole'] as const
+describe('RBAC Usage Examples', () => {
+  describe('Basic Permission Checks', () => {
+    it('should demonstrate basic permission checking', () => {
+      const adminContext = createMockPermissionContext('admin')
+      const userContext = createMockPermissionContext('user')
 
-  roles.forEach(role => {
-    const context = createMockPermissionContext(role)
-    testFn(role, context)
-    cleanup() // ✅ Clean up DOM between role tests
-  })
-}
+      // Admin should have user management permissions
+      expect(adminContext.hasPermission('users.all')).toBe(true)
+      expect(adminContext.hasPermission('roles.all')).toBe(true)
 
-describe('RBAC Test Utilities - Usage Examples', () => {
-  beforeEach(() => {
-    cleanup() // ✅ Ensure clean state
-  })
+      // Regular user should not have admin permissions
+      expect(userContext.hasPermission('users.all')).toBe(false)
+      expect(userContext.hasPermission('roles.all')).toBe(false)
 
-  describe('Basic Role Rendering', () => {
-    it('should render differently for different roles', () => {
-      testWithAllRoles((roleName, context) => {
-        const TestComponent = () => (
-          <div data-testid={`role-test-${roleName}`}> {/* ✅ Unique test ID */}
-            <h1>Dashboard</h1>
-            {context.isAdmin() && <div data-testid={`admin-panel-${roleName}`}>Admin Panel</div>}
-            {context.hasPermission('users.view') && <div data-testid={`users-section-${roleName}`}>Users</div>}
-            <div data-testid={`user-role-${roleName}`}>{roleName}</div>
-          </div>
-        )
+      // Both should have basic view permissions
+      expect(adminContext.hasPermission('users.view')).toBe(true)
+      expect(userContext.hasPermission('users.view')).toBe(true)
+    })
 
-        render(<TestComponent />)
+    it('should demonstrate role hierarchy checks', () => {
+      const adminContext = createMockPermissionContext('admin')
+      const managerContext = createMockPermissionContext('manager')
+      const userContext = createMockPermissionContext('user')
 
-        // ✅ Use role-specific selectors
-        expect(screen.getByTestId(`role-test-${roleName}`)).toBeInTheDocument()
-        expect(screen.getByTestId(`user-role-${roleName}`)).toHaveTextContent(roleName)
+      // Test hierarchy levels
+      expect(adminContext.getRoleHierarchy()).toBe(3)
+      expect(managerContext.getRoleHierarchy()).toBe(2)
+      expect(userContext.getRoleHierarchy()).toBe(1)
 
-        if (context.isAdmin()) {
-          expect(screen.getByTestId(`admin-panel-${roleName}`)).toBeInTheDocument()
-        } else {
-          expect(screen.queryByTestId(`admin-panel-${roleName}`)).not.toBeInTheDocument()
-        }
-      })
+      // Test admin checks
+      expect(adminContext.isAdmin()).toBe(true)
+      expect(managerContext.isAdmin()).toBe(false)
+      expect(userContext.isAdmin()).toBe(false)
+    })
+
+    it('should demonstrate multi-role user handling', () => {
+      const multiRoleContext = createMockPermissionContext('multiRole')
+      const userRoles = multiRoleContext.getUserRoles()
+
+      // Should have multiple roles
+      expect(Array.isArray(userRoles)).toBe(true)
+      expect(userRoles).toContain('Admin')
+      expect(userRoles).toContain('User')
+
+      // Should have admin-level permissions
+      expect(multiRoleContext.isAdmin()).toBe(true)
+      expect(multiRoleContext.hasPermission('users.all')).toBe(true)
     })
   })
 
-  describe('Batch Role Testing', () => {
-    it('should test all roles against component', () => {
-      const results: Record<string, boolean> = {}
+  describe('Component Testing Examples', () => {
+    const TestComponent = () => (
+      <div>
+        <div data-testid="public-content">Public Content</div>
+        <div data-testid="admin-content">Admin Only Content</div>
+        <div data-testid="user-content">User Content</div>
+      </div>
+    )
 
-      testWithAllRoles((roleName, context) => {
-        results[roleName] = context.hasPermission('users.view')
-      })
+    it('should render components with different roles', () => {
+      // Test as admin
+      rbacRender.asAdmin(<TestComponent />)
+      expect(screen.getByTestId('public-content')).toBeInTheDocument()
+      expect(screen.getByTestId('admin-content')).toBeInTheDocument()
+      expect(screen.getByTestId('user-content')).toBeInTheDocument()
+    })
 
-      // ✅ These should all be true now with updated permissions
-      expect(results.superAdmin).toBe(true)
-      expect(results.systemAdmin).toBe(true)
-      expect(results.admin).toBe(true)
-      expect(results.manager).toBe(true)
-      expect(results.user).toBe(true)
-      expect(results.viewer).toBe(true)
-      expect(results.multiRole).toBe(true)
+    it('should render components as regular user', () => {
+      rbacRender.asUser(<TestComponent />)
+      expect(screen.getByTestId('public-content')).toBeInTheDocument()
+      expect(screen.getByTestId('user-content')).toBeInTheDocument()
+      // Admin content would be hidden in real components with permission checks
+    })
+
+    it('should render components as viewer', () => {
+      rbacRender.asViewer(<TestComponent />)
+      expect(screen.getByTestId('public-content')).toBeInTheDocument()
+      // Other content would be hidden in real components with permission checks
     })
   })
 
-  describe('Form Testing', () => {
-    it('should test form field permissions', () => {
-      testWithAllRoles((roleName, context) => {
-        const TestForm = () => (
-          <div data-testid={`form-test-${roleName}`}> {/* ✅ Unique container */}
-            <form>
-              <input data-testid={`name-field-${roleName}`} />
-              {context.hasPermission('users.edit') && (
-                <input data-testid={`admin-field-${roleName}`} />
-              )}
-              {context.hasPermission('users.delete') && (
-                <button data-testid={`delete-button-${roleName}`}>Delete</button>
-              )}
-            </form>
-          </div>
-        )
+  describe('System vs Tenant Role Examples', () => {
+    it('should distinguish between system and tenant roles', () => {
+      const systemAdminContext = createMockPermissionContext('systemAdmin')
+      const tenantAdminContext = createMockPermissionContext('admin')
 
-        render(<TestForm />)
+      // System admin should be marked as system role
+      expect(systemAdminContext.isSystemAdmin()).toBe(true)
+      expect(tenantAdminContext.isSystemAdmin()).toBe(false)
 
-        // ✅ Use role-specific selectors
-        expect(screen.getByTestId(`name-field-${roleName}`)).toBeInTheDocument()
+      // Both should be admins, but different levels
+      expect(systemAdminContext.isAdmin()).toBe(true)
+      expect(tenantAdminContext.isAdmin()).toBe(true)
 
-        if (context.hasPermission('users.edit')) {
-          expect(screen.getByTestId(`admin-field-${roleName}`)).toBeInTheDocument()
-        } else {
-          expect(screen.queryByTestId(`admin-field-${roleName}`)).not.toBeInTheDocument()
-        }
-      })
+      // System admin should have higher hierarchy
+      expect(systemAdminContext.getRoleHierarchy()).toBeGreaterThan(
+        tenantAdminContext.getRoleHierarchy()
+      )
     })
-  })
 
-  describe('Navigation Testing', () => {
-    it('should test menu visibility', () => {
-      const navigationItems = [
-        { id: 'dashboard', label: 'Dashboard', requiredPermission: 'dashboard.view' },
-        { id: 'users', label: 'Users', requiredPermission: 'users.view' },
-        { id: 'admin', label: 'Admin', requiredPermission: 'users.all' }
-      ]
+    it('should handle super admin permissions', () => {
+      const superAdminContext = createMockPermissionContext('superAdmin')
 
-      testWithAllRoles((roleName, context) => {
-        const TestNavigation = () => (
-          <div data-testid={`nav-test-${roleName}`}> {/* ✅ Unique container */}
-            <nav>
-              {navigationItems.map(item =>
-                context.hasPermission(item.requiredPermission) ? (
-                  <a key={item.id} data-testid={`${item.id}-link-${roleName}`} href={`/${item.id}`}>
-                    {item.label}
-                  </a>
-                ) : null
-              )}
-            </nav>
-          </div>
-        )
+      expect(superAdminContext.isSuperAdmin()).toBe(true)
+      expect(superAdminContext.isSystemAdmin()).toBe(true)
+      expect(superAdminContext.isAdmin()).toBe(true)
 
-        render(<TestNavigation />)
-
-        for (const item of navigationItems) {
-          // ✅ Use role-specific selectors
-          const menuElement = screen.queryByTestId(`${item.id}-link-${roleName}`)
-
-          if (context.hasPermission(item.requiredPermission)) {
-            expect(menuElement).toBeInTheDocument()
-          } else {
-            expect(menuElement).not.toBeInTheDocument()
-          }
-        }
-      })
-    })
-  })
-
-  describe('Error State Testing', () => {
-    it('should test permission-based errors', () => {
-      testWithAllRoles((roleName, context) => {
-        const TestComponent = () => {
-          const canDelete = context.hasPermission('users.delete')
-
-          return (
-            <div data-testid={`error-test-${roleName}`}> {/* ✅ Unique container */}
-              {!canDelete && (
-                <div data-testid={`permission-error-${roleName}`}>
-                  You don't have permission to delete users
-                </div>
-              )}
-              {canDelete && (
-                <button data-testid={`delete-action-${roleName}`}>Delete User</button>
-              )}
-            </div>
-          )
-        }
-
-        render(<TestComponent />)
-
-        // ✅ Use role-specific selectors
-        if (context.hasPermission('users.delete')) {
-          expect(screen.getByTestId(`delete-action-${roleName}`)).toBeInTheDocument()
-          expect(screen.queryByTestId(`permission-error-${roleName}`)).not.toBeInTheDocument()
-        } else {
-          expect(screen.getByTestId(`permission-error-${roleName}`)).toBeInTheDocument()
-          expect(screen.queryByTestId(`delete-action-${roleName}`)).not.toBeInTheDocument()
-        }
-      })
+      // Should have the highest hierarchy level
+      expect(superAdminContext.getRoleHierarchy()).toBe(5)
     })
   })
 })

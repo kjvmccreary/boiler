@@ -3,10 +3,10 @@ import { render, type RenderOptions, screen, waitFor, cleanup } from '@testing-l
 import { BrowserRouter, MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import userEvent from '@testing-library/user-event'
-import { AuthProvider } from '@/contexts/AuthContext.js'
-import { TenantProvider } from '@/contexts/TenantContext.js'; // 🔧 NEW: Add TenantProvider
-import type { User } from '@/types/index.js'
-import { mockUsers, mockRoles, createMockPermissionContext, type MockRoleType } from './test-utils.js'
+import { AuthProvider } from '@/contexts/AuthContext'
+import { TenantProvider } from '@/contexts/TenantContext'
+import type { User } from '@/types/index'
+import { mockUsers, mockRoles, createMockPermissionContext, type MockRoleType } from './test-utils.tsx' // ✅ Explicit extension
 
 // Fix: Add cleanup between renders
 let currentQueryClient: QueryClient | null = null

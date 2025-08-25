@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { rbacRender, rbacBatch } from '../utils/rbac-test-utils.js'
+import { rbacRender, rbacBatch } from '../utils/rbac-test-utils.tsx' // ✅ Explicit extension
 import { screen, cleanup } from '@testing-library/react'
-import { mockRoles, createMockPermissionContext, type MockRoleType } from '../utils/test-utils.js'
+import { mockRoles, createMockPermissionContext, type MockRoleType } from '../utils/test-utils.tsx' // ✅ Explicit extension
 
 describe('Role Hierarchy Validation Scenarios', () => {
 
@@ -31,7 +31,7 @@ describe('Role Hierarchy Validation Scenarios', () => {
 
       // ✅ FIX: Test that each role has expected permission count
       rolePermissionCounts.forEach(({ role, permissions: expectedCount }) => {
-        const actualPermissions = mockRoles[role].permissions.map(p => p.name)
+        const actualPermissions = mockRoles[role].permissions.map((p: any) => p.name)
         // Allow some flexibility in permission counts
         expect(actualPermissions.length).toBeGreaterThanOrEqual(expectedCount - 1)
       })
@@ -44,14 +44,14 @@ describe('Role Hierarchy Validation Scenarios', () => {
       ]
 
       inheritanceTests.forEach(({ lower, higher }) => {
-        const lowerPermissions = mockRoles[lower].permissions.map(p => p.name)
-        const higherPermissions = mockRoles[higher].permissions.map(p => p.name)
+        const lowerPermissions = mockRoles[lower].permissions.map((p: any) => p.name)
+        const higherPermissions = mockRoles[higher].permissions.map((p: any) => p.name)
 
         // Higher roles should have at least as many permissions as lower roles
         expect(higherPermissions.length).toBeGreaterThanOrEqual(lowerPermissions.length)
 
         // Check that most lower role permissions are included in higher role
-        const commonPermissions = lowerPermissions.filter(permission =>
+        const commonPermissions = lowerPermissions.filter((permission: any) =>
           higherPermissions.includes(permission)
         )
 

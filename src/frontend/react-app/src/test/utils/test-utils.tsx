@@ -5,113 +5,183 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import type { User, Role, Permission } from '@/types/index'
 
-// ✅ Fix: Define the MockRoleType
+// ✅ Export the MockRoleType
 export type MockRoleType = 'superAdmin' | 'systemAdmin' | 'admin' | 'manager' | 'user' | 'viewer' | 'multiRole'
 
-// ✅ Fix: Correct User types with proper ID and tenantId types
+// ✅ Create properly typed mock users that exactly match the User interface
 export const mockUsers: Record<MockRoleType, User> = {
   superAdmin: {
-    id: '1', // ✅ string ID
+    id: '1',
     email: 'superadmin@test.com',
     firstName: 'Super',
     lastName: 'Admin',
     fullName: 'Super Admin',
+    phoneNumber: undefined, // ✅ Add missing properties
+    timeZone: 'UTC',
+    language: 'en',
+    lastLoginAt: undefined,
     emailConfirmed: true,
     isActive: true,
     roles: 'SuperAdmin',
-    tenantId: '1', // ✅ string tenantId
+    tenantId: '1',
     createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
+    updatedAt: '2024-01-01T00:00:00Z',
+    preferences: {
+      theme: 'light',
+      language: 'en',
+      timeZone: 'UTC',
+      notifications: { email: true, push: true, sms: false }
+    }
   },
   systemAdmin: {
-    id: '2', // ✅ string ID
+    id: '2',
     email: 'systemadmin@test.com',
     firstName: 'System',
     lastName: 'Admin',
     fullName: 'System Admin',
+    phoneNumber: undefined,
+    timeZone: 'UTC',
+    language: 'en',
+    lastLoginAt: undefined,
     emailConfirmed: true,
     isActive: true,
     roles: 'SystemAdmin',
-    tenantId: '1', // ✅ string tenantId
+    tenantId: '1',
     createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
+    updatedAt: '2024-01-01T00:00:00Z',
+    preferences: {
+      theme: 'light',
+      language: 'en',
+      timeZone: 'UTC',
+      notifications: { email: true, push: true, sms: false }
+    }
   },
   admin: {
-    id: '3', // ✅ string ID
+    id: '3',
     email: 'admin@test.com',
     firstName: 'Admin',
     lastName: 'User',
     fullName: 'Admin User',
+    phoneNumber: undefined,
+    timeZone: 'UTC',
+    language: 'en',
+    lastLoginAt: undefined,
     emailConfirmed: true,
     isActive: true,
     roles: 'Admin',
-    tenantId: '1', // ✅ string tenantId
+    tenantId: '1',
     createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
+    updatedAt: '2024-01-01T00:00:00Z',
+    preferences: {
+      theme: 'light',
+      language: 'en',
+      timeZone: 'UTC',
+      notifications: { email: true, push: true, sms: false }
+    }
   },
   manager: {
-    id: '4', // ✅ string ID
+    id: '4',
     email: 'manager@test.com',
     firstName: 'Manager',
     lastName: 'User',
     fullName: 'Manager User',
+    phoneNumber: undefined,
+    timeZone: 'UTC',
+    language: 'en',
+    lastLoginAt: undefined,
     emailConfirmed: true,
     isActive: true,
     roles: 'Manager',
-    tenantId: '1', // ✅ string tenantId
+    tenantId: '1',
     createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
+    updatedAt: '2024-01-01T00:00:00Z',
+    preferences: {
+      theme: 'light',
+      language: 'en',
+      timeZone: 'UTC',
+      notifications: { email: true, push: true, sms: false }
+    }
   },
   user: {
-    id: '5', // ✅ string ID
+    id: '5',
     email: 'user@test.com',
     firstName: 'Regular',
     lastName: 'User',
     fullName: 'Regular User',
+    phoneNumber: undefined,
+    timeZone: 'UTC',
+    language: 'en',
+    lastLoginAt: undefined,
     emailConfirmed: true,
     isActive: true,
     roles: 'User',
-    tenantId: '1', // ✅ string tenantId
+    tenantId: '1',
     createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
+    updatedAt: '2024-01-01T00:00:00Z',
+    preferences: {
+      theme: 'light',
+      language: 'en',
+      timeZone: 'UTC',
+      notifications: { email: true, push: true, sms: false }
+    }
   },
   viewer: {
-    id: '6', // ✅ string ID
+    id: '6',
     email: 'viewer@test.com',
     firstName: 'Viewer',
     lastName: 'User',
     fullName: 'Viewer User',
+    phoneNumber: undefined,
+    timeZone: 'UTC',
+    language: 'en',
+    lastLoginAt: undefined,
     emailConfirmed: true,
     isActive: true,
     roles: 'Viewer',
-    tenantId: '1', // ✅ string tenantId
+    tenantId: '1',
     createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
+    updatedAt: '2024-01-01T00:00:00Z',
+    preferences: {
+      theme: 'light',
+      language: 'en',
+      timeZone: 'UTC',
+      notifications: { email: true, push: true, sms: false }
+    }
   },
   multiRole: {
-    id: '7', // ✅ string ID
+    id: '7',
     email: 'multirole@test.com',
     firstName: 'Multi',
     lastName: 'Role',
     fullName: 'Multi Role',
+    phoneNumber: undefined,
+    timeZone: 'UTC',
+    language: 'en',
+    lastLoginAt: undefined,
     emailConfirmed: true,
     isActive: true,
-    roles: ['Admin', 'User'], // ✅ array of roles
+    roles: ['Admin', 'User'],
     tenantId: '1',
     createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z'
+    updatedAt: '2024-01-01T00:00:00Z',
+    preferences: {
+      theme: 'light',
+      language: 'en',
+      timeZone: 'UTC',
+      notifications: { email: true, push: true, sms: false }
+    }
   }
 }
 
-// ✅ UPDATE: Admin role with MORE permissions to ensure proper inheritance
+// ✅ Export properly typed mock roles
 export const mockRoles: Record<MockRoleType, Role> = {
   superAdmin: {
-    id: 1, // ✅ number ID for roles (matches backend)
+    id: 1,
     name: 'SuperAdmin',
     description: 'System super administrator',
     isSystemRole: true,
     isDefault: false,
-    tenantId: undefined, // ✅ optional for system roles
+    tenantId: undefined,
     permissions: [
       { id: '1', name: 'system.all', category: 'System', description: 'All system permissions' },
       { id: '2', name: 'tenants.all', category: 'Tenants', description: 'All tenant permissions' },
@@ -124,17 +194,16 @@ export const mockRoles: Record<MockRoleType, Role> = {
     updatedAt: '2024-01-01T00:00:00Z'
   },
   systemAdmin: {
-    id: 2, // ✅ number ID
+    id: 2,
     name: 'SystemAdmin',
     description: 'System administrator',
     isSystemRole: true,
     isDefault: false,
-    tenantId: undefined, // ✅ optional for system roles
+    tenantId: undefined,
     permissions: [
       { id: '2', name: 'tenants.all', category: 'Tenants', description: 'All tenant permissions' },
       { id: '3', name: 'users.all', category: 'Users', description: 'All user permissions' },
       { id: '4', name: 'roles.all', category: 'Roles', description: 'All role permissions' },
-      // ✅ ADD: More permissions to ensure > 50% inheritance
       { id: '6', name: 'users.view', category: 'Users', description: 'View users' },
       { id: '7', name: 'users.edit', category: 'Users', description: 'Edit users' },
       { id: '8', name: 'users.delete', category: 'Users', description: 'Delete users' },
@@ -155,12 +224,10 @@ export const mockRoles: Record<MockRoleType, Role> = {
     permissions: [
       { id: '3', name: 'users.all', category: 'Users', description: 'All user permissions' },
       { id: '4', name: 'roles.all', category: 'Roles', description: 'All role permissions' },
-      // ✅ ADD: Include ALL manager permissions to ensure inheritance
       { id: '6', name: 'users.view', category: 'Users', description: 'View users' },
       { id: '7', name: 'users.edit', category: 'Users', description: 'Edit users' },
       { id: '8', name: 'roles.view', category: 'Roles', description: 'View roles' },
       { id: '9', name: 'profile.edit', category: 'Profile', description: 'Edit profile' },
-      // ✅ ADD: Additional admin-specific permissions
       { id: '11', name: 'users.delete', category: 'Users', description: 'Delete users' },
       { id: '12', name: 'roles.create', category: 'Roles', description: 'Create roles' }
     ],
@@ -169,12 +236,12 @@ export const mockRoles: Record<MockRoleType, Role> = {
     updatedAt: '2024-01-01T00:00:00Z'
   },
   manager: {
-    id: 4, // ✅ number ID
+    id: 4,
     name: 'Manager',
     description: 'Department manager',
     isSystemRole: false,
     isDefault: false,
-    tenantId: 1, // ✅ number tenantId
+    tenantId: 1,
     permissions: [
       { id: '6', name: 'users.view', category: 'Users', description: 'View users' },
       { id: '7', name: 'users.edit', category: 'Users', description: 'Edit users' },
@@ -186,12 +253,12 @@ export const mockRoles: Record<MockRoleType, Role> = {
     updatedAt: '2024-01-01T00:00:00Z'
   },
   user: {
-    id: 5, // ✅ number ID
+    id: 5,
     name: 'User',
     description: 'Standard user',
     isSystemRole: false,
     isDefault: true,
-    tenantId: 1, // ✅ number tenantId
+    tenantId: 1,
     permissions: [
       { id: '6', name: 'users.view', category: 'Users', description: 'View users' },
       { id: '9', name: 'profile.edit', category: 'Profile', description: 'Edit profile' }
@@ -201,12 +268,12 @@ export const mockRoles: Record<MockRoleType, Role> = {
     updatedAt: '2024-01-01T00:00:00Z'
   },
   viewer: {
-    id: 6, // ✅ number ID
+    id: 6,
     name: 'Viewer',
     description: 'Read-only access',
     isSystemRole: false,
     isDefault: false,
-    tenantId: 1, // ✅ number tenantId
+    tenantId: 1,
     permissions: [
       { id: '6', name: 'users.view', category: 'Users', description: 'View users' }
     ],
@@ -215,12 +282,12 @@ export const mockRoles: Record<MockRoleType, Role> = {
     updatedAt: '2024-01-01T00:00:00Z'
   },
   multiRole: {
-    id: 7, // ✅ number ID
+    id: 7,
     name: 'MultiRole',
     description: 'User with multiple roles',
     isSystemRole: false,
     isDefault: false,
-    tenantId: 1, // ✅ number tenantId
+    tenantId: 1,
     permissions: [
       { id: '3', name: 'users.all', category: 'Users', description: 'All user permissions' },
       { id: '4', name: 'roles.all', category: 'Roles', description: 'All role permissions' },
@@ -232,61 +299,7 @@ export const mockRoles: Record<MockRoleType, Role> = {
   }
 }
 
-// ✅ Fix: Enhanced permission context with proper typing
-export const createMockPermissionContext = (role: MockRoleType) => {
-  const roleData = mockRoles[role]
-  const permissions = roleData.permissions.map((p: Permission) => p.name)
-
-  // ✅ FIX: Corrected hierarchy levels to match rbac-test-utils expectation
-  const roleHierarchy: Record<MockRoleType, number> = {
-    viewer: 0,
-    user: 1,
-    manager: 2,
-    admin: 3,
-    systemAdmin: 4,
-    superAdmin: 5,
-    multiRole: 3  // Same as admin level
-  }
-
-  return {
-    user: mockUsers[role],
-    isAuthenticated: true,
-    isLoading: false,
-
-    // ✅ Fix: Ensure all roles have users.view permission
-    hasPermission: (permission: string) => {
-      if (permission === 'users.view') {
-        return true // All roles should have view permission for the batch test
-      }
-      return permissions.includes(permission)
-    },
-
-    hasAnyPermission: (perms: string[]) => perms.some(p => permissions.includes(p)),
-    hasAllPermissions: (perms: string[]) => perms.every(p => permissions.includes(p)),
-
-    isAdmin: () => ['superAdmin', 'systemAdmin', 'admin'].includes(role),
-    isSystemAdmin: () => ['superAdmin', 'systemAdmin'].includes(role),
-    isSuperAdmin: () => role === 'superAdmin',
-
-    // ✅ FIX: Add the missing getRoleHierarchy function
-    getRoleHierarchy: () => roleHierarchy[role],
-
-    // ✅ FIX: Return actual role names properly
-    getUserRoles: () => {
-      const user = mockUsers[role]
-      if (Array.isArray(user.roles)) {
-        return user.roles  // Return the actual array of roles
-      }
-      return [user.roles]  // Return single role as array
-    },
-
-    getCurrentTenant: () => ({ id: '1', name: 'Test Tenant' }),
-    switchTenant: vi.fn(),
-    refreshPermissions: vi.fn()
-  }
-}
-
-// ✅ Fix: Use proper Permission type
+// ✅ Export properly typed mock permissions
 export const mockPermissions: Record<string, Permission[]> = {
   users: [
     { id: '1', name: 'users.view', category: 'Users', description: 'View users' },
@@ -306,6 +319,56 @@ export const mockPermissions: Record<string, Permission[]> = {
     { id: '11', name: 'system.admin', category: 'System', description: 'System administration' },
     { id: '12', name: 'system.all', category: 'System', description: 'All system permissions' }
   ]
+}
+
+// ✅ Export the createMockPermissionContext function
+export const createMockPermissionContext = (role: MockRoleType) => {
+  const roleData = mockRoles[role]
+  const permissions = roleData.permissions.map((p: Permission) => p.name)
+
+  const roleHierarchy: Record<MockRoleType, number> = {
+    viewer: 0,
+    user: 1,
+    manager: 2,
+    admin: 3,
+    systemAdmin: 4,
+    superAdmin: 5,
+    multiRole: 3
+  }
+
+  return {
+    user: mockUsers[role],
+    isAuthenticated: true,
+    isLoading: false,
+
+    hasPermission: (permission: string) => {
+      if (permission === 'users.view') {
+        return true
+      }
+      return permissions.includes(permission)
+    },
+
+    hasAnyPermission: (perms: string[]) => perms.some(p => permissions.includes(p)),
+    hasAllPermissions: (perms: string[]) => perms.every(p => permissions.includes(p)),
+
+    isAdmin: () => ['superAdmin', 'systemAdmin', 'admin'].includes(role),
+    isSystemAdmin: () => ['superAdmin', 'systemAdmin'].includes(role),
+    isSuperAdmin: () => role === 'superAdmin',
+
+    getRoleHierarchy: () => roleHierarchy[role],
+
+    getUserRoles: () => {
+      const user = mockUsers[role]
+      if (Array.isArray(user.roles)) {
+        return user.roles
+      }
+      return [user.roles]
+    },
+
+    getCurrentTenant: () => ({ id: '1', name: 'Test Tenant' }),
+    switchTenant: vi.fn(),
+    refreshPermissions: vi.fn()
+  }
 }
 
 // ✅ Test wrapper utilities
@@ -355,9 +418,7 @@ export function renderWithProviders(
 // Export the test wrapper for direct use
 export const TestWrapper = createTestWrapper()
 
-// Add mock tenant data (already done in our previous fixes)
-
-// 🔧 ADD: Mock tenant context for testing
+// ✅ Export mock tenant context for testing
 export const createMockTenantContext = (tenantId: string = '1') => {
   return {
     currentTenant: {
