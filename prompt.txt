@@ -1,0 +1,3 @@
+I have completed a software application as described at C:\Users\mccre\dev\boiler\microservices-system-spec.md. I am now building a workflow service into the application as described at C:\Users\mccre\dev\boiler\workflow\workflow-engine-dev-plan.md.
+
+Please do a deep scan of my project structure as well as the documents described above and let me know when you are done. We will then take the next steps on workflow.

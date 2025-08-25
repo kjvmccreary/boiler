@@ -16,7 +16,7 @@ export const mockUsers: Record<MockRoleType, User> = {
     firstName: 'Super',
     lastName: 'Admin',
     fullName: 'Super Admin',
-    phoneNumber: undefined, // ✅ Add missing properties
+    phoneNumber: undefined,
     timeZone: 'UTC',
     language: 'en',
     lastLoginAt: undefined,
@@ -321,10 +321,11 @@ export const mockPermissions: Record<string, Permission[]> = {
   ]
 }
 
-// ✅ Export the createMockPermissionContext function
+// ✅ Fixed: Export the createMockPermissionContext function with proper multi-role support
 export const createMockPermissionContext = (role: MockRoleType) => {
   const roleData = mockRoles[role]
   const permissions = roleData.permissions.map((p: Permission) => p.name)
+  const user = mockUsers[role]
 
   const roleHierarchy: Record<MockRoleType, number> = {
     viewer: 0,
@@ -336,8 +337,26 @@ export const createMockPermissionContext = (role: MockRoleType) => {
     multiRole: 3
   }
 
+  // ✅ Fixed: Helper function to check if user has any admin roles
+  const checkIsAdmin = () => {
+    const userRoles = Array.isArray(user.roles) ? user.roles : [user.roles]
+    const adminRoles = ['SuperAdmin', 'SystemAdmin', 'Admin']
+    return userRoles.some(userRole => adminRoles.includes(userRole))
+  }
+
+  const checkIsSystemAdmin = () => {
+    const userRoles = Array.isArray(user.roles) ? user.roles : [user.roles]
+    const systemAdminRoles = ['SuperAdmin', 'SystemAdmin']
+    return userRoles.some(userRole => systemAdminRoles.includes(userRole))
+  }
+
+  const checkIsSuperAdmin = () => {
+    const userRoles = Array.isArray(user.roles) ? user.roles : [user.roles]
+    return userRoles.includes('SuperAdmin')
+  }
+
   return {
-    user: mockUsers[role],
+    user: user,
     isAuthenticated: true,
     isLoading: false,
 
@@ -351,14 +370,14 @@ export const createMockPermissionContext = (role: MockRoleType) => {
     hasAnyPermission: (perms: string[]) => perms.some(p => permissions.includes(p)),
     hasAllPermissions: (perms: string[]) => perms.every(p => permissions.includes(p)),
 
-    isAdmin: () => ['superAdmin', 'systemAdmin', 'admin'].includes(role),
-    isSystemAdmin: () => ['superAdmin', 'systemAdmin'].includes(role),
-    isSuperAdmin: () => role === 'superAdmin',
+    // ✅ Fixed: Use the helper functions instead of checking role name
+    isAdmin: checkIsAdmin,
+    isSystemAdmin: checkIsSystemAdmin,
+    isSuperAdmin: checkIsSuperAdmin,
 
     getRoleHierarchy: () => roleHierarchy[role],
 
     getUserRoles: () => {
-      const user = mockUsers[role]
       if (Array.isArray(user.roles)) {
         return user.roles
       }

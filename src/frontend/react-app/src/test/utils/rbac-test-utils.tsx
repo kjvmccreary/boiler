@@ -3,17 +3,17 @@ import { render, type RenderOptions, screen, waitFor, cleanup } from '@testing-l
 import { BrowserRouter, MemoryRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import userEvent from '@testing-library/user-event'
-import { AuthProvider } from '@/contexts/AuthContext'
-import { TenantProvider } from '@/contexts/TenantContext'
-import type { User } from '@/types/index'
-import { mockUsers, mockRoles, createMockPermissionContext, type MockRoleType } from './test-utils.tsx' // ✅ Explicit extension
+import { AuthProvider } from '@/contexts/AuthContext.tsx'
+import { TenantProvider } from '@/contexts/TenantContext.tsx'
+import type { User } from '@/types/index.ts'  // ✅ FIXED: Add the missing User import
+import { mockUsers, mockRoles, createMockPermissionContext, type MockRoleType } from './test-utils.tsx'
 
 // Fix: Add cleanup between renders
 let currentQueryClient: QueryClient | null = null
 
 export interface RoleTestConfig {
   role: MockRoleType
-  user?: User
+  user?: User  // ✅ Now User type is available
   customPermissions?: string[]
   customRoles?: string[]
   tenantId?: string
@@ -36,7 +36,7 @@ export class RBACTestScenarioBuilder {
     return this
   }
 
-  withUser(user: User) {
+  withUser(user: User) {  // ✅ Now User type is available
     this.config.user = user
     return this
   }

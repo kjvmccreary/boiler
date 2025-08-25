@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { TenantSelector } from '../TenantSelector.js'
+import { TenantSelector } from '../TenantSelector.tsx'
 
 // Enhanced mock tenant data
 const mockSingleTenant = [
@@ -54,13 +54,15 @@ const createMockTenantContext = (overrides = {}) => ({
   ...overrides
 })
 
-vi.mock('@/contexts/TenantContext.js', () => ({
-  useTenant: () => createMockTenantContext(),
+// ✅ FIX: Define the missing mockUseTenant variable
+const mockUseTenant = vi.fn(() => createMockTenantContext())
+
+vi.mock('@/contexts/TenantContext.tsx', () => ({
+  useTenant: mockUseTenant,  // ✅ Now this reference will work
   TenantProvider: ({ children }: any) => children,
 }))
 
-// Mock AuthContext
-vi.mock('@/contexts/AuthContext.js', () => ({
+vi.mock('@/contexts/AuthContext.tsx', () => ({
   useAuth: () => ({
     user: { id: '1', email: 'test@example.com' },
     isAuthenticated: true,
@@ -71,6 +73,8 @@ vi.mock('@/contexts/AuthContext.js', () => ({
 describe('TenantSelector - Enhanced Tests', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    // Reset to default mock behavior
+    mockUseTenant.mockReturnValue(createMockTenantContext())
   })
 
   describe('Multiple Tenants', () => {
@@ -112,8 +116,8 @@ describe('TenantSelector - Enhanced Tests', () => {
 
   describe('Single Tenant Auto-Selection', () => {
     it('should auto-select single tenant and show continue button', () => {
-      // Override the mock to return single tenant
-      vi.mocked(require('@/contexts/TenantContext.js').useTenant).mockReturnValue(
+      // ✅ FIX: Use the mockUseTenant function instead of require
+      mockUseTenant.mockReturnValue(
         createMockTenantContext({
           availableTenants: mockSingleTenant,
         })
@@ -131,7 +135,8 @@ describe('TenantSelector - Enhanced Tests', () => {
       const user = userEvent.setup()
       const mockOnTenantSelected = vi.fn()
 
-      vi.mocked(require('@/contexts/TenantContext.js').useTenant).mockReturnValue(
+      // ✅ FIX: Use the mockUseTenant function
+      mockUseTenant.mockReturnValue(
         createMockTenantContext({
           availableTenants: mockSingleTenant,
         })
@@ -148,7 +153,8 @@ describe('TenantSelector - Enhanced Tests', () => {
 
   describe('Loading and Error States', () => {
     it('should show loading state', () => {
-      vi.mocked(require('@/contexts/TenantContext.js').useTenant).mockReturnValue(
+      // ✅ FIX: Use the mockUseTenant function
+      mockUseTenant.mockReturnValue(
         createMockTenantContext({
           isLoading: true,
           availableTenants: [],
@@ -164,7 +170,8 @@ describe('TenantSelector - Enhanced Tests', () => {
     })
 
     it('should show error state', () => {
-      vi.mocked(require('@/contexts/TenantContext.js').useTenant).mockReturnValue(
+      // ✅ FIX: Use the mockUseTenant function
+      mockUseTenant.mockReturnValue(
         createMockTenantContext({
           error: 'Failed to load tenants',
           availableTenants: [],
@@ -179,7 +186,8 @@ describe('TenantSelector - Enhanced Tests', () => {
     })
 
     it('should show no tenants message', () => {
-      vi.mocked(require('@/contexts/TenantContext.js').useTenant).mockReturnValue(
+      // ✅ FIX: Use the mockUseTenant function
+      mockUseTenant.mockReturnValue(
         createMockTenantContext({
           availableTenants: [],
           isLoading: false,

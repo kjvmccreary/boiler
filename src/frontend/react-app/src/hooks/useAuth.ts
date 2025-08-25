@@ -1,1 +1,1 @@
-export { useAuth } from '@/contexts/AuthContext.js';
+export { useAuth } from '@/contexts/AuthContext.tsx';  // ✅ FIXED: .js → .tsx

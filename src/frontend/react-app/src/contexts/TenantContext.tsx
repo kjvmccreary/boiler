@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import type { Tenant, User, TenantSettings } from '@/types/index.js';
-import { useAuth } from './AuthContext.js';
-import { tenantService } from '@/services/tenant.service.js';
-import { apiClient } from '@/services/api.client.js';
+import type { Tenant, User, TenantSettings } from '@/types/index.ts';  // ✅ FIXED: .js → .ts
+import { useAuth } from './AuthContext.tsx';  // ✅ FIXED: .js → .tsx
+import { tenantService } from '@/services/tenant.service.ts';  // ✅ FIXED: .js → .ts
+import { apiClient } from '@/services/api.client.ts';  // ✅ FIXED: .js → .ts
 
 interface TenantContextType {
   currentTenant: Tenant | null;
@@ -223,7 +223,7 @@ export function TenantProvider({ children }: TenantProviderProps) {
         console.log('🏢 TenantContext: Select-tenant API successful, updating tokens...');
         
         // Update tokens with tenant-enabled JWT
-        const tokenManager = await import('@/utils/token.manager.js');
+        const tokenManager = await import('@/utils/token.manager.ts');
         tokenManager.tokenManager.setTokens(response.data.accessToken, response.data.refreshToken);
         
         // Refresh auth context to load new token

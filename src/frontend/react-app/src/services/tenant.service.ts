@@ -1,5 +1,5 @@
-import { apiClient } from './api.client.js';
-import type { Tenant, ApiResponse, TenantSettings } from '@/types/index.js';
+import { apiClient } from './api.client.ts';  // ✅ FIXED: .js → .ts
+import type { Tenant, ApiResponse, TenantSettings } from '@/types/index.ts';  // ✅ FIXED: .js → .ts
 
 class TenantService {
   // 🔧 HELPER: Convert backend TenantDto to frontend Tenant

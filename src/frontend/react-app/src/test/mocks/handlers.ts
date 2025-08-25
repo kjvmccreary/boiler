@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw'
-import type { User, Role } from '@/types/index'
-import { mockUsers, mockRoles, mockPermissions } from '../utils/test-utils.tsx' // ✅ Explicit extension
+import type { User, Role } from '@/types/index.ts'  // ✅ FIXED: Add .ts (if it doesn't have an extension)
+import { mockUsers, mockRoles, mockPermissions } from '../utils/test-utils.tsx'
 
 const API_BASE_URL = 'http://localhost:5000/api'
 
@@ -382,10 +382,33 @@ export const handlers = [
   }),
 
   // ========================================
-  // 🏢 TENANT MANAGEMENT ENDPOINTS
+  // 🏢 TENANT MANAGEMENT ENDPOINTS - FIXED
   // ========================================
 
+  // ✅ Fixed: Add missing handlers for getUserTenants
   http.get(`${API_BASE_URL}/users/:userId/tenants`, ({ params }) => {
+    const userId = params.userId as string
+    
+    if (userId === 'error-user') {
+      return HttpResponse.json(
+        createApiResponse(null, false, 'Failed to load tenants'),
+        { status: 500 }
+      )
+    }
+    
+    if (userId === 'no-tenant-user') {
+      return HttpResponse.json(createApiResponse([]))
+    }
+    
+    if (userId === 'single-tenant-user' || userId === '3') {
+      return HttpResponse.json(createApiResponse([mockTenants[0]]))
+    }
+    
+    return HttpResponse.json(createApiResponse(mockTenants))
+  }),
+
+  // ✅ Add the direct pattern that's failing
+  http.get('/api/users/:userId/tenants', ({ params }) => {
     const userId = params.userId as string
     
     if (userId === 'error-user') {
@@ -438,42 +461,17 @@ export const handlers = [
   }),
 
   // ========================================
-  // 🛡️ ROLE MANAGEMENT ENDPOINTS
+  // 🛡️ ROLE MANAGEMENT ENDPOINTS - OPTIMIZED
   // ========================================
 
-  // 🔧 CRITICAL FIX: Add both role endpoint patterns
-  http.get(`${API_BASE_URL}/roles`, ({ request }) => {
-    const url = new URL(request.url)
-    const page = parseInt(url.searchParams.get('page') || '1')
-    const pageSize = parseInt(url.searchParams.get('pageSize') || '10')
-    const searchTerm = url.searchParams.get('searchTerm')
-
-    console.log('🎯 MSW: Handling full URL roles request', { page, pageSize, searchTerm })
-
-    let roles = [...enhancedMockRoles]
-
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase()
-      roles = roles.filter((role: Role) =>
-        role.name.toLowerCase().includes(term) ||
-        (role.description && role.description.toLowerCase().includes(term))
-      )
-    }
-
-    const response = createPagedResponse(roles, page, pageSize)
-    console.log('🎯 MSW: Returning full URL roles response', response)
-    
-    return HttpResponse.json(response)
-  }),
-
-  // 🔧 CRITICAL FIX: Direct /api/roles handler
+  // ✅ Optimized: Single role handler that works immediately
   http.get('/api/roles', ({ request }) => {
     const url = new URL(request.url)
     const page = parseInt(url.searchParams.get('page') || '1')
     const pageSize = parseInt(url.searchParams.get('pageSize') || '10')
     const searchTerm = url.searchParams.get('searchTerm')
 
-    console.log('🎯 MSW: Handling direct /api/roles request', { page, pageSize, searchTerm })
+    console.log('🎯 MSW: Handling /api/roles request immediately', { page, pageSize, searchTerm })
 
     let roles = [...enhancedMockRoles]
 
@@ -486,7 +484,7 @@ export const handlers = [
     }
 
     const response = createPagedResponse(roles, page, pageSize)
-    console.log('🎯 MSW: Returning direct /api/roles response', response)
+    console.log('🎯 MSW: Returning /api/roles response immediately', response)
     
     return HttpResponse.json(response)
   }),
