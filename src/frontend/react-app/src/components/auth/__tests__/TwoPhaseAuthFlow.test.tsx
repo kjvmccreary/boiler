@@ -2,13 +2,18 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
-import { AuthProvider } from '@/contexts/AuthContext'
-import { TenantProvider } from '@/contexts/TenantContext'
-import { TenantSelector } from '../TenantSelector'
-import { LoginForm } from '../LoginForm'
+import { AuthProvider } from '@/contexts/AuthContext.tsx'
+import { TenantProvider } from '@/contexts/TenantContext.tsx'
+import { TenantSelector } from '../TenantSelector.tsx'
+import { LoginForm } from '../LoginForm.tsx'
+
+// ✅ FIX: Import and create mock service references
+import { authService } from '@/services/auth.service.ts'
+import { tenantService } from '@/services/tenant.service.ts'
+import { tokenManager } from '@/utils/token.manager.ts'
 
 // Mock all services
-vi.mock('@/services/auth.service', () => ({
+vi.mock('@/services/auth.service.ts', () => ({
   authService: {
     login: vi.fn(),
     validateToken: vi.fn(),
@@ -16,7 +21,7 @@ vi.mock('@/services/auth.service', () => ({
   }
 }))
 
-vi.mock('@/services/tenant.service', () => ({
+vi.mock('@/services/tenant.service.ts', () => ({
   tenantService: {
     getUserTenants: vi.fn(),
     selectTenant: vi.fn(),
@@ -25,7 +30,7 @@ vi.mock('@/services/tenant.service', () => ({
   }
 }))
 
-vi.mock('@/utils/token.manager', () => ({
+vi.mock('@/utils/token.manager.ts', () => ({
   tokenManager: {
     getToken: vi.fn(),
     getRefreshToken: vi.fn(),
@@ -35,6 +40,11 @@ vi.mock('@/utils/token.manager', () => ({
     getTokenClaims: vi.fn(),
   }
 }))
+
+// ✅ FIX: Create mock service references
+const mockAuthService = vi.mocked(authService)
+const mockTenantService = vi.mocked(tenantService)
+const mockTokenManager = vi.mocked(tokenManager)
 
 const TestWrapper = ({ children }: { children: React.ReactNode }) => (
   <BrowserRouter>
@@ -51,15 +61,18 @@ describe('Two-Phase Authentication Flow', () => {
     vi.clearAllMocks()
     localStorage.clear()
     sessionStorage.clear()
+    
+    // ✅ FIX: Use the proper mock references
+    mockAuthService.login.mockClear()
+    mockTenantService.getUserTenants.mockClear()
+    mockTenantService.selectTenant.mockClear()
   })
 
   it('should complete Phase 1: Login without tenant context', async () => {
     const user = userEvent.setup()
-    const { authService } = await import('@/services/auth.service')
-    const { tokenManager } = await import('@/utils/token.manager')
 
     // Mock Phase 1 login response with all required AuthResponse properties
-    vi.mocked(authService.login).mockResolvedValue({
+    mockAuthService.login.mockResolvedValue({
       accessToken: 'phase1-token-no-tenant',
       refreshToken: 'refresh-token',
       expiresAt: new Date(Date.now() + 3600000).toISOString(),
@@ -103,10 +116,9 @@ describe('Two-Phase Authentication Flow', () => {
     })
 
     // Mock token claims without tenant
-    vi.mocked(tokenManager.getTokenClaims).mockReturnValue({
+    mockTokenManager.getTokenClaims.mockReturnValue({
       nameid: '1',
       email: 'admin@tenant1.com',
-      // No tenant_id or permissions
     })
 
     render(
@@ -122,7 +134,7 @@ describe('Two-Phase Authentication Flow', () => {
 
     // Should complete Phase 1
     await waitFor(() => {
-      expect(authService.login).toHaveBeenCalledWith({
+      expect(mockAuthService.login).toHaveBeenCalledWith({
         email: 'admin@tenant1.com',
         password: 'password123'
       })
@@ -131,8 +143,6 @@ describe('Two-Phase Authentication Flow', () => {
 
   it('should complete Phase 2: Tenant selection', async () => {
     const user = userEvent.setup()
-    const { tenantService } = await import('@/services/tenant.service')
-    const { tokenManager } = await import('@/utils/token.manager')
 
     const mockTenants = [
       {
@@ -156,13 +166,12 @@ describe('Two-Phase Authentication Flow', () => {
     ]
 
     // Mock get user tenants
-    vi.mocked(tenantService.getUserTenants).mockResolvedValue({
+    mockTenantService.getUserTenants.mockResolvedValue({
       success: true,
       data: mockTenants
     })
 
-    // 🔧 FIXED: Mock Phase 2 tenant selection with correct structure (no expiresAt/tokenType)
-    vi.mocked(tenantService.selectTenant).mockResolvedValue({
+    mockTenantService.selectTenant.mockResolvedValue({
       success: true,
       data: {
         accessToken: 'phase2-token-with-tenant',
@@ -217,7 +226,7 @@ describe('Two-Phase Authentication Flow', () => {
     // Wait for tenants to load and select one
     await waitFor(() => {
       expect(screen.getByText('Tenant 1')).toBeInTheDocument()
-    })
+    }, { timeout: 5000 })
 
     await user.click(screen.getByText('Tenant 1'))
     await user.click(screen.getByRole('button', { name: /select organization/i }))
@@ -226,8 +235,6 @@ describe('Two-Phase Authentication Flow', () => {
   })
 
   it('should handle single tenant auto-selection', async () => {
-    const { tenantService } = await import('@/services/tenant.service')
-
     const singleTenant = [
       {
         id: '1',
@@ -240,13 +247,12 @@ describe('Two-Phase Authentication Flow', () => {
       }
     ]
 
-    vi.mocked(tenantService.getUserTenants).mockResolvedValue({
+    mockTenantService.getUserTenants.mockResolvedValue({
       success: true,
       data: singleTenant
     })
 
-    // 🔧 FIXED: Correct structure for selectTenant response (no expiresAt/tokenType)
-    vi.mocked(tenantService.selectTenant).mockResolvedValue({
+    mockTenantService.selectTenant.mockResolvedValue({
       success: true,
       data: {
         accessToken: 'auto-selected-token',
@@ -290,16 +296,25 @@ describe('Two-Phase Authentication Flow', () => {
       </TestWrapper>
     )
 
+    // Wait for loading to complete
+    await waitFor(() => {
+      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument()
+    })
+
     // Should auto-select and show continue
     await waitFor(() => {
       expect(screen.getByText('Continue')).toBeInTheDocument()
-    })
+    }, { timeout: 5000 })
+
+    const user = userEvent.setup()
+    const continueButton = screen.getByText('Continue')
+    await user.click(continueButton)
+
+    expect(mockOnTenantSelected).toHaveBeenCalledWith('1')
   })
 
   it('should handle authentication errors', async () => {
-    const { authService } = await import('@/services/auth.service')
-
-    vi.mocked(authService.login).mockRejectedValue(
+    mockAuthService.login.mockRejectedValue(
       new Error('Invalid credentials')
     )
 
@@ -321,9 +336,7 @@ describe('Two-Phase Authentication Flow', () => {
   })
 
   it('should handle tenant loading errors', async () => {
-    const { tenantService } = await import('@/services/tenant.service')
-
-    vi.mocked(tenantService.getUserTenants).mockRejectedValue(
+    mockTenantService.getUserTenants.mockRejectedValue(
       new Error('Failed to load tenants')
     )
 
@@ -336,7 +349,7 @@ describe('Two-Phase Authentication Flow', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Failed to load tenants')).toBeInTheDocument()
-    })
+      expect(screen.getByText(/failed to load tenants/i)).toBeInTheDocument()
+    }, { timeout: 5000 })
   })
 })

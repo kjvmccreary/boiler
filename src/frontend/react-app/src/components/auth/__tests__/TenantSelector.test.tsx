@@ -54,11 +54,12 @@ const createMockTenantContext = (overrides = {}) => ({
   ...overrides
 })
 
-// ✅ FIX: Define the missing mockUseTenant variable
-const mockUseTenant = vi.fn(() => createMockTenantContext())
+// ✅ FIX: Create the mock function properly
+const mockUseTenant = vi.fn()
 
+// ✅ FIX: Move the mock setup outside and use factory function
 vi.mock('@/contexts/TenantContext.tsx', () => ({
-  useTenant: mockUseTenant,  // ✅ Now this reference will work
+  useTenant: () => mockUseTenant(),
   TenantProvider: ({ children }: any) => children,
 }))
 
@@ -116,7 +117,7 @@ describe('TenantSelector - Enhanced Tests', () => {
 
   describe('Single Tenant Auto-Selection', () => {
     it('should auto-select single tenant and show continue button', () => {
-      // ✅ FIX: Use the mockUseTenant function instead of require
+      // ✅ FIX: Use the mockUseTenant function properly
       mockUseTenant.mockReturnValue(
         createMockTenantContext({
           availableTenants: mockSingleTenant,
@@ -135,7 +136,6 @@ describe('TenantSelector - Enhanced Tests', () => {
       const user = userEvent.setup()
       const mockOnTenantSelected = vi.fn()
 
-      // ✅ FIX: Use the mockUseTenant function
       mockUseTenant.mockReturnValue(
         createMockTenantContext({
           availableTenants: mockSingleTenant,
@@ -153,7 +153,6 @@ describe('TenantSelector - Enhanced Tests', () => {
 
   describe('Loading and Error States', () => {
     it('should show loading state', () => {
-      // ✅ FIX: Use the mockUseTenant function
       mockUseTenant.mockReturnValue(
         createMockTenantContext({
           isLoading: true,
@@ -170,7 +169,6 @@ describe('TenantSelector - Enhanced Tests', () => {
     })
 
     it('should show error state', () => {
-      // ✅ FIX: Use the mockUseTenant function
       mockUseTenant.mockReturnValue(
         createMockTenantContext({
           error: 'Failed to load tenants',
@@ -186,7 +184,6 @@ describe('TenantSelector - Enhanced Tests', () => {
     })
 
     it('should show no tenants message', () => {
-      // ✅ FIX: Use the mockUseTenant function
       mockUseTenant.mockReturnValue(
         createMockTenantContext({
           availableTenants: [],
