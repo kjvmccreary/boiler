@@ -1,5 +1,5 @@
-import { apiClient } from './api.client.js';
-import { API_ENDPOINTS } from '@/utils/api.constants.js';
+import { apiClient } from './api.client';
+import { API_ENDPOINTS } from '@/utils/api.constants';
 
 export interface PermissionDto {
   id: number;

@@ -1,9 +1,9 @@
-import { apiClient } from './api.client.js';
-import { API_ENDPOINTS } from '@/utils/api.constants.js';
+import { apiClient } from './api.client';
+import { API_ENDPOINTS } from '@/utils/api.constants';
 import type { 
   User,
   PaginatedResponse
-} from '@/types/index.js';
+} from '@/types/index';
 
 export interface UserUpdateRequest {
   firstName: string;

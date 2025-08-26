@@ -13,7 +13,12 @@ import { RoleDetails } from '@/components/roles/RoleDetails.js';
 import { Dashboard } from '@/pages/Dashboard.js';
 import { CreateUser } from '@/components/users/CreateUser.js';
 import { LandingPage } from '@/components/landing/LandingPage.js';
-import { UnauthorizedPage } from '@/components/common/UnauthorizedPage.js'; // 🔧 ADD
+import { UnauthorizedPage } from '@/components/common/UnauthorizedPage.js';
+
+// ✅ NEW: Import workflow components
+import { DefinitionsPage } from '@/features/workflow/definitions/DefinitionsPage.js';
+import { InstanceDetailsPage } from '@/features/workflow/instances/InstanceDetailsPage.js';
+import { MyTasksPage } from '@/features/workflow/tasks/MyTasksPage.js';
 
 // Router-free routes component for testing
 export function AppRoutesConfig() {
@@ -50,7 +55,7 @@ export function AppRoutesConfig() {
         <Route path="users" element={
           <ProtectedRoute 
             requirePermission="users.view"
-            redirectToAccessibleRoute={true} // 🔧 NEW: Enable smart redirect
+            redirectToAccessibleRoute={true}
           >
             <UserList />
           </ProtectedRoute>
@@ -59,7 +64,7 @@ export function AppRoutesConfig() {
         <Route path="users/:userId" element={
           <ProtectedRoute 
             requirePermission="users.view"
-            redirectToAccessibleRoute={true} // 🔧 NEW: Enable smart redirect
+            redirectToAccessibleRoute={true}
           >
             <UserProfile />
           </ProtectedRoute>
@@ -68,7 +73,7 @@ export function AppRoutesConfig() {
         <Route path="users/:userId/roles" element={
           <ProtectedRoute 
             requirePermission="users.manage_roles"
-            redirectToAccessibleRoute={true} // 🔧 NEW: Enable smart redirect
+            redirectToAccessibleRoute={true}
           >
             <UserRoleAssignment />
           </ProtectedRoute>
@@ -77,7 +82,7 @@ export function AppRoutesConfig() {
         <Route path="users/new" element={
           <ProtectedRoute 
             requirePermission="users.create"
-            redirectToAccessibleRoute={true} // 🔧 NEW: Enable smart redirect
+            redirectToAccessibleRoute={true}
           >
             <CreateUser />
           </ProtectedRoute>
@@ -87,7 +92,7 @@ export function AppRoutesConfig() {
         <Route path="roles" element={
           <ProtectedRoute 
             requirePermission="roles.view"
-            redirectToAccessibleRoute={true} // 🔧 NEW: Enable smart redirect
+            redirectToAccessibleRoute={true}
           >
             <RoleManagement />
           </ProtectedRoute>
@@ -96,7 +101,7 @@ export function AppRoutesConfig() {
         <Route path="roles/:id" element={
           <ProtectedRoute 
             requirePermission="roles.view"
-            redirectToAccessibleRoute={true} // 🔧 NEW: Enable smart redirect
+            redirectToAccessibleRoute={true}
           >
             <RoleDetails />
           </ProtectedRoute>
@@ -105,7 +110,7 @@ export function AppRoutesConfig() {
         <Route path="roles/:id/edit" element={
           <ProtectedRoute 
             requirePermission="roles.edit"
-            redirectToAccessibleRoute={true} // 🔧 NEW: Enable smart redirect
+            redirectToAccessibleRoute={true}
           >
             <RoleEditor />
           </ProtectedRoute>
@@ -114,9 +119,50 @@ export function AppRoutesConfig() {
         <Route path="roles/new" element={
           <ProtectedRoute 
             requirePermission="roles.create"
-            redirectToAccessibleRoute={true} // 🔧 NEW: Enable smart redirect
+            redirectToAccessibleRoute={true}
           >
             <RoleEditor />
+          </ProtectedRoute>
+        } />
+
+        {/* ✅ NEW: Workflow routes */}
+        <Route path="workflow/definitions" element={
+          <ProtectedRoute 
+            requirePermission="workflow.read"
+            redirectToAccessibleRoute={true}
+          >
+            <DefinitionsPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="workflow/instances/:id" element={
+          <ProtectedRoute 
+            requirePermission="workflow.read"
+            redirectToAccessibleRoute={true}
+          >
+            <InstanceDetailsPage />
+          </ProtectedRoute>
+        } />
+
+        <Route path="workflow/tasks/mine" element={
+          <ProtectedRoute 
+            requirePermission="workflow.read"
+            redirectToAccessibleRoute={true}
+          >
+            <MyTasksPage />
+          </ProtectedRoute>
+        } />
+
+        {/* ✅ Placeholder for builder (to be implemented next) */}
+        <Route path="workflow/builder/:id?" element={
+          <ProtectedRoute 
+            requirePermission="workflow.write"
+            redirectToAccessibleRoute={true}
+          >
+            <div style={{ padding: '2rem' }}>
+              <h2>Workflow Builder</h2>
+              <p>Coming soon! This will be the ReactFlow-based workflow builder.</p>
+            </div>
           </ProtectedRoute>
         } />
       </Route>

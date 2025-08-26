@@ -1,10 +1,10 @@
-import { apiClient } from './api.client.js';
-import { API_ENDPOINTS } from '@/utils/api.constants.js';
+import { apiClient } from './api.client';
+import { API_ENDPOINTS } from '@/utils/api.constants';
 import type { 
   LoginRequest, 
   AuthResponse,
   User
-} from '@/types/index.js';
+} from '@/types/index';
 
 export interface ChangePasswordRequest {
   currentPassword: string;

@@ -25,6 +25,16 @@ export const ROUTES = {
   ROLE_EDIT: '/app/roles/:id/edit',
   PERMISSIONS: '/app/permissions',
   SETTINGS: '/app/settings',
+
+  // ✅ NEW: Workflow routes
+  WORKFLOW_DEFINITIONS: '/app/workflow/definitions',
+  WORKFLOW_DEFINITION_DETAILS: '/app/workflow/definitions/:id',
+  WORKFLOW_BUILDER: '/app/workflow/builder/:id?', // Optional ID for new vs edit
+  WORKFLOW_INSTANCES: '/app/workflow/instances',
+  WORKFLOW_INSTANCE_DETAILS: '/app/workflow/instances/:id',
+  WORKFLOW_MY_TASKS: '/app/workflow/tasks/mine',
+  WORKFLOW_TASK_DETAILS: '/app/workflow/tasks/:id',
+  WORKFLOW_ADMIN: '/app/workflow/admin',
 } as const;
 
 export const NAVIGATION_ITEMS = [
@@ -45,6 +55,38 @@ export const NAVIGATION_ITEMS = [
     path: ROUTES.ROLES,
     icon: 'Security',
     permission: 'roles.view',
+  },
+  // ✅ NEW: Workflow section
+  {
+    label: 'Workflows',
+    icon: 'AccountTree',
+    permission: 'workflow.read',
+    children: [
+      {
+        label: 'My Tasks',
+        path: ROUTES.WORKFLOW_MY_TASKS,
+        icon: 'Assignment',
+        permission: 'workflow.read',
+      },
+      {
+        label: 'Definitions',
+        path: ROUTES.WORKFLOW_DEFINITIONS,
+        icon: 'Description',
+        permission: 'workflow.read',
+      },
+      {
+        label: 'Instances',
+        path: ROUTES.WORKFLOW_INSTANCES,
+        icon: 'PlayArrow',
+        permission: 'workflow.read',
+      },
+      {
+        label: 'Builder',
+        path: '/app/workflow/builder/new',
+        icon: 'Edit',
+        permission: 'workflow.write',
+      },
+    ],
   },
   {
     label: 'Settings',

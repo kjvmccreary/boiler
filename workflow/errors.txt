@@ -1,18 +1,186 @@
-Test data store opened in 0.018 sec.
-========== Starting test discovery ==========
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.07]   Discovering: WorkflowService.SmokeTests
-[xUnit.net 00:00:00.09]   Discovered:  WorkflowService.SmokeTests
-========== Test discovery finished: 2 Tests found in 464.1 ms ==========
-Building Test Projects
-========== Starting test run ==========
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.04]   Starting:    WorkflowService.SmokeTests
-dbug: WorkflowService.SmokeTests.TestAuthenticationHandler[8]
-      AuthenticationScheme: Test was successfully authenticated.
-dbug: WorkflowService.SmokeTests.TestAuthenticationHandler[8]
-      AuthenticationScheme: Test was successfully authenticated.
-dbug: WorkflowService.SmokeTests.TestAuthenticationHandler[8]
-      AuthenticationScheme: Test was successfully authenticated.
-[xUnit.net 00:00:00.27]   Finished:    WorkflowService.SmokeTests
-========== Test run finished: 2 Tests (2 Passed, 0 Failed, 0 Skipped) run in 282 ms ==========
+PS C:\Users\mccre\dev\boiler\src\frontend\react-app> npm run build
+
+> microservices-frontend@0.0.0 build
+> tsc -b && vite build
+
+src/components/layout/Sidebar.tsx:93:36 - error TS2339: Property 'children' does not exist on type '{ readonly label: "Dashboard"; readonly path: "/app/dashboard"; readonly icon: "Dashboard"; readonly permission: undefined; } | { readonly label: "Users"; readonly path: "/app/users"; readonly icon: "People"; readonly permission: "users.view"; } | { ...; } | { ...; } | { ...; }'.
+  Property 'children' does not exist on type '{ readonly label: "Dashboard"; readonly path: "/app/dashboard"; readonly icon: "Dashboard"; readonly permission: undefined; }'.
+
+93           const hasChildren = item.children && item.children.length > 0;
+                                      ~~~~~~~~
+
+src/components/layout/Sidebar.tsx:93:53 - error TS2339: Property 'children' does not exist on type '{ readonly label: "Dashboard"; readonly path: "/app/dashboard"; readonly icon: "Dashboard"; readonly permission: undefined; } | { readonly label: "Users"; readonly path: "/app/users"; readonly icon: "People"; readonly permission: "users.view"; } | { ...; } | { ...; } | { ...; }'.
+  Property 'children' does not exist on type '{ readonly label: "Dashboard"; readonly path: "/app/dashboard"; readonly icon: "Dashboard"; readonly permission: undefined; }'.
+
+93           const hasChildren = item.children && item.children.length > 0;
+                                                       ~~~~~~~~
+
+src/components/layout/Sidebar.tsx:95:63 - error TS2339: Property 'children' does not exist on type '{ readonly label: "Dashboard"; readonly path: "/app/dashboard"; readonly icon: "Dashboard"; readonly permission: undefined; } | { readonly label: "Users"; readonly path: "/app/users"; readonly icon: "People"; readonly permission: "users.view"; } | { ...; } | { ...; } | { ...; }'.
+  Property 'children' does not exist on type '{ readonly label: "Dashboard"; readonly path: "/app/dashboard"; readonly icon: "Dashboard"; readonly permission: undefined; }'.
+
+95           const isActive = hasChildren ? isSectionActive(item.children) : isPathActive(item.path);
+                                                                 ~~~~~~~~
+
+src/components/layout/Sidebar.tsx:95:93 - error TS2339: Property 'path' does not exist on type '{ readonly label: "Dashboard"; readonly path: "/app/dashboard"; readonly icon: "Dashboard"; readonly permission: undefined; } | { readonly label: "Users"; readonly path: "/app/users"; readonly icon: "People"; readonly permission: "users.view"; } | { ...; } | { ...; } | { ...; }'.
+  Property 'path' does not exist on type '{ readonly label: "Workflows"; readonly icon: "AccountTree"; readonly permission: "workflow.read"; readonly children: readonly [{ readonly label: "My Tasks"; readonly path: "/app/workflow/tasks/mine"; readonly icon: "Assignment"; readonly permission: "workflow.read"; }, { ...; }, { ...; }, { ...; }]; }'.
+
+95           const isActive = hasChildren ? isSectionActive(item.children) : isPathActive(item.path);
+                                                                                               ~~~~
+
+src/components/layout/Sidebar.tsx:108:37 - error TS2339: Property 'path' does not exist on type '{ readonly label: "Dashboard"; readonly path: "/app/dashboard"; readonly icon: "Dashboard"; readonly permission: undefined; } | { readonly label: "Users"; readonly path: "/app/users"; readonly icon: "People"; readonly permission: "users.view"; } | { ...; } | { ...; } | { ...; }'.
+  Property 'path' does not exist on type '{ readonly label: "Workflows"; readonly icon: "AccountTree"; readonly permission: "workflow.read"; readonly children: readonly [{ readonly label: "My Tasks"; readonly path: "/app/workflow/tasks/mine"; readonly icon: "Assignment"; readonly permission: "workflow.read"; }, { ...; }, { ...; }, { ...; }]; }'.
+
+108                     } else if (item.path) {
+                                        ~~~~
+
+src/components/layout/Sidebar.tsx:109:45 - error TS2339: Property 'path' does not exist on type '{ readonly label: "Dashboard"; readonly path: "/app/dashboard"; readonly icon: "Dashboard"; readonly permission: undefined; } | { readonly label: "Users"; readonly path: "/app/users"; readonly icon: "People"; readonly permission: "users.view"; } | { ...; } | { ...; } | { ...; }'.
+  Property 'path' does not exist on type '{ readonly label: "Workflows"; readonly icon: "AccountTree"; readonly permission: "workflow.read"; readonly children: readonly [{ readonly label: "My Tasks"; readonly path: "/app/workflow/tasks/mine"; readonly icon: "Assignment"; readonly permission: "workflow.read"; }, { ...; }, { ...; }, { ...; }]; }'.
+
+109                       handleNavigation(item.path);
+                                                ~~~~
+
+src/components/layout/Sidebar.tsx:140:27 - error TS2339: Property 'children' does not exist on type '{ readonly label: "Dashboard"; readonly path: "/app/dashboard"; readonly icon: "Dashboard"; readonly permission: undefined; } | { readonly label: "Users"; readonly path: "/app/users"; readonly icon: "People"; readonly permission: "users.view"; } | { ...; } | { ...; } | { ...; }'.
+  Property 'children' does not exist on type '{ readonly label: "Dashboard"; readonly path: "/app/dashboard"; readonly icon: "Dashboard"; readonly permission: undefined; }'.
+
+140                     {item.children?.map((child) => {
+                              ~~~~~~~~
+
+src/components/layout/Sidebar.tsx:140:42 - error TS7006: Parameter 'child' implicitly has an 'any' type.
+
+140                     {item.children?.map((child) => {
+                                             ~~~~~
+
+src/features/workflow/dsl/dsl.serialize.ts:1:33 - error TS2307: Cannot find module 'reactflow' or its corresponding type declarations.
+
+1 import type { Node, Edge } from 'reactflow';
+                                  ~~~~~~~~~~~
+
+src/features/workflow/instances/InstanceDetailsPage.tsx:414:14 - error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: { component: ElementType<any, keyof IntrinsicElements>; } & GridBaseProps & { sx?: SxProps<Theme> | undefined; } & SystemProps<...> & Omit<...>): Element | null', gave the following error.
+    Property 'component' is missing in type '{ children: Element[]; item: true; xs: number; md: number; }' but required in type '{ component: ElementType<any, keyof IntrinsicElements>; }'.
+  Overload 2 of 2, '(props: DefaultComponentProps<GridTypeMap<{}, "div">>): Element | null', gave the following error.
+    Type '{ children: Element[]; item: true; xs: number; md: number; }' is not assignable to type 'IntrinsicAttributes & GridBaseProps & { sx?: SxProps<Theme> | undefined; } & SystemProps<Theme> & Omit<...>'.
+      Property 'item' does not exist on type 'IntrinsicAttributes & GridBaseProps & { sx?: SxProps<Theme> | undefined; } & SystemProps<Theme> & Omit<...>'.
+
+414             <Grid item xs={12} md={6}>
+                 ~~~~
+
+  node_modules/@mui/types/esm/index.d.ts:64:5
+    64     component: C;
+           ~~~~~~~~~
+    'component' is declared here.
+
+src/features/workflow/instances/InstanceDetailsPage.tsx:441:14 - error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: { component: ElementType<any, keyof IntrinsicElements>; } & GridBaseProps & { sx?: SxProps<Theme> | undefined; } & SystemProps<...> & Omit<...>): Element | null', gave the following error.
+    Property 'component' is missing in type '{ children: ("" | Element | undefined)[]; item: true; xs: number; md: number; }' but required in type '{ component: ElementType<any, keyof IntrinsicElements>; }'.
+  Overload 2 of 2, '(props: DefaultComponentProps<GridTypeMap<{}, "div">>): Element | null', gave the following error.
+    Type '{ children: ("" | Element | undefined)[]; item: true; xs: number; md: number; }' is not assignable to type 'IntrinsicAttributes & GridBaseProps & { sx?: SxProps<Theme> | undefined; } & SystemProps<Theme> & Omit<...>'.
+      Property 'item' does not exist on type 'IntrinsicAttributes & GridBaseProps & { sx?: SxProps<Theme> | undefined; } & SystemProps<Theme> & Omit<...>'.
+
+441             <Grid item xs={12} md={6}>
+                 ~~~~
+
+  node_modules/@mui/types/esm/index.d.ts:64:5
+    64     component: C;
+           ~~~~~~~~~
+    'component' is declared here.
+
+src/features/workflow/instances/InstanceDetailsPage.tsx:478:16 - error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: { component: ElementType<any, keyof IntrinsicElements>; } & GridBaseProps & { sx?: SxProps<Theme> | undefined; } & SystemProps<...> & Omit<...>): Element | null', gave the following error.
+    Property 'component' is missing in type '{ children: Element; item: true; xs: number; }' but required in type '{ component: ElementType<any, keyof IntrinsicElements>; }'.
+  Overload 2 of 2, '(props: DefaultComponentProps<GridTypeMap<{}, "div">>): Element | null', gave the following error.
+    Type '{ children: Element; item: true; xs: number; }' is not assignable to type 'IntrinsicAttributes & GridBaseProps & { sx?: SxProps<Theme> | undefined; } & SystemProps<Theme> & Omit<...>'.
+      Property 'item' does not exist on type 'IntrinsicAttributes & GridBaseProps & { sx?: SxProps<Theme> | undefined; } & SystemProps<Theme> & Omit<...>'.
+
+478               <Grid item xs={12}>
+                   ~~~~
+
+  node_modules/@mui/types/esm/index.d.ts:64:5
+    64     component: C;
+           ~~~~~~~~~
+    'component' is declared here.
+
+src/features/workflow/instances/InstanceDetailsPage.tsx:486:14 - error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: { component: ElementType<any, keyof IntrinsicElements>; } & GridBaseProps & { sx?: SxProps<Theme> | undefined; } & SystemProps<...> & Omit<...>): Element | null', gave the following error.
+    Property 'component' is missing in type '{ children: Element[]; item: true; xs: number; }' but required in type '{ component: ElementType<any, keyof IntrinsicElements>; }'.
+  Overload 2 of 2, '(props: DefaultComponentProps<GridTypeMap<{}, "div">>): Element | null', gave the following error.
+    Type '{ children: Element[]; item: true; xs: number; }' is not assignable to type 'IntrinsicAttributes & GridBaseProps & { sx?: SxProps<Theme> | undefined; } & SystemProps<Theme> & Omit<...>'.
+      Property 'item' does not exist on type 'IntrinsicAttributes & GridBaseProps & { sx?: SxProps<Theme> | undefined; } & SystemProps<Theme> & Omit<...>'.
+
+486             <Grid item xs={12}>
+                 ~~~~
+
+  node_modules/@mui/types/esm/index.d.ts:64:5
+    64     component: C;
+           ~~~~~~~~~
+    'component' is declared here.
+
+src/features/workflow/instances/InstanceDetailsPage.tsx:565:21 - error TS2353: Object literal may only specify known properties, and 'placeholder' does not exist in type 'GridToolbarQuickFilterProps'.
+
+565                     placeholder: 'Search events...'
+                        ~~~~~~~~~~~
+
+src/features/workflow/tasks/MyTasksPage.tsx:25:3 - error TS2724: '"@mui/x-data-grid-premium"' has no exported member named 'GridValueFormatterParams'. Did you mean 'GridValueFormatter'?
+
+25   GridValueFormatterParams,
+     ~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/features/workflow/tasks/MyTasksPage.tsx:34:3 - error TS2305: Module '"@mui/icons-material"' has no exported member 'WorkflowIcon'.
+
+34   WorkflowIcon,
+     ~~~~~~~~~~~~
+
+src/features/workflow/tasks/MyTasksPage.tsx:379:17 - error TS2353: Object literal may only specify known properties, and 'placeholder' does not exist in type 'GridToolbarQuickFilterProps'.
+
+379                 placeholder: 'Search tasks...'
+                    ~~~~~~~~~~~
+
+src/routes/workflow.routes.tsx:11:39 - error TS2307: Cannot find module '@/features/workflow/builder/BuilderPage' or its corresponding type declarations.
+
+11 const BuilderPage = lazy(() => import('@/features/workflow/builder/BuilderPage'));
+                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/routes/workflow.routes.tsx:20:27 - error TS2322: Type '{ children: Element; permission: string; }' is not assignable to type 'IntrinsicAttributes & ProtectedRouteProps'.
+  Property 'permission' does not exist on type 'IntrinsicAttributes & ProtectedRouteProps'.
+
+20           <ProtectedRoute permission="workflow.read">
+                             ~~~~~~~~~~
+
+src/routes/workflow.routes.tsx:28:27 - error TS2322: Type '{ children: Element; permission: string; }' is not assignable to type 'IntrinsicAttributes & ProtectedRouteProps'.
+  Property 'permission' does not exist on type 'IntrinsicAttributes & ProtectedRouteProps'.
+
+28           <ProtectedRoute permission="workflow.read">
+                             ~~~~~~~~~~
+
+src/routes/workflow.routes.tsx:36:27 - error TS2322: Type '{ children: Element; permission: string; }' is not assignable to type 'IntrinsicAttributes & ProtectedRouteProps'.
+  Property 'permission' does not exist on type 'IntrinsicAttributes & ProtectedRouteProps'.
+
+36           <ProtectedRoute permission="workflow.read">
+                             ~~~~~~~~~~
+
+src/routes/workflow.routes.tsx:44:27 - error TS2322: Type '{ children: Element; permission: string; }' is not assignable to type 'IntrinsicAttributes & ProtectedRouteProps'.
+  Property 'permission' does not exist on type 'IntrinsicAttributes & ProtectedRouteProps'.
+
+44           <ProtectedRoute permission="workflow.read">
+                             ~~~~~~~~~~
+
+src/routes/workflow.routes.tsx:52:27 - error TS2322: Type '{ children: Element; permission: string; }' is not assignable to type 'IntrinsicAttributes & ProtectedRouteProps'.
+  Property 'permission' does not exist on type 'IntrinsicAttributes & ProtectedRouteProps'.
+
+52           <ProtectedRoute permission="workflow.read">
+                             ~~~~~~~~~~
+
+src/routes/workflow.routes.tsx:60:27 - error TS2322: Type '{ children: Element; permission: string; }' is not assignable to type 'IntrinsicAttributes & ProtectedRouteProps'.
+  Property 'permission' does not exist on type 'IntrinsicAttributes & ProtectedRouteProps'.
+
+60           <ProtectedRoute permission="workflow.read">
+                             ~~~~~~~~~~
+
+src/routes/workflow.routes.tsx:68:27 - error TS2322: Type '{ children: Element; permission: string; }' is not assignable to type 'IntrinsicAttributes & ProtectedRouteProps'.
+  Property 'permission' does not exist on type 'IntrinsicAttributes & ProtectedRouteProps'.
+
+68           <ProtectedRoute permission="workflow.write">
+                             ~~~~~~~~~~
+
+
+Found 25 errors.
