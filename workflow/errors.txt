@@ -1,122 +1,18 @@
-PS C:\Users\mccre\dev\boiler> dotnet test tests/unit/WorkflowService.Tests/ --verbosity normal
-Restore complete (0.3s)
-  DTOs succeeded (0.0s) → src\shared\DTOs\bin\Debug\net9.0\DTOs.dll
-  Contracts succeeded (0.2s) → src\shared\Contracts\bin\Debug\net9.0\Contracts.dll
-  Common succeeded (0.1s) → src\shared\Common\bin\Debug\net9.0\Common.dll
-  WorkflowService succeeded (0.1s) → src\services\WorkflowService\bin\Debug\net9.0\WorkflowService.dll
-  WorkflowService.Tests succeeded (0.1s) → tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll
+Test data store opened in 0.018 sec.
+========== Starting test discovery ==========
 [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.05]   Discovering: WorkflowService.Tests
-[xUnit.net 00:00:00.07]   Discovered:  WorkflowService.Tests
-[xUnit.net 00:00:00.07]   Starting:    WorkflowService.Tests
-[xUnit.net 00:00:00.67]     WorkflowService.Tests.Services.DefinitionServiceTests.CreateDraftAsync_ValidRequest_ShouldCreateDraft [FAIL]
-[xUnit.net 00:00:00.67]       Expected result.Success to be True, but found False.
-[xUnit.net 00:00:00.67]       Stack Trace:
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Primitives.BooleanAssertions`1.BeTrue(String because, Object[] becauseArgs)
-[xUnit.net 00:00:00.67]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServiceTests.cs(64,0): at WorkflowService.Tests.Services.DefinitionServiceTests.CreateDraftAsync_ValidRequest_ShouldCreateDraft()
-[xUnit.net 00:00:00.67]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.67]     WorkflowService.Tests.Services.TaskServiceTests.GetMyTasksAsync_WithFilters_ShouldReturnFilteredTasks [FAIL]
-[xUnit.net 00:00:00.67]       Expected result.Success to be True, but found False.
-[xUnit.net 00:00:00.67]       Stack Trace:
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Primitives.BooleanAssertions`1.BeTrue(String because, Object[] becauseArgs)
-[xUnit.net 00:00:00.67]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\TaskServiceTests.cs(93,0): at WorkflowService.Tests.Services.TaskServiceTests.GetMyTasksAsync_WithFilters_ShouldReturnFilteredTasks()
-[xUnit.net 00:00:00.67]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.67]     WorkflowService.Tests.Services.DefinitionServiceTests.CreateDraftAsync_DuplicateName_ShouldReturnError [FAIL]
-[xUnit.net 00:00:00.67]       Expected result.Message "Invalid workflow definition: Edge references unknown source node: , Edge references unknown target node: " to contain "already exists".
-[xUnit.net 00:00:00.67]       Stack Trace:
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Primitives.StringAssertions`1.Contain(String expected, String because, Object[] becauseArgs)
-[xUnit.net 00:00:00.67]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServiceTests.cs(121,0): at WorkflowService.Tests.Services.DefinitionServiceTests.CreateDraftAsync_DuplicateName_ShouldReturnError()
-[xUnit.net 00:00:00.67]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.68]     WorkflowService.Tests.Services.DefinitionServiceTests.PublishAsync_ValidDraft_ShouldPublish [FAIL]
-[xUnit.net 00:00:00.68]       Expected result.Success to be True, but found False.
-[xUnit.net 00:00:00.68]       Stack Trace:
-[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[xUnit.net 00:00:00.68]            at FluentAssertions.Primitives.BooleanAssertions`1.BeTrue(String because, Object[] becauseArgs)
-[xUnit.net 00:00:00.68]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServiceTests.cs(163,0): at WorkflowService.Tests.Services.DefinitionServiceTests.PublishAsync_ValidDraft_ShouldPublish()
-[xUnit.net 00:00:00.68]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.69]   Finished:    WorkflowService.Tests
-  WorkflowService.Tests test failed with 4 error(s) (1.1s)
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServiceTests.cs(64): error TESTERROR:
-      WorkflowService.Tests.Services.DefinitionServiceTests.CreateDraftAsync_ValidRequest_ShouldCreateDraft (53ms): Erro
-      r Message: Expected result.Success to be True, but found False.
-      Stack Trace:
-         at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-         at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-         at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-         at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-         at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-         at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-         at FluentAssertions.Primitives.BooleanAssertions`1.BeTrue(String because, Object[] becauseArgs)
-         at WorkflowService.Tests.Services.DefinitionServiceTests.CreateDraftAsync_ValidRequest_ShouldCreateDraft() in C
-      :\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServiceTests.cs:line 64
-      --- End of stack trace from previous location ---
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\TaskServiceTests.cs(93): error TESTERROR:
-      WorkflowService.Tests.Services.TaskServiceTests.GetMyTasksAsync_WithFilters_ShouldReturnFilteredTasks (55ms): Erro
-      r Message: Expected result.Success to be True, but found False.
-      Stack Trace:
-         at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-         at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-         at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-         at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-         at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-         at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-         at FluentAssertions.Primitives.BooleanAssertions`1.BeTrue(String because, Object[] becauseArgs)
-         at WorkflowService.Tests.Services.TaskServiceTests.GetMyTasksAsync_WithFilters_ShouldReturnFilteredTasks() in C
-      :\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\TaskServiceTests.cs:line 93
-      --- End of stack trace from previous location ---
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServiceTests.cs(121): error TESTERROR:
-      WorkflowService.Tests.Services.DefinitionServiceTests.CreateDraftAsync_DuplicateName_ShouldReturnError (3ms): Erro
-      r Message: Expected result.Message "Invalid workflow definition: Edge references unknown source node: , Edge refer
-      ences unknown target node: " to contain "already exists".
-      Stack Trace:
-         at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-         at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-         at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-         at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-         at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-         at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-         at FluentAssertions.Primitives.StringAssertions`1.Contain(String expected, String because, Object[] becauseArgs
-      )
-         at WorkflowService.Tests.Services.DefinitionServiceTests.CreateDraftAsync_DuplicateName_ShouldReturnError() in
-      C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServiceTests.cs:line 121
-      --- End of stack trace from previous location ---
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServiceTests.cs(163): error TESTERROR:
-      WorkflowService.Tests.Services.DefinitionServiceTests.PublishAsync_ValidDraft_ShouldPublish (2ms): Error Message:
-      Expected result.Success to be True, but found False.
-      Stack Trace:
-         at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-         at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-         at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-         at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-         at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-         at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-         at FluentAssertions.Primitives.BooleanAssertions`1.BeTrue(String because, Object[] becauseArgs)
-         at WorkflowService.Tests.Services.DefinitionServiceTests.PublishAsync_ValidDraft_ShouldPublish() in C:\Users\mc
-      cre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServiceTests.cs:line 163
-      --- End of stack trace from previous location ---
-
-Test summary: total: 45, failed: 4, succeeded: 41, skipped: 0, duration: 1.1s
-Build failed with 4 error(s) in 2.4s
+[xUnit.net 00:00:00.07]   Discovering: WorkflowService.SmokeTests
+[xUnit.net 00:00:00.09]   Discovered:  WorkflowService.SmokeTests
+========== Test discovery finished: 2 Tests found in 464.1 ms ==========
+Building Test Projects
+========== Starting test run ==========
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
+[xUnit.net 00:00:00.04]   Starting:    WorkflowService.SmokeTests
+dbug: WorkflowService.SmokeTests.TestAuthenticationHandler[8]
+      AuthenticationScheme: Test was successfully authenticated.
+dbug: WorkflowService.SmokeTests.TestAuthenticationHandler[8]
+      AuthenticationScheme: Test was successfully authenticated.
+dbug: WorkflowService.SmokeTests.TestAuthenticationHandler[8]
+      AuthenticationScheme: Test was successfully authenticated.
+[xUnit.net 00:00:00.27]   Finished:    WorkflowService.SmokeTests
+========== Test run finished: 2 Tests (2 Passed, 0 Failed, 0 Skipped) run in 282 ms ==========

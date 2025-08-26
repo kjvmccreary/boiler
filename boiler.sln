@@ -47,6 +47,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkflowService", "src\serv
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkflowService.Tests", "tests\unit\WorkflowService.Tests\WorkflowService.Tests.csproj", "{27E5824B-A4EA-4A16-A5F7-425B0B0213B6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WorkflowService.SmokeTests", "tests\integration\WorkflowService.SmokeTests\WorkflowService.SmokeTests.csproj", "{A6ADD8AC-9CB0-4E09-8134-4E1D3829A160}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -237,6 +239,18 @@ Global
 		{27E5824B-A4EA-4A16-A5F7-425B0B0213B6}.Release|x64.Build.0 = Release|Any CPU
 		{27E5824B-A4EA-4A16-A5F7-425B0B0213B6}.Release|x86.ActiveCfg = Release|Any CPU
 		{27E5824B-A4EA-4A16-A5F7-425B0B0213B6}.Release|x86.Build.0 = Release|Any CPU
+		{A6ADD8AC-9CB0-4E09-8134-4E1D3829A160}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6ADD8AC-9CB0-4E09-8134-4E1D3829A160}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6ADD8AC-9CB0-4E09-8134-4E1D3829A160}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A6ADD8AC-9CB0-4E09-8134-4E1D3829A160}.Debug|x64.Build.0 = Debug|Any CPU
+		{A6ADD8AC-9CB0-4E09-8134-4E1D3829A160}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A6ADD8AC-9CB0-4E09-8134-4E1D3829A160}.Debug|x86.Build.0 = Debug|Any CPU
+		{A6ADD8AC-9CB0-4E09-8134-4E1D3829A160}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6ADD8AC-9CB0-4E09-8134-4E1D3829A160}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6ADD8AC-9CB0-4E09-8134-4E1D3829A160}.Release|x64.ActiveCfg = Release|Any CPU
+		{A6ADD8AC-9CB0-4E09-8134-4E1D3829A160}.Release|x64.Build.0 = Release|Any CPU
+		{A6ADD8AC-9CB0-4E09-8134-4E1D3829A160}.Release|x86.ActiveCfg = Release|Any CPU
+		{A6ADD8AC-9CB0-4E09-8134-4E1D3829A160}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -262,5 +276,6 @@ Global
 		{AE3B100D-CD7B-4711-8F7C-888193F6B87D} = {59F13AC0-48F4-1EAA-233F-95B7C7A91E1D}
 		{FE7E21C6-BDFB-4EED-AC0D-B19D71824C40} = {984BB9B3-3FA3-BE33-9484-CAC21695A33C}
 		{27E5824B-A4EA-4A16-A5F7-425B0B0213B6} = {9D556B49-86D1-93A7-9596-FFAAB74EC556}
+		{A6ADD8AC-9CB0-4E09-8134-4E1D3829A160} = {28A6993C-471E-82FE-7D9E-AD3B1EC22BD9}
 	EndGlobalSection
 EndGlobal
