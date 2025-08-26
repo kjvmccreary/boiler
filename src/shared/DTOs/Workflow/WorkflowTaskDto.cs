@@ -86,3 +86,4 @@ public class TaskStatisticsDto
     public double AverageCompletionTime { get; set; }
     public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
 }
+

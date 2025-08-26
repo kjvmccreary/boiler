@@ -101,6 +101,7 @@ public static class Permissions
     /// </summary>
     public static class Workflow
     {
+        // ✅ EXISTING - Keep these as they are
         public const string Read = "workflow.read";
         public const string Write = "workflow.write";
         public const string Admin = "workflow.admin";
@@ -115,6 +116,21 @@ public static class Permissions
         public const string CompleteTasks = "workflow.complete_tasks";
         public const string ViewAllTasks = "workflow.view_all_tasks";
         public const string AdminOperations = "workflow.admin_operations";
+
+        // 🚀 NEW - Add these missing permissions
+        public const string EditDefinitions = "workflow.edit_definitions";
+        public const string DeleteDefinitions = "workflow.delete_definitions";
+        public const string SignalInstances = "workflow.signal_instances";
+        public const string TerminateInstances = "workflow.terminate_instances";
+        public const string ReassignTasks = "workflow.reassign_tasks";
+        public const string RetryInstances = "workflow.retry_instances";
+        public const string MoveInstances = "workflow.move_instances";
+        public const string ViewAnalytics = "workflow.view_analytics";
+        public const string ViewSystemHealth = "workflow.view_system_health";
+        public const string BulkOperations = "workflow.bulk_operations";
+        public const string ViewAuditTrail = "workflow.view_audit_trail";
+        public const string ViewEvents = "workflow.view_events";
+        public const string ViewMetrics = "workflow.view_metrics";
     }
 
     /// <summary>

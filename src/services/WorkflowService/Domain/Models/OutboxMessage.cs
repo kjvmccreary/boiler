@@ -22,4 +22,11 @@ public class OutboxMessage : BaseEntity
     public int RetryCount { get; set; } = 0;
     
     public DateTime? NextRetryAt { get; set; }
+
+    // 🔧 NEW: Additional properties needed by EventPublisher
+    public string EventType { get; set; } = string.Empty;
+    public string EventData { get; set; } = string.Empty;
+    public int TenantId { get; set; }
+    public bool IsProcessed { get; set; }
+    public string? LastError { get; set; }
 }

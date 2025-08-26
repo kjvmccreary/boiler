@@ -11,6 +11,7 @@ using WorkflowService.Engine.Executors;
 using WorkflowService.Background;
 using WorkflowService.Services.Interfaces;
 using WorkflowService.Services;
+using WorkflowService.Security;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -100,7 +101,7 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IEventPublisher, EventPublisher>();
 
 // TODO: Add Workflow Security when created (STEP 3)
-// builder.Services.AddWorkflowPolicies();
+builder.Services.AddWorkflowPolicies();
 
 // Add AutoMapper (basic setup for now)
 builder.Services.AddAutoMapper(typeof(Program));

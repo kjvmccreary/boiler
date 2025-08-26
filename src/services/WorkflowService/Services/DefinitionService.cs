@@ -286,8 +286,8 @@ public class DefinitionService : IDefinitionService
                 Items = dtos,
                 TotalCount = totalCount,
                 Page = request.Page,
-                PageSize = request.PageSize,
-                TotalPages = (int)Math.Ceiling((double)totalCount / request.PageSize)
+                PageSize = request.PageSize
+                //TotalPages = (int)Math.Ceiling((double)totalCount / request.PageSize)
             };
 
             return ApiResponseDto<PagedResultDto<WorkflowDefinitionDto>>.SuccessResult(pagedResult);

@@ -1,51 +1,42 @@
-PS C:\Users\mccre\dev\boiler> dotnet clean
+ WorkflowService failed with 28 error(s) and 1 warning(s) (0.8s)
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(154,32): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(154,69): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(171,27): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(220,32): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(220,69): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(275,32): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(275,69): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(286,72): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(286,94): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(326,32): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(326,71): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(335,19): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(335,41): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Program.cs(98,46): error CS0246: The type or namespace name 'InstanceService' could not be found (are you missing a using directive or an assembly reference?)
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(375,63): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(384,61): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(385,64): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(385,98): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(386,63): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(388,61): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\TaskService.cs(388,97): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\AdminService.cs(197,41): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\AdminService.cs(198,41): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\AdminService.cs(199,41): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\AdminService.cs(200,41): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\AdminService.cs(205,31): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\AdminService.cs(304,46): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\AdminService.cs(304,80): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\DefinitionService.cs(422,45): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
+  RoleService.Tests succeeded (0.5s) → tests\unit\RoleService.Tests\bin\Debug\net9.0\RoleService.Tests.dll
+  PermissionService.Tests succeeded (0.5s) → tests\unit\PermissionService.Tests\bin\Debug\net9.0\PermissionService.Tests.dll
+  ApiGateway succeeded (0.5s) → src\services\ApiGateway\bin\Debug\net9.0\ApiGateway.dll
+  UserService succeeded (0.5s) → src\services\UserService\bin\Debug\net9.0\UserService.dll
+  AuthService succeeded (0.4s) → src\services\AuthService\bin\Debug\net9.0\AuthService.dll
+  UserService.Tests succeeded (0.2s) → tests\unit\UserService.Tests\bin\Debug\net9.0\UserService.Tests.dll
+  UserService.IntegrationTests succeeded (0.4s) → tests\integration\UserService.IntegrationTests\bin\Debug\net9.0\UserService.IntegrationTests.dll
+  AuthService.Tests succeeded (0.3s) → tests\unit\AuthService.Tests\bin\Debug\net9.0\AuthService.Tests.dll
+  UserService.PerformanceTests succeeded (0.4s) → tests\performance\UserService.PerformanceTests\bin\Debug\net9.0\UserService.PerformanceTests.dll
+  ApiGateway.Tests succeeded (0.5s) → tests\unit\ApiGateway.Tests\bin\Debug\net9.0\ApiGateway.Tests.dll
 
-Build succeeded in 0.9s
-PS C:\Users\mccre\dev\boiler> dotnet restore
-Restore complete (1.8s)
-
-Build succeeded in 1.9s
-PS C:\Users\mccre\dev\boiler> dotnet build
-Restore complete (0.7s)
-  DTOs succeeded (0.3s) → src\shared\DTOs\bin\Debug\net9.0\DTOs.dll
-  Contracts succeeded (0.1s) → src\shared\Contracts\bin\Debug\net9.0\Contracts.dll
-  Common succeeded with 17 warning(s) (0.8s) → src\shared\Common\bin\Debug\net9.0\Common.dll
-    C:\Users\mccre\dev\boiler\src\shared\Common\Monitoring\RedisMetricsCollector.cs(42,17): warning CS8602: Dereference of a possibly null reference.
-    C:\Users\mccre\dev\boiler\src\shared\Common\Monitoring\RedisMetricsCollector.cs(88,17): warning CS8602: Dereference of a possibly null reference.
-    C:\Users\mccre\dev\boiler\src\shared\Common\Monitoring\RedisMetricsCollector.cs(121,17): warning CS8602: Dereference of a possibly null reference.
-    C:\Users\mccre\dev\boiler\src\shared\Common\Monitoring\RedisMetricsCollector.cs(153,17): warning CS8602: Dereference of a possibly null reference.
-    C:\Users\mccre\dev\boiler\src\shared\Common\Monitoring\RedisMetricsCollector.cs(187,17): warning CS8602: Dereference of a possibly null reference.
-    C:\Users\mccre\dev\boiler\src\shared\Common\Monitoring\RedisMetricsCollector.cs(234,17): warning CS8602: Dereference of a possibly null reference.
-    C:\Users\mccre\dev\boiler\src\shared\Common\Monitoring\RedisMetricsCollector.cs(276,17): warning CS8602: Dereference of a possibly null reference.
-    C:\Users\mccre\dev\boiler\src\shared\Common\Monitoring\RedisMetricsCollector.cs(308,17): warning CS8602: Dereference of a possibly null reference.
-    C:\Users\mccre\dev\boiler\src\shared\Common\Monitoring\RedisMetricsCollector.cs(340,17): warning CS8602: Dereference of a possibly null reference.
-    C:\Users\mccre\dev\boiler\src\shared\Common\Services\IEmailService.cs(123,32): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
-    C:\Users\mccre\dev\boiler\src\shared\Common\Services\ISecurityAlertService.cs(165,44): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
-    C:\Users\mccre\dev\boiler\src\shared\Common\Services\ISecurityAlertService.cs(204,43): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
-    C:\Users\mccre\dev\boiler\src\shared\Common\Services\ISecurityAlertService.cs(356,30): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
-    C:\Users\mccre\dev\boiler\src\shared\Common\Services\MonitoringService.cs(338,38): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
-    C:\Users\mccre\dev\boiler\src\shared\Common\Services\IComplianceReportingService.cs(580,43): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
-    C:\Users\mccre\dev\boiler\src\shared\Common\Services\IComplianceReportingService.cs(768,43): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
-    C:\Users\mccre\dev\boiler\src\shared\Common\Services\IComplianceReportingService.cs(826,24): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
-  PermissionService.Tests succeeded (0.4s) → tests\unit\PermissionService.Tests\bin\Debug\net9.0\PermissionService.Tests.dll
-  ApiGateway succeeded (0.6s) → src\services\ApiGateway\bin\Debug\net9.0\ApiGateway.dll
-  AuthService succeeded with 2 warning(s) (0.6s) → src\services\AuthService\bin\Debug\net9.0\AuthService.dll
-    C:\Users\mccre\dev\boiler\src\services\AuthService\Services\AuthService.cs(279,26): warning CS8625: Cannot convert null literal to non-nullable reference type.
-    C:\Users\mccre\dev\boiler\src\services\AuthService\Services\AuthService.cs(492,45): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
-  RoleService.Tests succeeded (0.4s) → tests\unit\RoleService.Tests\bin\Debug\net9.0\RoleService.Tests.dll
-  UserService succeeded (1.1s) → src\services\UserService\bin\Debug\net9.0\UserService.dll
-  ApiGateway.Tests succeeded (0.6s) → tests\unit\ApiGateway.Tests\bin\Debug\net9.0\ApiGateway.Tests.dll
-  AuthService.Tests succeeded (0.6s) → tests\unit\AuthService.Tests\bin\Debug\net9.0\AuthService.Tests.dll
-  WorkflowService succeeded (0.8s) → src\services\WorkflowService\bin\Debug\net9.0\WorkflowService.dll
-  UserService.Tests succeeded (0.5s) → tests\unit\UserService.Tests\bin\Debug\net9.0\UserService.Tests.dll
-  UserService.PerformanceTests succeeded (0.8s) → tests\performance\UserService.PerformanceTests\bin\Debug\net9.0\UserService.PerformanceTests.dll
-  UserService.IntegrationTests succeeded with 7 warning(s) (0.9s) → tests\integration\UserService.IntegrationTests\bin\Debug\net9.0\UserService.IntegrationTests.dll
-    C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\CachePerformanceBenchmarkTests.cs(17,50): warning CS1570: XML comment has badly formed XML -- 'An identifier was expected.'
-    C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\CachePerformanceBenchmarkTests.cs(17,50): warning CS1570: XML comment has badly formed XML -- '1'
-    C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\CachePerformanceBenchmarkTests.cs(18,7): warning CS1570: XML comment has badly formed XML -- 'End tag 'summary' does not match the start tag ''.'
-    C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\CachePerformanceBenchmarkTests.cs(19,1): warning CS1570: XML comment has badly formed XML -- 'Expected an end tag for element 'summary'.'
-    C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\CachePerformanceIntegrationTests.cs(17,46): warning CS1570: XML comment has badly formed XML -- 'Whitespace is not allowed at this location.'
-    C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\TestUtilities\RateLimitingTestUtilities.cs(15,30): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
-    C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\Security\PermissionBoundaryTests.cs(198,42): warning CS8602: Dereference of a possibly null reference.
-
-Build succeeded with 26 warning(s) in 4.2s
+Build failed with 28 error(s) and 1 warning(s) in 2.8s

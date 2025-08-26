@@ -8,6 +8,7 @@ using WorkflowService.Engine.Interfaces;
 using WorkflowService.Persistence;
 using WorkflowService.Services.Interfaces;
 using Contracts.Services;
+using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus; // 🔧 ADD: Alias to resolve ambiguity
 
 namespace WorkflowService.Services;
 
@@ -150,7 +151,7 @@ public class TaskService : ITaskService
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task not found");
             }
 
-            if (task.Status != TaskStatus.Created && task.Status != TaskStatus.Assigned)
+            if (task.Status != WorkflowTaskStatus.Created && task.Status != WorkflowTaskStatus.Assigned)
             {
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task cannot be claimed in its current state");
             }
@@ -167,7 +168,7 @@ public class TaskService : ITaskService
             }
 
             // Claim the task
-            task.Status = TaskStatus.Claimed;
+            task.Status = WorkflowTaskStatus.Claimed;
             task.AssignedToUserId = currentUserId.Value;
             task.ClaimedAt = DateTime.UtcNow;
             task.UpdatedAt = DateTime.UtcNow;
@@ -216,7 +217,7 @@ public class TaskService : ITaskService
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task not found");
             }
 
-            if (task.Status != TaskStatus.Claimed && task.Status != TaskStatus.InProgress)
+            if (task.Status != WorkflowTaskStatus.Claimed && task.Status != WorkflowTaskStatus.InProgress)
             {
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task cannot be completed in its current state");
             }
@@ -271,7 +272,7 @@ public class TaskService : ITaskService
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task not found");
             }
 
-            if (task.Status != TaskStatus.Claimed && task.Status != TaskStatus.InProgress)
+            if (task.Status != WorkflowTaskStatus.Claimed && task.Status != WorkflowTaskStatus.InProgress)
             {
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task cannot be released in its current state");
             }
@@ -282,7 +283,7 @@ public class TaskService : ITaskService
             }
 
             // Release the task
-            task.Status = !string.IsNullOrEmpty(task.AssignedToRole) ? TaskStatus.Assigned : TaskStatus.Created;
+            task.Status = !string.IsNullOrEmpty(task.AssignedToRole) ? WorkflowTaskStatus.Assigned : WorkflowTaskStatus.Created;
             task.AssignedToUserId = null;
             task.ClaimedAt = null;
             task.UpdatedAt = DateTime.UtcNow;
@@ -322,7 +323,7 @@ public class TaskService : ITaskService
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task not found");
             }
 
-            if (task.Status == TaskStatus.Completed || task.Status == TaskStatus.Cancelled)
+            if (task.Status == WorkflowTaskStatus.Completed || task.Status == WorkflowTaskStatus.Cancelled)
             {
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Cannot reassign completed or cancelled task");
             }
@@ -331,7 +332,7 @@ public class TaskService : ITaskService
             task.AssignedToUserId = request.AssignToUserId;
             task.AssignedToRole = request.AssignToRole;
             task.Status = request.AssignToUserId.HasValue || !string.IsNullOrEmpty(request.AssignToRole) 
-                ? TaskStatus.Assigned : TaskStatus.Created;
+                ? WorkflowTaskStatus.Assigned : WorkflowTaskStatus.Created;
             task.ClaimedAt = null; // Reset claim time
             task.UpdatedAt = DateTime.UtcNow;
 
@@ -371,7 +372,7 @@ public class TaskService : ITaskService
                 .Where(t => t.WorkflowInstance.TenantId == tenantId.Value)
                 .ToListAsync(cancellationToken);
 
-            var completedTasks = tasks.Where(t => t.Status == TaskStatus.Completed).ToList();
+            var completedTasks = tasks.Where(t => t.Status == WorkflowTaskStatus.Completed).ToList();
             var averageCompletionTime = completedTasks.Any() 
                 ? completedTasks.Where(t => t.CompletedAt.HasValue && t.CreatedAt != default)
                     .Average(t => (t.CompletedAt!.Value - t.CreatedAt).TotalHours)
@@ -380,11 +381,11 @@ public class TaskService : ITaskService
             var statistics = new TaskStatisticsDto
             {
                 TotalTasks = tasks.Count,
-                PendingTasks = tasks.Count(t => t.Status == TaskStatus.Created),
-                InProgressTasks = tasks.Count(t => t.Status == TaskStatus.Claimed || t.Status == TaskStatus.InProgress),
-                CompletedTasks = tasks.Count(t => t.Status == TaskStatus.Completed),
+                PendingTasks = tasks.Count(t => t.Status == WorkflowTaskStatus.Created),
+                InProgressTasks = tasks.Count(t => t.Status == WorkflowTaskStatus.Claimed || t.Status == WorkflowTaskStatus.InProgress),
+                CompletedTasks = tasks.Count(t => t.Status == WorkflowTaskStatus.Completed),
                 OverdueTasks = tasks.Count(t => t.DueDate.HasValue && t.DueDate.Value < DateTime.UtcNow && 
-                                                t.Status != TaskStatus.Completed && t.Status != TaskStatus.Cancelled),
+                                                t.Status != WorkflowTaskStatus.Completed && t.Status != WorkflowTaskStatus.Cancelled),
                 TasksByType = tasks.GroupBy(t => t.NodeId).ToDictionary(g => g.Key, g => g.Count()),
                 TasksByStatus = tasks.GroupBy(t => t.Status).ToDictionary(g => g.Key, g => g.Count()),
                 AverageCompletionTime = averageCompletionTime,
@@ -474,8 +475,8 @@ public class TaskService : ITaskService
             Items = tasks,
             TotalCount = totalCount,
             Page = request.Page,
-            PageSize = request.PageSize,
-            TotalPages = (int)Math.Ceiling((double)totalCount / request.PageSize)
+            PageSize = request.PageSize
+            //TotalPages = (int)Math.Ceiling((double)totalCount / request.PageSize)
         };
 
         return ApiResponseDto<PagedResultDto<TaskSummaryDto>>.SuccessResult(pagedResult);

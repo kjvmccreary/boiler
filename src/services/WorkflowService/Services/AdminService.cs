@@ -8,6 +8,7 @@ using WorkflowService.Engine.Interfaces;
 using WorkflowService.Persistence;
 using WorkflowService.Services.Interfaces;
 using Contracts.Services;
+using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus; // Added alias for clarity
 
 namespace WorkflowService.Services;
 
@@ -193,15 +194,15 @@ public class AdminService : IAdminService
             // Cancel any active tasks
             var activeTasks = await _context.WorkflowTasks
                 .Where(t => t.WorkflowInstanceId == instanceId && 
-                           (t.Status == TaskStatus.Created || 
-                            t.Status == TaskStatus.Assigned || 
-                            t.Status == TaskStatus.Claimed ||
-                            t.Status == TaskStatus.InProgress))
+                           (t.Status == WorkflowTaskStatus.Created || 
+                            t.Status == WorkflowTaskStatus.Assigned || 
+                            t.Status == WorkflowTaskStatus.Claimed ||
+                            t.Status == WorkflowTaskStatus.InProgress))
                 .ToListAsync(cancellationToken);
 
             foreach (var task in activeTasks)
             {
-                task.Status = TaskStatus.Cancelled;
+                task.Status = WorkflowTaskStatus.Cancelled;
                 task.CompletedAt = DateTime.UtcNow;
                 task.UpdatedAt = DateTime.UtcNow;
             }
@@ -300,7 +301,7 @@ public class AdminService : IAdminService
             var pendingTasks = await _context.WorkflowTasks
                 .Include(t => t.WorkflowInstance)
                 .CountAsync(t => t.WorkflowInstance.TenantId == tenantId.Value && 
-                                (t.Status == TaskStatus.Created || t.Status == TaskStatus.Assigned), cancellationToken);
+                                (t.Status == WorkflowTaskStatus.Created || t.Status == WorkflowTaskStatus.Assigned), cancellationToken);
 
             var recentErrors = await _context.WorkflowInstances
                 .Where(i => i.TenantId == tenantId.Value && 
@@ -522,8 +523,8 @@ public class AdminService : IAdminService
                 Items = events,
                 TotalCount = totalCount,
                 Page = request.Page,
-                PageSize = request.PageSize,
-                TotalPages = (int)Math.Ceiling((double)totalCount / request.PageSize)
+                PageSize = request.PageSize
+                //TotalPages = (int)Math.Ceiling((double)totalCount / request.PageSize)
             };
 
             return ApiResponseDto<PagedResultDto<WorkflowAuditEntryDto>>.SuccessResult(pagedResult);

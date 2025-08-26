@@ -26,6 +26,12 @@ public class WorkflowDefinition : BaseEntity
     public DateTime? PublishedAt { get; set; }
     
     public int? PublishedByUserId { get; set; }
+
+    // Add these properties:
+    public string? Tags { get; set; }
+    public string? PublishNotes { get; set; }
+    public string? VersionNotes { get; set; }
+    public int? ParentDefinitionId { get; set; }
     
     // Navigation properties
     public virtual ICollection<WorkflowInstance> Instances { get; set; } = new List<WorkflowInstance>();

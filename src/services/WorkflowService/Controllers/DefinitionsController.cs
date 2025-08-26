@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Common.Authorization;
+using Common.Constants;
 using DTOs.Common;
 using DTOs.Workflow;
 using WorkflowService.Domain.Models;
@@ -33,7 +34,7 @@ public class DefinitionsController : ControllerBase
     /// Get all workflow definitions for the current tenant
     /// </summary>
     [HttpGet]
-    [RequiresPermission("workflow.view_definitions")]
+    [RequiresPermission(Permissions.Workflow.ViewDefinitions)]
     public async Task<ActionResult<ApiResponseDto<List<WorkflowDefinitionDto>>>> GetDefinitions(
         [FromQuery] bool? published = null)
     {
@@ -79,7 +80,7 @@ public class DefinitionsController : ControllerBase
     /// Get a specific workflow definition by ID
     /// </summary>
     [HttpGet("{id}")]
-    [RequiresPermission("workflow.view_definitions")]
+    [RequiresPermission(Permissions.Workflow.ViewDefinitions)]
     public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> GetDefinition(int id)
     {
         try
@@ -123,7 +124,7 @@ public class DefinitionsController : ControllerBase
     /// Create a new workflow definition draft
     /// </summary>
     [HttpPost("draft")]
-    [RequiresPermission("workflow.create_definitions")]
+    [RequiresPermission(Permissions.Workflow.CreateDefinitions)]
     public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> CreateDraft(
         [FromBody] CreateWorkflowDefinitionDto request)
     {
@@ -187,7 +188,7 @@ public class DefinitionsController : ControllerBase
     /// Update a workflow definition draft
     /// </summary>
     [HttpPut("{id}")]
-    [RequiresPermission("workflow.create_definitions")]
+    [RequiresPermission(Permissions.Workflow.EditDefinitions)]
     public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> UpdateDefinition(
         int id, 
         [FromBody] UpdateWorkflowDefinitionDto request)
@@ -253,7 +254,7 @@ public class DefinitionsController : ControllerBase
     /// Publish a workflow definition (makes it immutable)
     /// </summary>
     [HttpPost("{id}/publish")]
-    [RequiresPermission("workflow.publish_definitions")]
+    [RequiresPermission(Permissions.Workflow.PublishDefinitions)]
     public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> PublishDefinition(
         int id, 
         [FromBody] PublishDefinitionRequestDto request)
@@ -317,7 +318,7 @@ public class DefinitionsController : ControllerBase
     /// Delete a workflow definition (only if not published and no instances)
     /// </summary>
     [HttpDelete("{id}")]
-    [RequiresPermission("workflow.admin")]
+    [RequiresPermission(Permissions.Workflow.DeleteDefinitions)]
     public async Task<ActionResult<ApiResponseDto<bool>>> DeleteDefinition(int id)
     {
         try
@@ -363,7 +364,7 @@ public class DefinitionsController : ControllerBase
 
     private int GetCurrentUserId()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         return int.TryParse(userIdClaim, out var userId) ? userId : 0;
     }
 }
