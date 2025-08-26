@@ -4,12 +4,13 @@ using Common.Middleware;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Serilog;
-using WorkflowService.Persistence; // ✅ UNCOMMENT: We have WorkflowDbContext
-// REMOVE: These namespaces don't exist yet - will add them later
-// using WorkflowService.Services;
-// using WorkflowService.Engine;
-// using WorkflowService.Background;
-// using WorkflowService.Security;
+using WorkflowService.Persistence;
+using WorkflowService.Engine;
+using WorkflowService.Engine.Interfaces;
+using WorkflowService.Engine.Executors;
+using WorkflowService.Background;
+using WorkflowService.Services.Interfaces;
+using WorkflowService.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,10 +65,10 @@ builder.Services.AddCommonServices(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddDynamicAuthorization();
 
-// ✅ FIX: Add the main ApplicationDbContext (required by common services)
+// Add the main ApplicationDbContext (required by common services)
 builder.Services.AddDatabase(builder.Configuration);
 
-// ✅ UNCOMMENT: Add WorkflowService database context (NOW READY!)
+// Add WorkflowService database context
 builder.Services.AddDbContext<WorkflowDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -77,25 +78,28 @@ builder.Services.AddDbContext<WorkflowDbContext>(options =>
     });
 });
 
-// TODO: Add Workflow Services when created
-// builder.Services.AddScoped<IDefinitionService, DefinitionService>();
-// builder.Services.AddScoped<IInstanceService, InstanceService>();
-// builder.Services.AddScoped<ITaskService, TaskService>();
-// builder.Services.AddScoped<IAdminService, AdminService>();
-// builder.Services.AddScoped<IEventPublisher, EventPublisher>();
+// ✅ STEP 1: Add Workflow Engine Services (COMPLETED)
+builder.Services.AddScoped<IWorkflowRuntime, WorkflowRuntime>();
+builder.Services.AddScoped<IConditionEvaluator, JsonLogicConditionEvaluator>();
 
-// TODO: Add Workflow Engine when created
-// builder.Services.AddScoped<IWorkflowRuntime, WorkflowRuntime>();
-// builder.Services.AddScoped<IConditionEvaluator, JsonLogicConditionEvaluator>();
-// builder.Services.AddScoped<IAutomaticExecutor, AutomaticExecutor>();
-// builder.Services.AddScoped<IHumanTaskExecutor, HumanTaskExecutor>();
-// builder.Services.AddScoped<ITimerExecutor, TimerExecutor>();
-// builder.Services.AddScoped<IGatewayEvaluator, GatewayEvaluator>();
+// Add Node Executors
+builder.Services.AddScoped<INodeExecutor, StartEndExecutor>();
+builder.Services.AddScoped<INodeExecutor, HumanTaskExecutor>();
+builder.Services.AddScoped<INodeExecutor, AutomaticExecutor>();
+builder.Services.AddScoped<INodeExecutor, GatewayEvaluator>();
+builder.Services.AddScoped<INodeExecutor, TimerExecutor>();
 
-// TODO: Add Background Services when created
-// builder.Services.AddHostedService<TimerWorker>();
+// Add Background Services
+builder.Services.AddHostedService<TimerWorker>();
 
-// TODO: Add Workflow Security when created
+// 🚀 STEP 2: Add Workflow Business Services (NEW)
+builder.Services.AddScoped<IDefinitionService, DefinitionService>();
+builder.Services.AddScoped<IInstanceService, InstanceService>();
+builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IEventPublisher, EventPublisher>();
+
+// TODO: Add Workflow Security when created (STEP 3)
 // builder.Services.AddWorkflowPolicies();
 
 // Add AutoMapper (basic setup for now)
@@ -115,7 +119,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// ✅ ENHANCED: Add Health Checks with both database contexts
+// Add Health Checks with both database contexts
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<ApplicationDbContext>("main-database")
     .AddDbContextCheck<WorkflowDbContext>("workflow-database")
@@ -166,16 +170,16 @@ app.Lifetime.ApplicationStarted.Register(() =>
         Log.Information("Now listening on: {Address}", address);
     }
     
-    Console.WriteLine("🌊 WorkflowService started with dual database contexts");
-    Log.Information("WorkflowService started - main and workflow database contexts operational");
+    Console.WriteLine("🌊 WorkflowService started with workflow engine and service layer enabled");
+    Log.Information("WorkflowService started - workflow engine, service layer, and background workers operational");
 });
 
 try
 {
-    Log.Information("Starting WorkflowService");
-    Console.WriteLine("=== WorkflowService Starting ===");
+    Log.Information("Starting WorkflowService with Engine and Service Layer");
+    Console.WriteLine("=== WorkflowService Starting with Engine and Service Layer ===");
     
-    // ✅ UNCOMMENT: Run database migrations (NOW READY!)
+    // Run database migrations
     using (var scope = app.Services.CreateScope())
     {
         // Migrate main ApplicationDbContext first

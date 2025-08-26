@@ -36,7 +36,7 @@ public abstract class TestBase : IClassFixture<WebApplicationTestFixture>, IAsyn
         try 
         {
             // ✅ CRITICAL FIX: Clear any potential rate limiting cache before test
-            await RateLimitingTestUtilities.ClearRateLimitCacheAsync(_fixture.Services);
+            RateLimitingTestUtilities.ClearRateLimitCache(_fixture.Services);
             
             // ✅ FIX: Initialize database with clean seeding
             await InitializeDatabaseAsync();

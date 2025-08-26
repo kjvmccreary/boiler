@@ -191,7 +191,7 @@ public class MonitoringService : IMonitoringService
 
         try
         {
-            var alertKeys = await GetAlertKeysAsync();
+            var alertKeys = GetAlertKeys();
             
             foreach (var key in alertKeys)
             {
@@ -335,7 +335,7 @@ public class MonitoringService : IMonitoringService
             });
     }
 
-    private async Task<List<string>> GetAlertKeysAsync()
+    private List<string> GetAlertKeys()
     {
         // This is a simplified implementation
         // In production, you might use Redis SCAN or maintain an index

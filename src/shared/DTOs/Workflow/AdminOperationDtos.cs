@@ -81,3 +81,106 @@ public class BulkOperationResultDto
     public int TotalCount { get; set; }
     public string OperationType { get; set; } = string.Empty;
 }
+
+// 🔧 ADD: Missing DTOs needed by AdminService
+public class ForceCompleteRequestDto
+{
+    [Required]
+    [StringLength(500)]
+    public string Reason { get; set; } = string.Empty;
+
+    public string? FinalContext { get; set; } = "{}";
+
+    [StringLength(100)]
+    public string? CompletionNodeId { get; set; }
+}
+
+public class GetAnalyticsRequestDto
+{
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+    public int? WorkflowDefinitionId { get; set; }
+    public string? GroupBy { get; set; } = "day"; // day, week, month
+}
+
+public class WorkflowAnalyticsDto
+{
+    public DateTime StartDate { get; set; }
+    public DateTime EndDate { get; set; }
+    
+    public int TotalInstances { get; set; }
+    public int CompletedInstances { get; set; }
+    public int FailedInstances { get; set; }
+    public int RunningInstances { get; set; }
+    
+    public double AverageCompletionTime { get; set; }
+    public double SuccessRate { get; set; }
+    
+    public Dictionary<string, int> InstancesByStatus { get; set; } = new();
+    public Dictionary<string, int> InstancesByDefinition { get; set; } = new();
+    public Dictionary<DateTime, int> InstancesByDate { get; set; } = new();
+    
+    public List<WorkflowPerformanceDto> TopBottlenecks { get; set; } = new();
+}
+
+public class WorkflowPerformanceDto
+{
+    public string NodeId { get; set; } = string.Empty;
+    public string NodeName { get; set; } = string.Empty;
+    public string NodeType { get; set; } = string.Empty;
+    public double AverageTime { get; set; }
+    public int InstanceCount { get; set; }
+}
+
+public class WorkflowSystemHealthDto
+{
+    public string Status { get; set; } = string.Empty; // Healthy, Degraded, Unhealthy
+    public DateTime CheckedAt { get; set; } = DateTime.UtcNow;
+    
+    public int ActiveInstances { get; set; }
+    public int PendingTasks { get; set; }
+    public int BackgroundWorkerStatus { get; set; } // 0=Stopped, 1=Running, 2=Error
+    
+    public Dictionary<string, object> SystemMetrics { get; set; } = new();
+    public List<string> Issues { get; set; } = new();
+}
+
+public class BulkInstanceOperationRequestDto
+{
+    [Required]
+    public string Operation { get; set; } = string.Empty; // cancel, retry, terminate
+
+    public List<int>? InstanceIds { get; set; }
+    
+    // OR bulk criteria:
+    public int? WorkflowDefinitionId { get; set; }
+    public WorkflowInstanceStatus? Status { get; set; }
+    public DateTime? StartedBefore { get; set; }
+    
+    [Required]
+    [StringLength(500)]
+    public string Reason { get; set; } = string.Empty;
+}
+
+public class GetAuditTrailRequestDto
+{
+    public int? InstanceId { get; set; }
+    public int? UserId { get; set; }
+    public string? Action { get; set; }
+    public DateTime? StartDate { get; set; }
+    public DateTime? EndDate { get; set; }
+    public int Page { get; set; } = 1;
+    public int PageSize { get; set; } = 50;
+}
+
+public class WorkflowAuditEntryDto
+{
+    public int Id { get; set; }
+    public int? InstanceId { get; set; }
+    public int? UserId { get; set; }
+    public string Action { get; set; } = string.Empty;
+    public string Details { get; set; } = string.Empty;
+    public DateTime Timestamp { get; set; }
+    public string? IpAddress { get; set; }
+    public string? UserAgent { get; set; }
+}

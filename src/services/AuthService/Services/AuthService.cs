@@ -261,7 +261,7 @@ public class AuthServiceImplementation : IAuthService
             var accessToken = await _tokenService.GenerateAccessTokenWithoutTenantAsync(user);
             var refreshTokenEntity = await _tokenService.CreateRefreshTokenAsync(user);
 
-            refreshTokenEntity.TenantId = null; // No tenant context yet
+            refreshTokenEntity.TenantId = default; // 🔧 FIX: Use default instead of null
             refreshTokenEntity.CreatedByIp = GetClientIpAddress();
 
             _context.RefreshTokens.Add(refreshTokenEntity);

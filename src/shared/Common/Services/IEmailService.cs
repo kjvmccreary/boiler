@@ -94,14 +94,14 @@ public class EmailService : IEmailService
         }
     }
 
-    public async Task SendTemplateAsync(string to, string templateName, object model)
+    public Task SendTemplateAsync(string to, string templateName, object model)
     {
         // Simple template implementation - in production you'd use a proper template engine
-        var template = await GetEmailTemplateAsync(templateName);
+        var template = GetEmailTemplate(templateName);
         var body = ReplaceTokens(template, model);
         var subject = ExtractSubjectFromTemplate(template);
 
-        await SendAsync(to, subject, body);
+        return SendAsync(to, subject, body);
     }
 
     private bool IsValidEmail(string email)
@@ -120,7 +120,7 @@ public class EmailService : IEmailService
         }
     }
 
-    private async Task<string> GetEmailTemplateAsync(string templateName)
+    private string GetEmailTemplate(string templateName)
     {
         // Placeholder for template loading
         // In production, you'd load from files or database

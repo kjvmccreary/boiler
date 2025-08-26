@@ -38,6 +38,7 @@ public class RedisMetricsCollector : IMetricsCollector
             _ = Task.Run(async () =>
             {
                 var metrics = await GetOrCreateHourlyMetrics<PermissionHourlyMetrics>(key);
+                if (metrics == null) return; // 🔧 FIX: Add null check
                 
                 metrics.TotalChecks++;
                 metrics.TotalDuration += duration.TotalMilliseconds;
@@ -84,6 +85,7 @@ public class RedisMetricsCollector : IMetricsCollector
             _ = Task.Run(async () =>
             {
                 var metrics = await GetOrCreateHourlyMetrics<RoleChangeHourlyMetrics>(key);
+                if (metrics == null) return; // 🔧 FIX: Add null check
                 
                 metrics.TotalChanges++;
                 
@@ -117,6 +119,7 @@ public class RedisMetricsCollector : IMetricsCollector
             _ = Task.Run(async () =>
             {
                 var metrics = await GetOrCreateHourlyMetrics<AuthorizationHourlyMetrics>(key);
+                if (metrics == null) return; // 🔧 FIX: Add null check
                 
                 metrics.TotalOperations++;
                 metrics.TotalDuration += duration.TotalMilliseconds;
@@ -149,6 +152,7 @@ public class RedisMetricsCollector : IMetricsCollector
             _ = Task.Run(async () =>
             {
                 var metrics = await GetOrCreateHourlyMetrics<CacheHourlyMetrics>(key);
+                if (metrics == null) return; // 🔧 FIX: Add null check
                 
                 metrics.TotalOperations++;
                 if (hit) metrics.Hits++;
@@ -183,6 +187,7 @@ public class RedisMetricsCollector : IMetricsCollector
             _ = Task.Run(async () =>
             {
                 var metrics = await GetOrCreateHourlyMetrics<SecurityHourlyMetrics>(key);
+                if (metrics == null) return; // 🔧 FIX: Add null check
                 
                 metrics.TotalEvents++;
                 
@@ -230,6 +235,7 @@ public class RedisMetricsCollector : IMetricsCollector
             _ = Task.Run(async () =>
             {
                 var metrics = await GetOrCreateHourlyMetrics<RequestHourlyMetrics>(key);
+                if (metrics == null) return; // 🔧 FIX: Add null check
                 
                 metrics.TotalRequests++;
                 metrics.TotalDuration += duration.TotalMilliseconds;
@@ -272,6 +278,7 @@ public class RedisMetricsCollector : IMetricsCollector
             _ = Task.Run(async () =>
             {
                 var metrics = await GetOrCreateHourlyMetrics<DatabaseHourlyMetrics>(key);
+                if (metrics == null) return; // 🔧 FIX: Add null check
                 
                 metrics.TotalQueries++;
                 metrics.TotalDuration += duration.TotalMilliseconds;
@@ -304,6 +311,7 @@ public class RedisMetricsCollector : IMetricsCollector
             _ = Task.Run(async () =>
             {
                 var metrics = await GetOrCreateHourlyMetrics<RedisHourlyMetrics>(key);
+                if (metrics == null) return; // 🔧 FIX: Add null check
                 
                 metrics.TotalOperations++;
                 metrics.TotalDuration += duration.TotalMilliseconds;
@@ -336,6 +344,7 @@ public class RedisMetricsCollector : IMetricsCollector
             _ = Task.Run(async () =>
             {
                 var metrics = await GetOrCreateHourlyMetrics<HealthCheckMinuteMetrics>(key);
+                if (metrics == null) return; // 🔧 FIX: Add null check
                 
                 metrics.TotalChecks++;
                 metrics.TotalDuration += duration.TotalMilliseconds;
@@ -572,27 +581,50 @@ public class RedisMetricsCollector : IMetricsCollector
 
     private async Task<T?> GetOrCreateHourlyMetrics<T>(string key) where T : new()
     {
-        var existingData = await _cache.GetStringAsync(key);
-        return string.IsNullOrEmpty(existingData) 
-            ? new T() 
-            : JsonSerializer.Deserialize<T>(existingData);
+        try
+        {
+            var existingData = await _cache.GetStringAsync(key);
+            return string.IsNullOrEmpty(existingData) 
+                ? new T() 
+                : JsonSerializer.Deserialize<T>(existingData);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get or create hourly metrics for key {Key}", key);
+            return new T(); // Return empty metrics on error
+        }
     }
 
     private async Task<T?> GetHourlyMetrics<T>(string key) where T : class
     {
-        var data = await _cache.GetStringAsync(key);
-        return string.IsNullOrEmpty(data) ? null : JsonSerializer.Deserialize<T>(data);
+        try
+        {
+            var data = await _cache.GetStringAsync(key);
+            return string.IsNullOrEmpty(data) ? null : JsonSerializer.Deserialize<T>(data);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to get hourly metrics for key {Key}", key);
+            return null;
+        }
     }
 
     private async Task SaveHourlyMetrics<T>(string key, T metrics, TimeSpan? expiration = null)
     {
-        var data = JsonSerializer.Serialize(metrics);
-        var options = new DistributedCacheEntryOptions
+        try
         {
-            AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromHours(25) // Keep for 25 hours
-        };
-        
-        await _cache.SetStringAsync(key, data, options);
+            var data = JsonSerializer.Serialize(metrics);
+            var options = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromHours(25) // Keep for 25 hours
+            };
+            
+            await _cache.SetStringAsync(key, data, options);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to save hourly metrics for key {Key}", key);
+        }
     }
 
     private async Task CollectRequestMetrics(MetricsSummary summary, int hours)

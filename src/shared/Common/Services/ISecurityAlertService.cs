@@ -162,7 +162,7 @@ public class SecurityAlertService : ISecurityAlertService
         }
     }
 
-    public async Task<List<SecurityAlert>> GetActiveAlertsAsync(int? tenantId = null)
+    public Task<List<SecurityAlert>> GetActiveAlertsAsync(int? tenantId = null)
     {
         // For now, we'll simulate getting alerts from storage
         // In production, this would query a dedicated alerts table or cache
@@ -174,10 +174,10 @@ public class SecurityAlertService : ISecurityAlertService
         _logger.LogInformation("Retrieved {AlertCount} active alerts for tenant {TenantId}", 
             alerts.Count, tenantId);
         
-        return alerts;
+        return Task.FromResult(alerts);
     }
 
-    public async Task ResolveAlertAsync(Guid alertId, string resolvedBy, string resolutionNotes)
+    public Task ResolveAlertAsync(Guid alertId, string resolvedBy, string resolutionNotes)
     {
         try
         {
@@ -188,7 +188,7 @@ public class SecurityAlertService : ISecurityAlertService
                 alertId, resolvedBy, resolutionNotes);
 
             // Log the resolution as an audit event
-            await _auditService.LogAsync(
+            return _auditService.LogAsync(
                 Common.Services.AuditAction.SecurityViolation,
                 "AlertResolution",
                 new { alertId, resolvedBy, resolutionNotes },
@@ -201,12 +201,12 @@ public class SecurityAlertService : ISecurityAlertService
         }
     }
 
-    public async Task<AlertConfiguration> GetAlertConfigurationAsync(int tenantId)
+    public Task<AlertConfiguration> GetAlertConfigurationAsync(int tenantId)
     {
         // Check if we have a cached configuration
         if (_alertConfigurations.TryGetValue(tenantId, out var cachedConfig))
         {
-            return cachedConfig;
+            return Task.FromResult(cachedConfig);
         }
 
         // Load from configuration (in production, this would come from database)
@@ -225,10 +225,10 @@ public class SecurityAlertService : ISecurityAlertService
         // Cache the configuration
         _alertConfigurations[tenantId] = config;
 
-        return config;
+        return Task.FromResult(config);
     }
 
-    public async Task UpdateAlertConfigurationAsync(int tenantId, AlertConfiguration configuration)
+    public Task UpdateAlertConfigurationAsync(int tenantId, AlertConfiguration configuration)
     {
         // Update the cached configuration
         _alertConfigurations[tenantId] = configuration;
@@ -236,7 +236,7 @@ public class SecurityAlertService : ISecurityAlertService
         // In production, you would save this to database
         _logger.LogInformation("Alert configuration updated for tenant {TenantId}", tenantId);
 
-        await _auditService.LogAsync(
+        return _auditService.LogAsync(
             Common.Services.AuditAction.UserUpdated,
             "AlertConfiguration",
             new { tenantId, configuration },

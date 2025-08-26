@@ -72,7 +72,7 @@ public class ComplianceReportingService : IComplianceReportingService
         }
 
         // Set user information
-        await SetCurrentUserInfo(report);
+        SetCurrentUserInfo(report);
 
         try
         {
@@ -111,14 +111,14 @@ public class ComplianceReportingService : IComplianceReportingService
             ComplianceStandards = GetComplianceStandards()
         };
 
-        await SetCurrentUserInfo(report);
+        SetCurrentUserInfo(report);
 
         try
         {
             report.Sections.Add(await GeneratePermissionUsageSection(from, to, tenantId));
             report.Sections.Add(await GenerateRoleUsageSection(from, to, tenantId));
             report.Sections.Add(await GeneratePermissionPerformanceSection(from, to, tenantId));
-            report.Sections.Add(await GenerateUnusedPermissionsSection(tenantId));
+            report.Sections.Add(GenerateUnusedPermissionsSection(tenantId));
 
             await PopulateMetadata(report, from, to, tenantId);
             await SaveReportAsync(report);
@@ -147,7 +147,7 @@ public class ComplianceReportingService : IComplianceReportingService
             ComplianceStandards = GetComplianceStandards()
         };
 
-        await SetCurrentUserInfo(report);
+        SetCurrentUserInfo(report);
 
         try
         {
@@ -183,13 +183,13 @@ public class ComplianceReportingService : IComplianceReportingService
             ComplianceStandards = GetComplianceStandards()
         };
 
-        await SetCurrentUserInfo(report);
+        SetCurrentUserInfo(report);
 
         try
         {
             report.Sections.Add(await GenerateDataRetentionSection(tenantId));
             report.Sections.Add(await GenerateDataDeletionSection(tenantId));
-            report.Sections.Add(await GenerateBackupRetentionSection(tenantId));
+            report.Sections.Add(GenerateBackupRetentionSection(tenantId));
 
             await PopulateMetadata(report, report.Period.From, report.Period.To, tenantId);
             await SaveReportAsync(report);
@@ -205,7 +205,7 @@ public class ComplianceReportingService : IComplianceReportingService
         return report;
     }
 
-    // Change these methods from async to synchronous by removing async and returning Task.FromResult:
+    // Remove async from these methods and use Task.FromResult:
 
     public Task<byte[]> ExportReportToPdfAsync(ComplianceReport report)
     {
@@ -577,7 +577,7 @@ public class ComplianceReportingService : IComplianceReportingService
         return section;
     }
 
-    private async Task<ComplianceSection> GenerateUnusedPermissionsSection(int? tenantId)
+    private ComplianceSection GenerateUnusedPermissionsSection(int? tenantId)
     {
         var section = new ComplianceSection
         {
@@ -765,7 +765,7 @@ public class ComplianceReportingService : IComplianceReportingService
         return section;
     }
 
-    private async Task<ComplianceSection> GenerateBackupRetentionSection(int? tenantId)
+    private ComplianceSection GenerateBackupRetentionSection(int? tenantId)
     {
         var section = new ComplianceSection
         {
@@ -823,7 +823,7 @@ public class ComplianceReportingService : IComplianceReportingService
         metadata.EncryptionInTransit = true;
     }
 
-    private async Task SetCurrentUserInfo(ComplianceReport report)
+    private void SetCurrentUserInfo(ComplianceReport report)
     {
         // This would be set from the current user context
         // For now, adding placeholder

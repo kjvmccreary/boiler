@@ -13,8 +13,8 @@ using Microsoft.EntityFrameworkCore;
 namespace UserService.IntegrationTests;
 
 /// <summary>
-/// Performance benchmark tests for Phase 10 caching implementation
-/// Validates that performance targets are met: < 10ms cached, > 95% hit ratio
+/// Performance benchmark tests for Phase 10 caching implementation.
+/// Validates that performance targets are met: less than 10ms cached, greater than 95% hit ratio.
 /// </summary>
 public class CachePerformanceBenchmarkTests : IClassFixture<WebApplicationTestFixture>
 {

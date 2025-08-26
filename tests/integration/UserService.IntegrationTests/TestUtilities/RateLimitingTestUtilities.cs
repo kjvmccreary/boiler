@@ -12,7 +12,7 @@ public static class RateLimitingTestUtilities
     /// <summary>
     /// Clear all rate limiting cache entries to ensure clean test state
     /// </summary>
-    public static async Task ClearRateLimitCacheAsync(IServiceProvider services)
+    public static void ClearRateLimitCache(IServiceProvider services)
     {
         try
         {
@@ -23,7 +23,7 @@ public static class RateLimitingTestUtilities
                 // Note: Since IDistributedCache doesn't have a clear all method,
                 // we'll rely on the test configuration having very high limits
                 // and the middleware being disabled in testing environment
-                
+
                 // ✅ FIX: Use ILoggerFactory.CreateLogger instead of ILogger<static class>
                 var loggerFactory = services.GetService<ILoggerFactory>();
                 var logger = loggerFactory?.CreateLogger("RateLimitingTestUtilities");
@@ -39,7 +39,7 @@ public static class RateLimitingTestUtilities
             logger?.LogWarning(ex, "Failed to clear rate limiting cache, but continuing with test");
         }
     }
-    
+
     /// <summary>
     /// Add delay between requests if rate limiting is somehow still active
     /// </summary>
