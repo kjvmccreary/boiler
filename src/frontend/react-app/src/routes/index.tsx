@@ -18,8 +18,9 @@ import { UnauthorizedPage } from '@/components/common/UnauthorizedPage.js';
 // ✅ NEW: Import workflow components
 import { DefinitionsPage } from '@/features/workflow/definitions/DefinitionsPage.js';
 import { InstanceDetailsPage } from '@/features/workflow/instances/InstanceDetailsPage.js';
-import { InstancesListPage } from '@/features/workflow/instances/InstancesListPage.js'; // ✅ ADD: New import
+import { InstancesListPage } from '@/features/workflow/instances/InstancesListPage.js';
 import { MyTasksPage } from '@/features/workflow/tasks/MyTasksPage.js';
+import { BuilderPage } from '@/features/workflow/builder/BuilderPage.js'; // ✅ ADD: Import BuilderPage
 
 // Router-free routes component for testing
 export function AppRoutesConfig() {
@@ -164,16 +165,13 @@ export function AppRoutesConfig() {
           </ProtectedRoute>
         } />
 
-        {/* ✅ Placeholder for builder (to be implemented next) */}
+        {/* ✅ FIX: Use actual BuilderPage component */}
         <Route path="workflow/builder/:id?" element={
           <ProtectedRoute 
             requirePermission="workflow.write"
             redirectToAccessibleRoute={true}
           >
-            <div style={{ padding: '2rem' }}>
-              <h2>Workflow Builder</h2>
-              <p>Coming soon! This will be the ReactFlow-based workflow builder.</p>
-            </div>
+            <BuilderPage />
           </ProtectedRoute>
         } />
       </Route>

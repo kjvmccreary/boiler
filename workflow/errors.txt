@@ -3,52 +3,84 @@ PS C:\Users\mccre\dev\boiler\src\frontend\react-app> npm run build
 > microservices-frontend@0.0.0 build
 > tsc -b && vite build
 
-src/features/workflow/instances/InstanceDetailsPage.tsx:9:3 - error TS2724: '"@mui/material"' has no exported member named 'Grid2'. Did you mean 'Grid'?
+src/features/workflow/builder/BuilderCanvas.tsx:87:13 - error TS2322: Type '{ label: string; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'DslNode'.
+  Type '{ label: string; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'TimerNode'.
+    Types of property 'type' are incompatible.
+      Type 'NodeType' is not assignable to type '"timer"'.
+        Type '"end"' is not assignable to type '"timer"'.
 
-9   Grid2 as Grid, // ✅ FIX: Use Grid2 instead of Grid
-    ~~~~~
+87             return { ...baseNode, label: 'Start' };
+               ~~~~~~
 
-src/routes/workflow.routes.tsx:20:27 - error TS2322: Type '{ children: Element; permission: string; }' is not assignable to type 'IntrinsicAttributes & ProtectedRouteProps'.
-  Property 'permission' does not exist on type 'IntrinsicAttributes & ProtectedRouteProps'.
+src/features/workflow/builder/BuilderCanvas.tsx:89:13 - error TS2322: Type '{ label: string; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'DslNode'.
+  Type '{ label: string; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'TimerNode'.
+    Types of property 'type' are incompatible.
+      Type 'NodeType' is not assignable to type '"timer"'.
+        Type '"end"' is not assignable to type '"timer"'.
 
-20           <ProtectedRoute permission="workflow.read">
-                             ~~~~~~~~~~
+89             return { ...baseNode, label: 'End' };
+               ~~~~~~
 
-src/routes/workflow.routes.tsx:28:27 - error TS2322: Type '{ children: Element; permission: string; }' is not assignable to type 'IntrinsicAttributes & ProtectedRouteProps'.
-  Property 'permission' does not exist on type 'IntrinsicAttributes & ProtectedRouteProps'.
+src/features/workflow/builder/BuilderCanvas.tsx:91:13 - error TS2322: Type '{ label: string; assigneeRoles: never[]; dueInMinutes: undefined; formSchema: undefined; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'DslNode'.
+  Type '{ label: string; assigneeRoles: never[]; dueInMinutes: undefined; formSchema: undefined; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'HumanTaskNode'.
+    Types of property 'type' are incompatible.
+      Type 'NodeType' is not assignable to type '"humanTask"'.
+        Type '"end"' is not assignable to type '"humanTask"'.
 
-28           <ProtectedRoute permission="workflow.read">
-                             ~~~~~~~~~~
+91             return {
+               ~~~~~~
 
-src/routes/workflow.routes.tsx:36:27 - error TS2322: Type '{ children: Element; permission: string; }' is not assignable to type 'IntrinsicAttributes & ProtectedRouteProps'.
-  Property 'permission' does not exist on type 'IntrinsicAttributes & ProtectedRouteProps'.
+src/features/workflow/builder/BuilderCanvas.tsx:99:13 - error TS2322: Type '{ label: string; action: { kind: "noop"; }; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'DslNode'.
+  Type '{ label: string; action: { kind: "noop"; }; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'AutomaticNode'.
+    Types of property 'type' are incompatible.
+      Type 'NodeType' is not assignable to type '"automatic"'.
+        Type '"end"' is not assignable to type '"automatic"'.
 
-36           <ProtectedRoute permission="workflow.read">
-                             ~~~~~~~~~~
+99             return {
+               ~~~~~~
 
-src/routes/workflow.routes.tsx:44:27 - error TS2322: Type '{ children: Element; permission: string; }' is not assignable to type 'IntrinsicAttributes & ProtectedRouteProps'.
-  Property 'permission' does not exist on type 'IntrinsicAttributes & ProtectedRouteProps'.
+src/features/workflow/builder/BuilderCanvas.tsx:111:13 - error TS2322: Type '{ label: string; delayMinutes: number; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'DslNode'.
+  Type '{ label: string; delayMinutes: number; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'TimerNode'.
+    Types of property 'type' are incompatible.
+      Type 'NodeType' is not assignable to type '"timer"'.
+        Type '"end"' is not assignable to type '"timer"'.
 
-44           <ProtectedRoute permission="workflow.read">
-                             ~~~~~~~~~~
+111             return {
+                ~~~~~~
 
-src/routes/workflow.routes.tsx:52:27 - error TS2322: Type '{ children: Element; permission: string; }' is not assignable to type 'IntrinsicAttributes & ProtectedRouteProps'.
-  Property 'permission' does not exist on type 'IntrinsicAttributes & ProtectedRouteProps'.
+src/features/workflow/builder/BuilderCanvas.tsx:117:13 - error TS2322: Type '{ label: string; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'DslNode'.
+  Type '{ label: string; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'TimerNode'.
+    Types of property 'type' are incompatible.
+      Type 'NodeType' is not assignable to type '"timer"'.
+        Type '"end"' is not assignable to type '"timer"'.
 
-52           <ProtectedRoute permission="workflow.read">
-                             ~~~~~~~~~~
+117             return { ...baseNode, label: 'Unknown' };
+                ~~~~~~
 
-src/routes/workflow.routes.tsx:60:27 - error TS2322: Type '{ children: Element; permission: string; }' is not assignable to type 'IntrinsicAttributes & ProtectedRouteProps'.
-  Property 'permission' does not exist on type 'IntrinsicAttributes & ProtectedRouteProps'.
+src/features/workflow/builder/BuilderPage.tsx:87:75 - error TS2345: Argument of type 'string' is not assignable to parameter of type 'DslDefinition'.
 
-60           <ProtectedRoute permission="workflow.read">
-                             ~~~~~~~~~~
+87         const { nodes: flowNodes, edges: flowEdges } = deserializeFromDsl(definitionData.jsonDefinition);
+                                                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-src/routes/workflow.routes.tsx:68:27 - error TS2322: Type '{ children: Element; permission: string; }' is not assignable to type 'IntrinsicAttributes & ProtectedRouteProps'.
-  Property 'permission' does not exist on type 'IntrinsicAttributes & ProtectedRouteProps'.
+src/features/workflow/builder/BuilderPage.tsx:116:11 - error TS2322: Type 'DslDefinition' is not assignable to type 'string'.
 
-68           <ProtectedRoute permission="workflow.write">
-                             ~~~~~~~~~~
+116           jsonDefinition: dslDefinition
+              ~~~~~~~~~~~~~~
+
+  src/types/workflow.ts:62:3
+    62   jsonDefinition: string;
+         ~~~~~~~~~~~~~~
+    The expected type comes from property 'jsonDefinition' which is declared here on type 'CreateWorkflowDefinitionDto'
+
+src/features/workflow/builder/BuilderPage.tsx:128:11 - error TS2322: Type 'DslDefinition' is not assignable to type 'string'.
+
+128           jsonDefinition: dslDefinition
+              ~~~~~~~~~~~~~~
+
+  src/types/workflow.ts:69:3
+    69   jsonDefinition?: string;
+         ~~~~~~~~~~~~~~
+    The expected type comes from property 'jsonDefinition' which is declared here on type 'UpdateWorkflowDefinitionDto'
 
 
-Found 8 errors.
+Found 9 errors.

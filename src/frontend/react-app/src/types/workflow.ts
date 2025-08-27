@@ -48,7 +48,7 @@ export interface WorkflowDefinitionDto {
   id: number;
   name: string;
   version: number;
-  jsonDefinition: string;
+  jsonDefinition: string; // ✅ KEEP camelCase - our apiClient handles conversion
   isPublished: boolean;
   description?: string;
   publishedAt?: string;
@@ -59,14 +59,14 @@ export interface WorkflowDefinitionDto {
 
 export interface CreateWorkflowDefinitionDto {
   name: string;
-  jsonDefinition: string;
+  jsonDefinition: string; // ✅ KEEP camelCase 
   description?: string;
   tags?: string;
 }
 
 export interface UpdateWorkflowDefinitionDto {
   name?: string;
-  jsonDefinition?: string;
+  jsonDefinition?: string; // ✅ KEEP camelCase
   description?: string;
   tags?: string;
 }

@@ -4,10 +4,14 @@ import './index.css';
 import App from './App.tsx';
 
 // ✅ ADD: Install MUI Premium License Key
-import { LicenseInfo } from '@mui/x-license';
+//import { LicenseInfo } from '@mui/x-license';
 
-LicenseInfo.setLicenseKey('16a7881b177e895a30a9962d75169d44Tz05OTM1MSxFPTE3NTk2MDgyMjgwMDAsUz1wcmVtaXVtLExNPXN1YnNjcmlwdGlvbixQVj1pbml0aWFsLEtWPTI=');
-
+//const licenseKey = import.meta.env.VITE_MUI_LICENSE_KEY;
+//if (licenseKey) {
+//  LicenseInfo.setLicenseKey(licenseKey);
+//} else {
+//  console.warn('⚠️ MUI Premium license key not found. Add VITE_MUI_LICENSE_KEY to your .env file.');
+//}
 // Enable MSW in development for testing API integration
 async function enableMocking() {
   if (import.meta.env.DEV && import.meta.env.VITE_ENABLE_MOCK === 'true') {

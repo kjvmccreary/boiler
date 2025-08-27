@@ -78,10 +78,10 @@ export class WorkflowService {
       }
       
       const url = `/api/workflow/definitions${params.toString() ? `?${params.toString()}` : ''}`;
-      const response = await apiClient.get<WorkflowDefinitionDto[]>(url);
+      const response = await apiClient.get<ApiResponseDto<WorkflowDefinitionDto[]>>(url);
       
-      console.log('✅ WorkflowService: getDefinitions successful');
-      return response.data;
+      console.log('✅ WorkflowService: getDefinitions successful', response.data);
+      return response.data.data; // ✅ Extract data from wrapper
     } catch (error) {
       console.error('❌ WorkflowService: getDefinitions failed:', error);
       throw error;
@@ -95,9 +95,10 @@ export class WorkflowService {
     console.log('🔍 WorkflowService: getDefinition called with id:', id);
     
     try {
-      const response = await apiClient.get<WorkflowDefinitionDto>(`/api/workflow/definitions/${id}`);
+      // ✅ FIX: Handle ApiResponseDto wrapper
+      const response = await apiClient.get<ApiResponseDto<WorkflowDefinitionDto>>(`/api/workflow/definitions/${id}`);
       console.log('✅ WorkflowService: getDefinition successful');
-      return response.data;
+      return response.data.data; // ✅ Extract data from wrapper
     } catch (error) {
       console.error('❌ WorkflowService: getDefinition failed:', error);
       throw error;
@@ -108,12 +109,12 @@ export class WorkflowService {
    * Create a new workflow definition draft
    */
   async createDraft(request: CreateWorkflowDefinitionDto): Promise<WorkflowDefinitionDto> {
-    console.log('🔍 WorkflowService: createDraft called');
+    console.log('🔍 WorkflowService: createDraft called with request:', request);
     
     try {
-      const response = await apiClient.post<WorkflowDefinitionDto>('/api/workflow/definitions/draft', request);
-      console.log('✅ WorkflowService: createDraft successful');
-      return response.data;
+      const response = await apiClient.post<ApiResponseDto<WorkflowDefinitionDto>>('/api/workflow/definitions/draft', request);
+      console.log('✅ WorkflowService: createDraft successful', response.data);
+      return response.data.data; // ✅ Extract data from wrapper
     } catch (error) {
       console.error('❌ WorkflowService: createDraft failed:', error);
       throw error;
@@ -124,12 +125,12 @@ export class WorkflowService {
    * Update a workflow definition
    */
   async updateDefinition(id: number, request: UpdateWorkflowDefinitionDto): Promise<WorkflowDefinitionDto> {
-    console.log('🔍 WorkflowService: updateDefinition called with id:', id);
+    console.log('🔍 WorkflowService: updateDefinition called with id:', id, 'request:', request);
     
     try {
-      const response = await apiClient.put<WorkflowDefinitionDto>(`/api/workflow/definitions/${id}`, request);
-      console.log('✅ WorkflowService: updateDefinition successful');
-      return response.data;
+      const response = await apiClient.put<ApiResponseDto<WorkflowDefinitionDto>>(`/api/workflow/definitions/${id}`, request);
+      console.log('✅ WorkflowService: updateDefinition successful', response.data);
+      return response.data.data; // ✅ Extract data from wrapper
     } catch (error) {
       console.error('❌ WorkflowService: updateDefinition failed:', error);
       throw error;
@@ -143,9 +144,9 @@ export class WorkflowService {
     console.log('🔍 WorkflowService: publishDefinition called with id:', id);
     
     try {
-      const response = await apiClient.post<WorkflowDefinitionDto>(`/api/workflow/definitions/${id}/publish`, request);
+      const response = await apiClient.post<ApiResponseDto<WorkflowDefinitionDto>>(`/api/workflow/definitions/${id}/publish`, request);
       console.log('✅ WorkflowService: publishDefinition successful');
-      return response.data;
+      return response.data.data; // ✅ Extract data from wrapper
     } catch (error) {
       console.error('❌ WorkflowService: publishDefinition failed:', error);
       throw error;
@@ -159,9 +160,9 @@ export class WorkflowService {
     console.log('🔍 WorkflowService: deleteDefinition called with id:', id);
     
     try {
-      const response = await apiClient.delete<boolean>(`/api/workflow/definitions/${id}`);
+      const response = await apiClient.delete<ApiResponseDto<boolean>>(`/api/workflow/definitions/${id}`);
       console.log('✅ WorkflowService: deleteDefinition successful');
-      return response.data;
+      return response.data.data; // ✅ Extract data from wrapper
     } catch (error) {
       console.error('❌ WorkflowService: deleteDefinition failed:', error);
       throw error;

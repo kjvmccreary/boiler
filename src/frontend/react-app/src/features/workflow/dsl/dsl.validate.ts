@@ -1,4 +1,4 @@
-import type { DslDefinition, ValidationResult, DslNode } from './dsl.types';
+import type { DslDefinition, DslNode, ValidationResult } from './dsl.types'; // ✅ ADD: DslNode import
 
 /**
  * Validates a workflow definition according to MVP rules
