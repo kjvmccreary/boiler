@@ -72,16 +72,17 @@ export function DefinitionsPage() {
     }
   };
 
+  // ✅ FIX: Add /app prefix to navigation paths
   const handleCreateNew = () => {
-    navigate('/workflow/builder/new');
+    navigate('/app/workflow/builder/new');
   };
 
   const handleEdit = (id: GridRowId) => {
-    navigate(`/workflow/builder/${id}`);
+    navigate(`/app/workflow/builder/${id}`);
   };
 
   const handleView = (id: GridRowId) => {
-    navigate(`/workflow/definitions/${id}`);
+    navigate(`/app/workflow/definitions/${id}`);
   };
 
   const handleDuplicate = async (definition: WorkflowDefinitionDto) => {
@@ -135,7 +136,8 @@ export function DefinitionsPage() {
       });
 
       toast.success('Workflow instance started successfully');
-      navigate(`/workflow/instances/${response.id}`);
+      // ✅ FIX: Add /app prefix
+      navigate(`/app/workflow/instances/${response.id}`);
     } catch (error) {
       console.error('Failed to start instance:', error);
       toast.error('Failed to start workflow instance');
@@ -162,6 +164,8 @@ export function DefinitionsPage() {
       setDefinitionToDelete(null);
     }
   };
+
+  // ... rest of the component remains the same
 
   const columns: GridColDef[] = [
     {

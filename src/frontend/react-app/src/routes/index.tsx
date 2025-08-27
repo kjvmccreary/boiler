@@ -18,6 +18,7 @@ import { UnauthorizedPage } from '@/components/common/UnauthorizedPage.js';
 // ✅ NEW: Import workflow components
 import { DefinitionsPage } from '@/features/workflow/definitions/DefinitionsPage.js';
 import { InstanceDetailsPage } from '@/features/workflow/instances/InstanceDetailsPage.js';
+import { InstancesListPage } from '@/features/workflow/instances/InstancesListPage.js'; // ✅ ADD: New import
 import { MyTasksPage } from '@/features/workflow/tasks/MyTasksPage.js';
 
 // Router-free routes component for testing
@@ -132,6 +133,16 @@ export function AppRoutesConfig() {
             redirectToAccessibleRoute={true}
           >
             <DefinitionsPage />
+          </ProtectedRoute>
+        } />
+
+        {/* ✅ FIX: Add the missing instances list route */}
+        <Route path="workflow/instances" element={
+          <ProtectedRoute 
+            requirePermission="workflow.read"
+            redirectToAccessibleRoute={true}
+          >
+            <InstancesListPage />
           </ProtectedRoute>
         } />
 

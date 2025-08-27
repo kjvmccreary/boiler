@@ -22,7 +22,6 @@ import {
   GridActionsCellItem,
   GridRowId,
   GridToolbar,
-  GridValueFormatterParams,
 } from '@mui/x-data-grid-premium';
 import {
   Assignment as ClaimIcon,
@@ -31,7 +30,7 @@ import {
   Schedule as TimerIcon,
   Person as AssignedIcon,
   Refresh as RefreshIcon,
-  WorkflowIcon,
+  AccountTree as WorkflowIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { workflowService } from '@/services/workflow.service';
@@ -364,7 +363,7 @@ export function MyTasksPage() {
             pagination: { paginationModel: { pageSize: 25 } },
             sorting: {
               sortModel: [
-                { field: 'dueDate', sort: 'asc' }, // Show due dates first
+                { field: 'dueDate', sort: 'asc' },
               ],
             },
           }}
@@ -376,7 +375,6 @@ export function MyTasksPage() {
               showQuickFilter: true,
               quickFilterProps: { 
                 debounceMs: 500,
-                placeholder: 'Search tasks...'
               },
             },
           }}

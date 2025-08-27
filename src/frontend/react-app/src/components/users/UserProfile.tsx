@@ -314,7 +314,7 @@ export function UserProfile() {
           
           <Button 
             variant="outlined" 
-            onClick={() => navigate(isOwnProfile ? '/dashboard' : '/users')}
+            onClick={() => navigate(isOwnProfile ? '/app/dashboard' : '/app/users')}
           >
             {isOwnProfile ? 'Go to Dashboard' : 'Back to Users'}
           </Button>

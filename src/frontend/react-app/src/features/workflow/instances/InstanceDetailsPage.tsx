@@ -6,7 +6,7 @@ import {
   CardContent,
   Chip,
   Button,
-  Grid,
+  Grid, // ✅ FIX: Use regular Grid, not Grid2
   Divider,
   Alert,
   IconButton,
@@ -28,7 +28,6 @@ import {
   Visibility as ViewIcon,
   Assignment as TaskIcon,
   Timeline as TimelineIcon,
-  Info as InfoIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { workflowService } from '@/services/workflow.service';
@@ -302,7 +301,7 @@ export function InstanceDetailsPage() {
         <GridActionsCellItem
           icon={<ViewIcon />}
           label="View Task"
-          onClick={() => navigate(`/workflow/tasks/${params.id}`)}
+          onClick={() => navigate(`/app/workflow/tasks/${params.id}`)}  // ✅ Correct
         />,
       ],
     },
@@ -329,7 +328,7 @@ export function InstanceDetailsPage() {
       <Box sx={{ p: 3 }}>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/workflow/instances')}
+          onClick={() => navigate('/app/workflow/instances')}
           sx={{ mb: 2 }}
         >
           Back to Instances
@@ -411,7 +410,7 @@ export function InstanceDetailsPage() {
           </Typography>
           
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" color="text.secondary">
                   Status
@@ -438,7 +437,7 @@ export function InstanceDetailsPage() {
               </Box>
             </Grid>
 
-            <Grid item xs={12} md={6}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" color="text.secondary">
                   Started
@@ -475,7 +474,7 @@ export function InstanceDetailsPage() {
             </Grid>
 
             {instance.errorMessage && (
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Alert severity="error" sx={{ mt: 2 }}>
                   <Typography variant="subtitle2">Error Message</Typography>
                   <Typography variant="body2">{instance.errorMessage}</Typography>
@@ -483,7 +482,7 @@ export function InstanceDetailsPage() {
               </Grid>
             )}
 
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Divider sx={{ my: 2 }} />
               <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                 Context Data
@@ -562,7 +561,7 @@ export function InstanceDetailsPage() {
                   showQuickFilter: true,
                   quickFilterProps: { 
                     debounceMs: 500,
-                    placeholder: 'Search events...'
+                    // ✅ FIX: Remove placeholder property
                   },
                 },
               }}

@@ -90,9 +90,9 @@ export function Sidebar({ onItemClick }: SidebarProps) {
       <List>
         {NAVIGATION_ITEMS.map((item) => {
           const IconComponent = ICON_MAP[item.icon as keyof typeof ICON_MAP];
-          const hasChildren = item.children && item.children.length > 0;
+          const hasChildren = 'children' in item && item.children && item.children.length > 0;
           const isExpanded = expandedSections.has(item.label);
-          const isActive = hasChildren ? isSectionActive(item.children) : isPathActive(item.path);
+          const isActive = hasChildren ? isSectionActive(item.children) : isPathActive('path' in item ? item.path : undefined);
 
           return (
             <CanAccess
@@ -105,7 +105,7 @@ export function Sidebar({ onItemClick }: SidebarProps) {
                   onClick={() => {
                     if (hasChildren) {
                       handleSectionToggle(item.label);
-                    } else if (item.path) {
+                    } else if ('path' in item && item.path) {
                       handleNavigation(item.path);
                     }
                   }}
@@ -134,7 +134,7 @@ export function Sidebar({ onItemClick }: SidebarProps) {
               </ListItem>
 
               {/* Nested items for sections with children */}
-              {hasChildren && (
+              {hasChildren && 'children' in item && (
                 <Collapse in={isExpanded} timeout="auto" unmountOnExit>
                   <List component="div" disablePadding>
                     {item.children?.map((child) => {

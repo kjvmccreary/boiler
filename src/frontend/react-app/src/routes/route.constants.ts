@@ -29,7 +29,7 @@ export const ROUTES = {
   // ✅ NEW: Workflow routes
   WORKFLOW_DEFINITIONS: '/app/workflow/definitions',
   WORKFLOW_DEFINITION_DETAILS: '/app/workflow/definitions/:id',
-  WORKFLOW_BUILDER: '/app/workflow/builder/:id?', // Optional ID for new vs edit
+  WORKFLOW_BUILDER: '/app/workflow/builder/:id?',
   WORKFLOW_INSTANCES: '/app/workflow/instances',
   WORKFLOW_INSTANCE_DETAILS: '/app/workflow/instances/:id',
   WORKFLOW_MY_TASKS: '/app/workflow/tasks/mine',
@@ -37,7 +37,26 @@ export const ROUTES = {
   WORKFLOW_ADMIN: '/app/workflow/admin',
 } as const;
 
-export const NAVIGATION_ITEMS = [
+// ✅ FIX: Add proper TypeScript types for navigation items
+interface BaseNavigationItem {
+  label: string;
+  icon: string;
+  permission?: string;
+}
+
+interface NavigationLeafItem extends BaseNavigationItem {
+  path: string;
+  children?: never;
+}
+
+interface NavigationParentItem extends BaseNavigationItem {
+  path?: never;
+  children: NavigationLeafItem[];
+}
+
+type NavigationItem = NavigationLeafItem | NavigationParentItem;
+
+export const NAVIGATION_ITEMS: NavigationItem[] = [
   {
     label: 'Dashboard',
     path: ROUTES.DASHBOARD,
@@ -94,4 +113,4 @@ export const NAVIGATION_ITEMS = [
     icon: 'Settings',
     permission: undefined,
   },
-] as const;
+];
