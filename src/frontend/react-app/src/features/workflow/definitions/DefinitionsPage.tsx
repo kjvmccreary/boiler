@@ -62,11 +62,27 @@ export function DefinitionsPage() {
       console.log('🔄 DefinitionsPage: Loading workflow definitions');
 
       const response = await workflowService.getDefinitions();
+      
+      // ✅ FIX: Add defensive checks for the response
+      if (!response) {
+        console.warn('⚠️ DefinitionsPage: No response from getDefinitions');
+        setDefinitions([]);
+        return;
+      }
+
+      if (!Array.isArray(response)) {
+        console.warn('⚠️ DefinitionsPage: Response is not an array:', response);
+        setDefinitions([]);
+        return;
+      }
+
       console.log('✅ DefinitionsPage: Loaded', response.length, 'definitions');
       setDefinitions(response);
     } catch (error) {
       console.error('❌ DefinitionsPage: Failed to load definitions:', error);
       toast.error('Failed to load workflow definitions');
+      // ✅ FIX: Set empty array on error to prevent further crashes
+      setDefinitions([]);
     } finally {
       setLoading(false);
     }

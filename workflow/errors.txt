@@ -1,86 +1,218 @@
-PS C:\Users\mccre\dev\boiler\src\frontend\react-app> npm run build
-
-> microservices-frontend@0.0.0 build
-> tsc -b && vite build
-
-src/features/workflow/builder/BuilderCanvas.tsx:87:13 - error TS2322: Type '{ label: string; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'DslNode'.
-  Type '{ label: string; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'TimerNode'.
-    Types of property 'type' are incompatible.
-      Type 'NodeType' is not assignable to type '"timer"'.
-        Type '"end"' is not assignable to type '"timer"'.
-
-87             return { ...baseNode, label: 'Start' };
-               ~~~~~~
-
-src/features/workflow/builder/BuilderCanvas.tsx:89:13 - error TS2322: Type '{ label: string; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'DslNode'.
-  Type '{ label: string; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'TimerNode'.
-    Types of property 'type' are incompatible.
-      Type 'NodeType' is not assignable to type '"timer"'.
-        Type '"end"' is not assignable to type '"timer"'.
-
-89             return { ...baseNode, label: 'End' };
-               ~~~~~~
-
-src/features/workflow/builder/BuilderCanvas.tsx:91:13 - error TS2322: Type '{ label: string; assigneeRoles: never[]; dueInMinutes: undefined; formSchema: undefined; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'DslNode'.
-  Type '{ label: string; assigneeRoles: never[]; dueInMinutes: undefined; formSchema: undefined; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'HumanTaskNode'.
-    Types of property 'type' are incompatible.
-      Type 'NodeType' is not assignable to type '"humanTask"'.
-        Type '"end"' is not assignable to type '"humanTask"'.
-
-91             return {
-               ~~~~~~
-
-src/features/workflow/builder/BuilderCanvas.tsx:99:13 - error TS2322: Type '{ label: string; action: { kind: "noop"; }; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'DslNode'.
-  Type '{ label: string; action: { kind: "noop"; }; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'AutomaticNode'.
-    Types of property 'type' are incompatible.
-      Type 'NodeType' is not assignable to type '"automatic"'.
-        Type '"end"' is not assignable to type '"automatic"'.
-
-99             return {
-               ~~~~~~
-
-src/features/workflow/builder/BuilderCanvas.tsx:111:13 - error TS2322: Type '{ label: string; delayMinutes: number; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'DslNode'.
-  Type '{ label: string; delayMinutes: number; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'TimerNode'.
-    Types of property 'type' are incompatible.
-      Type 'NodeType' is not assignable to type '"timer"'.
-        Type '"end"' is not assignable to type '"timer"'.
-
-111             return {
-                ~~~~~~
-
-src/features/workflow/builder/BuilderCanvas.tsx:117:13 - error TS2322: Type '{ label: string; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'DslNode'.
-  Type '{ label: string; id: string; type: NodeType; x: number; y: number; }' is not assignable to type 'TimerNode'.
-    Types of property 'type' are incompatible.
-      Type 'NodeType' is not assignable to type '"timer"'.
-        Type '"end"' is not assignable to type '"timer"'.
-
-117             return { ...baseNode, label: 'Unknown' };
-                ~~~~~~
-
-src/features/workflow/builder/BuilderPage.tsx:87:75 - error TS2345: Argument of type 'string' is not assignable to parameter of type 'DslDefinition'.
-
-87         const { nodes: flowNodes, edges: flowEdges } = deserializeFromDsl(definitionData.jsonDefinition);
-                                                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-src/features/workflow/builder/BuilderPage.tsx:116:11 - error TS2322: Type 'DslDefinition' is not assignable to type 'string'.
-
-116           jsonDefinition: dslDefinition
-              ~~~~~~~~~~~~~~
-
-  src/types/workflow.ts:62:3
-    62   jsonDefinition: string;
-         ~~~~~~~~~~~~~~
-    The expected type comes from property 'jsonDefinition' which is declared here on type 'CreateWorkflowDefinitionDto'
-
-src/features/workflow/builder/BuilderPage.tsx:128:11 - error TS2322: Type 'DslDefinition' is not assignable to type 'string'.
-
-128           jsonDefinition: dslDefinition
-              ~~~~~~~~~~~~~~
-
-  src/types/workflow.ts:69:3
-    69   jsonDefinition?: string;
-         ~~~~~~~~~~~~~~
-    The expected type comes from property 'jsonDefinition' which is declared here on type 'UpdateWorkflowDefinitionDto'
-
-
-Found 9 errors.
+boiler-workflow | [20:33:53 INF] 🔍 WorkflowDbContext: Starting SaveChangesAsync {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🏢 WorkflowDbContext: Tenant ID resolved as: 1 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] ✅ WorkflowDbContext: Using tenant ID 1 for auto-population {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 DBG] ✅ WorkflowDbContext: Set database tenant context to 1 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 DBG] ✅ Set TenantId=1 for WorkflowDefinition: New Workflow {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🔍 Property 'Id': Value='-2147482647', Type='Int32', IsNullable='System.Int32' {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🔍 Property 'CreatedAt': Value='08/27/2025 20:33:53', Type='DateTime', IsNullable='System.DateTime' {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🔍 Property 'Description': Value='', Type='String', IsNullable='System.String' {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🔍 Property 'IsPublished': Value='False', Type='Boolean', IsNullable='System.Boolean' {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🔍 Property 'JSONDefinition': Value='{"key":"new-workflow","nodes":[{"id":"start-1756326800627","x":-46,"y":12.333328247070312,"type":"start","label":"Start"},{"id":"humanTask-1756326804023","x":31.25,"y":100.74999237060547,"type":"humanTask","label":"Human Task","assigneeRoles":[]},{"id":"end-1756326813685","x":197.74992246642375,"y":167.379045623995,"type":"end","label":"End"}],"edges":[{"id":"reactflow__edge-start-1756326800627-humanTask-1756326804023","from":"start-1756326800627","to":"humanTask-1756326804023"},{"id":"reactflow__edge-humanTask-1756326804023-end-1756326813685","from":"humanTask-1756326804023","to":"end-1756326813685"}]}', Type='String', IsNullable='System.String' {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🔍 Property 'Name': Value='New Workflow', Type='String', IsNullable='System.String' {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🔍 Property 'ParentDefinitionId': Value='NULL', Type='NULL', IsNullable='System.Nullable`1[System.Int32]' {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🔍 Property 'PublishNotes': Value='NULL', Type='NULL', IsNullable='System.String' {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🔍 Property 'PublishedAt': Value='NULL', Type='NULL', IsNullable='System.Nullable`1[System.DateTime]' {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🔍 Property 'PublishedByUserId': Value='NULL', Type='NULL', IsNullable='System.Nullable`1[System.Int32]' {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🔍 Property 'Tags': Value='NULL', Type='NULL', IsNullable='System.String' {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🔍 Property 'TenantId': Value='1', Type='Int32', IsNullable='System.Int32' {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🔍 Property 'UpdatedAt': Value='08/27/2025 20:33:53', Type='DateTime', IsNullable='System.DateTime' {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🔍 Property 'Version': Value='1', Type='Int32', IsNullable='System.Int32' {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🔍 Property 'VersionNotes': Value='NULL', Type='NULL', IsNullable='System.String' {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] 🔧 Null enforcement applied to WorkflowDefinition: New Workflow {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 INF] ✅ WorkflowDbContext: Updated TenantId for 1 entities {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-postgres | 2025-08-27 20:33:53.454 UTC [41] ERROR:  invalid input syntax for type integer: ""
+boiler-postgres | 2025-08-27 20:33:53.454 UTC [41] STATEMENT:  INSERT INTO "WorkflowDefinitions" ("CreatedAt", "Description", "IsPublished", "JSONDefinition", "Name", "ParentDefinitionId", "PublishNotes", "PublishedAt", "PublishedByUserId", "Tags", "TenantId", "UpdatedAt", "Version", "VersionNotes")
+boiler-postgres | 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+boiler-postgres | 	RETURNING "Id"
+boiler-workflow | [20:33:53 ERR] Failed executing DbCommand (6ms) [Parameters=[@p0='?' (DbType = DateTime), @p1='?', @p2='?' (DbType = Boolean), @p3='?' (DbType = Object), @p4='?', @p5='?' (DbType = Int32), @p6='?', @p7='?' (DbType = DateTime), @p8='?' (DbType = Int32), @p9='?', @p10='?' (DbType = Int32), @p11='?' (DbType = DateTime), @p12='?' (DbType = Int32), @p13='?'], CommandType='Text', CommandTimeout='30']
+boiler-workflow | INSERT INTO "WorkflowDefinitions" ("CreatedAt", "Description", "IsPublished", "JSONDefinition", "Name", "ParentDefinitionId", "PublishNotes", "PublishedAt", "PublishedByUserId", "Tags", "TenantId", "UpdatedAt", "Version", "VersionNotes")
+boiler-workflow | VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11, @p12, @p13)
+boiler-workflow | RETURNING "Id"; {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | [20:33:53 ERR] An exception occurred in the database while saving changes for context type 'WorkflowService.Persistence.WorkflowDbContext'.
+boiler-workflow | Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+boiler-workflow |  ---> Npgsql.PostgresException (0x80004005): 22P02: invalid input syntax for type integer: ""
+boiler-workflow |    at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+boiler-workflow |    at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+boiler-workflow |    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+boiler-workflow |    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+boiler-workflow |    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-workflow |    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-workflow |    at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-workflow |   Exception data:
+boiler-workflow |     Severity: ERROR
+boiler-workflow |     SqlState: 22P02
+boiler-workflow |     MessageText: invalid input syntax for type integer: ""
+boiler-workflow |     File: numutils.c
+boiler-workflow |     Line: 232
+boiler-workflow |     Routine: pg_strtoint32
+boiler-workflow |    --- End of inner exception stack trace ---
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+boiler-workflow | --- End of stack trace from previous location ---
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken) {"EventId": {"Id": 10000, "Name": "Microsoft.EntityFrameworkCore.Update.SaveChangesFailed"}, "SourceContext": "Microsoft.EntityFrameworkCore.Update", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+boiler-workflow |  ---> Npgsql.PostgresException (0x80004005): 22P02: invalid input syntax for type integer: ""
+boiler-workflow |    at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+boiler-workflow |    at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+boiler-workflow |    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+boiler-workflow |    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+boiler-workflow |    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-workflow |    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-workflow |    at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-workflow |   Exception data:
+boiler-workflow |     Severity: ERROR
+boiler-workflow |     SqlState: 22P02
+boiler-workflow |     MessageText: invalid input syntax for type integer: ""
+boiler-workflow |     File: numutils.c
+boiler-workflow |     Line: 232
+boiler-workflow |     Routine: pg_strtoint32
+boiler-workflow |    --- End of inner exception stack trace ---
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+boiler-workflow | --- End of stack trace from previous location ---
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+boiler-workflow | [20:33:53 ERR] Error creating workflow definition draft {"SourceContext": "WorkflowService.Controllers.DefinitionsController", "ActionId": "c1b4c60d-0069-4943-aeb7-29452cacd534", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF5L2O32SPU:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2O32SPU"}
+boiler-workflow | Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+boiler-workflow |  ---> Npgsql.PostgresException (0x80004005): 22P02: invalid input syntax for type integer: ""
+boiler-workflow |    at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+boiler-workflow |    at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+boiler-workflow |    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+boiler-workflow |    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+boiler-workflow |    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-workflow |    at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-workflow |    at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-workflow |   Exception data:
+boiler-workflow |     Severity: ERROR
+boiler-workflow |     SqlState: 22P02
+boiler-workflow |     MessageText: invalid input syntax for type integer: ""
+boiler-workflow |     File: numutils.c
+boiler-workflow |     Line: 232
+boiler-workflow |     Routine: pg_strtoint32
+boiler-workflow |    --- End of inner exception stack trace ---
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+boiler-workflow | --- End of stack trace from previous location ---
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+boiler-workflow |    at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+boiler-workflow |    at WorkflowService.Persistence.WorkflowDbContext.SaveChangesAsync(CancellationToken cancellationToken) in /src/src/services/WorkflowService/Persistence/WorkflowDbContext.cs:line 203
+boiler-workflow |    at WorkflowService.Controllers.DefinitionsController.CreateDraft(CreateWorkflowDefinitionDto request) in /src/src/services/WorkflowService/Controllers/DefinitionsController.cs:line 162
+boiler-workflow | [20:33:53 ERR] HTTP POST /api/workflow/definitions/draft responded 500 in 132.5106 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-gateway | 2025-08-27T20:33:53.486756357Z [20:33:53 WRN] requestId: 0HNF5L2PRISGG:00000001, previousRequestId: No PreviousRequestId, message: '500 (Internal Server Error) status code of request URI: https://boiler-workflow:7003/api/workflow/definitions/draft.' {"SourceContext": "Ocelot.Requester.Middleware.HttpRequesterMiddleware", "RequestId": "0HNF5L2PRISGG:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2PRISGG"}
+boiler-gateway | 2025-08-27T20:33:53.487303992Z [20:33:53 INF] RESPONSE 7d7f1bf1: 500 in 146ms | Size: Unknown {"SourceContext": "ApiGateway.Middleware.RequestLoggingMiddleware", "RequestId": "0HNF5L2PRISGG:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF5L2PRISGG"}
+boiler-gateway | 2025-08-27T20:33:53.487310792Z [20:33:53 ERR] HTTP POST /api/workflow/definitions/draft responded 500 in 146.7298 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware", "RequestId": "0HNF5L2PRISGG:00000001", "ConnectionId": "0HNF5L2PRISGG"}
+boiler-frontend | 172.18.0.1 - - [27/Aug/2025:20:33:53 +0000] "POST /api/workflow/definitions/draft HTTP/1.1" 500 142 "https://localhost:3000/app/workflow/builder/new" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/139.0.0.0 Safari/537.36" "-"
+boiler-auth |   | 2025-08-27T20:33:53.784322535Z [20:33:53 INF] HTTP GET /health responded 200 in 0.2400 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-workflow | [20:33:53 INF] HTTP GET /health responded 200 in 8.0130 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+boiler-user |   | 2025-08-27T20:33:54.147850665Z [20:33:54 DBG] AuthenticationScheme: Bearer was not authenticated. {"EventId": {"Id": 9, "Name": "AuthenticationSchemeNotAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.151137777Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.151364491Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.151373192Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.151417595Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.151685112Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.151691012Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.152884289Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.152912391Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.153452226Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.153471327Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.153775147Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.153781347Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.153794948Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.153797748Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.153800148Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.153802648Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.153804948Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.154226576Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.154244077Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.154247077Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.154512194Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.154522495Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.155337347Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.155355448Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.155358049Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.155360649Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.155410352Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.155414952Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.155417352Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.155419853Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156090296Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156097196Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156099896Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156102397Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156111497Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156114297Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156116697Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156119498Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156121998Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156124398Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156126798Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156129298Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156131698Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156134099Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156136699Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156141099Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156143499Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156169801Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156172301Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.156174701Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_authorization", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.159632224Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.159701428Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.165547805Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.165616610Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.166987598Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.166993198Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.170294811Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.170319813Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.172092027Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.172133130Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.172961783Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.172967984Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.174074955Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.174082255Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.174935610Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.175041117Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.175931575Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.175954076Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.176925039Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.176931339Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.178705153Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.178726755Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.181047704Z [20:33:54 INF] 🔍 All request headers: Accept=*/*; Host=localhost:7002; User-Agent=curl/7.88.1; X-Tenant-ID=1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.181060205Z [20:33:54 INF] 🏢 FOUND tenant from header 'X-Tenant-Id': 1 {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "enhanced_database", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.182780616Z [20:33:54 WRN] Health check enhanced_database with status Degraded completed after 34.2746ms with message 'Database performance issues: WARNING: Found 6 orphaned user role assignments; WARNING: Found 366 orphaned role permissions' {"EventId": {"Id": 103, "Name": "HealthCheckEnd"}, "SourceContext": "Microsoft.Extensions.Diagnostics.HealthChecks.DefaultHealthCheckService", "RequestId": "0HNF5L2O21VAN:00000001", "RequestPath": "/health", "ConnectionId": "0HNF5L2O21VAN"}
+boiler-user |   | 2025-08-27T20:33:54.183966792Z [20:33:54 INF] HTTP GET /health responded 200 in 39.0914 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WorkflowService.Persistence;
@@ -11,9 +12,11 @@ using WorkflowService.Persistence;
 namespace WorkflowService.Migrations
 {
     [DbContext(typeof(WorkflowDbContext))]
-    partial class WorkflowDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250827165246_UpdateWorkflowDefinitionDefaults")]
+    partial class UpdateWorkflowDefinitionDefaults
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -120,8 +123,9 @@ namespace WorkflowService.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("PublishNotes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValueSql("''::character varying");
 
                     b.Property<DateTime?>("PublishedAt")
                         .HasColumnType("timestamp with time zone");
@@ -130,8 +134,9 @@ namespace WorkflowService.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Tags")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValueSql("''::character varying");
 
                     b.Property<int>("TenantId")
                         .HasColumnType("integer");
@@ -143,8 +148,9 @@ namespace WorkflowService.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("VersionNotes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValueSql("''::character varying");
 
                     b.HasKey("Id");
 

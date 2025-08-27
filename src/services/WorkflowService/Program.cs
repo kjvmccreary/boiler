@@ -150,6 +150,10 @@ app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
+
+// ✅ FIX: Use proper tenant resolution middleware (same as UserService)
+app.UseTenantResolution();
+
 app.UseAuthorization();
 
 app.MapControllers();

@@ -1,3 +1,7 @@
-I have completed a software application as described at C:\Users\mccre\dev\boiler\microservices-system-spec.md. I am now building a workflow service into the application as described at C:\Users\mccre\dev\boiler\workflow\workflow-engine-dev-plan.md.
+I have completed a software application as described at C:\Users\mccre\dev\boiler\microservices-system-spec.md. I am now building a workflow service into the application as described at C:\Users\mccre\dev\boiler\workflow\workflow-engine-dev-plan.md. I have made great progress. The backend for the MVP is basically complete. For the front end, I have been working on the visual WF builder with react flow.
 
-Please do a deep scan of my project structure as well as the documents described above and let me know when you are done. We will then take the next steps on workflow.
+I am more or less following C:\Users\mccre\dev\boiler\workflow\master-mvp-checklist.md.
+
+My current issue is that when I attempt to save a Worflow Definition, there is a problem between Entity Framework and the db. In a separate chat, Claude was unable to resolve this and went for the 'nuclear option' which was to bypass EF and do direct sql. That is exactly where I am right now. The file DefinitionController is current open and has a syntax error. I fed that syntax error to Claude and Claude is now frozen.
+
+It might make sense to do a full deep scan of my project before we resume. 

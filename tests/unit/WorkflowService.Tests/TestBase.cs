@@ -22,12 +22,14 @@ public abstract class TestBase : IDisposable
     protected readonly WorkflowDbContext DbContext;
     protected readonly Mock<IHttpContextAccessor> MockHttpContextAccessor;
     protected readonly Mock<ITenantProvider> MockTenantProvider;
+    protected readonly Mock<ILogger<WorkflowDbContext>> MockWorkflowDbContextLogger; // ✅ ADD: Mock logger for WorkflowDbContext
 
     protected TestBase()
     {
         MockLogger = new Mock<ILogger<object>>();
         MockHttpContextAccessor = new Mock<IHttpContextAccessor>();
         MockTenantProvider = new Mock<ITenantProvider>();
+        MockWorkflowDbContextLogger = new Mock<ILogger<WorkflowDbContext>>(); // ✅ ADD: Initialize mock logger
         
         // Configure tenant provider to return test tenant
         MockTenantProvider.Setup(x => x.GetCurrentTenantIdAsync())
@@ -51,7 +53,12 @@ public abstract class TestBase : IDisposable
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        DbContext = new WorkflowDbContext(options, MockHttpContextAccessor.Object, MockTenantProvider.Object);
+        // ✅ FIX: Pass the mock logger to WorkflowDbContext constructor
+        DbContext = new WorkflowDbContext(
+            options, 
+            MockHttpContextAccessor.Object, 
+            MockTenantProvider.Object,
+            MockWorkflowDbContextLogger.Object); // ✅ ADD: Pass mock logger
         
         // Set test environment to disable query filters
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
