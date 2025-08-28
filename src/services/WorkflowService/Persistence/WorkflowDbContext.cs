@@ -3,7 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using WorkflowService.Domain.Models;
 using DTOs.Entities;
 using Contracts.Services;
-using Microsoft.Extensions.Logging; // ✅ ADD: Logger namespace
+using Microsoft.Extensions.Logging;
+using System.Data;
 
 namespace WorkflowService.Persistence;
 
@@ -11,17 +12,17 @@ public class WorkflowDbContext : DbContext
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ITenantProvider _tenantProvider;
-    private readonly ILogger<WorkflowDbContext> _logger; // ✅ ADD: Logger
+    private readonly ILogger<WorkflowDbContext> _logger;
 
     public WorkflowDbContext(
         DbContextOptions<WorkflowDbContext> options,
         IHttpContextAccessor httpContextAccessor,
         ITenantProvider tenantProvider,
-        ILogger<WorkflowDbContext> logger) : base(options) // ✅ ADD: Logger parameter
+        ILogger<WorkflowDbContext> logger) : base(options)
     {
         _httpContextAccessor = httpContextAccessor;
         _tenantProvider = tenantProvider;
-        _logger = logger; // ✅ ADD: Store logger
+        _logger = logger;
     }
 
     // Workflow entities
@@ -33,10 +34,8 @@ public class WorkflowDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Apply global query filters for tenant isolation
         ApplyTenantQueryFilters(modelBuilder);
 
-        // Configure workflow entities
         ConfigureWorkflowDefinition(modelBuilder);
         ConfigureWorkflowInstance(modelBuilder);
         ConfigureWorkflowTask(modelBuilder);
@@ -46,12 +45,8 @@ public class WorkflowDbContext : DbContext
         base.OnModelCreating(modelBuilder);
     }
 
-    /// <summary>
-    /// Apply tenant isolation query filters following the same pattern as ApplicationDbContext
-    /// </summary>
     private void ApplyTenantQueryFilters(ModelBuilder modelBuilder)
     {
-        // Check if we're in a test environment (same pattern as ApplicationDbContext)
         var isTestEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
                                Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Testing" ||
                                AppDomain.CurrentDomain.GetAssemblies()
@@ -63,26 +58,19 @@ public class WorkflowDbContext : DbContext
             return;
         }
 
-        // ✅ IMPROVED: Apply direct tenant filters (now that all entities have TenantId)
-        modelBuilder.Entity<WorkflowDefinition>().HasQueryFilter(wd => 
+        modelBuilder.Entity<WorkflowDefinition>().HasQueryFilter(wd =>
             EF.Property<int>(wd, "TenantId") == GetCurrentTenantIdFromProvider());
 
-        modelBuilder.Entity<WorkflowInstance>().HasQueryFilter(wi => 
+        modelBuilder.Entity<WorkflowInstance>().HasQueryFilter(wi =>
             EF.Property<int>(wi, "TenantId") == GetCurrentTenantIdFromProvider());
 
-        // ✅ FIXED: Now use direct TenantId instead of relationship-based filtering
-        modelBuilder.Entity<WorkflowTask>().HasQueryFilter(wt => 
+        modelBuilder.Entity<WorkflowTask>().HasQueryFilter(wt =>
             EF.Property<int>(wt, "TenantId") == GetCurrentTenantIdFromProvider());
 
-        modelBuilder.Entity<WorkflowEvent>().HasQueryFilter(we => 
+        modelBuilder.Entity<WorkflowEvent>().HasQueryFilter(we =>
             EF.Property<int>(we, "TenantId") == GetCurrentTenantIdFromProvider());
-
-        // OutboxMessage doesn't need tenant filtering as it's infrastructure
     }
 
-    /// <summary>
-    /// Get current tenant ID for query filters (same pattern as ApplicationDbContext)
-    /// </summary>
     private int? GetCurrentTenantIdFromProvider()
     {
         try
@@ -107,177 +95,104 @@ public class WorkflowDbContext : DbContext
         }
     }
 
-    /// <summary>
-    /// Override SaveChanges to set tenant context and auto-populate TenantId
-    /// </summary>
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        // ✅ ADD: Debug logging for tenant resolution
         _logger.LogInformation("🔍 WorkflowDbContext: Starting SaveChangesAsync");
-        
-        // Set database tenant context for RLS (same pattern as ApplicationDbContext)
+
         var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
-        
-        // ✅ ADD: Detailed tenant resolution logging
         _logger.LogInformation("🏢 WorkflowDbContext: Tenant ID resolved as: {TenantId}", tenantId);
-        
-        if (tenantId.HasValue)
+
+        if (!tenantId.HasValue)
         {
-            _logger.LogInformation("✅ WorkflowDbContext: Using tenant ID {TenantId} for auto-population", tenantId.Value);
-            
-            try
+            _logger.LogWarning("❌ WorkflowDbContext: No tenant ID available - DB constraint will likely fail");
+            // Still stamp timestamps to keep behavior consistent
+            UpdateTimestamps();
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+
+        var strategy = Database.CreateExecutionStrategy();
+        return await strategy.ExecuteAsync(async () =>
+        {
+            // Ensure one connection and a transaction for GUC + INSERT
+            if (Database.GetDbConnection().State != ConnectionState.Open)
             {
-                await Database.ExecuteSqlRawAsync(
-                    "SELECT set_config('app.tenant_id', {0}, false)", 
-                    tenantId.Value.ToString());
-                _logger.LogDebug("✅ WorkflowDbContext: Set database tenant context to {TenantId}", tenantId.Value);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "⚠️ WorkflowDbContext: Failed to set database tenant context");
-                // Continue if RLS context setting fails
+                await Database.GetDbConnection().OpenAsync(cancellationToken);
             }
 
-            // Auto-populate TenantId for new workflow entities
+            await using var tx = await Database.BeginTransactionAsync(cancellationToken);
+
+            // Transaction-local tenant context (RLS)
+            await Database.ExecuteSqlRawAsync(
+                "SELECT set_config('app.tenant_id', {0}, true)",
+                tenantId.Value.ToString());
+
+            _logger.LogDebug("✅ WorkflowDbContext: Transaction-local tenant set to {TenantId}", tenantId.Value);
+
+            // Optional: verify GUC (useful while stabilizing)
+            // var guc = await Database.SqlQueryRaw<string>("SELECT current_setting('app.tenant_id', true)").SingleAsync();
+            // _logger.LogDebug("🔎 Verified app.tenant_id GUC = '{Guc}'", guc ?? "<null>");
+
+            // Auto-populate and timestamps just before saving
             SetTenantIdForNewEntities(tenantId.Value);
-        }
-        else
-        {
-            // ✅ ADD: Log when tenant ID is null - this is the likely issue
-            _logger.LogWarning("❌ WorkflowDbContext: No tenant ID available - this will cause the database error!");
-            
-            // ✅ ADD: Log HTTP context details for debugging
-            var context = _httpContextAccessor.HttpContext;
-            if (context != null)
-            {
-                _logger.LogInformation("🔍 WorkflowDbContext: HTTP Context exists, checking headers and items...");
-                
-                // Check headers
-                if (context.Request.Headers.ContainsKey("X-Tenant-ID"))
-                {
-                    var headerValue = context.Request.Headers["X-Tenant-ID"].ToString();
-                    _logger.LogInformation("🔍 WorkflowDbContext: X-Tenant-ID header = '{HeaderValue}'", headerValue);
-                }
-                else
-                {
-                    _logger.LogWarning("❌ WorkflowDbContext: No X-Tenant-ID header found");
-                }
-                
-                // Check context items
-                if (context.Items.TryGetValue("TenantId", out var tenantItem))
-                {
-                    _logger.LogInformation("🔍 WorkflowDbContext: Context.Items['TenantId'] = '{TenantItem}'", tenantItem);
-                }
-                else
-                {
-                    _logger.LogWarning("❌ WorkflowDbContext: No TenantId in Context.Items");
-                }
-                
-                // Check JWT claims
-                if (context.User.Identity?.IsAuthenticated == true)
-                {
-                    var tenantClaim = context.User.FindFirst("tenant_id");
-                    if (tenantClaim != null)
-                    {
-                        _logger.LogInformation("🔍 WorkflowDbContext: JWT tenant_id claim = '{ClaimValue}'", tenantClaim.Value);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("❌ WorkflowDbContext: No tenant_id claim in JWT");
-                    }
-                }
-                else
-                {
-                    _logger.LogWarning("❌ WorkflowDbContext: User is not authenticated");
-                }
-            }
-            else
-            {
-                _logger.LogWarning("❌ WorkflowDbContext: No HTTP context available");
-            }
-        }
+            UpdateTimestamps();
 
-        // Update timestamps
-        UpdateTimestamps();
+            var result = await base.SaveChangesAsync(cancellationToken);
 
-        return await base.SaveChangesAsync(cancellationToken);
+            await tx.CommitAsync(cancellationToken);
+            return result;
+        });
     }
 
-    /// <summary>
-    /// Auto-populate TenantId for new workflow entities
-    /// </summary>
     private void SetTenantIdForNewEntities(int tenantId)
     {
         var entitiesUpdated = 0;
-        
+
         foreach (var entry in ChangeTracker.Entries())
         {
-            if (entry.State == EntityState.Added)
+            if (entry.State != EntityState.Added) continue;
+
+            if (entry.Entity is WorkflowDefinition wd)
             {
-                if (entry.Entity is WorkflowDefinition wd)
+                if (wd.TenantId == 0)
                 {
-                    if (wd.TenantId == 0)
+                    wd.TenantId = tenantId;
+                    entitiesUpdated++;
+                    _logger.LogDebug("✅ Set TenantId={TenantId} for WorkflowDefinition: {Name}", tenantId, wd.Name);
+                }
+
+                // Normalize optional strings to NULL
+                foreach (var property in entry.Properties)
+                {
+                    var value = property.CurrentValue;
+                    var propertyName = property.Metadata.Name;
+                    var clrType = property.Metadata.ClrType;
+
+                    if (clrType == typeof(string) && value is string s && s == "" &&
+                        (propertyName == "Tags" || propertyName == "PublishNotes" || propertyName == "VersionNotes" || propertyName == "Description"))
                     {
-                        wd.TenantId = tenantId;
-                        entitiesUpdated++;
-                        _logger.LogDebug("✅ Set TenantId={TenantId} for WorkflowDefinition: {Name}", tenantId, wd.Name);
+                        property.CurrentValue = null;
                     }
-                    
-                    // ✅ CRITICAL FIX: Scan all properties at the EF Core level
-                    foreach (var property in entry.Properties)
-                    {
-                        var value = property.CurrentValue;
-                        var propertyName = property.Metadata.Name;
-                        var clrType = property.Metadata.ClrType;
-                        
-                        _logger.LogInformation("🔍 Property '{PropertyName}': Value='{Value}', Type='{Type}', IsNullable='{Nullable}'", 
-                            propertyName, value?.ToString() ?? "NULL", value?.GetType().Name ?? "NULL", clrType);
-                        
-                        // ✅ CRITICAL: Fix empty strings in nullable integer fields
-                        if (clrType == typeof(int?) && value != null && value.ToString() == "")
-                        {
-                            _logger.LogError("🚨 FOUND EMPTY STRING IN NULLABLE INT: '{PropertyName}' = '{Value}' - FIXING TO NULL", propertyName, value);
-                            property.CurrentValue = null;
-                        }
-                        
-                        // ✅ CRITICAL: Fix empty strings in nullable string fields that should be NULL
-                        if (clrType == typeof(string) && value is string strValue && strValue == "" && 
-                            (propertyName == "Tags" || propertyName == "PublishNotes" || propertyName == "VersionNotes"))
-                        {
-                            _logger.LogInformation("🔧 FORCING '{PropertyName}' from empty string to NULL", propertyName);
-                            property.CurrentValue = null;
-                        }
-                    }
-                    
-                    _logger.LogInformation("🔧 Null enforcement applied to WorkflowDefinition: {Name}", wd.Name);
                 }
-                else if (entry.Entity is WorkflowInstance wi && wi.TenantId == 0)
-                {
-                    wi.TenantId = tenantId;
-                    entitiesUpdated++;
-                    _logger.LogDebug("✅ Set TenantId={TenantId} for WorkflowInstance", tenantId);
-                }
-                else if (entry.Entity is WorkflowTask wt && wt.TenantId == 0)
-                {
-                    wt.TenantId = tenantId;
-                    entitiesUpdated++;
-                    _logger.LogDebug("✅ Set TenantId={TenantId} for WorkflowTask", tenantId);
-                }
-                else if (entry.Entity is WorkflowEvent we && we.TenantId == 0)
-                {
-                    we.TenantId = tenantId;
-                    entitiesUpdated++;
-                    _logger.LogDebug("✅ Set TenantId={TenantId} for WorkflowEvent", tenantId);
-                }
+
+                _logger.LogInformation("🔧 Null enforcement applied to WorkflowDefinition: {Name}", wd.Name);
+            }
+            else if (entry.Entity is WorkflowInstance wi && wi.TenantId == 0)
+            {
+                wi.TenantId = tenantId; entitiesUpdated++;
+            }
+            else if (entry.Entity is WorkflowTask wt && wt.TenantId == 0)
+            {
+                wt.TenantId = tenantId; entitiesUpdated++;
+            }
+            else if (entry.Entity is WorkflowEvent we && we.TenantId == 0)
+            {
+                we.TenantId = tenantId; entitiesUpdated++;
             }
         }
-        
+
         _logger.LogInformation("✅ WorkflowDbContext: Updated TenantId for {Count} entities", entitiesUpdated);
     }
 
-    /// <summary>
-    /// Update timestamps for all entities
-    /// </summary>
     private void UpdateTimestamps()
     {
         var now = DateTime.UtcNow;
@@ -290,7 +205,7 @@ public class WorkflowDbContext : DbContext
                     entry.Entity.CreatedAt = now;
                     entry.Entity.UpdatedAt = now;
                     break;
-                
+
                 case EntityState.Modified:
                     entry.Entity.UpdatedAt = now;
                     break;
@@ -305,12 +220,10 @@ public class WorkflowDbContext : DbContext
         modelBuilder.Entity<WorkflowDefinition>(entity =>
         {
             entity.HasKey(e => e.Id);
-            
-            // Tenant isolation index
+
             entity.HasIndex(e => new { e.TenantId, e.Name, e.Version }).IsUnique();
             entity.HasIndex(e => new { e.TenantId, e.IsPublished });
-            
-            // Properties
+
             entity.Property(e => e.TenantId).IsRequired();
             entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Version).IsRequired();
@@ -320,22 +233,15 @@ public class WorkflowDbContext : DbContext
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();
 
-            // Row-Level Security check constraint
-            entity.ToTable(t => t.HasCheckConstraint("CK_WorkflowDefinition_TenantId", 
+            entity.ToTable(t => t.HasCheckConstraint("CK_WorkflowDefinition_TenantId",
                 "\"TenantId\" = current_setting('app.tenant_id')::int"));
 
-            // ✅ REMOVE: Default SQL values that are causing issues
-            // entity.Property(e => e.Tags).HasDefaultValueSql("''::character varying");
-            // entity.Property(e => e.PublishNotes).HasDefaultValueSql("''::character varying");
-            // entity.Property(e => e.VersionNotes).HasDefaultValueSql("''::character varying");
-            
-            // ✅ ADD: Explicit nullable configuration without SQL defaults
             entity.Property(e => e.Tags).IsRequired(false).HasMaxLength(500);
             entity.Property(e => e.PublishNotes).IsRequired(false).HasMaxLength(1000);
             entity.Property(e => e.VersionNotes).IsRequired(false).HasMaxLength(1000);
-            entity.Property(e => e.ParentDefinitionId).IsRequired(false);
             entity.Property(e => e.PublishedByUserId).IsRequired(false);
             entity.Property(e => e.PublishedAt).IsRequired(false);
+            entity.Property(e => e.ParentDefinitionId).IsRequired(false); // keep mapped for versioning
         });
     }
 
@@ -344,13 +250,11 @@ public class WorkflowDbContext : DbContext
         modelBuilder.Entity<WorkflowInstance>(entity =>
         {
             entity.HasKey(e => e.Id);
-            
-            // Tenant isolation and performance indexes
+
             entity.HasIndex(e => new { e.TenantId, e.Status });
             entity.HasIndex(e => new { e.TenantId, e.WorkflowDefinitionId });
             entity.HasIndex(e => new { e.TenantId, e.StartedAt });
-            
-            // Properties
+
             entity.Property(e => e.TenantId).IsRequired();
             entity.Property(e => e.WorkflowDefinitionId).IsRequired();
             entity.Property(e => e.DefinitionVersion).IsRequired();
@@ -362,14 +266,12 @@ public class WorkflowDbContext : DbContext
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();
 
-            // Relationships
             entity.HasOne(e => e.WorkflowDefinition)
                   .WithMany(wd => wd.Instances)
                   .HasForeignKey(e => e.WorkflowDefinitionId)
                   .OnDelete(DeleteBehavior.Restrict);
 
-            // Row-Level Security check constraint
-            entity.ToTable(t => t.HasCheckConstraint("CK_WorkflowInstance_TenantId", 
+            entity.ToTable(t => t.HasCheckConstraint("CK_WorkflowInstance_TenantId",
                 "\"TenantId\" = current_setting('app.tenant_id')::int"));
         });
     }
@@ -379,16 +281,14 @@ public class WorkflowDbContext : DbContext
         modelBuilder.Entity<WorkflowTask>(entity =>
         {
             entity.HasKey(e => e.Id);
-            
-            // ✅ ADD: Tenant isolation indexes
+
             entity.HasIndex(e => new { e.TenantId, e.Status });
             entity.HasIndex(e => new { e.TenantId, e.AssignedToUserId });
             entity.HasIndex(e => new { e.TenantId, e.DueDate });
             entity.HasIndex(e => new { e.WorkflowInstanceId, e.Status });
             entity.HasIndex(e => new { e.AssignedToRole, e.Status });
-            
-            // Properties
-            entity.Property(e => e.TenantId).IsRequired(); // ✅ ADD
+
+            entity.Property(e => e.TenantId).IsRequired();
             entity.Property(e => e.WorkflowInstanceId).IsRequired();
             entity.Property(e => e.NodeId).IsRequired().HasMaxLength(100);
             entity.Property(e => e.TaskName).IsRequired().HasMaxLength(255);
@@ -400,14 +300,12 @@ public class WorkflowDbContext : DbContext
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();
 
-            // Relationships
             entity.HasOne(e => e.WorkflowInstance)
                   .WithMany(wi => wi.Tasks)
                   .HasForeignKey(e => e.WorkflowInstanceId)
                   .OnDelete(DeleteBehavior.Cascade);
 
-            // Row-Level Security check constraint
-            entity.ToTable(t => t.HasCheckConstraint("CK_WorkflowTask_TenantId", 
+            entity.ToTable(t => t.HasCheckConstraint("CK_WorkflowTask_TenantId",
                 "\"TenantId\" = current_setting('app.tenant_id')::int"));
         });
     }
@@ -417,14 +315,12 @@ public class WorkflowDbContext : DbContext
         modelBuilder.Entity<WorkflowEvent>(entity =>
         {
             entity.HasKey(e => e.Id);
-            
-            // ✅ ADD: Tenant isolation indexes
+
             entity.HasIndex(e => new { e.TenantId, e.Type, e.OccurredAt });
             entity.HasIndex(e => new { e.TenantId, e.UserId });
             entity.HasIndex(e => new { e.WorkflowInstanceId, e.OccurredAt });
-            
-            // Properties
-            entity.Property(e => e.TenantId).IsRequired(); // ✅ ADD
+
+            entity.Property(e => e.TenantId).IsRequired();
             entity.Property(e => e.WorkflowInstanceId).IsRequired();
             entity.Property(e => e.Type).IsRequired().HasMaxLength(100);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
@@ -433,14 +329,12 @@ public class WorkflowDbContext : DbContext
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();
 
-            // Relationships
             entity.HasOne(e => e.WorkflowInstance)
                   .WithMany(wi => wi.Events)
                   .HasForeignKey(e => e.WorkflowInstanceId)
                   .OnDelete(DeleteBehavior.Cascade);
 
-            // Row-Level Security check constraint
-            entity.ToTable(t => t.HasCheckConstraint("CK_WorkflowEvent_TenantId", 
+            entity.ToTable(t => t.HasCheckConstraint("CK_WorkflowEvent_TenantId",
                 "\"TenantId\" = current_setting('app.tenant_id')::int"));
         });
     }
@@ -450,13 +344,11 @@ public class WorkflowDbContext : DbContext
         modelBuilder.Entity<OutboxMessage>(entity =>
         {
             entity.HasKey(e => e.Id);
-            
-            // Processing indexes
+
             entity.HasIndex(e => new { e.Processed, e.CreatedAt });
             entity.HasIndex(e => new { e.Type, e.Processed });
             entity.HasIndex(e => e.NextRetryAt);
-            
-            // Properties
+
             entity.Property(e => e.Type).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Payload).IsRequired().HasColumnType("jsonb");
             entity.Property(e => e.Processed).IsRequired();
@@ -464,8 +356,6 @@ public class WorkflowDbContext : DbContext
             entity.Property(e => e.RetryCount).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();
-
-            // OutboxMessage is infrastructure - no tenant isolation needed
         });
     }
 

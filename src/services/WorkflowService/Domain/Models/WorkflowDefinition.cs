@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using DTOs.Entities;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WorkflowService.Domain.Models;
 
@@ -28,15 +27,13 @@ public class WorkflowDefinition : BaseEntity
     
     public int? PublishedByUserId { get; set; }
 
-    // Add these properties:
     public string? Tags { get; set; }
     public string? PublishNotes { get; set; }
     public string? VersionNotes { get; set; }
-    
-    // ✅ TEMPORARY FIX: Remove this field from database operations
-    [NotMapped]
+
+    // Map this: used for versioning lineage
     public int? ParentDefinitionId { get; set; }
     
-    // Navigation properties
+    // Navigation
     public virtual ICollection<WorkflowInstance> Instances { get; set; } = new List<WorkflowInstance>();
 }
