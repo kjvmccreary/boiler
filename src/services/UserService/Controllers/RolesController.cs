@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Contracts.Services;
 using DTOs.Common;
 using DTOs.Auth;
+using DTOs.Workflow; // ✅ ADD: Missing using directive for workflow DTOs
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Common.Data;
@@ -588,6 +589,31 @@ public class RolesController : ControllerBase
         {
             _logger.LogError(ex, "Error retrieving users for role {RoleId}", id);
             return StatusCode(500, ApiResponseDto<List<UserInfo>>.ErrorResult("An error occurred while retrieving role users"));
+        }
+    }
+
+    /// <summary>
+    /// Check if a role is used in workflow definitions - SECURE: Framework-enforced permission check
+    /// </summary>
+    [HttpPost("check-workflow-usage")]
+    [RequirePermission("roles.view")]
+    public async Task<ActionResult<ApiResponseDto<RoleUsageInWorkflowsDto>>> CheckRoleWorkflowUsage([FromBody] CheckRoleUsageRequestDto request)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(request.RoleName))
+            {
+                return BadRequest(ApiResponseDto<RoleUsageInWorkflowsDto>.ErrorResult("Role name is required"));
+            }
+
+            var usageInfo = await _roleService.CheckRoleUsageInWorkflowsAsync(request.RoleName);
+            
+            return Ok(ApiResponseDto<RoleUsageInWorkflowsDto>.SuccessResult(usageInfo, "Role workflow usage checked successfully"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking role workflow usage for {RoleName}", request.RoleName);
+            return StatusCode(500, ApiResponseDto<RoleUsageInWorkflowsDto>.ErrorResult("Failed to check role workflow usage"));
         }
     }
 

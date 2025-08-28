@@ -2,6 +2,7 @@ using System.Text.Json;
 using WorkflowService.Domain.Dsl;
 using WorkflowService.Domain.Models;
 using WorkflowService.Engine.Interfaces;
+using Contracts.Services; // ✅ ADD: Missing using directive for IRoleService
 using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
 
 namespace WorkflowService.Engine.Executors;
@@ -12,23 +13,49 @@ namespace WorkflowService.Engine.Executors;
 public class HumanTaskExecutor : INodeExecutor
 {
     private readonly ILogger<HumanTaskExecutor> _logger;
+    private readonly IRoleService _roleService; // ✅ NOW RESOLVED: IRoleService reference
 
     public string NodeType => NodeTypes.HumanTask;
 
-    public HumanTaskExecutor(ILogger<HumanTaskExecutor> logger)
+    public HumanTaskExecutor(ILogger<HumanTaskExecutor> logger, IRoleService roleService)
     {
         _logger = logger;
+        _roleService = roleService;
     }
 
     public bool CanExecute(WorkflowNode node) => node.IsHumanTask();
 
+    // ✅ FIX: Make method synchronous to match interface signature
     public Task<NodeExecutionResult> ExecuteAsync(WorkflowNode node, WorkflowInstance instance, string context, CancellationToken cancellationToken = default)
     {
         try
         {
+            // ✅ FIXED: Use available method to validate role existence
+            var assignedRole = node.GetAssignedToRole();
+            if (!string.IsNullOrEmpty(assignedRole))
+            {
+                // ✅ NEW: Use IsRoleNameAvailableAsync to check if role exists
+                // If role is NOT available, it means it exists (inverse logic)
+                var roleTask = _roleService.IsRoleNameAvailableAsync(assignedRole, null, cancellationToken);
+                roleTask.ContinueWith(task =>
+                {
+                    if (task.IsCompletedSuccessfully)
+                    {
+                        var roleExists = !task.Result; // Inverse logic: if not available, it exists
+                        if (!roleExists)
+                        {
+                            _logger.LogWarning("Assigned role '{Role}' no longer exists in tenant {TenantId} for task {NodeId}", 
+                                assignedRole, instance.TenantId, node.Id);
+                            // Could either fail the task or assign to a default role
+                        }
+                    }
+                }, TaskContinuationOptions.OnlyOnRanToCompletion);
+            }
+
             // Create workflow task
             var task = new WorkflowTask
             {
+                TenantId = instance.TenantId, // ✅ FIX: Set tenant ID
                 WorkflowInstanceId = instance.Id,
                 NodeId = node.Id,
                 TaskName = node.GetTaskName(),
@@ -46,7 +73,6 @@ public class HumanTaskExecutor : INodeExecutor
 
             // Assign task
             var assignedUserId = node.GetAssignedToUserId();
-            var assignedRole = node.GetAssignedToRole();
             
             if (!string.IsNullOrEmpty(assignedUserId) && int.TryParse(assignedUserId, out var userId))
             {
@@ -59,8 +85,8 @@ public class HumanTaskExecutor : INodeExecutor
                 task.Status = WorkflowTaskStatus.Assigned;
             }
 
-            _logger.LogInformation("Created human task {TaskName} for workflow instance {InstanceId}", 
-                node.GetTaskName(), instance.Id);
+            _logger.LogInformation("Created human task {TaskName} for workflow instance {InstanceId} with tenant {TenantId}", 
+                node.GetTaskName(), instance.Id, instance.TenantId);
 
             var result = new NodeExecutionResult
             {
@@ -70,6 +96,7 @@ public class HumanTaskExecutor : INodeExecutor
                 NextNodeIds = new List<string>() // Will be set when task is completed
             };
 
+            // ✅ FIX: Return Task.FromResult instead of direct return
             return Task.FromResult(result);
         }
         catch (Exception ex)
@@ -80,6 +107,7 @@ public class HumanTaskExecutor : INodeExecutor
                 IsSuccess = false,
                 ErrorMessage = ex.Message
             };
+            // ✅ FIX: Return Task.FromResult instead of direct return
             return Task.FromResult(result);
         }
     }

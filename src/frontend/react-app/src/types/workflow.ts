@@ -392,3 +392,33 @@ export interface WorkflowAuditEntryDto {
   ipAddress?: string;
   userAgent?: string;
 }
+
+// Add these interfaces to your types
+
+export interface RoleUsageInWorkflowsDto {
+  isUsedInWorkflows: boolean;
+  usedInDefinitions: WorkflowDefinitionUsageDto[];
+  totalUsageCount: number;
+  roleName: string;
+  message: string;
+}
+
+export interface WorkflowDefinitionUsageDto {
+  definitionId: number;
+  definitionName: string;
+  version: number;
+  isPublished: boolean;
+  usedInNodes: WorkflowNodeUsageDto[];
+  usageCount: number;
+  lastModified: string;
+}
+
+export interface WorkflowNodeUsageDto {
+  nodeId: string;
+  nodeName: string;
+  nodeType: string;
+}
+
+export interface CheckRoleUsageRequestDto {
+  roleName: string;
+}

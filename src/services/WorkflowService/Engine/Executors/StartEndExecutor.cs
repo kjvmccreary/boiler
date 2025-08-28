@@ -30,10 +30,12 @@ public class StartEndExecutor : INodeExecutor
                 _logger.LogInformation("Executing start node {NodeId} for instance {InstanceId}", 
                     node.Id, instance.Id);
 
+                // ✅ FIX: This executor doesn't have access to the workflow definition edges
+                // We need to let the WorkflowRuntime handle the next node calculation
                 var result = new NodeExecutionResult
                 {
                     IsSuccess = true,
-                    NextNodeIds = node.GetOutgoingConnections(new List<WorkflowEdge>())
+                    NextNodeIds = new List<string>() // Let runtime calculate next nodes
                 };
                 return Task.FromResult(result);
             }

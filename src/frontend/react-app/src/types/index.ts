@@ -157,6 +157,7 @@ export interface UpdateRoleRequest {
   name: string;
   description?: string;
   permissions: string[];
+  forceUpdate?: boolean; // ✅ ADD: Missing forceUpdate property
 }
 
 export interface AssignRoleRequest {
@@ -220,3 +221,30 @@ export type {
   UpdateTenantDto,
   RoleTemplateDto
 } from './tenant.js';
+
+// ✅ ADD: Export workflow types including RoleUsageInWorkflowsDto
+export type {
+  // Role usage types
+  RoleUsageInWorkflowsDto,
+  WorkflowDefinitionUsageDto,
+  WorkflowNodeUsageDto,
+  CheckRoleUsageRequestDto,
+  
+  // Main workflow types
+  WorkflowDefinitionDto,
+  CreateWorkflowDefinitionDto,
+  UpdateWorkflowDefinitionDto,
+  PublishDefinitionRequestDto,
+  WorkflowInstanceDto,
+  StartInstanceRequestDto,
+  WorkflowTaskDto,
+  TaskSummaryDto,
+  CompleteTaskRequestDto,
+  ClaimTaskRequestDto,
+  WorkflowEventDto,
+  WorkflowStatsDto,
+  
+  // Enums
+  InstanceStatus,
+  TaskStatus
+} from './workflow.js';

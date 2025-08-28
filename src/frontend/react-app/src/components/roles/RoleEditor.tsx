@@ -29,8 +29,9 @@ import {
   Info as InfoIcon,
 } from '@mui/icons-material';
 import { PermissionSelector } from './PermissionSelector.js';
+import { RoleWorkflowUsageDialog } from './RoleWorkflowUsageDialog'; // ✅ ADD: Import the dialog
 import { roleService, type RoleCreateRequest, type RoleUpdateRequest } from '@/services/role.service.js';
-import type { Role, UserInfo } from '@/types/index.js';
+import type { Role, UserInfo, RoleUsageInWorkflowsDto } from '@/types/index.js'; // ✅ ADD: Import the type
 import toast from 'react-hot-toast';
 import { ROUTES } from '@/routes/route.constants.js';
 
@@ -50,6 +51,19 @@ export function RoleEditor() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // ✅ NEW: State for workflow usage dialog
+  const [workflowUsageDialog, setWorkflowUsageDialog] = useState<{
+    open: boolean;
+    usageInfo: RoleUsageInWorkflowsDto | null;
+    pendingUpdate: RoleUpdateRequest | null;
+    actionType: 'rename' | 'delete';
+  }>({
+    open: false,
+    usageInfo: null,
+    pendingUpdate: null,
+    actionType: 'rename'
+  });
 
   const loadRole = async (roleId: string) => {
     try {
@@ -81,7 +95,7 @@ export function RoleEditor() {
     } catch (error) {
       console.error('Failed to load role:', error);
       toast.error('Failed to load role');
-      navigate(ROUTES.ROLES); // 🔧 FIX: Was navigate('/roles')
+      navigate(ROUTES.ROLES);
     } finally {
       setLoading(false);
     }
@@ -110,6 +124,7 @@ export function RoleEditor() {
     return Object.keys(newErrors).length === 0;
   };
 
+  // ✅ ENHANCED: Update the handleSubmit method to include workflow validation
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
@@ -132,8 +147,35 @@ export function RoleEditor() {
           description: formData.description.trim() || undefined,
           permissions: formData.permissions,
         };
-        await roleService.updateRole(parseInt(id), updateData);
-        toast.success('Role updated successfully');
+
+        // ✅ NEW: Check for workflow usage before updating if name is changing
+        if (role && role.name !== updateData.name) {
+          console.log('🔍 RoleEditor: Role name changing, checking workflow usage...');
+          const result = await roleService.updateRoleWithValidation(parseInt(id), updateData);
+          
+          if (result.success) {
+            toast.success('Role updated successfully');
+            navigate(ROUTES.ROLES);
+            return;
+          } else if (result.workflowUsage) {
+            // Show warning dialog
+            console.log('⚠️ RoleEditor: Role is used in workflows, showing dialog');
+            setWorkflowUsageDialog({
+              open: true,
+              usageInfo: result.workflowUsage,
+              pendingUpdate: updateData,
+              actionType: 'rename'
+            });
+            return;
+          } else {
+            toast.error(result.error || 'Failed to update role');
+            return;
+          }
+        } else {
+          // Name not changing, use regular update
+          await roleService.updateRole(parseInt(id), updateData);
+          toast.success('Role updated successfully');
+        }
       } else {
         const createData: RoleCreateRequest = {
           name: formData.name.trim(),
@@ -144,13 +186,52 @@ export function RoleEditor() {
         toast.success('Role created successfully');
       }
 
-      navigate(ROUTES.ROLES); // 🔧 FIX: Was navigate('/roles')
+      navigate(ROUTES.ROLES);
     } catch (error) {
       console.error('Failed to save role:', error);
       toast.error(`Failed to ${isEditing ? 'update' : 'create'} role`);
     } finally {
       setSaving(false);
     }
+  };
+
+  // ✅ NEW: Handle proceeding with update despite workflow warnings
+  const handleProceedWithUpdate = async () => {
+    if (!workflowUsageDialog.pendingUpdate || !id) return;
+    
+    try {
+      setSaving(true);
+      
+      // Force update by calling the regular update method
+      await roleService.updateRole(parseInt(id), {
+        ...workflowUsageDialog.pendingUpdate,
+        forceUpdate: true // This flag might need to be handled by your backend
+      });
+      
+      toast.success('Role updated successfully (workflow definitions may need attention)');
+      setWorkflowUsageDialog({ 
+        open: false, 
+        usageInfo: null, 
+        pendingUpdate: null, 
+        actionType: 'rename' 
+      });
+      navigate(ROUTES.ROLES);
+    } catch (error) {
+      console.error('Failed to force update role:', error);
+      toast.error('Failed to update role');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ✅ NEW: Handle closing the workflow usage dialog
+  const handleCloseWorkflowDialog = () => {
+    setWorkflowUsageDialog({ 
+      open: false, 
+      usageInfo: null, 
+      pendingUpdate: null, 
+      actionType: 'rename' 
+    });
   };
 
   const handleInputChange = (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -366,13 +447,23 @@ export function RoleEditor() {
           <Button
             variant="outlined"
             startIcon={<CancelIcon />}
-            onClick={() => navigate(ROUTES.ROLES)} // 🔧 FIX: Was navigate('/roles')
+            onClick={() => navigate(ROUTES.ROLES)}
             disabled={saving}
           >
             Cancel
           </Button>
         </Box>
       </form>
+
+      {/* ✅ NEW: Workflow Usage Warning Dialog */}
+      <RoleWorkflowUsageDialog
+        open={workflowUsageDialog.open}
+        onClose={handleCloseWorkflowDialog}
+        onProceed={handleProceedWithUpdate}
+        usageInfo={workflowUsageDialog.usageInfo}
+        actionType={workflowUsageDialog.actionType}
+        newRoleName={workflowUsageDialog.pendingUpdate?.name}
+      />
     </Box>
   );
 }

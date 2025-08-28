@@ -259,17 +259,42 @@ public class WorkflowRuntime : IWorkflowRuntime
                 instance.Context = result.UpdatedContext;
             }
 
+            // ✅ FIX: Handle task creation for human tasks
+            if (result.CreatedTask != null)
+            {
+                // Set tenant ID for the task
+                result.CreatedTask.TenantId = instance.TenantId;
+                _context.WorkflowTasks.Add(result.CreatedTask);
+                
+                _logger.LogInformation("Created task {TaskName} for workflow instance {InstanceId}", 
+                    result.CreatedTask.TaskName, instance.Id);
+            }
+
             // Handle node completion
             if (!result.ShouldWait)
             {
-                AdvanceToNextNodes(instance, workflowDef, result.NextNodeIds);
+                // ✅ FIX: Calculate next nodes properly
+                var nextNodeIds = result.NextNodeIds.Any() 
+                    ? result.NextNodeIds 
+                    : GetNextNodeIds(node, workflowDef);
+                    
+                _logger.LogDebug("Advancing from node {NodeId} to nodes: {NextNodes}", 
+                    node.Id, string.Join(", ", nextNodeIds));
+                    
+                AdvanceToNextNodes(instance, workflowDef, nextNodeIds);
             }
 
             await _context.SaveChangesAsync(cancellationToken);
 
             // Create node execution event
             await CreateEventAsync(instance.Id, "Node", "Executed", 
-                $"{{\"nodeId\": \"{node.Id}\", \"nodeType\": \"{node.Type}\", \"nextNodes\": {JsonSerializer.Serialize(result.NextNodeIds)}}}", null);
+                $"{{\"nodeId\": \"{node.Id}\", \"nodeType\": \"{node.Type}\", \"shouldWait\": {result.ShouldWait.ToString().ToLower()}, \"taskCreated\": {(result.CreatedTask != null).ToString().ToLower()}}}", null);
+
+            // ✅ FIX: Continue to next nodes if not waiting
+            if (!result.ShouldWait)
+            {
+                await ContinueWorkflowAsync(instance.Id, cancellationToken);
+            }
 
         }
         catch (Exception ex)
@@ -277,6 +302,17 @@ public class WorkflowRuntime : IWorkflowRuntime
             _logger.LogError(ex, "Error executing node {NodeId} for instance {InstanceId}", node.Id, instance.Id);
             await HandleNodeExecutionFailure(instance, node, ex.Message);
         }
+    }
+
+    private List<string> GetNextNodeIds(WorkflowNode currentNode, WorkflowDefinitionJson workflowDef)
+    {
+        // Find all edges that have this node as source
+        var outgoingEdges = workflowDef.Edges.Where(e => e.Source == currentNode.Id).ToList();
+        
+        _logger.LogDebug("Found {EdgeCount} outgoing edges from node {NodeId}", 
+            outgoingEdges.Count, currentNode.Id);
+        
+        return outgoingEdges.Select(e => e.Target).ToList();
     }
 
     private void AdvanceToNextNodes(WorkflowInstance instance, WorkflowDefinitionJson workflowDef, List<string> nextNodeIds)

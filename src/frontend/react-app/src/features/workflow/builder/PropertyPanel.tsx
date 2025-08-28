@@ -18,6 +18,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  CircularProgress,
 } from '@mui/material';
 import {
   Close as CloseIcon,
@@ -27,6 +28,9 @@ import {
 } from '@mui/icons-material';
 import type { DslNode } from '../dsl/dsl.types';
 import { ConditionBuilder } from './components/ConditionBuilder';
+import { roleService } from '@/services/role.service'; // ✅ ADD: Import role service
+import { useTenant } from '@/contexts/TenantContext'; // ✅ ADD: Import tenant context
+import type { RoleDto } from '@/types'; // ✅ ADD: Import RoleDto type
 
 interface PropertyPanelProps {
   open: boolean;
@@ -160,9 +164,70 @@ export function PropertyPanel({
   );
 }
 
-// Individual property components for each node type
+// ✅ UPDATED: HumanTaskProperties with tenant-aware role loading
 function HumanTaskProperties({ node, onChange }: { node: any; onChange: (field: string, value: any) => void }) {
   const [newRole, setNewRole] = useState('');
+  const [tenantRoles, setTenantRoles] = useState<RoleDto[]>([]); // ✅ ADD: State for tenant roles
+  const [loadingRoles, setLoadingRoles] = useState(false); // ✅ ADD: Loading state
+  const [rolesError, setRolesError] = useState<string | null>(null); // ✅ ADD: Error state
+  
+  const { currentTenant } = useTenant(); // ✅ ADD: Get current tenant
+
+  // ✅ ADD: Load tenant roles when component mounts or tenant changes
+  useEffect(() => {
+    const loadTenantRoles = async () => {
+      if (!currentTenant) {
+        setTenantRoles([]);
+        return;
+      }
+
+      try {
+        setLoadingRoles(true);
+        setRolesError(null);
+        
+        console.log('🔄 PropertyPanel: Loading roles for tenant:', currentTenant.name);
+        
+        const response = await roleService.getRoles({ page: 1, pageSize: 100 });
+        
+        // ✅ NEW: Filter to only show roles with workflow permissions
+        const workflowCapableRoles = response.roles.filter(role => {
+          // System roles like SuperAdmin can do everything
+          if (role.isSystemRole && ['SuperAdmin', 'SystemAdmin'].includes(role.name)) {
+            return false; // Don't show these for assignment
+          }
+          
+          // Check if role has any workflow-related permissions
+          const hasWorkflowPermissions = role.permissions?.some(permission => {
+            // ✅ FIX: Handle Permission object properly
+            const permissionName = typeof permission === 'string' ? permission : permission.name;
+            return permissionName.startsWith('workflow.') || 
+                   permissionName === 'workflow.read' || 
+                   permissionName === 'workflow.write' || 
+                   permissionName === 'workflow.admin';
+          });
+          
+          return hasWorkflowPermissions;
+        });
+        
+        setTenantRoles(workflowCapableRoles);
+        console.log('✅ PropertyPanel: Loaded', workflowCapableRoles.length, 'workflow-capable roles for tenant:', currentTenant.name);
+        
+        // ✅ NEW: Show helpful message if no workflow roles found
+        if (workflowCapableRoles.length === 0 && response.roles.length > 0) {
+          setRolesError(`No roles with workflow permissions found. Consider assigning workflow permissions to existing roles.`);
+        }
+        
+      } catch (error) {
+        console.error('❌ PropertyPanel: Failed to load tenant roles:', error);
+        setRolesError('Failed to load roles');
+        setTenantRoles([]);
+      } finally {
+        setLoadingRoles(false);
+      }
+    };
+
+    loadTenantRoles();
+  }, [currentTenant]); // ✅ ADD: Re-load when tenant changes
 
   const addRole = () => {
     if (newRole.trim() && !node.assigneeRoles?.includes(newRole.trim())) {
@@ -177,8 +242,13 @@ function HumanTaskProperties({ node, onChange }: { node: any; onChange: (field: 
     onChange('assigneeRoles', updatedRoles);
   };
 
-  // ✅ ADD: Predefined common roles
-  const commonRoles = ['Manager', 'Approver', 'TeamLead', 'Admin', 'Reviewer', 'Supervisor'];
+  // ✅ ADD: Quick add role from tenant roles
+  const addTenantRole = (roleName: string) => {
+    if (!node.assigneeRoles?.includes(roleName)) {
+      const updatedRoles = [...(node.assigneeRoles || []), roleName];
+      onChange('assigneeRoles', updatedRoles);
+    }
+  };
 
   return (
     <Box>
@@ -198,25 +268,52 @@ function HumanTaskProperties({ node, onChange }: { node: any; onChange: (field: 
           Only users with these roles will see this task in their "My Tasks" list. Leave empty to allow any user.
         </Typography>
         
-        {/* ✅ ADD: Quick role buttons */}
-        <Box sx={{ mb: 1 }}>
-          <Typography variant="caption" sx={{ mr: 1 }}>Common roles:</Typography>
-          {commonRoles.map(role => (
-            <Chip
-              key={role}
-              label={role}
-              size="small"
-              variant="outlined"
-              onClick={() => {
-                if (!node.assigneeRoles?.includes(role)) {
-                  const updatedRoles = [...(node.assigneeRoles || []), role];
-                  onChange('assigneeRoles', updatedRoles);
-                }
-              }}
-              sx={{ mr: 0.5, mb: 0.5, cursor: 'pointer' }}
-            />
-          ))}
-        </Box>
+        {/* ✅ UPDATED: Show tenant-specific roles */}
+        {currentTenant && (
+          <Box sx={{ mb: 1 }}>
+            <Typography variant="caption" sx={{ mr: 1 }}>
+              {currentTenant.name} roles:
+            </Typography>
+            
+            {loadingRoles ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                <CircularProgress size={16} />
+                <Typography variant="caption" color="text.secondary">
+                  Loading roles...
+                </Typography>
+              </Box>
+            ) : rolesError ? (
+              <Alert severity="warning" sx={{ mt: 0.5, mb: 1 }}>
+                <Typography variant="caption">
+                  {rolesError}. You can still enter role names manually.
+                </Typography>
+              </Alert>
+            ) : tenantRoles.length === 0 ? (
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                No roles found in {currentTenant.name}. Create roles first or enter custom role names.
+              </Typography>
+            ) : (
+              <Box sx={{ mt: 0.5 }}>
+                {tenantRoles.map(role => (
+                  <Chip
+                    key={role.id}
+                    label={`${role.name}${role.isSystemRole ? ' (System)' : ''}`}
+                    size="small"
+                    variant={node.assigneeRoles?.includes(role.name) ? "filled" : "outlined"}
+                    color={node.assigneeRoles?.includes(role.name) ? "primary" : "default"}
+                    onClick={() => addTenantRole(role.name)}
+                    sx={{ 
+                      mr: 0.5, 
+                      mb: 0.5, 
+                      cursor: 'pointer',
+                      opacity: node.assigneeRoles?.includes(role.name) ? 0.7 : 1 
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
+          </Box>
+        )}
 
         <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
           <TextField
@@ -246,13 +343,13 @@ function HumanTaskProperties({ node, onChange }: { node: any; onChange: (field: 
         {(node.assigneeRoles || []).length === 0 ? (
           <Alert severity="info" sx={{ mt: 1 }}>
             <Typography variant="caption">
-              💡 No roles specified - this task will be available to <strong>all users</strong>
+              💡 No roles specified - this task will be available to <strong>all users</strong> in {currentTenant?.name || 'the current tenant'}
             </Typography>
           </Alert>
         ) : (
           <Alert severity="success" sx={{ mt: 1 }}>
             <Typography variant="caption">
-              ✅ Only users with roles: <strong>{node.assigneeRoles.join(', ')}</strong> can work on this task
+              ✅ Only users with roles: <strong>{node.assigneeRoles.join(', ')}</strong> can work on this task in {currentTenant?.name || 'the current tenant'}
             </Typography>
           </Alert>
         )}

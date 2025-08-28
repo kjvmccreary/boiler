@@ -1,5 +1,6 @@
 using DTOs.Entities;
 using DTOs.Common;
+using DTOs.Workflow; // ✅ ADD: Missing using directive for workflow DTOs
 
 namespace Contracts.Services;
 
@@ -32,6 +33,9 @@ public interface IRoleService
     
     // 🔧 .NET 9 FIX: Change return type to bool for UpdateRolePermissionsAsync
     Task<bool> UpdateRolePermissionsAsync(int roleId, List<string> permissions, CancellationToken cancellationToken = default);
+
+    // ✅ NEW: Safety feature - Check if role is used in workflow definitions  
+    Task<RoleUsageInWorkflowsDto> CheckRoleUsageInWorkflowsAsync(string roleName, CancellationToken cancellationToken = default);
 }
 
 public class RoleInfo

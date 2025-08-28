@@ -4,7 +4,8 @@ import type {
   PaginationParams,
   CreateRoleRequest,
   UpdateRoleRequest,
-  UserInfo
+  UserInfo,
+  RoleUsageInWorkflowsDto
 } from '../types';
 
 // ✅ ADD: Type for backend's PagedResultDto
@@ -201,6 +202,53 @@ export class RoleService {
     } catch (error) {
       console.error('❌ RoleService: getUserPermissions failed:', error);
       throw error;
+    }
+  }
+
+  async checkRoleWorkflowUsage(roleName: string): Promise<RoleUsageInWorkflowsDto> {
+    console.log('🔍 RoleService: checkRoleWorkflowUsage called with roleName:', roleName);
+    try {
+      // ✅ UPDATED: Use the WorkflowService endpoint instead of UserService
+      const response = await apiClient.post<RoleUsageInWorkflowsDto>('/api/workflow/role-usage/check-usage', {
+        roleName
+      });
+      console.log('✅ RoleService: Role workflow usage checked successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ RoleService: checkRoleWorkflowUsage failed:', error);
+      throw error;
+    }
+  }
+
+  // ✅ ENHANCED: Update role with workflow validation
+  async updateRoleWithValidation(id: number, roleData: UpdateRoleRequest): Promise<{
+    success: boolean;
+    workflowUsage?: RoleUsageInWorkflowsDto;
+    error?: string;
+  }> {
+    console.log('🔍 RoleService: updateRoleWithValidation called with id:', id, 'data:', roleData);
+    try {
+      const response = await apiClient.put<RoleDto>(`/api/roles/${id}`, roleData);
+      console.log('✅ RoleService: Role updated successfully');
+      return { success: true };
+    } catch (error: any) {
+      if (error.response?.data?.message?.startsWith('ROLE_USED_IN_WORKFLOWS:')) {
+        // Extract workflow usage info from error message
+        const usageJson = error.response.data.message.replace('ROLE_USED_IN_WORKFLOWS:', '');
+        const workflowUsage = JSON.parse(usageJson) as RoleUsageInWorkflowsDto;
+        
+        console.log('⚠️ RoleService: Role is used in workflows, returning usage info');
+        return { 
+          success: false, 
+          workflowUsage 
+        };
+      }
+      
+      console.error('❌ RoleService: updateRoleWithValidation failed:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || 'Failed to update role' 
+      };
     }
   }
 }

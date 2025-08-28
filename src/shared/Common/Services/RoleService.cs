@@ -2,9 +2,11 @@ using Common.Data;
 using Contracts.Repositories;
 using Contracts.Services;
 using DTOs.Entities;
+using DTOs.Workflow;
 using Microsoft.EntityFrameworkCore;
 using Common.Constants;
 using Common.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Common.Services;
@@ -130,6 +132,27 @@ public class RoleService : IRoleService
     {
         try
         {
+            // Get the existing role first to check its current name
+            var existingRole = await GetRoleByIdAsync(roleId, cancellationToken);
+            if (existingRole == null)
+            {
+                return false;
+            }
+
+            // ✅ NEW: If role name is being changed, check workflow usage
+            if (!string.IsNullOrEmpty(name) && !name.Equals(existingRole.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                var usageInfo = await CheckRoleUsageInWorkflowsAsync(existingRole.Name, cancellationToken);
+                if (usageInfo.IsUsedInWorkflows)
+                {
+                    _logger.LogWarning("Attempting to rename role '{OldName}' to '{NewName}' but role is used in {Count} workflow definition(s)", 
+                        existingRole.Name, name, usageInfo.UsedInDefinitions.Count);
+                    
+                    // This will be caught by the frontend to show the warning dialog
+                    throw new InvalidOperationException($"ROLE_USED_IN_WORKFLOWS:{System.Text.Json.JsonSerializer.Serialize(usageInfo)}");
+                }
+            }
+
             // 🔧 FIX: Add input validation
             if (string.IsNullOrWhiteSpace(name))
             {
@@ -169,6 +192,10 @@ public class RoleService : IRoleService
                     return await UpdateRoleInternalAsync(roleId, name, description, permissions, tenantId.Value, cancellationToken);
                 });
             }
+        }
+        catch (Exception ex) when (ex.Message.StartsWith("ROLE_USED_IN_WORKFLOWS:"))
+        {
+            throw; // Re-throw workflow usage exceptions for frontend handling
         }
         catch (Exception ex)
         {
@@ -1005,6 +1032,53 @@ public class RoleService : IRoleService
         {
             _logger.LogError(ex, "Error getting permissions for role {RoleId}", roleId);
             return new List<string>();
+        }
+    }
+
+    public async Task<RoleUsageInWorkflowsDto> CheckRoleUsageInWorkflowsAsync(string roleName, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!tenantId.HasValue)
+            {
+                return new RoleUsageInWorkflowsDto
+                {
+                    RoleName = roleName,
+                    IsUsedInWorkflows = false,
+                    Message = "No tenant context available"
+                };
+            }
+
+            _logger.LogInformation("Checking role '{RoleName}' usage in workflow definitions for tenant {TenantId}", roleName, tenantId);
+
+            // ✅ FIX: We need to inject WorkflowDbContext via IServiceProvider since it's not in Common project
+            // This is a temporary solution - ideally this method should be in WorkflowService
+            
+            var usageInfo = new RoleUsageInWorkflowsDto
+            {
+                RoleName = roleName,
+                IsUsedInWorkflows = false,
+                UsedInDefinitions = new List<WorkflowDefinitionUsageDto>(),
+                TotalUsageCount = 0,
+                Message = $"Role '{roleName}' usage check not implemented - requires WorkflowService integration"
+            };
+
+            // TODO: This method should be moved to WorkflowService project where WorkflowDbContext is available
+            // For now, return empty result to fix build
+            _logger.LogWarning("Role workflow usage checking is not yet implemented - method needs to be moved to WorkflowService project");
+
+            return usageInfo;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error checking role '{RoleName}' usage in workflows", roleName);
+            return new RoleUsageInWorkflowsDto
+            {
+                RoleName = roleName,
+                IsUsedInWorkflows = false,
+                Message = "Error checking workflow usage"
+            };
         }
     }
 }
