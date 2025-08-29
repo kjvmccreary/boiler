@@ -30,6 +30,9 @@ import {
   Visibility as ViewIcon,
   FileCopy as DuplicateIcon,
   MoreVert as MoreVertIcon,
+  Gavel as UnpublishIcon,
+  Archive as ArchiveIcon,
+  Cancel as TerminateIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { CanAccess } from '@/components/authorization/CanAccess';
@@ -46,6 +49,10 @@ export function DefinitionsPage() {
   const [publishNotes, setPublishNotes] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [definitionToDelete, setDefinitionToDelete] = useState<WorkflowDefinitionDto | null>(null);
+  const [unpublishDialogOpen, setUnpublishDialogOpen] = useState(false);
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  const [terminateDialogOpen, setTerminateDialogOpen] = useState(false);
+  const [targetDefinition, setTargetDefinition] = useState<WorkflowDefinitionDto | null>(null);
 
   const navigate = useNavigate();
   const { currentTenant } = useTenant();
@@ -181,7 +188,47 @@ export function DefinitionsPage() {
     }
   };
 
-  // ... rest of the component remains the same
+  const openUnpublish = (d: WorkflowDefinitionDto) => { setTargetDefinition(d); setUnpublishDialogOpen(true); };
+  const openArchive = (d: WorkflowDefinitionDto) => { setTargetDefinition(d); setArchiveDialogOpen(true); };
+  const openTerminate = (d: WorkflowDefinitionDto) => { setTargetDefinition(d); setTerminateDialogOpen(true); };
+
+  const handleUnpublishConfirm = async () => {
+    if (!targetDefinition) return;
+    try {
+      await workflowService.unpublishDefinition(targetDefinition.id);
+      toast.success('Definition unpublished');
+      loadDefinitions();
+    } catch (e) {
+      toast.error('Unpublish failed');
+    } finally {
+      setUnpublishDialogOpen(false); setTargetDefinition(null);
+    }
+  };
+
+  const handleArchiveConfirm = async () => {
+    if (!targetDefinition) return;
+    try {
+      await workflowService.archiveDefinition(targetDefinition.id);
+      toast.success('Definition archived');
+      loadDefinitions();
+    } catch {
+      toast.error('Archive failed');
+    } finally {
+      setArchiveDialogOpen(false); setTargetDefinition(null);
+    }
+  };
+
+  const handleTerminateInstancesConfirm = async () => {
+    if (!targetDefinition) return;
+    try {
+      const result = await workflowService.terminateDefinitionInstances(targetDefinition.id);
+      toast.success(`Terminated ${result.terminated} running instance(s)`);
+    } catch {
+      toast.error('Terminate running instances failed');
+    } finally {
+      setTerminateDialogOpen(false); setTargetDefinition(null);
+    }
+  };
 
   const columns: GridColDef[] = [
     {
@@ -289,6 +336,30 @@ export function DefinitionsPage() {
               icon={<StartIcon />}
               label="Start Instance"
               onClick={() => handleStartInstance(definition)}
+              showInMenu
+            />
+          );
+        }
+
+        // Unpublish, Archive, Terminate actions (only for published)
+        if (definition.isPublished) {
+          actions.push(
+            <GridActionsCellItem
+              icon={<UnpublishIcon />}
+              label="Unpublish"
+              onClick={() => openUnpublish(definition)}
+              showInMenu
+            />,
+            <GridActionsCellItem
+              icon={<ArchiveIcon />}
+              label="Archive"
+              onClick={() => openArchive(definition)}
+              showInMenu
+            />,
+            <GridActionsCellItem
+              icon={<TerminateIcon />}
+              label="Terminate Instances"
+              onClick={() => openTerminate(definition)}
               showInMenu
             />
           );
@@ -407,6 +478,45 @@ export function DefinitionsPage() {
           <Button onClick={handleDeleteConfirm} color="error" variant="contained">
             Delete
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={unpublishDialogOpen} onClose={() => setUnpublishDialogOpen(false)}>
+        <DialogTitle>Unpublish Definition</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Unpublish "{targetDefinition?.name}"? New instances cannot start; existing continue running.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setUnpublishDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleUnpublishConfirm} variant="contained">Unpublish</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={archiveDialogOpen} onClose={() => setArchiveDialogOpen(false)}>
+        <DialogTitle>Archive Definition</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Archive "{targetDefinition?.name}"? It will be hidden from normal lists.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setArchiveDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleArchiveConfirm} variant="contained" color="warning">Archive</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={terminateDialogOpen} onClose={() => setTerminateDialogOpen(false)}>
+        <DialogTitle>Terminate Running Instances</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Terminate all running instances of "{targetDefinition?.name}"? This cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTerminateDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleTerminateInstancesConfirm} variant="contained" color="error">Terminate All</Button>
         </DialogActions>
       </Dialog>
     </Box>

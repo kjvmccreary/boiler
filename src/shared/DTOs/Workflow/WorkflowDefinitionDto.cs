@@ -14,6 +14,8 @@ public class WorkflowDefinitionDto
     public int? PublishedByUserId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public bool IsArchived { get; set; }
+    public DateTime? ArchivedAt { get; set; }
 }
 
 public class CreateWorkflowDefinitionDto

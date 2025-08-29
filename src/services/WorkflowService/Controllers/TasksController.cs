@@ -9,6 +9,7 @@ using WorkflowService.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
+using WorkflowService.Services.Interfaces;
 
 namespace WorkflowService.Controllers;
 
@@ -19,13 +20,16 @@ public class TasksController : ControllerBase
 {
     private readonly WorkflowDbContext _context;
     private readonly ILogger<TasksController> _logger;
+    private readonly IWorkflowExecutionService _execution;
 
     public TasksController(
         WorkflowDbContext context,
-        ILogger<TasksController> logger)
+        ILogger<TasksController> logger,
+        IWorkflowExecutionService execution)
     {
         _context = context;
         _logger = logger;
+        _execution = execution;
     }
 
     /// <summary>
@@ -324,6 +328,16 @@ public class TasksController : ControllerBase
             _context.WorkflowEvents.Add(workflowEvent);
             await _context.SaveChangesAsync();
 
+            try
+            {
+                await _execution.AdvanceAfterTaskCompletionAsync(task);
+            }
+            catch (Exception execEx)
+            {
+                _logger.LogError(execEx, "Advance failed after completing task {TaskId}", task.Id);
+            }
+
+            // THEN map & return response (task now completed; new tasks may exist)
             return Ok(ApiResponseDto<WorkflowTaskDto>.SuccessResult(MapTask(task), "Task completed successfully"));
         }
         catch (Exception ex)

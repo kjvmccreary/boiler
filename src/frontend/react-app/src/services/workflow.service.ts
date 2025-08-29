@@ -134,6 +134,17 @@ export class WorkflowService {
     return (await apiClient.delete<any>(`/api/workflow/definitions/${id}`)).data === true;
   }
 
+  async unpublishDefinition(id: number): Promise<WorkflowDefinitionDto> {
+    return (await apiClient.post<WorkflowDefinitionDto>(`/api/workflow/definitions/${id}/unpublish`, {})).data;
+  }
+  async archiveDefinition(id: number): Promise<WorkflowDefinitionDto> {
+    return (await apiClient.post<WorkflowDefinitionDto>(`/api/workflow/definitions/${id}/archive`, {})).data;
+  }
+  async terminateDefinitionInstances(id: number): Promise<{ terminated: number }> {
+    // backend returns { terminated: number }
+    return (await apiClient.post<{ terminated: number }>(`/api/workflow/definitions/${id}/terminate-running`, {})).data;
+  }
+
   // -------- Instances --------
   async getInstances(filters?: WorkflowInstancesFilters): Promise<WorkflowInstanceDto[]> {
     const params = new URLSearchParams();

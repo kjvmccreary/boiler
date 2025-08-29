@@ -36,4 +36,6 @@ public class WorkflowDefinition : BaseEntity
     
     // Navigation
     public virtual ICollection<WorkflowInstance> Instances { get; set; } = new List<WorkflowInstance>();
+    public bool IsArchived { get; set; }
+    public DateTime? ArchivedAt { get; set; }
 }

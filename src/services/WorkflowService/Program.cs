@@ -106,6 +106,7 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IEventPublisher, EventPublisher>();
 builder.Services.AddScoped<IRoleWorkflowUsageService, RoleWorkflowUsageService>();
+builder.Services.AddScoped<IWorkflowExecutionService, WorkflowExecutionService>();
 
 // TODO: Add Workflow Security when created (STEP 3)
 builder.Services.AddWorkflowPolicies();

@@ -291,6 +291,66 @@ public class DefinitionsController : ControllerBase
     }
 
     /// <summary>
+    /// Unpublish a published definition (prevent new instances, keep version history)
+    /// </summary>
+    [HttpPost("{id}/unpublish")]
+    [RequiresPermission(Permissions.Workflow.PublishDefinitions)]
+    public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> Unpublish(int id)
+    {
+        var def = await _context.WorkflowDefinitions.FirstOrDefaultAsync(d => d.Id == id);
+        if (def == null) return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Workflow definition not found"));
+        if (!def.IsPublished) return BadRequest(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Definition is not published"));
+        // Ensure no running instances if that is your rule (optional)
+        def.IsPublished = false;
+        await _context.SaveChangesAsync();
+        return Ok(ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(new WorkflowDefinitionDto {
+            Id = def.Id, Name = def.Name, Version = def.Version, JSONDefinition = def.JSONDefinition,
+            IsPublished = def.IsPublished, Description = def.Description, PublishedAt = def.PublishedAt,
+            PublishedByUserId = def.PublishedByUserId, CreatedAt = def.CreatedAt, UpdatedAt = def.UpdatedAt
+        }, "Definition unpublished"));
+    }
+
+    /// <summary>
+    /// Archive a definition (hide from normal lists)
+    /// </summary>
+    [HttpPost("{id}/archive")]
+    [RequiresPermission(Permissions.Workflow.PublishDefinitions)]
+    public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> Archive(int id)
+    {
+        var def = await _context.WorkflowDefinitions.FirstOrDefaultAsync(d => d.Id == id);
+        if (def == null) return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Workflow definition not found"));
+        if (def.IsArchived) return BadRequest(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Already archived"));
+        def.IsArchived = true;
+        def.ArchivedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        return Ok(ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(new WorkflowDefinitionDto {
+            Id = def.Id, Name = def.Name, Version = def.Version, JSONDefinition = def.JSONDefinition,
+            IsPublished = def.IsPublished, Description = def.Description, PublishedAt = def.PublishedAt,
+            PublishedByUserId = def.PublishedByUserId, CreatedAt = def.CreatedAt, UpdatedAt = def.UpdatedAt
+        }, "Definition archived"));
+    }
+
+    /// <summary>
+    /// Terminate all running instances of a definition.
+    /// </summary>
+    [HttpPost("{id}/terminate-running")]
+    [RequiresPermission(Permissions.Workflow.ManageInstances)]
+    public async Task<ActionResult<ApiResponseDto<object>>> TerminateRunning(int id)
+    {
+        var running = await _context.WorkflowInstances
+            .Where(i => i.WorkflowDefinitionId == id && i.Status == DTOs.Workflow.Enums.InstanceStatus.Running)
+            .ToListAsync();
+        foreach (var inst in running)
+        {
+            inst.Status = DTOs.Workflow.Enums.InstanceStatus.Cancelled;
+            inst.CompletedAt = DateTime.UtcNow;
+            inst.UpdatedAt = DateTime.UtcNow;
+        }
+        var count = await _context.SaveChangesAsync();
+        return Ok(ApiResponseDto<object>.SuccessResult(new { terminated = running.Count }, $"Terminated {running.Count} running instance(s)"));
+    }
+
+    /// <summary>
     /// Delete a workflow definition (only if not published and no instances)
     /// </summary>
     [HttpDelete("{id}")]

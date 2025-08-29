@@ -4,8 +4,11 @@ using Common.Authorization;
 using DTOs.Common;
 using DTOs.Workflow;
 using DTOs.Workflow.Enums;
-using WorkflowService.Services.Interfaces; // ✅ ADD: Import service interfaces
+using WorkflowService.Services.Interfaces;
 using System.Security.Claims;
+using WorkflowService.Persistence;
+using Microsoft.EntityFrameworkCore;
+using AutoMapper;
 
 namespace WorkflowService.Controllers;
 
@@ -20,12 +23,20 @@ public class InstancesController : ControllerBase
     private readonly IInstanceService _instanceService; // ✅ CHANGE: Use service instead of direct DB access
     private readonly ILogger<InstancesController> _logger;
 
+    // Added for suspend/resume endpoints
+    private readonly WorkflowDbContext _context;
+    private readonly IMapper _mapper;
+
     public InstancesController(
         IInstanceService instanceService, // ✅ CHANGE: Inject service
-        ILogger<InstancesController> logger)
+        ILogger<InstancesController> logger,
+        WorkflowDbContext context,
+        IMapper mapper)
     {
         _instanceService = instanceService; // ✅ CHANGE: Use service
         _logger = logger;
+        _context = context;
+        _mapper = mapper;
     }
 
     /// <summary>
@@ -302,6 +313,42 @@ public class InstancesController : ControllerBase
             return StatusCode(500, ApiResponseDto<InstanceStatusDto>.ErrorResult(
                 "An error occurred while retrieving the workflow instance status"));
         }
+    }
+
+    /// <summary>
+    /// Suspend a running workflow instance
+    /// </summary>
+    [HttpPost("{id}/suspend")]
+    [RequiresPermission("workflow.manage_instances")]
+    public async Task<ActionResult<ApiResponseDto<WorkflowInstanceDto>>> Suspend(int id)
+    {
+        var inst = await _context.WorkflowInstances.FirstOrDefaultAsync(i => i.Id == id);
+        if (inst == null) return NotFound(ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Not found"));
+        if (inst.Status != InstanceStatus.Running)
+            return BadRequest(ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Only running instances can be suspended"));
+        inst.Status = InstanceStatus.Suspended;
+        inst.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        return Ok(ApiResponseDto<WorkflowInstanceDto>.SuccessResult(
+            _mapper.Map<WorkflowInstanceDto>(inst), "Suspended"));
+    }
+
+    /// <summary>
+    /// Resume a suspended workflow instance
+    /// </summary>
+    [HttpPost("{id}/resume")]
+    [RequiresPermission("workflow.manage_instances")]
+    public async Task<ActionResult<ApiResponseDto<WorkflowInstanceDto>>> Resume(int id)
+    {
+        var inst = await _context.WorkflowInstances.FirstOrDefaultAsync(i => i.Id == id);
+        if (inst == null) return NotFound(ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Not found"));
+        if (inst.Status != InstanceStatus.Suspended)
+            return BadRequest(ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Only suspended instances can be resumed"));
+        inst.Status = InstanceStatus.Running;
+        inst.UpdatedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+        return Ok(ApiResponseDto<WorkflowInstanceDto>.SuccessResult(
+            _mapper.Map<WorkflowInstanceDto>(inst), "Resumed"));
     }
 
     private int GetCurrentUserId()

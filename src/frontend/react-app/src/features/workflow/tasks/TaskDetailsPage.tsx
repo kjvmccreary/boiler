@@ -136,7 +136,7 @@ export function TaskDetailsPage() {
       <Box sx={{ p: 3 }}>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/app/workflow/my-tasks')}
+          onClick={() => navigate('/app/workflow/tasks/mine')}
           sx={{ mb: 2 }}
         >
           Back to My Tasks
@@ -150,7 +150,7 @@ export function TaskDetailsPage() {
     <Box sx={{ p: 3, maxWidth: 900 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <IconButton onClick={() => navigate('/app/workflow/my-tasks')} sx={{ mr: 1 }}>
+          <IconButton onClick={() => navigate('/app/workflow/tasks/mine')} sx={{ mr: 1 }}>
             <ArrowBackIcon />
           </IconButton>
           <Typography variant="h4">

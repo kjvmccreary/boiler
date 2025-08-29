@@ -10,22 +10,26 @@ using DTOs.Workflow;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus; // Fix ambiguity
+using WorkflowService.Services.Interfaces; // NEW: interface for execution service
 
 namespace WorkflowService.Tests.Controllers;
 
 public class TasksControllerTests : TestBase
 {
     private readonly Mock<ILogger<TasksController>> _mockLogger;
+    private readonly Mock<IWorkflowExecutionService> _mockExecution; // NEW
     private readonly TasksController _controller;
 
     public TasksControllerTests()
     {
         _mockLogger = CreateMockLogger<TasksController>();
-        
-        // Use actual DbContext from TestBase
+        _mockExecution = new Mock<IWorkflowExecutionService>();
+
         _controller = new TasksController(
             DbContext,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockExecution.Object   // NEW required parameter
+        );
 
         SetupControllerContext();
     }
@@ -38,8 +42,10 @@ public class TasksControllerTests : TestBase
 
         // Act - Use actual controller method signature
         var result = await _controller.GetTasks(
-            status: WorkflowTaskStatus.Created,
             mine: true,
+            mineIncludeRoles: false,
+            mineIncludeUnassigned: false,
+            status: WorkflowTaskStatus.Created,
             page: 1,
             pageSize: 10);
 
@@ -89,6 +95,7 @@ public class TasksControllerTests : TestBase
         var actionResult = result.Result as OkObjectResult;
         actionResult.Should().NotBeNull();
         actionResult!.StatusCode.Should().Be(200);
+        _mockExecution.Verify(x => x.AdvanceAfterTaskCompletionAsync(It.IsAny<WorkflowService.Domain.Models.WorkflowTask>()), Times.Once);
     }
 
     private async Task SeedTestTasksAsync()
@@ -138,7 +145,7 @@ public class TasksControllerTests : TestBase
     }
 
     private async Task<WorkflowService.Domain.Models.WorkflowTask> CreateTestTaskAsync(
-        WorkflowTaskStatus status, 
+        WorkflowTaskStatus status,
         int? assignedUserId = null)
     {
         var definition = new WorkflowService.Domain.Models.WorkflowDefinition
@@ -177,9 +184,7 @@ public class TasksControllerTests : TestBase
         };
 
         if (status == WorkflowTaskStatus.Claimed && assignedUserId.HasValue)
-        {
             task.ClaimedAt = DateTime.UtcNow;
-        }
 
         definition.Instances = new List<WorkflowService.Domain.Models.WorkflowInstance> { instance };
         instance.WorkflowDefinition = definition;
@@ -205,16 +210,9 @@ public class TasksControllerTests : TestBase
         var identity = new ClaimsIdentity(claims, "TestAuth");
         var principal = new ClaimsPrincipal(identity);
 
-        var httpContext = new DefaultHttpContext
-        {
-            User = principal
-        };
-
+        var httpContext = new DefaultHttpContext { User = principal };
         httpContext.Request.Headers["X-Tenant-ID"] = "1";
 
-        _controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = httpContext
-        };
+        _controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
     }
 }
