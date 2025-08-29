@@ -8,7 +8,7 @@ public class WorkflowTaskDto
     public int WorkflowInstanceId { get; set; }
     public string NodeId { get; set; } = string.Empty;
     public string TaskName { get; set; } = string.Empty;
-    public DTOs.Workflow.Enums.TaskStatus Status { get; set; } // ✅ FIXED: Fully qualified
+    public DTOs.Workflow.Enums.TaskStatus Status { get; set; }
     public int? AssignedToUserId { get; set; }
     public string? AssignedToRole { get; set; }
     public DateTime? DueDate { get; set; }
@@ -25,11 +25,13 @@ public class TaskSummaryDto
 {
     public int Id { get; set; }
     public string TaskName { get; set; } = string.Empty;
-    public DTOs.Workflow.Enums.TaskStatus Status { get; set; } // ✅ FIXED: Fully qualified
+    public DTOs.Workflow.Enums.TaskStatus Status { get; set; }
     public string WorkflowDefinitionName { get; set; } = string.Empty;
     public int WorkflowInstanceId { get; set; }
     public DateTime? DueDate { get; set; }
     public DateTime CreatedAt { get; set; }
+    // NEW: Node mapping for diagram overlays
+    public string NodeId { get; set; } = string.Empty;
 }
 
 public class CompleteTaskRequestDto

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -39,6 +39,7 @@ import type {
 } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
+import DefinitionDiagram from '@/features/workflow/definitions/DefinitionDiagram';
 
 export function InstanceDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -48,83 +49,35 @@ export function InstanceDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [eventsLoading, setEventsLoading] = useState(false);
   const [tasksLoading, setTasksLoading] = useState(false);
+  const [definitionJson, setDefinitionJson] = useState<string | null>(null); // ADD state
 
   const navigate = useNavigate();
   const { currentTenant } = useTenant();
 
-  useEffect(() => {
-    if (currentTenant && id) {
-      loadInstanceDetails();
-      loadInstanceEvents();
-      loadInstanceTasks();
-    }
-  }, [currentTenant, id]);
-
-  const loadInstanceDetails = async () => {
+  const loadSnapshot = async () => {
     if (!id) return;
-
     try {
       setLoading(true);
-      console.log('🔄 InstanceDetailsPage: Loading instance details for ID:', id);
-
-      const response = await workflowService.getInstance(parseInt(id));
-      console.log('✅ InstanceDetailsPage: Loaded instance details');
-      setInstance(response);
-    } catch (error) {
-      console.error('❌ InstanceDetailsPage: Failed to load instance:', error);
-      toast.error('Failed to load workflow instance details');
+      const snapshot = await workflowService.getRuntimeSnapshot(parseInt(id));
+      setInstance(snapshot.instance);
+      setTasks(snapshot.tasks);
+      setEvents(snapshot.events);
+      setDefinitionJson(snapshot.definitionJson);
+    } catch (e) {
+      toast.error('Failed to load runtime snapshot');
     } finally {
       setLoading(false);
     }
   };
 
-  const loadInstanceEvents = async () => {
-    if (!id) return;
-
-    try {
-      setEventsLoading(true);
-      const response = await workflowService.getWorkflowEvents({ 
-        instanceId: parseInt(id) 
-      });
-      setEvents(response);
-    } catch (error) {
-      console.error('❌ Failed to load instance events:', error);
-      // Don't show error toast for events as they're supplementary
-    } finally {
-      setEventsLoading(false);
+  useEffect(() => {
+    if (currentTenant && id) {
+      loadSnapshot();
     }
-  };
-
-  const loadInstanceTasks = async () => {
-    if (!id) return;
-
-    try {
-      setTasksLoading(true);
-      const response = await workflowService.getTasks({ 
-        workflowInstanceId: parseInt(id) 
-      });
-      // Convert to TaskSummaryDto format if needed
-      const taskSummaries: TaskSummaryDto[] = response.map(task => ({
-        id: task.id,
-        taskName: task.taskName,
-        status: task.status,
-        workflowDefinitionName: instance?.workflowDefinitionName || 'Unknown',
-        workflowInstanceId: task.workflowInstanceId,
-        dueDate: task.dueDate,
-        createdAt: task.createdAt
-      }));
-      setTasks(taskSummaries);
-    } catch (error) {
-      console.error('❌ Failed to load instance tasks:', error);
-    } finally {
-      setTasksLoading(false);
-    }
-  };
+  }, [currentTenant, id]);
 
   const handleRefresh = () => {
-    loadInstanceDetails();
-    loadInstanceEvents();
-    loadInstanceTasks();
+    loadSnapshot();
   };
 
   const handleTerminateInstance = async () => {
@@ -133,7 +86,7 @@ export function InstanceDetailsPage() {
     try {
       await workflowService.terminateInstance(instance.id);
       toast.success('Workflow instance terminated');
-      loadInstanceDetails();
+      loadSnapshot();
     } catch (error) {
       console.error('Failed to terminate instance:', error);
       toast.error('Failed to terminate workflow instance');
@@ -146,7 +99,7 @@ export function InstanceDetailsPage() {
     try {
       await workflowService.suspendInstance(instance.id);
       toast.success('Workflow instance suspended');
-      loadInstanceDetails();
+      loadSnapshot();
     } catch (error) {
       console.error('Failed to suspend instance:', error);
       toast.error('Failed to suspend workflow instance');
@@ -159,7 +112,7 @@ export function InstanceDetailsPage() {
     try {
       await workflowService.resumeInstance(instance.id);
       toast.success('Workflow instance resumed');
-      loadInstanceDetails();
+      loadSnapshot();
     } catch (error) {
       console.error('Failed to resume instance:', error);
       toast.error('Failed to resume workflow instance');
@@ -500,6 +453,47 @@ export function InstanceDetailsPage() {
               </Box>
             </Grid>
           </Grid>
+        </CardContent>
+      </Card>
+
+      {/* Runtime Diagram */}
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Runtime Diagram
+          </Typography>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+            Visual overlay of active, completed, overdue and traversed path.
+          </Typography>
+          {instance.workflowDefinitionId && instance.workflowDefinitionName && (
+            <DefinitionDiagram
+              jsonDefinition={definitionJson}
+              currentNodeIds={instance.currentNodeIds}
+              tasks={tasks.map(t => ({
+                nodeId: t.nodeId || '',
+                status: t.status,
+                dueDate: t.dueDate
+              })).filter(t => t.nodeId)}
+              traversedEdgeIds={events
+                .filter(e => e.type === 'Edge' && e.name === 'EdgeTraversed')
+                .map(e => {
+                  try { return JSON.parse(e.data || '{}').edgeId; } catch { return undefined; }
+                })
+                .filter(Boolean) as string[]}
+              visitedNodeIds={events
+                .filter(e => e.type === 'Node')
+                .map(e => {
+                  try { return JSON.parse(e.data || '{}').nodeId; } catch { return undefined; }
+                })
+                .filter(Boolean) as string[]}
+              dueSoonMinutes={15}
+            />
+          )}
+          {!tasks.length && (
+            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+              (Task node positions shown after first activation if nodeId not yet emitted by backend.)
+            </Typography>
+          )}
         </CardContent>
       </Card>
 

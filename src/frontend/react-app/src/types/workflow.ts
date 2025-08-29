@@ -199,6 +199,7 @@ export interface TaskSummaryDto {
   workflowInstanceId: number;
   dueDate?: string;
   createdAt: string;
+  nodeId?: string; // NEW
 }
 
 export interface CompleteTaskRequestDto {
@@ -421,4 +422,14 @@ export interface WorkflowNodeUsageDto {
 
 export interface CheckRoleUsageRequestDto {
   roleName: string;
+}
+
+export interface InstanceRuntimeSnapshotDto {
+  instance: WorkflowInstanceDto;
+  definitionJson: string;
+  tasks: TaskSummaryDto[];
+  events: WorkflowEventDto[];
+  traversedEdgeIds: string[];
+  visitedNodeIds: string[];
+  currentNodeIds: string[];
 }

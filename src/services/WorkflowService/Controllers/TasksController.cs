@@ -171,7 +171,8 @@ public class TasksController : ControllerBase
                     WorkflowDefinitionName = t.WorkflowInstance.WorkflowDefinition.Name,
                     WorkflowInstanceId = t.WorkflowInstanceId,
                     DueDate = t.DueDate,
-                    CreatedAt = t.CreatedAt
+                    CreatedAt = t.CreatedAt,
+                    NodeId = t.NodeId
                 })
                 .ToListAsync();
 

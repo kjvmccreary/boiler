@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using DTOs.Workflow.Enums; // ✅ FIXED: Use shared enum namespace
+using DTOs.Workflow.Enums;
 
 namespace DTOs.Workflow;
 
@@ -24,17 +24,11 @@ public class StartInstanceRequestDto
 {
     [Required]
     public int WorkflowDefinitionId { get; set; }
-    
     public string? InitialContext { get; set; } = "{}";
-    
     public string? StartNotes { get; set; }
-    
-    // 🔧 ADD: Enhanced options for starting instances
     public int? WorkflowVersion { get; set; }
-    
     [StringLength(255)]
     public string? InstanceName { get; set; }
-
     public Dictionary<string, object> Variables { get; set; } = new();
 }
 
@@ -42,11 +36,9 @@ public class SignalInstanceRequestDto
 {
     [Required]
     public string SignalName { get; set; } = string.Empty;
-    
     public string? SignalData { get; set; } = "{}";
 }
 
-// 🔧 ADD: Missing DTOs needed by InstanceService
 public class GetInstancesRequestDto
 {
     public int? WorkflowDefinitionId { get; set; }
@@ -66,7 +58,6 @@ public class TerminateInstanceRequestDto
     [Required]
     [StringLength(500)]
     public string Reason { get; set; } = string.Empty;
-
     public bool ForceTerminate { get; set; } = false;
 }
 
@@ -83,7 +74,7 @@ public class InstanceStatusDto
     public string? ErrorMessage { get; set; }
 }
 
-// ✅ CONSOLIDATED: Complete WorkflowEventDto with audit fields
+// Event DTO (restored)
 public class WorkflowEventDto
 {
     public int Id { get; set; }
@@ -95,4 +86,16 @@ public class WorkflowEventDto
     public int? UserId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+}
+
+// Runtime snapshot aggregate DTO
+public class InstanceRuntimeSnapshotDto
+{
+    public WorkflowInstanceDto Instance { get; set; } = new();
+    public string DefinitionJson { get; set; } = string.Empty;
+    public List<TaskSummaryDto> Tasks { get; set; } = new();
+    public List<WorkflowEventDto> Events { get; set; } = new();
+    public List<string> TraversedEdgeIds { get; set; } = new();
+    public List<string> VisitedNodeIds { get; set; } = new();
+    public List<string> CurrentNodeIds { get; set; } = new();
 }

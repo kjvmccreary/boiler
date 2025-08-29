@@ -42,38 +42,33 @@ public class InstanceService : IInstanceService
         {
             var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!tenantId.HasValue)
-            {
                 return ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Tenant context required");
-            }
 
-            // Verify workflow definition exists and is published
             var definition = await _context.WorkflowDefinitions
-                .FirstOrDefaultAsync(d => d.Id == request.WorkflowDefinitionId && 
-                                         d.TenantId == tenantId.Value && 
-                                         d.IsPublished, cancellationToken);
+                .FirstOrDefaultAsync(d => d.Id == request.WorkflowDefinitionId &&
+                                          d.TenantId == tenantId.Value &&
+                                          d.IsPublished, cancellationToken);
 
             if (definition == null)
-            {
                 return ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Published workflow definition not found");
-            }
 
-            // Get current user ID for audit trail
             var currentUserId = GetCurrentUserId();
 
-            // Start workflow instance using the engine
             var instance = await _workflowRuntime.StartWorkflowAsync(
-                request.WorkflowDefinitionId, 
-                request.InitialContext ?? "{}", 
-                currentUserId, 
+                request.WorkflowDefinitionId,
+                request.InitialContext ?? "{}",
+                currentUserId,
                 cancellationToken);
 
-            // Publish event
             await _eventPublisher.PublishInstanceStartedAsync(instance, cancellationToken);
 
             var dto = _mapper.Map<WorkflowInstanceDto>(instance);
 
-            _logger.LogInformation("Started workflow instance {InstanceId} from definition {DefinitionId} for tenant {TenantId}", 
+            _logger.LogInformation("Started workflow instance {InstanceId} from definition {DefinitionId} for tenant {TenantId}",
                 instance.Id, request.WorkflowDefinitionId, tenantId);
+
+            // Emit initial activation events after first persistence
+            await EmitInitialActivationEventsAsync(instance, definition, cancellationToken);
 
             return ApiResponseDto<WorkflowInstanceDto>.SuccessResult(dto, "Workflow instance started successfully");
         }
@@ -90,21 +85,16 @@ public class InstanceService : IInstanceService
         {
             var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!tenantId.HasValue)
-            {
                 return ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Tenant context required");
-            }
 
             var instance = await _context.WorkflowInstances
                 .Include(i => i.WorkflowDefinition)
                 .FirstOrDefaultAsync(i => i.Id == instanceId && i.TenantId == tenantId.Value, cancellationToken);
 
             if (instance == null)
-            {
                 return ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Workflow instance not found");
-            }
 
             var dto = _mapper.Map<WorkflowInstanceDto>(instance);
-
             return ApiResponseDto<WorkflowInstanceDto>.SuccessResult(dto);
         }
         catch (Exception ex)
@@ -120,47 +110,33 @@ public class InstanceService : IInstanceService
         {
             var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!tenantId.HasValue)
-            {
                 return ApiResponseDto<PagedResultDto<WorkflowInstanceDto>>.ErrorResult("Tenant context required");
-            }
 
             var query = _context.WorkflowInstances
                 .Include(i => i.WorkflowDefinition)
                 .Where(i => i.TenantId == tenantId.Value);
 
-            // Apply filters
             if (request.WorkflowDefinitionId.HasValue)
-            {
                 query = query.Where(i => i.WorkflowDefinitionId == request.WorkflowDefinitionId.Value);
-            }
 
             if (request.Status.HasValue)
-            {
                 query = query.Where(i => i.Status == request.Status.Value);
-            }
 
             if (request.StartedAfter.HasValue)
-            {
                 query = query.Where(i => i.StartedAt >= request.StartedAfter.Value);
-            }
 
             if (request.StartedBefore.HasValue)
-            {
                 query = query.Where(i => i.StartedAt <= request.StartedBefore.Value);
-            }
 
             if (request.StartedByUserId.HasValue)
-            {
                 query = query.Where(i => i.StartedByUserId == request.StartedByUserId.Value);
-            }
 
             if (!string.IsNullOrEmpty(request.SearchTerm))
             {
                 query = query.Where(i => i.WorkflowDefinition.Name.Contains(request.SearchTerm) ||
-                                        (i.ErrorMessage != null && i.ErrorMessage.Contains(request.SearchTerm)));
+                                         (i.ErrorMessage != null && i.ErrorMessage.Contains(request.SearchTerm)));
             }
 
-            // Apply sorting
             query = request.SortBy.ToLower() switch
             {
                 "completedat" => request.SortDescending ? query.OrderByDescending(i => i.CompletedAt) : query.OrderBy(i => i.CompletedAt),
@@ -170,7 +146,7 @@ public class InstanceService : IInstanceService
             };
 
             var totalCount = await query.CountAsync(cancellationToken);
-            
+
             var instances = await query
                 .Skip((request.Page - 1) * request.PageSize)
                 .Take(request.PageSize)
@@ -201,39 +177,31 @@ public class InstanceService : IInstanceService
         {
             var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!tenantId.HasValue)
-            {
                 return ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Tenant context required");
-            }
 
             var instance = await _context.WorkflowInstances
                 .FirstOrDefaultAsync(i => i.Id == instanceId && i.TenantId == tenantId.Value, cancellationToken);
 
             if (instance == null)
-            {
                 return ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Workflow instance not found");
-            }
 
             if (instance.Status != DTOs.Workflow.Enums.InstanceStatus.Running)
-            {
                 return ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Cannot signal non-running workflow instance");
-            }
 
             var currentUserId = GetCurrentUserId();
 
-            // Signal the workflow instance
             await _workflowRuntime.SignalWorkflowAsync(
-                instanceId, 
-                request.SignalName, 
-                request.SignalData ?? "{}", 
-                currentUserId, 
+                instanceId,
+                request.SignalName,
+                request.SignalData ?? "{}",
+                currentUserId,
                 cancellationToken);
 
-            // Reload instance to get updated state
             await _context.Entry(instance).ReloadAsync(cancellationToken);
 
             var dto = _mapper.Map<WorkflowInstanceDto>(instance);
 
-            _logger.LogInformation("Signaled workflow instance {InstanceId} with signal {SignalName}", 
+            _logger.LogInformation("Signaled workflow instance {InstanceId} with signal {SignalName}",
                 instanceId, request.SignalName);
 
             return ApiResponseDto<WorkflowInstanceDto>.SuccessResult(dto, "Workflow instance signaled successfully");
@@ -251,21 +219,16 @@ public class InstanceService : IInstanceService
         {
             var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!tenantId.HasValue)
-            {
                 return ApiResponseDto<bool>.ErrorResult("Tenant context required");
-            }
 
             var instance = await _context.WorkflowInstances
                 .FirstOrDefaultAsync(i => i.Id == instanceId && i.TenantId == tenantId.Value, cancellationToken);
 
             if (instance == null)
-            {
                 return ApiResponseDto<bool>.ErrorResult("Workflow instance not found");
-            }
 
             var currentUserId = GetCurrentUserId();
 
-            // Terminate the workflow instance
             await _workflowRuntime.CancelWorkflowAsync(instanceId, request.Reason, currentUserId, cancellationToken);
 
             _logger.LogInformation("Terminated workflow instance {InstanceId}: {Reason}", instanceId, request.Reason);
@@ -285,18 +248,13 @@ public class InstanceService : IInstanceService
         {
             var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!tenantId.HasValue)
-            {
                 return ApiResponseDto<List<WorkflowEventDto>>.ErrorResult("Tenant context required");
-            }
 
-            // Verify instance exists and belongs to tenant
             var instanceExists = await _context.WorkflowInstances
                 .AnyAsync(i => i.Id == instanceId && i.TenantId == tenantId.Value, cancellationToken);
 
             if (!instanceExists)
-            {
                 return ApiResponseDto<List<WorkflowEventDto>>.ErrorResult("Workflow instance not found");
-            }
 
             var events = await _context.WorkflowEvents
                 .Where(e => e.WorkflowInstanceId == instanceId)
@@ -320,9 +278,7 @@ public class InstanceService : IInstanceService
         {
             var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!tenantId.HasValue)
-            {
                 return ApiResponseDto<InstanceStatusDto>.ErrorResult("Tenant context required");
-            }
 
             var instance = await _context.WorkflowInstances
                 .Include(i => i.WorkflowDefinition)
@@ -330,22 +286,18 @@ public class InstanceService : IInstanceService
                 .FirstOrDefaultAsync(i => i.Id == instanceId && i.TenantId == tenantId.Value, cancellationToken);
 
             if (instance == null)
-            {
                 return ApiResponseDto<InstanceStatusDto>.ErrorResult("Workflow instance not found");
-            }
 
-            // Calculate progress and other metrics
-            var activeTasksCount = instance.Tasks.Count(t => 
+            var activeTasksCount = instance.Tasks.Count(t =>
                 t.Status == WorkflowTaskStatus.Created ||
                 t.Status == WorkflowTaskStatus.Assigned ||
                 t.Status == WorkflowTaskStatus.Claimed ||
                 t.Status == WorkflowTaskStatus.InProgress);
 
-            var runtime = instance.CompletedAt.HasValue 
+            var runtime = instance.CompletedAt.HasValue
                 ? instance.CompletedAt.Value - instance.StartedAt
                 : DateTime.UtcNow - instance.StartedAt;
 
-            // Simple progress calculation (could be enhanced with actual workflow analysis)
             var progressPercentage = instance.Status switch
             {
                 DTOs.Workflow.Enums.InstanceStatus.Completed => 100.0,
@@ -378,34 +330,104 @@ public class InstanceService : IInstanceService
 
     private int? GetCurrentUserId()
     {
-        // This would typically extract from HttpContext or JWT claims
-        // For now, return null and let the system handle it
+        // Placeholder; integrate with user context provider later if needed.
         return null;
     }
 
     private double CalculateProgress(WorkflowInstance instance)
     {
-        // Simple progress calculation - could be enhanced with actual workflow analysis
-        // For now, just return based on runtime (max 80% for running workflows)
         var runtime = DateTime.UtcNow - instance.StartedAt;
-        var estimatedTotalTime = TimeSpan.FromHours(1); // Default estimate
-        
+        var estimatedTotalTime = TimeSpan.FromHours(1);
         var progress = Math.Min(80.0, (runtime.TotalMinutes / estimatedTotalTime.TotalMinutes) * 80.0);
-        return Math.Max(5.0, progress); // Minimum 5% for running workflows
+        return Math.Max(5.0, progress);
     }
 
     private List<string> ExtractNodeNames(WorkflowInstance instance)
     {
         try
         {
-            // Parse current node IDs and map to names from workflow definition
-            // This is a simplified implementation
             var nodeIds = System.Text.Json.JsonSerializer.Deserialize<string[]>(instance.CurrentNodeIds) ?? Array.Empty<string>();
-            return nodeIds.ToList(); // In a real implementation, you'd map IDs to names
+            return nodeIds.ToList();
         }
         catch
         {
             return new List<string>();
         }
+    }
+
+    // ---- Initial activation events (fixed references)
+    private async Task EmitInitialActivationEventsAsync(WorkflowInstance instance, WorkflowDefinition definition, CancellationToken ct)
+    {
+        // Use DSL types defined in WorkflowExecutionService.cs (top-level classes in same namespace)
+        WorkflowBuilderDsl dsl;
+        try
+        {
+            dsl = System.Text.Json.JsonSerializer.Deserialize<WorkflowBuilderDsl>(
+                definition.JSONDefinition,
+                new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+            ) ?? new WorkflowBuilderDsl();
+        }
+        catch
+        {
+            _logger.LogWarning("Failed to parse definition JSON for initial activation events (Instance {Id})", instance.Id);
+            return;
+        }
+
+        var currentSet = ParseCurrentNodeIds(instance.CurrentNodeIds);
+
+        foreach (var nodeId in currentSet)
+        {
+            var node = dsl.Nodes.FirstOrDefault(n => n.id == nodeId);
+            if (node == null) continue;
+            if (node.type == "start" || node.type == "end") continue;
+
+            _context.WorkflowEvents.Add(new WorkflowEvent
+            {
+                WorkflowInstanceId = instance.Id,
+                Type = "Node",
+                Name = "NodeActivated",
+                Data = System.Text.Json.JsonSerializer.Serialize(new { nodeId = node.id, type = node.type, label = node.label }),
+                OccurredAt = DateTime.UtcNow
+            });
+        }
+
+        var startNodes = dsl.Nodes.Where(n => n.type == "start").Select(n => n.id).ToHashSet();
+        foreach (var edge in dsl.Edges)
+        {
+            if (startNodes.Contains(edge.from) && currentSet.Contains(edge.to))
+            {
+                _context.WorkflowEvents.Add(new WorkflowEvent
+                {
+                    WorkflowInstanceId = instance.Id,
+                    Type = "Edge",
+                    Name = "EdgeTraversed",
+                    Data = System.Text.Json.JsonSerializer.Serialize(new { from = edge.from, to = edge.to, edgeId = edge.id }),
+                    OccurredAt = DateTime.UtcNow
+                });
+            }
+        }
+
+        await _context.SaveChangesAsync(ct);
+    }
+
+    private static HashSet<string> ParseCurrentNodeIds(string raw)
+    {
+        var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(raw)) return set;
+        var trimmed = raw.Trim();
+        try
+        {
+            if (trimmed.StartsWith("["))
+            {
+                var arr = System.Text.Json.JsonSerializer.Deserialize<List<string>>(trimmed);
+                if (arr != null)
+                    foreach (var s in arr.Where(s => !string.IsNullOrWhiteSpace(s))) set.Add(s);
+                return set;
+            }
+        }
+        catch { }
+        foreach (var part in trimmed.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            set.Add(part);
+        return set;
     }
 }

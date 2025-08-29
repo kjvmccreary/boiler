@@ -8,7 +8,9 @@ import {
   Divider,
   Alert,
   CircularProgress,
-  Tooltip
+  Tooltip,
+  Tabs,
+  Tab
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon, Refresh as RefreshIcon } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -16,6 +18,9 @@ import { workflowService } from '@/services/workflow.service';
 import type { WorkflowDefinitionDto } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
+import DefinitionDiagram from './DefinitionDiagram';
+import DefinitionNodeDetailsPanel from './DefinitionNodeDetailsPanel';
+import type { DslNode } from '../dsl/dsl.types';
 
 export function DefinitionDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +30,8 @@ export function DefinitionDetailsPage() {
 
   const [definition, setDefinition] = useState<WorkflowDefinitionDto | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<'diagram' | 'json'>('diagram');
+  const [selectedNode, setSelectedNode] = useState<DslNode | null>(null);
 
   const loadDefinition = async () => {
     if (isNaN(defId)) return;
@@ -43,8 +50,7 @@ export function DefinitionDetailsPage() {
     if (currentTenant && !isNaN(defId)) {
       loadDefinition();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentTenant, defId]);
+  }, [currentTenant, defId]); // eslint-disable-line
 
   if (!currentTenant) {
     return (
@@ -94,19 +100,19 @@ export function DefinitionDetailsPage() {
   }
 
   return (
-    <Box p={3} maxWidth={1000}>
+    <Box p={3} maxWidth={1200}>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box display="flex" alignItems="center">
           <IconButton onClick={() => navigate('/app/workflow/definitions')} sx={{ mr: 1 }}>
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h4">
-            Definition
-            <Typography variant="subtitle2" color="text.secondary">
-              {definition.name} • v{definition.version} • ID {definition.id}
+            <Typography variant="h4">
+              Definition
+              <Typography variant="subtitle2" color="text.secondary">
+                {definition.name} • v{definition.version} • ID {definition.id}
+              </Typography>
             </Typography>
-          </Typography>
         </Box>
         <Box display="flex" gap={1} alignItems="center">
           {statusChip}
@@ -119,7 +125,7 @@ export function DefinitionDetailsPage() {
       </Box>
 
       {/* Meta */}
-      <Box mb={3} display="flex" flexWrap="wrap" gap={4}>
+      <Box mb={2} display="flex" flexWrap="wrap" gap={4}>
         {definition.description && (
           <Box sx={{ minWidth: 220 }}>
             <Typography variant="subtitle2" color="text.secondary">Description</Typography>
@@ -148,27 +154,49 @@ export function DefinitionDetailsPage() {
 
       <Divider sx={{ mb: 2 }} />
 
-      {/* JSON */}
-      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-        JSON Definition
-      </Typography>
-      <Box
-        sx={{
-          backgroundColor: 'grey.50',
-          p: 2,
-          borderRadius: 1,
-          fontFamily: 'monospace',
-          fontSize: '0.8rem',
-          maxHeight: 400,
-          overflow: 'auto'
-        }}
+      {/* Tabs */}
+      <Tabs
+        value={tab}
+        onChange={(_, v) => setTab(v)}
+        sx={{ mb: 2 }}
       >
-        <pre>
+        <Tab value="diagram" label="Diagram" />
+        <Tab value="json" label="JSON" />
+      </Tabs>
+
+      {tab === 'diagram' && (
+        <>
+          <DefinitionDiagram
+            jsonDefinition={definition.jsonDefinition}
+            onNodeSelect={setSelectedNode}
+          />
+          <DefinitionNodeDetailsPanel
+            open={!!selectedNode}
+            node={selectedNode}
+            onClose={() => setSelectedNode(null)}
+          />
+        </>
+      )}
+
+      {tab === 'json' && (
+        <Box
+          sx={{
+            backgroundColor: 'grey.50',
+            p: 2,
+            borderRadius: 1,
+            fontFamily: 'monospace',
+            fontSize: '0.8rem',
+            maxHeight: 500,
+            overflow: 'auto'
+          }}
+        >
+          <pre>
 {parsedJson
   ? JSON.stringify(parsedJson, null, 2)
   : (definition.jsonDefinition || '// No JSON definition')}
-        </pre>
-      </Box>
+          </pre>
+        </Box>
+      )}
     </Box>
   );
 }
