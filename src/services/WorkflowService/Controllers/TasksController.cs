@@ -12,9 +12,6 @@ using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
 
 namespace WorkflowService.Controllers;
 
-/// <summary>
-/// Controller for managing workflow tasks
-/// </summary>
 [ApiController]
 [Route("api/workflow/[controller]")]
 [Authorize]
@@ -32,12 +29,17 @@ public class TasksController : ControllerBase
     }
 
     /// <summary>
-    /// Get workflow tasks with filtering options
+    /// General task search.
+    /// mine=true by default only includes tasks directly assigned to the user.
+    /// Use mineIncludeRoles=true to also include tasks assigned to any of the user's roles.
+    /// Use mineIncludeUnassigned=true to include claimable (unassigned) tasks.
     /// </summary>
     [HttpGet]
     [RequiresPermission("workflow.view_tasks")]
     public async Task<ActionResult<ApiResponseDto<List<WorkflowTaskDto>>>> GetTasks(
         [FromQuery] bool? mine = null,
+        [FromQuery] bool mineIncludeRoles = false,
+        [FromQuery] bool mineIncludeUnassigned = false,
         [FromQuery] WorkflowTaskStatus? status = null,
         [FromQuery] int? workflowInstanceId = null,
         [FromQuery] int? assignedToUserId = null,
@@ -49,46 +51,44 @@ public class TasksController : ControllerBase
         try
         {
             var currentUserId = GetCurrentUserId();
+            var userRoles = GetCurrentUserRoles();
+
             var query = _context.WorkflowTasks
                 .Include(t => t.WorkflowInstance)
                 .ThenInclude(i => i.WorkflowDefinition)
                 .AsQueryable();
 
-            // Apply filters
+            // Mine filtering expansion
             if (mine == true)
             {
-                query = query.Where(t => t.AssignedToUserId == currentUserId);
+                query = query.Where(t =>
+                    t.AssignedToUserId == currentUserId
+                    || (mineIncludeRoles && t.AssignedToRole != null && userRoles.Contains(t.AssignedToRole))
+                    || (mineIncludeUnassigned && t.AssignedToUserId == null && t.AssignedToRole == null &&
+                        (t.Status == WorkflowTaskStatus.Created || t.Status == WorkflowTaskStatus.Assigned))
+                );
             }
 
             if (status.HasValue)
-            {
                 query = query.Where(t => t.Status == status.Value);
-            }
 
             if (workflowInstanceId.HasValue)
-            {
                 query = query.Where(t => t.WorkflowInstanceId == workflowInstanceId.Value);
-            }
 
             if (assignedToUserId.HasValue)
-            {
                 query = query.Where(t => t.AssignedToUserId == assignedToUserId.Value);
-            }
 
             if (!string.IsNullOrEmpty(assignedToRole))
-            {
                 query = query.Where(t => t.AssignedToRole == assignedToRole);
-            }
 
             if (overdue == true)
             {
                 var now = DateTime.UtcNow;
-                query = query.Where(t => t.DueDate.HasValue && t.DueDate.Value < now && 
-                                   t.Status != WorkflowTaskStatus.Completed && 
-                                   t.Status != WorkflowTaskStatus.Cancelled);
+                query = query.Where(t => t.DueDate.HasValue && t.DueDate.Value < now &&
+                                         t.Status != WorkflowTaskStatus.Completed &&
+                                         t.Status != WorkflowTaskStatus.Cancelled);
             }
 
-            // Apply pagination
             var totalCount = await query.CountAsync();
             var tasks = await query
                 .OrderBy(t => t.DueDate ?? DateTime.MaxValue)
@@ -116,7 +116,7 @@ public class TasksController : ControllerBase
                 .ToListAsync();
 
             return Ok(ApiResponseDto<List<WorkflowTaskDto>>.SuccessResult(
-                tasks, 
+                tasks,
                 $"Retrieved {tasks.Count} of {totalCount} workflow tasks"));
         }
         catch (Exception ex)
@@ -128,27 +128,35 @@ public class TasksController : ControllerBase
     }
 
     /// <summary>
-    /// Get my tasks summary (simplified view)
+    /// Focused "My Tasks" endpoint with optional inclusion of role and unassigned tasks.
     /// </summary>
     [HttpGet("mine")]
     [RequiresPermission("workflow.view_tasks")]
     public async Task<ActionResult<ApiResponseDto<List<TaskSummaryDto>>>> GetMyTasks(
-        [FromQuery] WorkflowTaskStatus? status = null)
+        [FromQuery] WorkflowTaskStatus? status = null,
+        [FromQuery] bool includeRoleTasks = true,
+        [FromQuery] bool includeUnassigned = true)
     {
         try
         {
             var currentUserId = GetCurrentUserId();
-            var query = _context.WorkflowTasks
+            var userRoles = GetCurrentUserRoles();
+
+            var baseQuery = _context.WorkflowTasks
                 .Include(t => t.WorkflowInstance)
                 .ThenInclude(i => i.WorkflowDefinition)
-                .Where(t => t.AssignedToUserId == currentUserId);
+                .AsQueryable();
+
+            baseQuery = baseQuery.Where(t =>
+                t.AssignedToUserId == currentUserId
+                || (includeRoleTasks && t.AssignedToRole != null && userRoles.Contains(t.AssignedToRole))
+                || (includeUnassigned && t.AssignedToUserId == null && t.AssignedToRole == null &&
+                    (t.Status == WorkflowTaskStatus.Created || t.Status == WorkflowTaskStatus.Assigned)));
 
             if (status.HasValue)
-            {
-                query = query.Where(t => t.Status == status.Value);
-            }
+                baseQuery = baseQuery.Where(t => t.Status == status.Value);
 
-            var tasks = await query
+            var tasks = await baseQuery
                 .OrderBy(t => t.DueDate ?? DateTime.MaxValue)
                 .ThenByDescending(t => t.CreatedAt)
                 .Select(t => new TaskSummaryDto
@@ -164,8 +172,8 @@ public class TasksController : ControllerBase
                 .ToListAsync();
 
             return Ok(ApiResponseDto<List<TaskSummaryDto>>.SuccessResult(
-                tasks, 
-                $"Retrieved {tasks.Count} tasks assigned to you"));
+                tasks,
+                $"Retrieved {tasks.Count} tasks (you / your roles / claimable)"));
         }
         catch (Exception ex)
         {
@@ -209,14 +217,9 @@ public class TasksController : ControllerBase
                 .FirstOrDefaultAsync();
 
             if (task == null)
-            {
-                return NotFound(ApiResponseDto<WorkflowTaskDto>.ErrorResult(
-                    "Workflow task not found"));
-            }
+                return NotFound(ApiResponseDto<WorkflowTaskDto>.ErrorResult("Workflow task not found"));
 
-            return Ok(ApiResponseDto<WorkflowTaskDto>.SuccessResult(
-                task, 
-                "Workflow task retrieved successfully"));
+            return Ok(ApiResponseDto<WorkflowTaskDto>.SuccessResult(task, "Workflow task retrieved successfully"));
         }
         catch (Exception ex)
         {
@@ -244,29 +247,18 @@ public class TasksController : ControllerBase
                 .FirstOrDefaultAsync(t => t.Id == id);
 
             if (task == null)
-            {
-                return NotFound(ApiResponseDto<WorkflowTaskDto>.ErrorResult(
-                    "Workflow task not found"));
-            }
+                return NotFound(ApiResponseDto<WorkflowTaskDto>.ErrorResult("Workflow task not found"));
 
             if (task.Status != WorkflowTaskStatus.Created && task.Status != WorkflowTaskStatus.Assigned)
-            {
-                return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult(
-                    $"Cannot claim task in {task.Status} status"));
-            }
+                return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult($"Cannot claim task in {task.Status} status"));
 
             if (task.AssignedToUserId.HasValue && task.AssignedToUserId.Value != currentUserId)
-            {
-                return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult(
-                    "Task is already assigned to another user"));
-            }
+                return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task is already assigned to another user"));
 
-            // Claim the task
             task.Status = WorkflowTaskStatus.Claimed;
             task.AssignedToUserId = currentUserId;
             task.ClaimedAt = DateTime.UtcNow;
 
-            // Create claim event
             var workflowEvent = new WorkflowEvent
             {
                 WorkflowInstanceId = task.WorkflowInstanceId,
@@ -280,36 +272,12 @@ public class TasksController : ControllerBase
             _context.WorkflowEvents.Add(workflowEvent);
             await _context.SaveChangesAsync();
 
-            var responseDto = new WorkflowTaskDto
-            {
-                Id = task.Id,
-                WorkflowInstanceId = task.WorkflowInstanceId,
-                NodeId = task.NodeId,
-                TaskName = task.TaskName,
-                Status = task.Status,
-                AssignedToUserId = task.AssignedToUserId,
-                AssignedToRole = task.AssignedToRole,
-                DueDate = task.DueDate,
-                Data = task.Data,
-                ClaimedAt = task.ClaimedAt,
-                CompletedAt = task.CompletedAt,
-                CompletionData = task.CompletionData,
-                ErrorMessage = task.ErrorMessage,
-                CreatedAt = task.CreatedAt,
-                UpdatedAt = task.UpdatedAt
-            };
-
-            _logger.LogInformation("User {UserId} claimed task {TaskId}", currentUserId, id);
-
-            return Ok(ApiResponseDto<WorkflowTaskDto>.SuccessResult(
-                responseDto, 
-                "Task claimed successfully"));
+            return Ok(ApiResponseDto<WorkflowTaskDto>.SuccessResult(MapTask(task), "Task claimed successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error claiming workflow task {Id}", id);
-            return StatusCode(500, ApiResponseDto<WorkflowTaskDto>.ErrorResult(
-                "An error occurred while claiming the workflow task"));
+            return StatusCode(500, ApiResponseDto<WorkflowTaskDto>.ErrorResult("An error occurred while claiming the workflow task"));
         }
     }
 
@@ -331,33 +299,18 @@ public class TasksController : ControllerBase
                 .FirstOrDefaultAsync(t => t.Id == id);
 
             if (task == null)
-            {
-                return NotFound(ApiResponseDto<WorkflowTaskDto>.ErrorResult(
-                    "Workflow task not found"));
-            }
+                return NotFound(ApiResponseDto<WorkflowTaskDto>.ErrorResult("Workflow task not found"));
 
             if (task.Status != WorkflowTaskStatus.Claimed && task.Status != WorkflowTaskStatus.InProgress)
-            {
-                return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult(
-                    $"Cannot complete task in {task.Status} status"));
-            }
+                return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult($"Cannot complete task in {task.Status} status"));
 
             if (task.AssignedToUserId != currentUserId)
-            {
-                return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult(
-                    "You can only complete tasks assigned to you"));
-            }
+                return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult("You can only complete tasks assigned to you"));
 
-            // Complete the task
             task.Status = WorkflowTaskStatus.Completed;
             task.CompletedAt = DateTime.UtcNow;
             task.CompletionData = request.CompletionData ?? "{}";
 
-            // TODO: Trigger workflow engine to continue processing
-            // TODO: Evaluate gateway conditions based on completion data
-            // TODO: Move to next node in workflow
-
-            // Create completion event
             var workflowEvent = new WorkflowEvent
             {
                 WorkflowInstanceId = task.WorkflowInstanceId,
@@ -371,36 +324,12 @@ public class TasksController : ControllerBase
             _context.WorkflowEvents.Add(workflowEvent);
             await _context.SaveChangesAsync();
 
-            var responseDto = new WorkflowTaskDto
-            {
-                Id = task.Id,
-                WorkflowInstanceId = task.WorkflowInstanceId,
-                NodeId = task.NodeId,
-                TaskName = task.TaskName,
-                Status = task.Status,
-                AssignedToUserId = task.AssignedToUserId,
-                AssignedToRole = task.AssignedToRole,
-                DueDate = task.DueDate,
-                Data = task.Data,
-                ClaimedAt = task.ClaimedAt,
-                CompletedAt = task.CompletedAt,
-                CompletionData = task.CompletionData,
-                ErrorMessage = task.ErrorMessage,
-                CreatedAt = task.CreatedAt,
-                UpdatedAt = task.UpdatedAt
-            };
-
-            _logger.LogInformation("User {UserId} completed task {TaskId}", currentUserId, id);
-
-            return Ok(ApiResponseDto<WorkflowTaskDto>.SuccessResult(
-                responseDto, 
-                "Task completed successfully"));
+            return Ok(ApiResponseDto<WorkflowTaskDto>.SuccessResult(MapTask(task), "Task completed successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error completing workflow task {Id}", id);
-            return StatusCode(500, ApiResponseDto<WorkflowTaskDto>.ErrorResult(
-                "An error occurred while completing the workflow task"));
+            return StatusCode(500, ApiResponseDto<WorkflowTaskDto>.ErrorResult("An error occurred while completing the workflow task"));
         }
     }
 
@@ -417,36 +346,25 @@ public class TasksController : ControllerBase
         {
             var currentUserId = GetCurrentUserId();
             var task = await _context.WorkflowTasks
-                .Include(t => t.WorkflowInstance)
-                .ThenInclude(i => i.WorkflowDefinition)
                 .FirstOrDefaultAsync(t => t.Id == id);
 
             if (task == null)
-            {
-                return NotFound(ApiResponseDto<WorkflowTaskDto>.ErrorResult(
-                    "Workflow task not found"));
-            }
+                return NotFound(ApiResponseDto<WorkflowTaskDto>.ErrorResult("Workflow task not found"));
 
             if (task.Status == WorkflowTaskStatus.Completed || task.Status == WorkflowTaskStatus.Cancelled)
-            {
-                return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult(
-                    $"Cannot assign task in {task.Status} status"));
-            }
+                return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult($"Cannot assign task in {task.Status} status"));
 
-            // TODO: Validate that the user exists and has appropriate permissions
-
-            // Assign the task
             task.AssignedToUserId = request.AssignedToUserId;
             task.AssignedToRole = request.AssignedToRole;
             task.Status = WorkflowTaskStatus.Assigned;
 
-            // Create assignment event
             var workflowEvent = new WorkflowEvent
             {
                 WorkflowInstanceId = task.WorkflowInstanceId,
                 Type = "Task",
                 Name = "Assigned",
-                Data = $"{{\"taskId\": {task.Id}, \"assignedBy\": {currentUserId}, \"assignedToUserId\": {request.AssignedToUserId}, \"assignedToRole\": \"{request.AssignedToRole ?? ""}\", \"notes\": \"{request.AssignmentNotes ?? ""}\"}}",
+                Data =
+                    $"{{\"taskId\": {task.Id}, \"assignedBy\": {currentUserId}, \"assignedToUserId\": {(request.AssignedToUserId?.ToString() ?? "null")}, \"assignedToRole\": \"{request.AssignedToRole ?? ""}\", \"notes\": \"{request.AssignmentNotes ?? ""}\"}}",
                 OccurredAt = DateTime.UtcNow,
                 UserId = currentUserId
             };
@@ -454,37 +372,12 @@ public class TasksController : ControllerBase
             _context.WorkflowEvents.Add(workflowEvent);
             await _context.SaveChangesAsync();
 
-            var responseDto = new WorkflowTaskDto
-            {
-                Id = task.Id,
-                WorkflowInstanceId = task.WorkflowInstanceId,
-                NodeId = task.NodeId,
-                TaskName = task.TaskName,
-                Status = task.Status,
-                AssignedToUserId = task.AssignedToUserId,
-                AssignedToRole = task.AssignedToRole,
-                DueDate = task.DueDate,
-                Data = task.Data,
-                ClaimedAt = task.ClaimedAt,
-                CompletedAt = task.CompletedAt,
-                CompletionData = task.CompletionData,
-                ErrorMessage = task.ErrorMessage,
-                CreatedAt = task.CreatedAt,
-                UpdatedAt = task.UpdatedAt
-            };
-
-            _logger.LogInformation("User {UserId} assigned task {TaskId} to user {AssignedUserId}", 
-                currentUserId, id, request.AssignedToUserId);
-
-            return Ok(ApiResponseDto<WorkflowTaskDto>.SuccessResult(
-                responseDto, 
-                "Task assigned successfully"));
+            return Ok(ApiResponseDto<WorkflowTaskDto>.SuccessResult(MapTask(task), "Task assigned successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error assigning workflow task {Id}", id);
-            return StatusCode(500, ApiResponseDto<WorkflowTaskDto>.ErrorResult(
-                "An error occurred while assigning the workflow task"));
+            return StatusCode(500, ApiResponseDto<WorkflowTaskDto>.ErrorResult("An error occurred while assigning the workflow task"));
         }
     }
 
@@ -499,27 +392,17 @@ public class TasksController : ControllerBase
         {
             var currentUserId = GetCurrentUserId();
             var task = await _context.WorkflowTasks
-                .Include(t => t.WorkflowInstance)
-                .ThenInclude(i => i.WorkflowDefinition)
                 .FirstOrDefaultAsync(t => t.Id == id);
 
             if (task == null)
-            {
-                return NotFound(ApiResponseDto<WorkflowTaskDto>.ErrorResult(
-                    "Workflow task not found"));
-            }
+                return NotFound(ApiResponseDto<WorkflowTaskDto>.ErrorResult("Workflow task not found"));
 
             if (task.Status == WorkflowTaskStatus.Completed || task.Status == WorkflowTaskStatus.Cancelled)
-            {
-                return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult(
-                    $"Cannot cancel task in {task.Status} status"));
-            }
+                return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult($"Cannot cancel task in {task.Status} status"));
 
-            // Cancel the task
             task.Status = WorkflowTaskStatus.Cancelled;
             task.CompletedAt = DateTime.UtcNow;
 
-            // Create cancellation event
             var workflowEvent = new WorkflowEvent
             {
                 WorkflowInstanceId = task.WorkflowInstanceId,
@@ -533,42 +416,47 @@ public class TasksController : ControllerBase
             _context.WorkflowEvents.Add(workflowEvent);
             await _context.SaveChangesAsync();
 
-            var responseDto = new WorkflowTaskDto
-            {
-                Id = task.Id,
-                WorkflowInstanceId = task.WorkflowInstanceId,
-                NodeId = task.NodeId,
-                TaskName = task.TaskName,
-                Status = task.Status,
-                AssignedToUserId = task.AssignedToUserId,
-                AssignedToRole = task.AssignedToRole,
-                DueDate = task.DueDate,
-                Data = task.Data,
-                ClaimedAt = task.ClaimedAt,
-                CompletedAt = task.CompletedAt,
-                CompletionData = task.CompletionData,
-                ErrorMessage = task.ErrorMessage,
-                CreatedAt = task.CreatedAt,
-                UpdatedAt = task.UpdatedAt
-            };
-
-            _logger.LogInformation("User {UserId} cancelled task {TaskId}", currentUserId, id);
-
-            return Ok(ApiResponseDto<WorkflowTaskDto>.SuccessResult(
-                responseDto, 
-                "Task cancelled successfully"));
+            return Ok(ApiResponseDto<WorkflowTaskDto>.SuccessResult(MapTask(task), "Task cancelled successfully"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error cancelling workflow task {Id}", id);
-            return StatusCode(500, ApiResponseDto<WorkflowTaskDto>.ErrorResult(
-                "An error occurred while cancelling the workflow task"));
+            return StatusCode(500, ApiResponseDto<WorkflowTaskDto>.ErrorResult("An error occurred while cancelling the workflow task"));
         }
     }
+
+    private WorkflowTaskDto MapTask(WorkflowTask t) => new()
+    {
+        Id = t.Id,
+        WorkflowInstanceId = t.WorkflowInstanceId,
+        NodeId = t.NodeId,
+        TaskName = t.TaskName,
+        Status = t.Status,
+        AssignedToUserId = t.AssignedToUserId,
+        AssignedToRole = t.AssignedToRole,
+        DueDate = t.DueDate,
+        Data = t.Data,
+        ClaimedAt = t.ClaimedAt,
+        CompletedAt = t.CompletedAt,
+        CompletionData = t.CompletionData,
+        ErrorMessage = t.ErrorMessage,
+        CreatedAt = t.CreatedAt,
+        UpdatedAt = t.UpdatedAt
+    };
 
     private int GetCurrentUserId()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         return int.TryParse(userIdClaim, out var userId) ? userId : 0;
+    }
+
+    private HashSet<string> GetCurrentUserRoles()
+    {
+        // Gather roles from standard & custom claims
+        var roles = User.Claims
+            .Where(c => c.Type == ClaimTypes.Role || c.Type == "role" || c.Type == "roles")
+            .SelectMany(c => c.Value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return roles;
     }
 }

@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 using WorkflowService.Controllers;
-using WorkflowService.Persistence;
+using WorkflowService.Services.Interfaces; // ✅ ADD: Import service interfaces
 using DTOs.Common;
 using DTOs.Workflow;
 using DTOs.Workflow.Enums;
@@ -16,15 +16,17 @@ namespace WorkflowService.Tests.Controllers;
 public class InstancesControllerTests : TestBase
 {
     private readonly Mock<ILogger<InstancesController>> _mockLogger;
+    private readonly Mock<IInstanceService> _mockInstanceService; // ✅ ADD: Mock the service
     private readonly InstancesController _controller;
 
     public InstancesControllerTests()
     {
         _mockLogger = CreateMockLogger<InstancesController>();
+        _mockInstanceService = new Mock<IInstanceService>(); // ✅ ADD: Initialize mock service
         
-        // Use actual DbContext from TestBase
+        // ✅ FIX: Pass the mock service instead of DbContext
         _controller = new InstancesController(
-            DbContext,
+            _mockInstanceService.Object,
             _mockLogger.Object);
 
         SetupControllerContext();
@@ -34,9 +36,19 @@ public class InstancesControllerTests : TestBase
     public async Task GetInstances_ValidRequest_ShouldReturnOkResult()
     {
         // Arrange
-        await SeedTestInstancesAsync();
+        var expectedResponse = ApiResponseDto<PagedResultDto<WorkflowInstanceDto>>.SuccessResult(
+            new PagedResultDto<WorkflowInstanceDto>
+            {
+                Items = new List<WorkflowInstanceDto>(),
+                TotalCount = 0,
+                PageNumber = 1,
+                PageSize = 50
+            });
 
-        // Act - Use actual controller method signature
+        _mockInstanceService.Setup(x => x.GetAllAsync(It.IsAny<GetInstancesRequestDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
         var result = await _controller.GetInstances(
             status: InstanceStatus.Running,
             workflowDefinitionId: null,
@@ -49,34 +61,68 @@ public class InstancesControllerTests : TestBase
         var actionResult = result.Result as OkObjectResult;
         actionResult.Should().NotBeNull();
         actionResult!.StatusCode.Should().Be(200);
+
+        // Verify service was called with correct parameters
+        _mockInstanceService.Verify(x => x.GetAllAsync(
+            It.Is<GetInstancesRequestDto>(r => 
+                r.Status == InstanceStatus.Running &&
+                r.Page == 1 &&
+                r.PageSize == 50), 
+            It.IsAny<CancellationToken>()), 
+            Times.Once);
     }
 
     [Fact]
     public async Task GetInstance_ExistingId_ShouldReturnOkResult()
     {
         // Arrange
-        var instance = await CreateTestInstanceAsync();
+        var instanceDto = new WorkflowInstanceDto
+        {
+            Id = 1,
+            WorkflowDefinitionId = 1,
+            WorkflowDefinitionName = "Test Workflow",
+            Status = InstanceStatus.Running
+        };
 
-        // Act - Use actual controller method name
-        var result = await _controller.GetInstance(instance.Id);
+        var expectedResponse = ApiResponseDto<WorkflowInstanceDto>.SuccessResult(instanceDto);
+
+        _mockInstanceService.Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _controller.GetInstance(1);
 
         // Assert
         result.Should().NotBeNull();
         var actionResult = result.Result as OkObjectResult;
         actionResult.Should().NotBeNull();
         actionResult!.StatusCode.Should().Be(200);
+
+        _mockInstanceService.Verify(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task StartInstance_ValidRequest_ShouldReturnCreatedResult()
     {
         // Arrange
-        var definition = await CreateTestDefinitionAsync();
         var request = new StartInstanceRequestDto
         {
-            WorkflowDefinitionId = definition.Id,
+            WorkflowDefinitionId = 1,
             InitialContext = """{"requestId": 123}"""
         };
+
+        var instanceDto = new WorkflowInstanceDto
+        {
+            Id = 1,
+            WorkflowDefinitionId = 1,
+            WorkflowDefinitionName = "Test Workflow",
+            Status = InstanceStatus.Running
+        };
+
+        var expectedResponse = ApiResponseDto<WorkflowInstanceDto>.SuccessResult(instanceDto);
+
+        _mockInstanceService.Setup(x => x.StartInstanceAsync(It.IsAny<StartInstanceRequestDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
 
         // Act
         var result = await _controller.StartInstance(request);
@@ -86,85 +132,140 @@ public class InstancesControllerTests : TestBase
         var actionResult = result.Result as CreatedAtActionResult;
         actionResult.Should().NotBeNull();
         actionResult!.StatusCode.Should().Be(201);
+
+        _mockInstanceService.Verify(x => x.StartInstanceAsync(
+            It.Is<StartInstanceRequestDto>(r => r.WorkflowDefinitionId == 1), 
+            It.IsAny<CancellationToken>()), 
+            Times.Once);
     }
 
     [Fact]
     public async Task TerminateInstance_ValidRequest_ShouldReturnOkResult()
     {
         // Arrange
-        var instance = await CreateTestInstanceAsync();
+        var expectedResponse = ApiResponseDto<bool>.SuccessResult(true);
 
-        // Act - Use correct method signature (no request parameter)
-        var result = await _controller.TerminateInstance(instance.Id);
+        _mockInstanceService.Setup(x => x.TerminateAsync(1, It.IsAny<TerminateInstanceRequestDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _controller.TerminateInstance(1);
 
         // Assert
         result.Should().NotBeNull();
         var actionResult = result.Result as OkObjectResult;
         actionResult.Should().NotBeNull();
         actionResult!.StatusCode.Should().Be(200);
+
+        _mockInstanceService.Verify(x => x.TerminateAsync(
+            1, 
+            It.Is<TerminateInstanceRequestDto>(r => r.Reason == "Manual termination"), 
+            It.IsAny<CancellationToken>()), 
+            Times.Once);
     }
 
-    private async Task SeedTestInstancesAsync()
+    [Fact]
+    public async Task GetInstanceHistory_ValidRequest_ShouldReturnOkResult()
     {
-        var definition = await CreateTestDefinitionAsync();
-        
-        var instance = new WorkflowService.Domain.Models.WorkflowInstance
+        // Arrange
+        var events = new List<WorkflowEventDto>
         {
-            TenantId = 1,
-            WorkflowDefinitionId = definition.Id,
-            DefinitionVersion = 1,
+            new WorkflowEventDto
+            {
+                Id = 1,
+                WorkflowInstanceId = 1,
+                Type = "Instance",
+                Name = "Started",
+                OccurredAt = DateTime.UtcNow
+            }
+        };
+
+        var expectedResponse = ApiResponseDto<List<WorkflowEventDto>>.SuccessResult(events);
+
+        _mockInstanceService.Setup(x => x.GetHistoryAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _controller.GetInstanceHistory(1);
+
+        // Assert
+        result.Should().NotBeNull();
+        var actionResult = result.Result as OkObjectResult;
+        actionResult.Should().NotBeNull();
+        actionResult!.StatusCode.Should().Be(200);
+
+        _mockInstanceService.Verify(x => x.GetHistoryAsync(1, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetInstanceStatus_ValidRequest_ShouldReturnOkResult()
+    {
+        // Arrange
+        var status = new InstanceStatusDto
+        {
+            InstanceId = 1,
             Status = InstanceStatus.Running,
-            CurrentNodeIds = """["start"]""",
-            Context = "{}",
-            StartedAt = DateTime.UtcNow
+            ProgressPercentage = 50.0
         };
 
-        definition.Instances = new List<WorkflowService.Domain.Models.WorkflowInstance> { instance };
-        instance.WorkflowDefinition = definition;
+        var expectedResponse = ApiResponseDto<InstanceStatusDto>.SuccessResult(status);
 
-        DbContext.WorkflowInstances.Add(instance);
-        await DbContext.SaveChangesAsync();
+        _mockInstanceService.Setup(x => x.GetStatusAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _controller.GetInstanceStatus(1);
+
+        // Assert
+        result.Should().NotBeNull();
+        var actionResult = result.Result as OkObjectResult;
+        actionResult.Should().NotBeNull();
+        actionResult!.StatusCode.Should().Be(200);
+
+        _mockInstanceService.Verify(x => x.GetStatusAsync(1, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    private async Task<WorkflowService.Domain.Models.WorkflowInstance> CreateTestInstanceAsync()
+    [Fact]
+    public async Task StartInstance_ServiceReturnsError_ShouldReturnBadRequest()
     {
-        var definition = await CreateTestDefinitionAsync();
-        
-        var instance = new WorkflowService.Domain.Models.WorkflowInstance
+        // Arrange
+        var request = new StartInstanceRequestDto
         {
-            TenantId = 1,
-            WorkflowDefinitionId = definition.Id,
-            DefinitionVersion = 1,
-            Status = InstanceStatus.Running,
-            CurrentNodeIds = """["start"]""",
-            Context = "{}",
-            StartedAt = DateTime.UtcNow
+            WorkflowDefinitionId = 999 // Non-existent
         };
 
-        definition.Instances = new List<WorkflowService.Domain.Models.WorkflowInstance> { instance };
-        instance.WorkflowDefinition = definition;
+        var expectedResponse = ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Published workflow definition not found");
 
-        DbContext.WorkflowInstances.Add(instance);
-        await DbContext.SaveChangesAsync();
-        return instance;
+        _mockInstanceService.Setup(x => x.StartInstanceAsync(It.IsAny<StartInstanceRequestDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _controller.StartInstance(request);
+
+        // Assert
+        result.Should().NotBeNull();
+        var actionResult = result.Result as BadRequestObjectResult;
+        actionResult.Should().NotBeNull();
+        actionResult!.StatusCode.Should().Be(400);
     }
 
-    private async Task<WorkflowService.Domain.Models.WorkflowDefinition> CreateTestDefinitionAsync()
+    [Fact]
+    public async Task GetInstance_NonExistentId_ShouldReturnNotFound()
     {
-        var definition = new WorkflowService.Domain.Models.WorkflowDefinition
-        {
-            TenantId = 1,
-            Name = "Test Workflow",
-            Version = 1,
-            JSONDefinition = "{}",
-            IsPublished = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
+        // Arrange
+        var expectedResponse = ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Workflow instance not found");
 
-        DbContext.WorkflowDefinitions.Add(definition);
-        await DbContext.SaveChangesAsync();
-        return definition;
+        _mockInstanceService.Setup(x => x.GetByIdAsync(999, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expectedResponse);
+
+        // Act
+        var result = await _controller.GetInstance(999);
+
+        // Assert
+        result.Should().NotBeNull();
+        var actionResult = result.Result as NotFoundObjectResult;
+        actionResult.Should().NotBeNull();
+        actionResult!.StatusCode.Should().Be(404);
     }
 
     private void SetupControllerContext()

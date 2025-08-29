@@ -50,13 +50,9 @@ export function InstancesListPage() {
   const loadInstances = async () => {
     try {
       setLoading(true);
-      console.log('🔄 InstancesListPage: Loading workflow instances');
-
-      const response = await workflowService.getInstances();
-      console.log('✅ InstancesListPage: Loaded', response.length, 'instances');
-      setInstances(response);
-    } catch (error) {
-      console.error('❌ InstancesListPage: Failed to load instances:', error);
+      const items = await workflowService.getInstances(); // now unwrapped array
+      setInstances(items);
+    } catch (e) {
       toast.error('Failed to load workflow instances');
     } finally {
       setLoading(false);

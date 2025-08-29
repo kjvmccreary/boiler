@@ -59,14 +59,9 @@ export function MyTasksPage() {
   const loadMyTasks = async () => {
     try {
       setLoading(true);
-      console.log('🔄 MyTasksPage: Loading my tasks for tenant:', currentTenant?.name || 'Unknown');
-
       const response = await workflowService.getMyTasks(statusFilter || undefined);
-
-      console.log('✅ MyTasksPage: Loaded', response.length, 'tasks');
       setTasks(response);
     } catch (error) {
-      console.error('❌ MyTasksPage: Failed to load tasks:', error);
       toast.error('Failed to load your tasks');
     } finally {
       setLoading(false);
@@ -77,12 +72,14 @@ export function MyTasksPage() {
     setStatusFilter(event.target.value);
   };
 
+  // ✅ FIX: Correct route base to include /app
   const handleViewTask = (id: GridRowId) => {
-    navigate(`/workflow/tasks/${id}`);
+    navigate(`/app/workflow/tasks/${id}`);
   };
 
+  // ✅ FIX: Correct route base to include /app
   const handleViewInstance = (task: TaskSummaryDto) => {
-    navigate(`/workflow/instances/${task.workflowInstanceId}`);
+    navigate(`/app/workflow/instances/${task.workflowInstanceId}`);
   };
 
   const handleClaimTask = async (task: TaskSummaryDto) => {
@@ -93,7 +90,6 @@ export function MyTasksPage() {
       toast.success('Task claimed successfully');
       loadMyTasks();
     } catch (error) {
-      console.error('Failed to claim task:', error);
       toast.error('Failed to claim task');
     }
   };
@@ -116,7 +112,6 @@ export function MyTasksPage() {
       toast.success('Task completed successfully');
       loadMyTasks();
     } catch (error) {
-      console.error('Failed to complete task:', error);
       toast.error('Failed to complete task');
     } finally {
       setCompleteDialogOpen(false);
@@ -161,7 +156,6 @@ export function MyTasksPage() {
       renderCell: (params) => {
         const task = params.row as TaskSummaryDto;
         const overdue = isOverdue(task.dueDate);
-        
         return (
           <Box>
             <Typography variant="subtitle2" fontWeight="medium">
@@ -215,21 +209,12 @@ export function MyTasksPage() {
       valueGetter: (value) => value ? new Date(value) : null,
       renderCell: (params) => {
         if (!params.value) {
-          return (
-            <Typography variant="body2" color="text.secondary">
-              No due date
-            </Typography>
-          );
+          return <Typography variant="body2" color="text.secondary">No due date</Typography>;
         }
-        
         const task = params.row as TaskSummaryDto;
         const overdue = isOverdue(task.dueDate);
-        
         return (
-          <Typography 
-            variant="body2"
-            color={overdue ? 'error' : 'inherit'}
-          >
+          <Typography variant="body2" color={overdue ? 'error' : 'inherit'}>
             {new Date(params.value).toLocaleString()}
           </Typography>
         );
@@ -255,31 +240,25 @@ export function MyTasksPage() {
             label="View Task"
             onClick={() => handleViewTask(params.id)}
           />,
-        ];
-
-        // View instance action
-        actions.push(
           <GridActionsCellItem
             icon={<WorkflowIcon />}
             label="View Instance"
             onClick={() => handleViewInstance(task)}
             showInMenu
           />
-        );
+        ];
 
-        // Claim action (for available tasks)
         if (task.status === 'Created' || task.status === 'Assigned') {
-          actions.push(
-            <GridActionsCellItem
-              icon={<ClaimIcon />}
-              label="Claim Task"
-              onClick={() => handleClaimTask(task)}
-              showInMenu
-            />
-          );
+            actions.push(
+              <GridActionsCellItem
+                icon={<ClaimIcon />}
+                label="Claim Task"
+                onClick={() => handleClaimTask(task)}
+                showInMenu
+              />
+            );
         }
 
-        // Complete action (for claimed/in-progress tasks)
         if (task.status === 'Claimed' || task.status === 'InProgress') {
           actions.push(
             <GridActionsCellItem
@@ -296,7 +275,6 @@ export function MyTasksPage() {
     },
   ];
 
-  // Count overdue tasks for alert
   const overdueTasks = tasks.filter(task => isOverdue(task.dueDate));
 
   if (!currentTenant) {
@@ -335,7 +313,7 @@ export function MyTasksPage() {
             </Select>
           </FormControl>
 
-          <Button
+            <Button
             variant="outlined"
             startIcon={<RefreshIcon />}
             onClick={loadMyTasks}
@@ -361,21 +339,13 @@ export function MyTasksPage() {
           pageSizeOptions={[10, 25, 50, 100]}
           initialState={{
             pagination: { paginationModel: { pageSize: 25 } },
-            sorting: {
-              sortModel: [
-                { field: 'dueDate', sort: 'asc' },
-              ],
-            },
+            sorting: { sortModel: [{ field: 'dueDate', sort: 'asc' }] },
           }}
-          slots={{
-            toolbar: GridToolbar,
-          }}
+          slots={{ toolbar: GridToolbar }}
           slotProps={{
             toolbar: {
               showQuickFilter: true,
-              quickFilterProps: { 
-                debounceMs: 500,
-              },
+              quickFilterProps: { debounceMs: 500 },
             },
           }}
           disableRowSelectionOnClick
@@ -384,14 +354,10 @@ export function MyTasksPage() {
             return isOverdue(task.dueDate) ? 'row-overdue' : '';
           }}
           sx={{
-            '& .MuiDataGrid-row:hover': {
-              backgroundColor: 'action.hover',
-            },
+            '& .MuiDataGrid-row:hover': { backgroundColor: 'action.hover' },
             '& .row-overdue': {
               backgroundColor: 'error.50',
-              '&:hover': {
-                backgroundColor: 'error.100',
-              },
+              '&:hover': { backgroundColor: 'error.100' },
             },
             '& .MuiDataGrid-cell': {
               borderBottom: '1px solid',
@@ -401,14 +367,13 @@ export function MyTasksPage() {
         />
       </Box>
 
-      {/* Complete Task Dialog */}
       <Dialog open={completeDialogOpen} onClose={() => setCompleteDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Complete Task</DialogTitle>
         <DialogContent>
           <Typography sx={{ mb: 2 }}>
             Complete task "{taskToComplete?.taskName}"
           </Typography>
-          
+
           <TextField
             fullWidth
             label="Completion Data (JSON)"

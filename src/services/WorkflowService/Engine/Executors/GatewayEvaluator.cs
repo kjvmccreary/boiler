@@ -1,6 +1,7 @@
 using WorkflowService.Domain.Dsl;
 using WorkflowService.Domain.Models;
 using WorkflowService.Engine.Interfaces;
+using System.Text.Json;
 
 namespace WorkflowService.Engine.Executors;
 
@@ -28,16 +29,44 @@ public class GatewayEvaluator : INodeExecutor
     {
         try
         {
-            var nextNodeIds = await EvaluateGatewayConditions(node, context);
+            _logger.LogInformation("Executing gateway node {NodeId} for instance {InstanceId}", node.Id, instance.Id);
 
-            _logger.LogInformation("Gateway {NodeId} evaluated to next nodes: {NextNodes}", 
-                node.Id, string.Join(", ", nextNodeIds));
+            var condition = GetCondition(node);
+            var gatewayType = node.GetGatewayType();
 
-            return new NodeExecutionResult
+            _logger.LogInformation("Gateway node {NodeId} type: {GatewayType}, condition: {Condition}", 
+                node.Id, gatewayType, condition);
+
+            // ✅ FIX: Evaluate condition using the proper condition evaluator
+            bool conditionResult = true; // Default for MVP
+            
+            if (!string.IsNullOrEmpty(condition) && condition != "true")
+            {
+                try
+                {
+                    conditionResult = await _conditionEvaluator.EvaluateAsync(condition, context);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to evaluate condition '{Condition}' for gateway {NodeId}, defaulting to true", 
+                        condition, node.Id);
+                    conditionResult = true; // Default to true on evaluation failure
+                }
+            }
+
+            _logger.LogInformation("Gateway node {NodeId} condition evaluated to: {Result}", node.Id, conditionResult);
+
+            // ✅ FIX: Let the WorkflowRuntime handle next node calculation
+            // The runtime has access to the full workflow definition with edges
+            var result = new NodeExecutionResult
             {
                 IsSuccess = true,
-                NextNodeIds = nextNodeIds
+                ShouldWait = false, // Gateways evaluate immediately
+                NextNodeIds = new List<string>(), // Let runtime calculate next nodes based on edges
+                UpdatedContext = UpdateContextWithGatewayResult(context, node.Id, conditionResult)
             };
+
+            return result;
         }
         catch (Exception ex)
         {
@@ -50,40 +79,44 @@ public class GatewayEvaluator : INodeExecutor
         }
     }
 
-    private Task<List<string>> EvaluateGatewayConditions(WorkflowNode gateway, string context)
+    // ✅ ADD: Helper methods to handle frontend JSON structure
+    private string GetCondition(WorkflowNode node)
     {
-        var nextNodeIds = new List<string>();
-        var gatewayType = gateway.GetGatewayType();
-
-        // For MVP, we'll use a simplified condition evaluation
-        // In a real implementation, you'd parse the workflow definition to get edges and conditions
-        
-        switch (gatewayType)
+        // Handle frontend JSON structure
+        if (node.Properties.TryGetValue("condition", out var conditionValue))
         {
-            case GatewayTypes.Exclusive:
-                // XOR - only one path can be taken
-                // For MVP, just take the first outgoing connection
-                var connections = gateway.GetOutgoingConnections(new List<WorkflowEdge>());
-                if (connections.Any())
-                {
-                    nextNodeIds.Add(connections.First());
-                }
-                break;
-
-            case GatewayTypes.Inclusive:
-                // OR - multiple paths can be taken
-                // For MVP, take all outgoing connections
-                nextNodeIds.AddRange(gateway.GetOutgoingConnections(new List<WorkflowEdge>()));
-                break;
-
-            case GatewayTypes.Parallel:
-                // AND - all paths are taken (not implemented in MVP)
-                throw new NotImplementedException("Parallel gateways are not implemented in MVP");
-
-            default:
-                throw new ArgumentException($"Unknown gateway type: {gatewayType}");
+            if (conditionValue is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.String)
+            {
+                return jsonElement.GetString() ?? string.Empty;
+            }
         }
 
-        return Task.FromResult(nextNodeIds);
+        return node.GetProperty<string>("condition") ?? "true";
     }
+
+    private string UpdateContextWithGatewayResult(string currentContext, string nodeId, bool conditionResult)
+    {
+        try
+        {
+            var context = JsonSerializer.Deserialize<Dictionary<string, object>>(currentContext) ?? new();
+            
+            // Add gateway result to context for future nodes to use
+            context[$"gateway_{nodeId}"] = new
+            {
+                NodeId = nodeId,
+                ConditionResult = conditionResult,
+                EvaluatedAt = DateTime.UtcNow
+            };
+
+            return JsonSerializer.Serialize(context);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to update context with gateway result for node {NodeId}", nodeId);
+            return currentContext;
+        }
+    }
+
+    // ✅ REMOVE: The broken EvaluateGatewayConditions method
+    // Let the WorkflowRuntime handle edge-based next node calculation
 }

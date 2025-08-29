@@ -354,12 +354,21 @@ public class EventPublisher : IEventPublisher
 
     private async Task CreateOutboxMessage(string eventType, object eventData, int tenantId, CancellationToken cancellationToken)
     {
+        var json = JsonSerializer.Serialize(eventData);
+
         var outboxMessage = new OutboxMessage
         {
+            // Legacy canonical fields (required by current model configuration)
+            Type = eventType,
+            Payload = json,
+            Processed = false,
+
+            // New fields (keep in sync for now)
             EventType = eventType,
-            EventData = JsonSerializer.Serialize(eventData),
-            TenantId = tenantId,
+            EventData = json,
             IsProcessed = false,
+
+            TenantId = tenantId,
             RetryCount = 0,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow

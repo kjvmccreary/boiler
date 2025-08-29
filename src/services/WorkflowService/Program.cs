@@ -12,6 +12,7 @@ using WorkflowService.Background;
 using WorkflowService.Services.Interfaces;
 using WorkflowService.Services;
 using WorkflowService.Security;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +23,12 @@ builder.Host.UseSerilog((hostingContext, loggerConfiguration) =>
 });
 
 // Add services to the container
-builder.Services.AddControllers();
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(o =>
+    {
+        o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 builder.Services.AddEndpointsApiExplorer();
 
 // Configure Swagger with JWT authentication support

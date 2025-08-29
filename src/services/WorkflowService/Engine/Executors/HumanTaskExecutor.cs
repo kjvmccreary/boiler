@@ -2,7 +2,7 @@ using System.Text.Json;
 using WorkflowService.Domain.Dsl;
 using WorkflowService.Domain.Models;
 using WorkflowService.Engine.Interfaces;
-using Contracts.Services; // ✅ ADD: Missing using directive for IRoleService
+using Contracts.Services;
 using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
 
 namespace WorkflowService.Engine.Executors;
@@ -13,7 +13,7 @@ namespace WorkflowService.Engine.Executors;
 public class HumanTaskExecutor : INodeExecutor
 {
     private readonly ILogger<HumanTaskExecutor> _logger;
-    private readonly IRoleService _roleService; // ✅ NOW RESOLVED: IRoleService reference
+    private readonly IRoleService _roleService;
 
     public string NodeType => NodeTypes.HumanTask;
 
@@ -25,90 +25,205 @@ public class HumanTaskExecutor : INodeExecutor
 
     public bool CanExecute(WorkflowNode node) => node.IsHumanTask();
 
-    // ✅ FIX: Make method synchronous to match interface signature
-    public Task<NodeExecutionResult> ExecuteAsync(WorkflowNode node, WorkflowInstance instance, string context, CancellationToken cancellationToken = default)
+    public async Task<NodeExecutionResult> ExecuteAsync(WorkflowNode node, WorkflowInstance instance, string context, CancellationToken cancellationToken = default)
     {
         try
         {
-            // ✅ FIXED: Use available method to validate role existence
-            var assignedRole = node.GetAssignedToRole();
-            if (!string.IsNullOrEmpty(assignedRole))
+            var assignedRole = GetAssignedRole(node);
+            var assignedUserId = GetAssignedUserId(node);
+            var taskName = GetTaskName(node);
+            var dueInMinutes = GetDueInMinutes(node);
+
+            _logger.LogInformation(
+                "Creating human task: TaskName='{TaskName}', AssignedRole='{Role}', AssignedUserId='{UserId}', DueInMinutes={DueInMinutes}",
+                taskName, assignedRole, assignedUserId, dueInMinutes);
+
+            // Validate assigned role if present
+            if (!string.IsNullOrWhiteSpace(assignedRole))
             {
-                // ✅ NEW: Use IsRoleNameAvailableAsync to check if role exists
-                // If role is NOT available, it means it exists (inverse logic)
-                var roleTask = _roleService.IsRoleNameAvailableAsync(assignedRole, null, cancellationToken);
-                roleTask.ContinueWith(task =>
+                try
                 {
-                    if (task.IsCompletedSuccessfully)
-                    {
-                        var roleExists = !task.Result; // Inverse logic: if not available, it exists
-                        if (!roleExists)
-                        {
-                            _logger.LogWarning("Assigned role '{Role}' no longer exists in tenant {TenantId} for task {NodeId}", 
-                                assignedRole, instance.TenantId, node.Id);
-                            // Could either fail the task or assign to a default role
-                        }
-                    }
-                }, TaskContinuationOptions.OnlyOnRanToCompletion);
+                    var roleExists = !await _roleService.IsRoleNameAvailableAsync(assignedRole, null, cancellationToken);
+                    if (!roleExists)
+                        _logger.LogWarning("Assigned role '{Role}' does not exist in tenant {TenantId} for task {NodeId}", assignedRole, instance.TenantId, node.Id);
+                    else
+                        _logger.LogInformation("Validated role '{Role}' exists in tenant {TenantId}", assignedRole, instance.TenantId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Role validation failed for '{Role}' (node {NodeId})", assignedRole, node.Id);
+                }
             }
 
-            // Create workflow task
             var task = new WorkflowTask
             {
-                TenantId = instance.TenantId, // ✅ FIX: Set tenant ID
+                TenantId = instance.TenantId,
                 WorkflowInstanceId = instance.Id,
                 NodeId = node.Id,
-                TaskName = node.GetTaskName(),
+                TaskName = taskName,
                 Status = WorkflowTaskStatus.Created,
                 Data = JsonSerializer.Serialize(new
                 {
-                    FormSchema = node.GetFormSchema(),
-                    Instructions = node.GetProperty<string>("instructions", ""),
-                    Priority = node.GetProperty<string>("priority", "normal")
+                    FormSchema = GetFormSchema(node),
+                    Instructions = GetInstructions(node),
+                    Priority = GetPriority(node),
+                    NodeLabel = node.Name,
+                    NodeId = node.Id
                 }),
-                DueDate = node.GetTimeoutDuration().HasValue 
-                    ? DateTime.UtcNow.Add(node.GetTimeoutDuration()!.Value)
-                    : null
+                DueDate = dueInMinutes.HasValue ? DateTime.UtcNow.AddMinutes(dueInMinutes.Value) : null,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
-            // Assign task
-            var assignedUserId = node.GetAssignedToUserId();
-            
+            // Assign precedence: explicit user > role
             if (!string.IsNullOrEmpty(assignedUserId) && int.TryParse(assignedUserId, out var userId))
             {
                 task.AssignedToUserId = userId;
                 task.Status = WorkflowTaskStatus.Assigned;
+                _logger.LogInformation("Task assigned to user {UserId}", userId);
             }
-            else if (!string.IsNullOrEmpty(assignedRole))
+            else if (!string.IsNullOrWhiteSpace(assignedRole))
             {
                 task.AssignedToRole = assignedRole;
                 task.Status = WorkflowTaskStatus.Assigned;
+                _logger.LogInformation("Task assigned to role '{Role}'", assignedRole);
+            }
+            else
+            {
+                _logger.LogInformation("Task created without assignment (claimable by any eligible user/role)");
             }
 
-            _logger.LogInformation("Created human task {TaskName} for workflow instance {InstanceId} with tenant {TenantId}", 
-                node.GetTaskName(), instance.Id, instance.TenantId);
+            _logger.LogInformation("Successfully created human task '{TaskName}' for workflow instance {InstanceId} (Tenant {TenantId})",
+                taskName, instance.Id, instance.TenantId);
 
-            var result = new NodeExecutionResult
+            return new NodeExecutionResult
             {
                 IsSuccess = true,
-                ShouldWait = true, // Human tasks always wait for completion
+                ShouldWait = true,
                 CreatedTask = task,
-                NextNodeIds = new List<string>() // Will be set when task is completed
+                NextNodeIds = new List<string>() // advanced after completion
             };
-
-            // ✅ FIX: Return Task.FromResult instead of direct return
-            return Task.FromResult(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing human task node {NodeId}", node.Id);
-            var result = new NodeExecutionResult
+            _logger.LogError(ex, "Error executing human task node {NodeId} for instance {InstanceId}", node.Id, instance.Id);
+            return new NodeExecutionResult
             {
                 IsSuccess = false,
                 ErrorMessage = ex.Message
             };
-            // ✅ FIX: Return Task.FromResult instead of direct return
-            return Task.FromResult(result);
         }
     }
+
+    // ---------- Property Extraction Helpers (Robust) ----------
+
+    private string GetAssignedRole(WorkflowNode node)
+    {
+        if (!node.Properties.TryGetValue("assigneeRoles", out var value) || value == null)
+            return FallbackRole(node);
+
+        try
+        {
+            // Case 1: Already a string[] (what BuilderDefinitionAdapter puts in)
+            if (value is string[] arr && arr.Length > 0)
+                return SafeFirst(arr);
+
+            // Case 2: List<object>
+            if (value is IEnumerable<object> objEnum)
+            {
+                var first = objEnum.OfType<string>().FirstOrDefault();
+                if (!string.IsNullOrWhiteSpace(first))
+                    return first.Trim();
+            }
+
+            // Case 3: JsonElement (array)
+            if (value is JsonElement je)
+            {
+                if (je.ValueKind == JsonValueKind.Array && je.GetArrayLength() > 0)
+                {
+                    var first = je[0].GetString();
+                    if (!string.IsNullOrWhiteSpace(first))
+                        return first.Trim();
+                }
+                if (je.ValueKind == JsonValueKind.String)
+                {
+                    var s = je.GetString();
+                    if (!string.IsNullOrWhiteSpace(s))
+                        return s.Trim();
+                }
+            }
+
+            // Case 4: Single string
+            if (value is string single && !string.IsNullOrWhiteSpace(single))
+                return single.Trim();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to parse assigneeRoles for node {NodeId}", node.Id);
+        }
+
+        return FallbackRole(node);
+
+        static string SafeFirst(string[] a) => a.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s))?.Trim() ?? string.Empty;
+    }
+
+    private string FallbackRole(WorkflowNode node)
+    {
+        return node.GetProperty<string>("assignedToRole")?.Trim() ??
+               node.GetProperty<string>("assigneeRole")?.Trim() ??
+               string.Empty;
+    }
+
+    private string GetAssignedUserId(WorkflowNode node)
+    {
+        return node.GetProperty<string>("assignedToUserId")?.Trim() ??
+               node.GetProperty<string>("assigneeUserId")?.Trim() ??
+               string.Empty;
+    }
+
+    private string GetTaskName(WorkflowNode node)
+    {
+        if (node.Properties.TryGetValue("label", out var labelValue) && labelValue != null)
+        {
+            if (labelValue is string s && !string.IsNullOrWhiteSpace(s))
+                return s;
+            if (labelValue is JsonElement je && je.ValueKind == JsonValueKind.String)
+                return je.GetString() ?? "Human Task";
+        }
+
+        return node.GetProperty<string>("taskName") ??
+               node.Name ??
+               "Human Task";
+    }
+
+    private int? GetDueInMinutes(WorkflowNode node)
+    {
+        if (!node.Properties.TryGetValue("dueInMinutes", out var raw) || raw == null)
+            return node.GetProperty<int?>("timeoutMinutes") ?? node.GetProperty<int?>("dueDateMinutes");
+
+        try
+        {
+            return raw switch
+            {
+                int i => i,
+                long l => (int)l,
+                string s when int.TryParse(s, out var parsed) => parsed,
+                JsonElement je when je.ValueKind == JsonValueKind.Number && je.TryGetInt32(out var v) => v,
+                _ => node.GetProperty<int?>("timeoutMinutes") ?? node.GetProperty<int?>("dueDateMinutes")
+            };
+        }
+        catch
+        {
+            return node.GetProperty<int?>("timeoutMinutes") ?? node.GetProperty<int?>("dueDateMinutes");
+        }
+    }
+
+    private string GetFormSchema(WorkflowNode node)
+        => node.GetProperty<string>("formSchema") ?? "{}";
+
+    private string GetInstructions(WorkflowNode node)
+        => node.GetProperty<string>("instructions") ?? node.GetProperty<string>("description") ?? string.Empty;
+
+    private string GetPriority(WorkflowNode node)
+        => node.GetProperty<string>("priority") ?? "normal";
 }

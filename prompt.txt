@@ -1,7 +1,5 @@
-I have completed a software application as described at C:\Users\mccre\dev\boiler\microservices-system-spec.md. I am now building a workflow service into the application as described at C:\Users\mccre\dev\boiler\workflow\workflow-engine-dev-plan.md. I have made great progress. The backend for the MVP is basically complete. For the front end, I have been working on the visual WF builder with react flow. You and I just got to the point where the app will allow me to both CREATE a WF definition as well as SAVE an update to that WF definition.
+I have completed a software application as described at C:\Users\mccre\dev\boiler\microservices-system-spec.md. I am now building a workflow service into the application as described at C:\Users\mccre\dev\boiler\workflow\workflow-engine-dev-plan.md. I have made great progress. The backend for the MVP is basically complete. For the front end, the visual WF builder is allowing me to create and save WF Definitions. I am now trying to start a WF Instance from a definition. I can see in the db that the instance gets created but it does not move off of the START node. That means, the first - and only task - is not getting created.
 
-I am more or less following C:\Users\mccre\dev\boiler\workflow\master-mvp-checklist.md. Specific to the front-end UI, I am following C:\Users\mccre\dev\boiler\workflow\WF_MVP_Frontend_Implementation_Guide.md. You created both of these documents.
-
-There was a lot of back and forth in getting to this point of saving WF Defs to the db. So I need to know where I stand in relation to those two documents and what is next for the WF MVP.
+For reference, I am more or less following C:\Users\mccre\dev\boiler\workflow\master-mvp-checklist.md. Specific to the front-end UI, I am following C:\Users\mccre\dev\boiler\workflow\WF_MVP_Frontend_Implementation_Guide.md. You created both of these documents.
 
 It might make sense to do a full deep scan of my project before we resume. 

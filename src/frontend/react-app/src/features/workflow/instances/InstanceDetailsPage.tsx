@@ -346,7 +346,7 @@ export function InstanceDetailsPage() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <IconButton
-            onClick={() => navigate('/workflow/definitions')}
+            onClick={() => navigate('/app/workflow/definitions')}
             sx={{ mr: 1 }}
           >
             <ArrowBackIcon />

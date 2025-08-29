@@ -4,9 +4,7 @@ using Common.Authorization;
 using DTOs.Common;
 using DTOs.Workflow;
 using DTOs.Workflow.Enums;
-using WorkflowService.Domain.Models;
-using WorkflowService.Persistence;
-using Microsoft.EntityFrameworkCore;
+using WorkflowService.Services.Interfaces; // ✅ ADD: Import service interfaces
 using System.Security.Claims;
 
 namespace WorkflowService.Controllers;
@@ -19,14 +17,14 @@ namespace WorkflowService.Controllers;
 [Authorize]
 public class InstancesController : ControllerBase
 {
-    private readonly WorkflowDbContext _context;
+    private readonly IInstanceService _instanceService; // ✅ CHANGE: Use service instead of direct DB access
     private readonly ILogger<InstancesController> _logger;
 
     public InstancesController(
-        WorkflowDbContext context,
+        IInstanceService instanceService, // ✅ CHANGE: Inject service
         ILogger<InstancesController> logger)
     {
-        _context = context;
+        _instanceService = instanceService; // ✅ CHANGE: Use service
         _logger = logger;
     }
 
@@ -35,7 +33,7 @@ public class InstancesController : ControllerBase
     /// </summary>
     [HttpGet]
     [RequiresPermission("workflow.view_instances")]
-    public async Task<ActionResult<ApiResponseDto<List<WorkflowInstanceDto>>>> GetInstances(
+    public async Task<ActionResult<ApiResponseDto<PagedResultDto<WorkflowInstanceDto>>>> GetInstances(
         [FromQuery] InstanceStatus? status = null,
         [FromQuery] int? workflowDefinitionId = null,
         [FromQuery] int? startedByUserId = null,
@@ -44,60 +42,58 @@ public class InstancesController : ControllerBase
     {
         try
         {
-            var query = _context.WorkflowInstances
-                .Include(i => i.WorkflowDefinition)
-                .AsQueryable();
-
-            // Apply filters
-            if (status.HasValue)
+            var request = new GetInstancesRequestDto
             {
-                query = query.Where(i => i.Status == status.Value);
-            }
+                Status = status,
+                WorkflowDefinitionId = workflowDefinitionId,
+                StartedByUserId = startedByUserId,
+                Page = page,
+                PageSize = pageSize
+            };
 
-            if (workflowDefinitionId.HasValue)
+            var result = await _instanceService.GetAllAsync(request);
+            
+            if (result.Success)
             {
-                query = query.Where(i => i.WorkflowDefinitionId == workflowDefinitionId.Value);
+                return Ok(result);
             }
-
-            if (startedByUserId.HasValue)
-            {
-                query = query.Where(i => i.StartedByUserId == startedByUserId.Value);
-            }
-
-            // Apply pagination
-            var totalCount = await query.CountAsync();
-            var instances = await query
-                .OrderByDescending(i => i.StartedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(i => new WorkflowInstanceDto
-                {
-                    Id = i.Id,
-                    WorkflowDefinitionId = i.WorkflowDefinitionId,
-                    WorkflowDefinitionName = i.WorkflowDefinition.Name,
-                    DefinitionVersion = i.DefinitionVersion,
-                    Status = i.Status,
-                    CurrentNodeIds = i.CurrentNodeIds,
-                    Context = i.Context,
-                    StartedAt = i.StartedAt,
-                    CompletedAt = i.CompletedAt,
-                    StartedByUserId = i.StartedByUserId,
-                    ErrorMessage = i.ErrorMessage,
-                    CreatedAt = i.CreatedAt,
-                    UpdatedAt = i.UpdatedAt
-                })
-                .ToListAsync();
-
-            return Ok(ApiResponseDto<List<WorkflowInstanceDto>>.SuccessResult(
-                instances, 
-                $"Retrieved {instances.Count} of {totalCount} workflow instances"));
+            
+            return StatusCode(500, result);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving workflow instances");
-            return StatusCode(500, ApiResponseDto<List<WorkflowInstanceDto>>.ErrorResult(
+            return StatusCode(500, ApiResponseDto<PagedResultDto<WorkflowInstanceDto>>.ErrorResult(
                 "An error occurred while retrieving workflow instances"));
         }
+    }
+
+    /// <summary>
+    /// Get all workflow instances for the current tenant (flat list)
+    /// </summary>
+    [HttpGet("flat")]
+    [RequiresPermission("workflow.view_instances")]
+    public async Task<ActionResult<PagedResultDto<WorkflowInstanceDto>>> GetInstancesFlat(
+        [FromQuery] InstanceStatus? status = null,
+        [FromQuery] int? workflowDefinitionId = null,
+        [FromQuery] int? startedByUserId = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 50)
+    {
+        var request = new GetInstancesRequestDto
+        {
+            Status = status,
+            WorkflowDefinitionId = workflowDefinitionId,
+            StartedByUserId = startedByUserId,
+            Page = page,
+            PageSize = pageSize
+        };
+
+        var result = await _instanceService.GetAllAsync(request);
+        if (!result.Success || result.Data == null)
+            return StatusCode(500);
+
+        return Ok(result.Data);
     }
 
     /// <summary>
@@ -109,36 +105,19 @@ public class InstancesController : ControllerBase
     {
         try
         {
-            var instance = await _context.WorkflowInstances
-                .Include(i => i.WorkflowDefinition)
-                .Where(i => i.Id == id)
-                .Select(i => new WorkflowInstanceDto
-                {
-                    Id = i.Id,
-                    WorkflowDefinitionId = i.WorkflowDefinitionId,
-                    WorkflowDefinitionName = i.WorkflowDefinition.Name,
-                    DefinitionVersion = i.DefinitionVersion,
-                    Status = i.Status,
-                    CurrentNodeIds = i.CurrentNodeIds,
-                    Context = i.Context,
-                    StartedAt = i.StartedAt,
-                    CompletedAt = i.CompletedAt,
-                    StartedByUserId = i.StartedByUserId,
-                    ErrorMessage = i.ErrorMessage,
-                    CreatedAt = i.CreatedAt,
-                    UpdatedAt = i.UpdatedAt
-                })
-                .FirstOrDefaultAsync();
-
-            if (instance == null)
+            var result = await _instanceService.GetByIdAsync(id);
+            
+            if (result.Success)
             {
-                return NotFound(ApiResponseDto<WorkflowInstanceDto>.ErrorResult(
-                    "Workflow instance not found"));
+                return Ok(result);
             }
-
-            return Ok(ApiResponseDto<WorkflowInstanceDto>.SuccessResult(
-                instance, 
-                "Workflow instance retrieved successfully"));
+            
+            if (result.Message?.Contains("not found") == true)
+            {
+                return NotFound(result);
+            }
+            
+            return StatusCode(500, result);
         }
         catch (Exception ex)
         {
@@ -158,68 +137,26 @@ public class InstancesController : ControllerBase
     {
         try
         {
-            // Verify the workflow definition exists and is published
-            var definition = await _context.WorkflowDefinitions
-                .FirstOrDefaultAsync(d => d.Id == request.WorkflowDefinitionId);
-
-            if (definition == null)
-            {
-                return BadRequest(ApiResponseDto<WorkflowInstanceDto>.ErrorResult(
-                    "Workflow definition not found"));
-            }
-
-            if (!definition.IsPublished)
-            {
-                return BadRequest(ApiResponseDto<WorkflowInstanceDto>.ErrorResult(
-                    "Cannot start instance from unpublished workflow definition"));
-            }
-
-            // TODO: Parse JSON definition to find start node
-            // TODO: Validate initial context against definition
+            // ✅ FIX: Use the service layer which calls the workflow engine!
+            var result = await _instanceService.StartInstanceAsync(request);
             
-            var instance = new WorkflowInstance
+            if (result.Success)
             {
-                WorkflowDefinitionId = request.WorkflowDefinitionId,
-                DefinitionVersion = definition.Version,
-                Status = InstanceStatus.Running,
-                CurrentNodeIds = "[\"start\"]", // TODO: Get actual start node from definition
-                Context = request.InitialContext ?? "{}",
-                StartedAt = DateTime.UtcNow,
-                StartedByUserId = GetCurrentUserId()
-            };
+                _logger.LogInformation("Started workflow instance {Id} from definition {DefinitionId} by user {UserId}", 
+                    result.Data?.Id, request.WorkflowDefinitionId, GetCurrentUserId());
 
-            _context.WorkflowInstances.Add(instance);
-            await _context.SaveChangesAsync();
-
-            // TODO: Trigger workflow engine to process start node
-            // TODO: Create initial workflow event
-
-            var responseDto = new WorkflowInstanceDto
+                return CreatedAtAction(
+                    nameof(GetInstance),
+                    new { id = result.Data?.Id },
+                    result);
+            }
+            
+            if (result.Message?.Contains("not found") == true)
             {
-                Id = instance.Id,
-                WorkflowDefinitionId = instance.WorkflowDefinitionId,
-                WorkflowDefinitionName = definition.Name,
-                DefinitionVersion = instance.DefinitionVersion,
-                Status = instance.Status,
-                CurrentNodeIds = instance.CurrentNodeIds,
-                Context = instance.Context,
-                StartedAt = instance.StartedAt,
-                CompletedAt = instance.CompletedAt,
-                StartedByUserId = instance.StartedByUserId,
-                ErrorMessage = instance.ErrorMessage,
-                CreatedAt = instance.CreatedAt,
-                UpdatedAt = instance.UpdatedAt
-            };
-
-            _logger.LogInformation("Started workflow instance {Id} from definition {DefinitionId} by user {UserId}", 
-                instance.Id, request.WorkflowDefinitionId, GetCurrentUserId());
-
-            return CreatedAtAction(
-                nameof(GetInstance),
-                new { id = instance.Id },
-                ApiResponseDto<WorkflowInstanceDto>.SuccessResult(
-                    responseDto, 
-                    "Workflow instance started successfully"));
+                return BadRequest(result);
+            }
+            
+            return StatusCode(500, result);
         }
         catch (Exception ex)
         {
@@ -241,63 +178,22 @@ public class InstancesController : ControllerBase
     {
         try
         {
-            var instance = await _context.WorkflowInstances
-                .Include(i => i.WorkflowDefinition)
-                .FirstOrDefaultAsync(i => i.Id == id);
-
-            if (instance == null)
+            // ✅ FIX: Use the service layer
+            var result = await _instanceService.SignalAsync(id, request);
+            
+            if (result.Success)
             {
-                return NotFound(ApiResponseDto<WorkflowInstanceDto>.ErrorResult(
-                    "Workflow instance not found"));
+                _logger.LogInformation("Sent signal '{SignalName}' to workflow instance {Id} by user {UserId}", 
+                    request.SignalName, id, GetCurrentUserId());
+                return Ok(result);
             }
-
-            if (instance.Status != InstanceStatus.Running && instance.Status != InstanceStatus.Suspended)
+            
+            if (result.Message?.Contains("not found") == true)
             {
-                return BadRequest(ApiResponseDto<WorkflowInstanceDto>.ErrorResult(
-                    $"Cannot signal instance in {instance.Status} status"));
+                return NotFound(result);
             }
-
-            // TODO: Process signal with workflow engine
-            // TODO: Update instance state based on signal processing
-            // TODO: Create workflow event for signal
-
-            // Log the signal for now
-            var workflowEvent = new WorkflowEvent
-            {
-                WorkflowInstanceId = instance.Id,
-                Type = "Signal",
-                Name = request.SignalName,
-                Data = request.SignalData ?? "{}",
-                OccurredAt = DateTime.UtcNow,
-                UserId = GetCurrentUserId()
-            };
-
-            _context.WorkflowEvents.Add(workflowEvent);
-            await _context.SaveChangesAsync();
-
-            var responseDto = new WorkflowInstanceDto
-            {
-                Id = instance.Id,
-                WorkflowDefinitionId = instance.WorkflowDefinitionId,
-                WorkflowDefinitionName = instance.WorkflowDefinition.Name,
-                DefinitionVersion = instance.DefinitionVersion,
-                Status = instance.Status,
-                CurrentNodeIds = instance.CurrentNodeIds,
-                Context = instance.Context,
-                StartedAt = instance.StartedAt,
-                CompletedAt = instance.CompletedAt,
-                StartedByUserId = instance.StartedByUserId,
-                ErrorMessage = instance.ErrorMessage,
-                CreatedAt = instance.CreatedAt,
-                UpdatedAt = instance.UpdatedAt
-            };
-
-            _logger.LogInformation("Sent signal '{SignalName}' to workflow instance {Id} by user {UserId}", 
-                request.SignalName, id, GetCurrentUserId());
-
-            return Ok(ApiResponseDto<WorkflowInstanceDto>.SuccessResult(
-                responseDto, 
-                $"Signal '{request.SignalName}' sent to workflow instance successfully"));
+            
+            return BadRequest(result);
         }
         catch (Exception ex)
         {
@@ -316,49 +212,27 @@ public class InstancesController : ControllerBase
     {
         try
         {
-            var instance = await _context.WorkflowInstances
-                .FirstOrDefaultAsync(i => i.Id == id);
-
-            if (instance == null)
+            var request = new TerminateInstanceRequestDto
             {
-                return NotFound(ApiResponseDto<bool>.ErrorResult(
-                    "Workflow instance not found"));
-            }
-
-            if (instance.Status == InstanceStatus.Completed || instance.Status == InstanceStatus.Cancelled)
-            {
-                return BadRequest(ApiResponseDto<bool>.ErrorResult(
-                    $"Cannot terminate instance that is already {instance.Status}"));
-            }
-
-            // Update instance status
-            instance.Status = InstanceStatus.Cancelled;
-            instance.CompletedAt = DateTime.UtcNow;
-
-            // TODO: Cancel any active tasks
-            // TODO: Cleanup resources
-            // TODO: Trigger workflow engine cleanup
-
-            // Create termination event
-            var workflowEvent = new WorkflowEvent
-            {
-                WorkflowInstanceId = instance.Id,
-                Type = "Instance",
-                Name = "Terminated",
-                Data = $"{{\"terminatedBy\": {GetCurrentUserId()}, \"reason\": \"Manual termination\"}}",
-                OccurredAt = DateTime.UtcNow,
-                UserId = GetCurrentUserId()
+                Reason = "Manual termination"
             };
 
-            _context.WorkflowEvents.Add(workflowEvent);
-            await _context.SaveChangesAsync();
-
-            _logger.LogInformation("Terminated workflow instance {Id} by user {UserId}", 
-                id, GetCurrentUserId());
-
-            return Ok(ApiResponseDto<bool>.SuccessResult(
-                true, 
-                "Workflow instance terminated successfully"));
+            // ✅ FIX: Use the service layer
+            var result = await _instanceService.TerminateAsync(id, request);
+            
+            if (result.Success)
+            {
+                _logger.LogInformation("Terminated workflow instance {Id} by user {UserId}", 
+                    id, GetCurrentUserId());
+                return Ok(result);
+            }
+            
+            if (result.Message?.Contains("not found") == true)
+            {
+                return NotFound(result);
+            }
+            
+            return BadRequest(result);
         }
         catch (Exception ex)
         {
@@ -369,150 +243,64 @@ public class InstancesController : ControllerBase
     }
 
     /// <summary>
-    /// Suspend a workflow instance
+    /// Get workflow instance execution history
     /// </summary>
-    [HttpPost("{id}/suspend")]
-    [RequiresPermission("workflow.manage_instances")]
-    public async Task<ActionResult<ApiResponseDto<WorkflowInstanceDto>>> SuspendInstance(int id)
+    [HttpGet("{id}/history")]
+    [RequiresPermission("workflow.view_instances")]
+    public async Task<ActionResult<ApiResponseDto<List<WorkflowEventDto>>>> GetInstanceHistory(int id)
     {
         try
         {
-            var instance = await _context.WorkflowInstances
-                .Include(i => i.WorkflowDefinition)
-                .FirstOrDefaultAsync(i => i.Id == id);
-
-            if (instance == null)
+            var result = await _instanceService.GetHistoryAsync(id);
+            
+            if (result.Success)
             {
-                return NotFound(ApiResponseDto<WorkflowInstanceDto>.ErrorResult(
-                    "Workflow instance not found"));
+                return Ok(result);
             }
-
-            if (instance.Status != InstanceStatus.Running)
+            
+            if (result.Message?.Contains("not found") == true)
             {
-                return BadRequest(ApiResponseDto<WorkflowInstanceDto>.ErrorResult(
-                    $"Cannot suspend instance in {instance.Status} status"));
+                return NotFound(result);
             }
-
-            instance.Status = InstanceStatus.Suspended;
-
-            // Create suspension event
-            var workflowEvent = new WorkflowEvent
-            {
-                WorkflowInstanceId = instance.Id,
-                Type = "Instance",
-                Name = "Suspended",
-                Data = $"{{\"suspendedBy\": {GetCurrentUserId()}}}",
-                OccurredAt = DateTime.UtcNow,
-                UserId = GetCurrentUserId()
-            };
-
-            _context.WorkflowEvents.Add(workflowEvent);
-            await _context.SaveChangesAsync();
-
-            var responseDto = new WorkflowInstanceDto
-            {
-                Id = instance.Id,
-                WorkflowDefinitionId = instance.WorkflowDefinitionId,
-                WorkflowDefinitionName = instance.WorkflowDefinition.Name,
-                DefinitionVersion = instance.DefinitionVersion,
-                Status = instance.Status,
-                CurrentNodeIds = instance.CurrentNodeIds,
-                Context = instance.Context,
-                StartedAt = instance.StartedAt,
-                CompletedAt = instance.CompletedAt,
-                StartedByUserId = instance.StartedByUserId,
-                ErrorMessage = instance.ErrorMessage,
-                CreatedAt = instance.CreatedAt,
-                UpdatedAt = instance.UpdatedAt
-            };
-
-            _logger.LogInformation("Suspended workflow instance {Id} by user {UserId}", 
-                id, GetCurrentUserId());
-
-            return Ok(ApiResponseDto<WorkflowInstanceDto>.SuccessResult(
-                responseDto, 
-                "Workflow instance suspended successfully"));
+            
+            return StatusCode(500, result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error suspending workflow instance {Id}", id);
-            return StatusCode(500, ApiResponseDto<WorkflowInstanceDto>.ErrorResult(
-                "An error occurred while suspending the workflow instance"));
+            _logger.LogError(ex, "Error getting workflow instance history {Id}", id);
+            return StatusCode(500, ApiResponseDto<List<WorkflowEventDto>>.ErrorResult(
+                "An error occurred while retrieving the workflow instance history"));
         }
     }
 
     /// <summary>
-    /// Resume a suspended workflow instance
+    /// Get workflow instance status
     /// </summary>
-    [HttpPost("{id}/resume")]
-    [RequiresPermission("workflow.manage_instances")]
-    public async Task<ActionResult<ApiResponseDto<WorkflowInstanceDto>>> ResumeInstance(int id)
+    [HttpGet("{id}/status")]
+    [RequiresPermission("workflow.view_instances")]
+    public async Task<ActionResult<ApiResponseDto<InstanceStatusDto>>> GetInstanceStatus(int id)
     {
         try
         {
-            var instance = await _context.WorkflowInstances
-                .Include(i => i.WorkflowDefinition)
-                .FirstOrDefaultAsync(i => i.Id == id);
-
-            if (instance == null)
+            var result = await _instanceService.GetStatusAsync(id);
+            
+            if (result.Success)
             {
-                return NotFound(ApiResponseDto<WorkflowInstanceDto>.ErrorResult(
-                    "Workflow instance not found"));
+                return Ok(result);
             }
-
-            if (instance.Status != InstanceStatus.Suspended)
+            
+            if (result.Message?.Contains("not found") == true)
             {
-                return BadRequest(ApiResponseDto<WorkflowInstanceDto>.ErrorResult(
-                    $"Cannot resume instance in {instance.Status} status"));
+                return NotFound(result);
             }
-
-            instance.Status = InstanceStatus.Running;
-
-            // TODO: Trigger workflow engine to continue processing
-
-            // Create resumption event
-            var workflowEvent = new WorkflowEvent
-            {
-                WorkflowInstanceId = instance.Id,
-                Type = "Instance",
-                Name = "Resumed",
-                Data = $"{{\"resumedBy\": {GetCurrentUserId()}}}",
-                OccurredAt = DateTime.UtcNow,
-                UserId = GetCurrentUserId()
-            };
-
-            _context.WorkflowEvents.Add(workflowEvent);
-            await _context.SaveChangesAsync();
-
-            var responseDto = new WorkflowInstanceDto
-            {
-                Id = instance.Id,
-                WorkflowDefinitionId = instance.WorkflowDefinitionId,
-                WorkflowDefinitionName = instance.WorkflowDefinition.Name,
-                DefinitionVersion = instance.DefinitionVersion,
-                Status = instance.Status,
-                CurrentNodeIds = instance.CurrentNodeIds,
-                Context = instance.Context,
-                StartedAt = instance.StartedAt,
-                CompletedAt = instance.CompletedAt,
-                StartedByUserId = instance.StartedByUserId,
-                ErrorMessage = instance.ErrorMessage,
-                CreatedAt = instance.CreatedAt,
-                UpdatedAt = instance.UpdatedAt
-            };
-
-            _logger.LogInformation("Resumed workflow instance {Id} by user {UserId}", 
-                id, GetCurrentUserId());
-
-            return Ok(ApiResponseDto<WorkflowInstanceDto>.SuccessResult(
-                responseDto, 
-                "Workflow instance resumed successfully"));
+            
+            return StatusCode(500, result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error resuming workflow instance {Id}", id);
-            return StatusCode(500, ApiResponseDto<WorkflowInstanceDto>.ErrorResult(
-                "An error occurred while resuming the workflow instance"));
+            _logger.LogError(ex, "Error getting workflow instance status {Id}", id);
+            return StatusCode(500, ApiResponseDto<InstanceStatusDto>.ErrorResult(
+                "An error occurred while retrieving the workflow instance status"));
         }
     }
 

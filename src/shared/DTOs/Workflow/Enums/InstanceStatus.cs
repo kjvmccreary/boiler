@@ -1,8 +1,11 @@
+using System.Text.Json.Serialization;
+
 namespace DTOs.Workflow.Enums;
 
 /// <summary>
 /// Status of a workflow instance
 /// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum InstanceStatus
 {
     /// <summary>
