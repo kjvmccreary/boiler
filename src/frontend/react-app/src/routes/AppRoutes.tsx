@@ -7,6 +7,7 @@ import { ProtectedRoute } from '@/components/authorization/ProtectedRoute.js'; /
 const EnhancedLoginForm = lazy(() => import('@/components/auth/EnhancedLoginForm.js'));
 const RegisterForm = lazy(() => import('@/components/auth/RegisterForm.js'));
 const Dashboard = lazy(() => import('@/pages/Dashboard.js'));
+const TaskDetailsPage = lazy(() => import('@/features/workflow/tasks/TaskDetailsPage'));
 // ... other imports
 
 const LoadingSpinner = () => (
@@ -27,6 +28,11 @@ export function AppRoutes() {
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <Dashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/app/workflow/tasks/:id" element={
+          <ProtectedRoute>
+            <TaskDetailsPage />
           </ProtectedRoute>
         } />
         
