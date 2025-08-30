@@ -1,20 +1,28 @@
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using WorkflowService.Domain.Dsl;
 using WorkflowService.Engine.Interfaces;
 using WorkflowService.Persistence;
-using DTOs.Workflow.Enums;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+// Alias enums to avoid ambiguity with System.Threading.Tasks.TaskStatus
+using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
+using InstanceStatusEnum = DTOs.Workflow.Enums.InstanceStatus;
 
 namespace WorkflowService.Background;
 
 /// <summary>
-/// Background service that processes workflow timers
+/// Background service that advances due timer tasks.
 /// </summary>
 public class TimerWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<TimerWorker> _logger;
-    private readonly TimeSpan _checkInterval;
+    private readonly TimeSpan _interval;
 
     public TimerWorker(
         IServiceProvider serviceProvider,
@@ -23,102 +31,83 @@ public class TimerWorker : BackgroundService
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
-        
-        var intervalSeconds = configuration.GetValue<int>("WorkflowSettings:TimerWorkerIntervalSeconds", 30);
-        _checkInterval = TimeSpan.FromSeconds(intervalSeconds);
+        var seconds = configuration.GetValue<int>("WorkflowSettings:TimerWorkerIntervalSeconds", 30);
+        _interval = TimeSpan.FromSeconds(Math.Max(5, seconds));
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("TimerWorker started with check interval {Interval}", _checkInterval);
+        _logger.LogInformation("WF_TIMER_WORKER_START IntervalSeconds={Interval}", _interval.TotalSeconds);
 
         while (!stoppingToken.IsCancellationRequested)
         {
+            var started = DateTime.UtcNow;
             try
             {
                 await ProcessDueTimers(stoppingToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing due timers");
+                _logger.LogError(ex, "WF_TIMER_WORKER_ERROR");
             }
 
-            await Task.Delay(_checkInterval, stoppingToken);
+            var elapsed = DateTime.UtcNow - started;
+            var delay = _interval - elapsed;
+            if (delay < TimeSpan.FromSeconds(1)) delay = TimeSpan.FromSeconds(1);
+
+            try
+            {
+                await Task.Delay(delay, stoppingToken);
+            }
+            catch (TaskCanceledException) { }
         }
 
-        _logger.LogInformation("TimerWorker stopped");
+        _logger.LogInformation("WF_TIMER_WORKER_STOP");
     }
 
-    private async Task ProcessDueTimers(CancellationToken cancellationToken)
+    private async Task ProcessDueTimers(CancellationToken ct)
     {
         using var scope = _serviceProvider.CreateScope();
-        var context = scope.ServiceProvider.GetRequiredService<WorkflowDbContext>();
-        var workflowRuntime = scope.ServiceProvider.GetRequiredService<IWorkflowRuntime>();
+        var db = scope.ServiceProvider.GetRequiredService<WorkflowDbContext>();
+        var runtime = scope.ServiceProvider.GetRequiredService<IWorkflowRuntime>();
 
-        // Find workflow instances that are waiting on timer nodes
         var now = DateTime.UtcNow;
-        
-        var waitingInstances = await context.WorkflowInstances
-            .Include(i => i.WorkflowDefinition)
-            .Where(i => i.Status == InstanceStatus.Running)
-            .ToListAsync(cancellationToken);
 
-        foreach (var instance in waitingInstances)
+        // Fetch a reasonable batch to avoid long locks
+        var dueTasks = await db.WorkflowTasks
+            .Include(t => t.WorkflowInstance)
+            .Where(t =>
+                t.Status == WorkflowTaskStatus.Created &&
+                t.DueDate.HasValue &&
+                t.DueDate <= now &&
+                t.WorkflowInstance.Status == InstanceStatusEnum.Running)
+            .OrderBy(t => t.DueDate)
+            .Take(100)
+            .ToListAsync(ct);
+
+        if (!dueTasks.Any())
+        {
+            _logger.LogDebug("WF_TIMER_WORKER_NO_DUE");
+            return;
+        }
+
+        _logger.LogInformation("WF_TIMER_WORKER_DUE_COUNT Count={Count}", dueTasks.Count);
+
+        foreach (var task in dueTasks)
         {
             try
             {
-                await ProcessInstanceTimers(instance, workflowRuntime, now, cancellationToken);
+                _logger.LogInformation("WF_TIMER_FIRE Instance={InstanceId} Task={TaskId} Node={NodeId} Due={Due}",
+                    task.WorkflowInstanceId, task.Id, task.NodeId, task.DueDate);
+
+                // Use 0 as system user id sentinel
+                await runtime.CompleteTaskAsync(task.Id, "{}", 0, ct);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing timers for instance {InstanceId}", instance.Id);
+                _logger.LogError(ex, "WF_TIMER_FIRE_ERROR Task={TaskId} Instance={InstanceId}",
+                    task.Id, task.WorkflowInstanceId);
             }
         }
-    }
-
-    private async Task ProcessInstanceTimers(
-        WorkflowService.Domain.Models.WorkflowInstance instance, 
-        IWorkflowRuntime workflowRuntime, 
-        DateTime now, 
-        CancellationToken cancellationToken)
-    {
-        var workflowDef = WorkflowDefinitionJson.FromJson(instance.WorkflowDefinition.JSONDefinition);
-        var currentNodeIds = JsonSerializer.Deserialize<string[]>(instance.CurrentNodeIds) ?? Array.Empty<string>();
-
-        var dueTimers = new List<string>();
-
-        foreach (var nodeId in currentNodeIds)
-        {
-            var node = workflowDef.Nodes.FirstOrDefault(n => n.Id == nodeId);
-            if (node != null && node.IsTimer())
-            {
-                var dueTime = CalculateTimerDueTime(node);
-                if (dueTime <= now)
-                {
-                    dueTimers.Add(nodeId);
-                    _logger.LogInformation("Timer {NodeId} is due for instance {InstanceId}", 
-                        nodeId, instance.Id);
-                }
-            }
-        }
-
-        // If any timers are due, continue the workflow
-        if (dueTimers.Any())
-        {
-            await workflowRuntime.ContinueWorkflowAsync(instance.Id, cancellationToken);
-        }
-    }
-
-    private DateTime CalculateTimerDueTime(WorkflowNode timer)
-    {
-        var timerType = timer.GetTimerType();
-        
-        return timerType switch
-        {
-            TimerTypes.Duration => DateTime.UtcNow.Add(timer.GetDuration() ?? TimeSpan.Zero),
-            TimerTypes.DueDate => timer.GetDueDate() ?? DateTime.UtcNow,
-            TimerTypes.Cron => throw new NotImplementedException("Cron timers not implemented"),
-            _ => DateTime.UtcNow
-        };
     }
 }

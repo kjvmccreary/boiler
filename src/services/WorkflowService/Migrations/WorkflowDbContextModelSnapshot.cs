@@ -86,7 +86,7 @@ namespace WorkflowService.Migrations
 
                     b.HasIndex("Type", "Processed");
 
-                    b.ToTable("OutboxMessages");
+                    b.ToTable("OutboxMessages", (string)null);
                 });
 
             modelBuilder.Entity("WorkflowService.Domain.Models.WorkflowDefinition", b =>
@@ -159,7 +159,7 @@ namespace WorkflowService.Migrations
                     b.HasIndex("TenantId", "Name", "Version")
                         .IsUnique();
 
-                    b.ToTable("WorkflowDefinitions", t =>
+                    b.ToTable("WorkflowDefinitions", null, t =>
                         {
                             t.HasCheckConstraint("CK_WorkflowDefinition_TenantId", "\"TenantId\" = current_setting('app.tenant_id')::int");
                         });
@@ -213,7 +213,7 @@ namespace WorkflowService.Migrations
 
                     b.HasIndex("TenantId", "Type", "OccurredAt");
 
-                    b.ToTable("WorkflowEvents", t =>
+                    b.ToTable("WorkflowEvents", null, t =>
                         {
                             t.HasCheckConstraint("CK_WorkflowEvent_TenantId", "\"TenantId\" = current_setting('app.tenant_id')::int");
                         });
@@ -276,7 +276,7 @@ namespace WorkflowService.Migrations
 
                     b.HasIndex("TenantId", "WorkflowDefinitionId");
 
-                    b.ToTable("WorkflowInstances", t =>
+                    b.ToTable("WorkflowInstances", null, t =>
                         {
                             t.HasCheckConstraint("CK_WorkflowInstance_TenantId", "\"TenantId\" = current_setting('app.tenant_id')::int");
                         });
@@ -355,7 +355,7 @@ namespace WorkflowService.Migrations
 
                     b.HasIndex("WorkflowInstanceId", "Status");
 
-                    b.ToTable("WorkflowTasks", t =>
+                    b.ToTable("WorkflowTasks", null, t =>
                         {
                             t.HasCheckConstraint("CK_WorkflowTask_TenantId", "\"TenantId\" = current_setting('app.tenant_id')::int");
                         });

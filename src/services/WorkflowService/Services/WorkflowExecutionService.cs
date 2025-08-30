@@ -13,6 +13,7 @@ using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
 
 namespace WorkflowService.Services
 {
+    [Obsolete("Legacy traversal service retained temporarily. Use WorkflowRuntime instead.")]
     public class WorkflowExecutionService : IWorkflowExecutionService
     {
         private readonly WorkflowDbContext _db;
@@ -22,6 +23,7 @@ namespace WorkflowService.Services
         {
             _db = db;
             _logger = logger;
+            _logger.LogWarning("WF_LEGACY_ENGINE_INSTANTIATED - This should be removed after runtime consolidation.");
         }
 
         public async Task AdvanceAfterTaskCompletionAsync(WorkflowTask completedTask)

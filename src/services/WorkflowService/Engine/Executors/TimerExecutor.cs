@@ -6,7 +6,7 @@ using WorkflowService.Engine.Interfaces;
 namespace WorkflowService.Engine.Executors;
 
 /// <summary>
-/// Executor for timer nodes
+/// Executor for timer nodes (schedules a waiting task).
 /// </summary>
 public class TimerExecutor : INodeExecutor
 {
@@ -25,48 +25,33 @@ public class TimerExecutor : INodeExecutor
     {
         try
         {
-            _logger.LogInformation("Executing timer node {NodeId} for instance {InstanceId}", node.Id, instance.Id);
-
-            var timerType = GetTimerType(node);
             var dueDate = CalculateDueDate(node);
 
-            _logger.LogInformation("Timer node {NodeId} type: {TimerType}, due date: {DueDate}",
-                node.Id, timerType, dueDate);
+            _logger.LogInformation("WF_TIMER_SCHEDULE Instance={InstanceId} Node={NodeId} DueUtc={DueUtc}",
+                instance.Id, node.Id, dueDate);
 
-            if (dueDate <= DateTime.UtcNow)
+            var task = new WorkflowTask
             {
-                // Timer has already expired, continue immediately
-                _logger.LogInformation("Timer node {NodeId} has already expired, continuing immediately", node.Id);
+                WorkflowInstanceId = instance.Id,
+                NodeId = node.Id,
+                TaskName = node.GetProperty<string>("label") ?? "Timer",
+                Status = DTOs.Workflow.Enums.TaskStatus.Created,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                DueDate = dueDate
+            };
 
-                return new NodeExecutionResult
-                {
-                    IsSuccess = true,
-                    ShouldWait = false,
-                    NextNodeIds = new List<string>()
-                };
-            }
-            else
+            return new NodeExecutionResult
             {
-                // Timer is still running, create a timer record and wait
-                _logger.LogInformation("Timer node {NodeId} will expire at {DueDate}, creating timer record",
-                    node.Id, dueDate);
-
-                // For MVP, we'll rely on the TimerWorker to advance this
-                // In a full implementation, we might schedule a background job
-
-                return new NodeExecutionResult
-                {
-                    IsSuccess = true,
-                    ShouldWait = true, // Wait for timer to expire
-                    NextNodeIds = new List<string>(),
-                    // Could add timer info to context for TimerWorker to find
-                    UpdatedContext = UpdateContextWithTimerInfo(context, node.Id, dueDate)
-                };
-            }
+                IsSuccess = true,
+                ShouldWait = true,
+                CreatedTask = task,
+                UpdatedContext = context
+            };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing timer node {NodeId} for instance {InstanceId}", node.Id, instance.Id);
+            _logger.LogError(ex, "WF_TIMER_ERROR Instance={InstanceId} Node={NodeId}", instance.Id, node.Id);
             return new NodeExecutionResult
             {
                 IsSuccess = false,
@@ -75,87 +60,37 @@ public class TimerExecutor : INodeExecutor
         }
     }
 
-    private string GetTimerType(WorkflowNode node)
-    {
-        return node.GetProperty<string>("timerType") ?? TimerTypes.Duration;
-    }
-
     private DateTime CalculateDueDate(WorkflowNode node)
     {
-        var timerType = GetTimerType(node);
+        // Priority: untilIso > delayMinutes > default 1 minute
+        var untilIso = GetString(node, "untilIso") ?? GetString(node, "dueDate");
+        if (!string.IsNullOrWhiteSpace(untilIso) && DateTime.TryParse(untilIso, out var until))
+            return until.ToUniversalTime();
 
-        switch (timerType.ToLowerInvariant())
-        {
-            case "duration":
-                var delayMinutes = GetDelayMinutes(node);
-                return DateTime.UtcNow.AddMinutes(delayMinutes);
-
-            case "duedate":
-                var untilIso = GetUntilIso(node);
-                if (DateTime.TryParse(untilIso, out var dueDate))
-                {
-                    return dueDate.ToUniversalTime();
-                }
-                _logger.LogWarning("Could not parse due date '{UntilIso}' for timer node, using 1 minute delay", untilIso);
-                return DateTime.UtcNow.AddMinutes(1);
-
-            default:
-                _logger.LogWarning("Unknown timer type '{TimerType}', using 1 minute delay", timerType);
-                return DateTime.UtcNow.AddMinutes(1);
-        }
+        var delayMinutes = GetInt(node, "delayMinutes") ?? GetInt(node, "durationMinutes") ?? 1;
+        return DateTime.UtcNow.AddMinutes(delayMinutes);
     }
 
-    private int GetDelayMinutes(WorkflowNode node)
+    private static string? GetString(WorkflowNode node, string key)
     {
-        // Handle frontend JSON structure
-        if (node.Properties.TryGetValue("delayMinutes", out var delayValue))
+        if (node.Properties.TryGetValue(key, out var v))
         {
-            if (delayValue is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.Number)
-            {
-                if (jsonElement.TryGetInt32(out var minutes))
-                {
-                    return minutes;
-                }
-            }
+            if (v is JsonElement el && el.ValueKind == JsonValueKind.String)
+                return el.GetString();
+            return v?.ToString();
         }
-
-        return node.GetProperty<int>("durationMinutes", 1);
+        return null;
     }
 
-    private string GetUntilIso(WorkflowNode node)
+    private static int? GetInt(WorkflowNode node, string key)
     {
-        // Handle frontend JSON structure
-        if (node.Properties.TryGetValue("untilIso", out var untilValue))
+        if (node.Properties.TryGetValue(key, out var v))
         {
-            if (untilValue is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.String)
-            {
-                return jsonElement.GetString() ?? string.Empty;
-            }
+            if (v is JsonElement el && el.ValueKind == JsonValueKind.Number && el.TryGetInt32(out var n))
+                return n;
+            if (int.TryParse(v?.ToString(), out var parsed))
+                return parsed;
         }
-
-        return node.GetProperty<string>("dueDate") ?? string.Empty;
-    }
-
-    private string UpdateContextWithTimerInfo(string currentContext, string nodeId, DateTime dueDate)
-    {
-        try
-        {
-            var context = JsonSerializer.Deserialize<Dictionary<string, object>>(currentContext) ?? new();
-
-            // Add timer info for TimerWorker to find
-            context[$"timer_{nodeId}"] = new
-            {
-                NodeId = nodeId,
-                DueDate = dueDate,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            return JsonSerializer.Serialize(context);
-        }
-        catch (Exception ex)
-        {
-            // If context update fails, just log and return original
-            return currentContext;
-        }
+        return null;
     }
 }

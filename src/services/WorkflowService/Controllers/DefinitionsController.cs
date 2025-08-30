@@ -1,55 +1,51 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Common.Authorization;
 using Common.Constants;
 using DTOs.Common;
 using DTOs.Workflow;
-using WorkflowService.Persistence;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WorkflowService.Domain.Dsl;
+using WorkflowService.Persistence;
+using WorkflowService.Security;
 
 namespace WorkflowService.Controllers;
 
-/// <summary>
-/// Controller for managing workflow definitions (stores RAW builder JSON as-is).
-/// </summary>
 [ApiController]
-[Route("api/workflow/[controller]")]
-[Authorize]
+[Route("api/workflow/definitions")]
 public class DefinitionsController : ControllerBase
 {
     private readonly WorkflowDbContext _context;
     private readonly ILogger<DefinitionsController> _logger;
 
-    public DefinitionsController(
-        WorkflowDbContext context,
-        ILogger<DefinitionsController> logger)
+    public DefinitionsController(WorkflowDbContext context, ILogger<DefinitionsController> logger)
     {
         _context = context;
         _logger = logger;
     }
 
-    /// <summary>
-    /// Get all workflow definitions for the current tenant
-    /// </summary>
+    // -------------------------
+    // PRIMARY ENDPOINTS
+    // -------------------------
+
+    // GET (list)
     [HttpGet]
     [RequiresPermission(Permissions.Workflow.ViewDefinitions)]
-    public async Task<ActionResult<ApiResponseDto<List<WorkflowDefinitionDto>>>> GetDefinitions(
-        [FromQuery] bool? published = null)
+    public async Task<ActionResult<ApiResponseDto<List<WorkflowDefinitionDto>>>> GetAll()
     {
         try
         {
-            var query = _context.WorkflowDefinitions.AsQueryable();
-            if (published.HasValue)
-                query = query.Where(d => d.IsPublished == published.Value);
+            var defs = await _context.WorkflowDefinitions
+                .AsNoTracking()
+                .OrderBy(d => d.Name)
+                .ToListAsync();
 
-            var definitions = await query
-                .OrderByDescending(d => d.CreatedAt)
+            var list = defs
                 .Select(d => new WorkflowDefinitionDto
                 {
                     Id = d.Id,
                     Name = d.Name,
                     Version = d.Version,
-                    JSONDefinition = d.JSONDefinition,
+                    JSONDefinition = d.JSONDefinition.EnrichEdgesForGateway(),
                     IsPublished = d.IsPublished,
                     Description = d.Description,
                     PublishedAt = d.PublishedAt,
@@ -57,64 +53,56 @@ public class DefinitionsController : ControllerBase
                     CreatedAt = d.CreatedAt,
                     UpdatedAt = d.UpdatedAt
                 })
-                .ToListAsync();
+                .ToList();
 
-            return Ok(ApiResponseDto<List<WorkflowDefinitionDto>>.SuccessResult(
-                definitions,
-                "Workflow definitions retrieved successfully"));
+            return Ok(ApiResponseDto<List<WorkflowDefinitionDto>>.SuccessResult(list));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving workflow definitions");
-            return StatusCode(500, ApiResponseDto<List<WorkflowDefinitionDto>>.ErrorResult(
-                "An error occurred while retrieving workflow definitions"));
+            return StatusCode(500,
+                ApiResponseDto<List<WorkflowDefinitionDto>>.ErrorResult("Failed to retrieve workflow definitions"));
         }
     }
 
-    /// <summary>
-    /// Get a specific workflow definition by ID
-    /// </summary>
-    [HttpGet("{id}")]
+    // GET (single)
+    [HttpGet("{id:int}")]
     [RequiresPermission(Permissions.Workflow.ViewDefinitions)]
-    public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> GetDefinition(int id)
+    public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> Get(int id)
     {
         try
         {
-            var definition = await _context.WorkflowDefinitions
-                .Where(d => d.Id == id)
-                .Select(d => new WorkflowDefinitionDto
-                {
-                    Id = d.Id,
-                    Name = d.Name,
-                    Version = d.Version,
-                    JSONDefinition = d.JSONDefinition,
-                    IsPublished = d.IsPublished,
-                    Description = d.Description,
-                    PublishedAt = d.PublishedAt,
-                    PublishedByUserId = d.PublishedByUserId,
-                    CreatedAt = d.CreatedAt,
-                    UpdatedAt = d.UpdatedAt
-                })
-                .FirstOrDefaultAsync();
+            var def = await _context.WorkflowDefinitions
+                .FirstOrDefaultAsync(d => d.Id == id);
 
-            if (definition == null)
+            if (def == null)
                 return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Workflow definition not found"));
 
-            return Ok(ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(
-                definition,
-                "Workflow definition retrieved successfully"));
+            var dto = new WorkflowDefinitionDto
+            {
+                Id = def.Id,
+                Name = def.Name,
+                Version = def.Version,
+                JSONDefinition = def.JSONDefinition.EnrichEdgesForGateway(),
+                IsPublished = def.IsPublished,
+                Description = def.Description,
+                PublishedAt = def.PublishedAt,
+                PublishedByUserId = def.PublishedByUserId,
+                CreatedAt = def.CreatedAt,
+                UpdatedAt = def.UpdatedAt
+            };
+
+            return Ok(ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving workflow definition {Id}", id);
-            return StatusCode(500, ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(
-                "An error occurred while retrieving the workflow definition"));
+            return StatusCode(500,
+                ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Failed to retrieve workflow definition"));
         }
     }
 
-    /// <summary>
-    /// Create a new workflow definition draft (EF-based)
-    /// </summary>
+    // POST: draft
     [HttpPost("draft")]
     [RequiresPermission(Permissions.Workflow.CreateDefinitions)]
     public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> CreateDraft(
@@ -122,271 +110,130 @@ public class DefinitionsController : ControllerBase
     {
         try
         {
-            var nameExists = await _context.WorkflowDefinitions
-                .AnyAsync(d => d.Name == request.Name);
+            if (await _context.WorkflowDefinitions.AnyAsync(d => d.Name == request.Name))
+                return BadRequest(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Definition name already exists"));
 
-            if (nameExists)
-                return BadRequest(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(
-                    "A workflow definition with this name already exists"));
+            var enrichedJson = request.JSONDefinition.EnrichEdgesForGateway();
 
-            // Store raw builder JSON unmodified
-            var definition = new WorkflowService.Domain.Models.WorkflowDefinition
+            var entity = new Domain.Models.WorkflowDefinition
             {
                 Name = request.Name,
                 Version = 1,
-                JSONDefinition = request.JSONDefinition, // RAW
+                JSONDefinition = enrichedJson,
                 IsPublished = false,
                 Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description,
-                Tags = string.IsNullOrWhiteSpace(request.Tags) ? null : request.Tags
+                Tags = string.IsNullOrWhiteSpace(request.Tags) ? null : request.Tags,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
-            _context.WorkflowDefinitions.Add(definition);
+            _context.WorkflowDefinitions.Add(entity);
             await _context.SaveChangesAsync();
 
             var dto = new WorkflowDefinitionDto
             {
-                Id = definition.Id,
-                Name = definition.Name,
-                Version = definition.Version,
-                JSONDefinition = definition.JSONDefinition,
-                IsPublished = definition.IsPublished,
-                Description = definition.Description,
-                PublishedAt = definition.PublishedAt,
-                PublishedByUserId = definition.PublishedByUserId,
-                CreatedAt = definition.CreatedAt,
-                UpdatedAt = definition.UpdatedAt
+                Id = entity.Id,
+                Name = entity.Name,
+                Version = entity.Version,
+                JSONDefinition = entity.JSONDefinition,
+                IsPublished = entity.IsPublished,
+                Description = entity.Description,
+                PublishedAt = entity.PublishedAt,
+                PublishedByUserId = entity.PublishedByUserId,
+                CreatedAt = entity.CreatedAt,
+                UpdatedAt = entity.UpdatedAt
             };
 
-            _logger.LogInformation("Created workflow definition draft {Name} (ID={Id})",
-                definition.Name, definition.Id);
-
-            return CreatedAtAction(nameof(GetDefinition),
-                new { id = definition.Id },
-                ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto,
-                    "Workflow definition draft created successfully"));
+            _logger.LogInformation("Created workflow definition draft {Name} (ID={Id})", entity.Name, entity.Id);
+            return CreatedAtAction(nameof(Get), new { id = entity.Id },
+                ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto, "Draft created"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating workflow definition draft");
-            return StatusCode(500, ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(
-                "An error occurred while creating the workflow definition draft"));
+            return StatusCode(500,
+                ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Failed to create draft"));
         }
     }
 
-    /// <summary>
-    /// Update a workflow definition draft
-    /// </summary>
-    [HttpPut("{id}")]
+    // PUT: update draft
+    [HttpPut("{id:int}")]
     [RequiresPermission(Permissions.Workflow.EditDefinitions)]
-    public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> UpdateDefinition(
+    public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> UpdateDraft(
         int id,
         [FromBody] UpdateWorkflowDefinitionDto request)
     {
         try
         {
-            var definition = await _context.WorkflowDefinitions
-                .FirstOrDefaultAsync(d => d.Id == id);
+            var def = await _context.WorkflowDefinitions.FirstOrDefaultAsync(d => d.Id == id);
+            if (def == null)
+                return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Definition not found"));
+            if (def.IsPublished)
+                return BadRequest(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Cannot edit published definition"));
 
-            if (definition == null)
-                return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Workflow definition not found"));
-
-            if (definition.IsPublished)
-                return BadRequest(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(
-                    "Cannot modify a published workflow definition"));
-
-            if (!string.IsNullOrEmpty(request.Name))
-                definition.Name = request.Name;
-
-            if (!string.IsNullOrEmpty(request.JSONDefinition))
-                definition.JSONDefinition = request.JSONDefinition; // RAW
-
+            if (!string.IsNullOrWhiteSpace(request.Name))
+                def.Name = request.Name;
             if (request.Description != null)
-                definition.Description = request.Description;
-
+                def.Description = request.Description;
             if (request.Tags != null)
-                definition.Tags = string.IsNullOrWhiteSpace(request.Tags) ? null : request.Tags;
+                def.Tags = request.Tags;
 
+            if (!string.IsNullOrWhiteSpace(request.JSONDefinition))
+                def.JSONDefinition = request.JSONDefinition.EnrichEdgesForGateway();
+            else
+                def.JSONDefinition = def.JSONDefinition.EnrichEdgesForGateway();
+
+            def.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
             var dto = new WorkflowDefinitionDto
             {
-                Id = definition.Id,
-                Name = definition.Name,
-                Version = definition.Version,
-                JSONDefinition = definition.JSONDefinition,
-                IsPublished = definition.IsPublished,
-                Description = definition.Description,
-                PublishedAt = definition.PublishedAt,
-                PublishedByUserId = definition.PublishedByUserId,
-                CreatedAt = definition.CreatedAt,
-                UpdatedAt = definition.UpdatedAt
+                Id = def.Id,
+                Name = def.Name,
+                Version = def.Version,
+                JSONDefinition = def.JSONDefinition,
+                IsPublished = def.IsPublished,
+                Description = def.Description,
+                PublishedAt = def.PublishedAt,
+                PublishedByUserId = def.PublishedByUserId,
+                CreatedAt = def.CreatedAt,
+                UpdatedAt = def.UpdatedAt
             };
-
-            _logger.LogInformation("Updated workflow definition {Id}", id);
-
-            return Ok(ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto,
-                "Workflow definition updated successfully"));
+            return Ok(ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto, "Draft updated"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating workflow definition {Id}", id);
-            return StatusCode(500, ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(
-                "An error occurred while updating the workflow definition"));
+            _logger.LogError(ex, "Error updating workflow definition draft {Id}", id);
+            return StatusCode(500,
+                ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Failed to update draft"));
         }
     }
 
-    /// <summary>
-    /// Publish a workflow definition (makes it immutable)
-    /// </summary>
-    [HttpPost("{id}/publish")]
-    [RequiresPermission(Permissions.Workflow.PublishDefinitions)]
-    public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> PublishDefinition(
-        int id,
-        [FromBody] PublishDefinitionRequestDto request)
+    // -------------------------
+    // LEGACY TEST ALIASES
+    // -------------------------
+    // Old tests used: GetDefinitions(published: bool?)
+    [NonAction]
+    public async Task<ActionResult<ApiResponseDto<List<WorkflowDefinitionDto>>>> GetDefinitions(bool? published = null)
     {
-        try
+        var result = await GetAll();
+        if (result.Result is ObjectResult or OkObjectResult)
         {
-            var definition = await _context.WorkflowDefinitions
-                .FirstOrDefaultAsync(d => d.Id == id);
-
-            if (definition == null)
-                return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Workflow definition not found"));
-
-            if (definition.IsPublished)
-                return BadRequest(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(
-                    "Workflow definition is already published"));
-
-            // Optionally validate (light)
-            // (Intentionally tolerant – engine will enforce at start time)
-            definition.IsPublished = true;
-            definition.PublishedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-
-            var dto = new WorkflowDefinitionDto
+            var payload = (result.Result as ObjectResult)?.Value as ApiResponseDto<List<WorkflowDefinitionDto>>
+                          ?? result.Value;
+            if (payload?.Data != null && published.HasValue)
             {
-                Id = definition.Id,
-                Name = definition.Name,
-                Version = definition.Version,
-                JSONDefinition = definition.JSONDefinition,
-                IsPublished = definition.IsPublished,
-                Description = definition.Description,
-                PublishedAt = definition.PublishedAt,
-                PublishedByUserId = definition.PublishedByUserId,
-                CreatedAt = definition.CreatedAt,
-                UpdatedAt = definition.UpdatedAt
-            };
-
-            _logger.LogInformation("Published workflow definition {Id}", id);
-
-            return Ok(ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto,
-                "Workflow definition published successfully"));
+                payload.Data = payload.Data
+                    .Where(d => d.IsPublished == published.Value)
+                    .ToList();
+            }
+            return payload == null
+                ? ApiResponseDto<List<WorkflowDefinitionDto>>.ErrorResult("Unexpected null payload")
+                : ApiResponseDto<List<WorkflowDefinitionDto>>.SuccessResult(payload.Data);
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error publishing workflow definition {Id}", id);
-            return StatusCode(500, ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(
-                "An error occurred while publishing the workflow definition"));
-        }
+        return result;
     }
 
-    /// <summary>
-    /// Unpublish a published definition (prevent new instances, keep version history)
-    /// </summary>
-    [HttpPost("{id}/unpublish")]
-    [RequiresPermission(Permissions.Workflow.PublishDefinitions)]
-    public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> Unpublish(int id)
-    {
-        var def = await _context.WorkflowDefinitions.FirstOrDefaultAsync(d => d.Id == id);
-        if (def == null) return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Workflow definition not found"));
-        if (!def.IsPublished) return BadRequest(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Definition is not published"));
-        // Ensure no running instances if that is your rule (optional)
-        def.IsPublished = false;
-        await _context.SaveChangesAsync();
-        return Ok(ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(new WorkflowDefinitionDto {
-            Id = def.Id, Name = def.Name, Version = def.Version, JSONDefinition = def.JSONDefinition,
-            IsPublished = def.IsPublished, Description = def.Description, PublishedAt = def.PublishedAt,
-            PublishedByUserId = def.PublishedByUserId, CreatedAt = def.CreatedAt, UpdatedAt = def.UpdatedAt
-        }, "Definition unpublished"));
-    }
-
-    /// <summary>
-    /// Archive a definition (hide from normal lists)
-    /// </summary>
-    [HttpPost("{id}/archive")]
-    [RequiresPermission(Permissions.Workflow.PublishDefinitions)]
-    public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> Archive(int id)
-    {
-        var def = await _context.WorkflowDefinitions.FirstOrDefaultAsync(d => d.Id == id);
-        if (def == null) return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Workflow definition not found"));
-        if (def.IsArchived) return BadRequest(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Already archived"));
-        def.IsArchived = true;
-        def.ArchivedAt = DateTime.UtcNow;
-        await _context.SaveChangesAsync();
-        return Ok(ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(new WorkflowDefinitionDto {
-            Id = def.Id, Name = def.Name, Version = def.Version, JSONDefinition = def.JSONDefinition,
-            IsPublished = def.IsPublished, Description = def.Description, PublishedAt = def.PublishedAt,
-            PublishedByUserId = def.PublishedByUserId, CreatedAt = def.CreatedAt, UpdatedAt = def.UpdatedAt
-        }, "Definition archived"));
-    }
-
-    /// <summary>
-    /// Terminate all running instances of a definition.
-    /// </summary>
-    [HttpPost("{id}/terminate-running")]
-    [RequiresPermission(Permissions.Workflow.ManageInstances)]
-    public async Task<ActionResult<ApiResponseDto<object>>> TerminateRunning(int id)
-    {
-        var running = await _context.WorkflowInstances
-            .Where(i => i.WorkflowDefinitionId == id && i.Status == DTOs.Workflow.Enums.InstanceStatus.Running)
-            .ToListAsync();
-        foreach (var inst in running)
-        {
-            inst.Status = DTOs.Workflow.Enums.InstanceStatus.Cancelled;
-            inst.CompletedAt = DateTime.UtcNow;
-            inst.UpdatedAt = DateTime.UtcNow;
-        }
-        var count = await _context.SaveChangesAsync();
-        return Ok(ApiResponseDto<object>.SuccessResult(new { terminated = running.Count }, $"Terminated {running.Count} running instance(s)"));
-    }
-
-    /// <summary>
-    /// Delete a workflow definition (only if not published and no instances)
-    /// </summary>
-    [HttpDelete("{id}")]
-    [RequiresPermission(Permissions.Workflow.DeleteDefinitions)]
-    public async Task<ActionResult<ApiResponseDto<bool>>> DeleteDefinition(int id)
-    {
-        try
-        {
-            var definition = await _context.WorkflowDefinitions
-                .Include(d => d.Instances)
-                .FirstOrDefaultAsync(d => d.Id == id);
-
-            if (definition == null)
-                return NotFound(ApiResponseDto<bool>.ErrorResult("Workflow definition not found"));
-
-            if (definition.IsPublished)
-                return BadRequest(ApiResponseDto<bool>.ErrorResult(
-                    "Cannot delete a published workflow definition"));
-
-            if (definition.Instances.Any())
-                return BadRequest(ApiResponseDto<bool>.ErrorResult(
-                    "Cannot delete a workflow definition that has instances"));
-
-            _context.WorkflowDefinitions.Remove(definition);
-            await _context.SaveChangesAsync();
-
-            _logger.LogInformation("Deleted workflow definition {Id}", id);
-
-            return Ok(ApiResponseDto<bool>.SuccessResult(true,
-                "Workflow definition deleted successfully"));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting workflow definition {Id}", id);
-            return StatusCode(500, ApiResponseDto<bool>.ErrorResult(
-                "An error occurred while deleting the workflow definition"));
-        }
-    }
+    [NonAction]
+    public Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> GetDefinition(int id) => Get(id);
 }

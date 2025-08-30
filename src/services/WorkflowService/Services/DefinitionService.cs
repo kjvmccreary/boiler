@@ -32,30 +32,38 @@ public class DefinitionService : IDefinitionService
         _logger = logger;
     }
 
+    private bool ApplyGatewayBackfill(WorkflowDefinition definition, bool persistIfChanged)
+    {
+        var original = definition.JSONDefinition;
+        var backfilled = original.EnrichEdgesForGateway();
+        if (backfilled != original)
+        {
+            definition.JSONDefinition = backfilled;
+            if (persistIfChanged)
+                definition.UpdatedAt = DateTime.UtcNow;
+            return true;
+        }
+        return false;
+    }
+
     public async Task<ApiResponseDto<WorkflowDefinitionDto>> CreateDraftAsync(CreateWorkflowDefinitionDto request, CancellationToken cancellationToken = default)
     {
         try
         {
             var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!tenantId.HasValue)
-            {
                 return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Tenant context required");
-            }
 
-            // Validate the JSON definition
             var validationResult = await ValidateDefinitionInternalAsync(request.JSONDefinition);
             if (!validationResult.IsValid)
-            {
-                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(
-                    $"Invalid workflow definition: {string.Join(", ", validationResult.Errors)}");
-            }
+                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult($"Invalid workflow definition: {string.Join(", ", validationResult.Errors)}");
 
             var definition = new WorkflowDefinition
             {
                 TenantId = tenantId.Value,
                 Name = request.Name,
                 Description = request.Description,
-                JSONDefinition = request.JSONDefinition,
+                JSONDefinition = request.JSONDefinition.EnrichEdgesForGateway(),
                 Version = 1,
                 IsPublished = false,
                 Tags = request.Tags,
@@ -67,10 +75,7 @@ public class DefinitionService : IDefinitionService
             await _context.SaveChangesAsync(cancellationToken);
 
             var dto = _mapper.Map<WorkflowDefinitionDto>(definition);
-
-            _logger.LogInformation("Created draft workflow definition {DefinitionId} for tenant {TenantId}", 
-                definition.Id, tenantId);
-
+            _logger.LogInformation("Created draft workflow definition {DefinitionId} for tenant {TenantId}", definition.Id, tenantId);
             return ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto, "Draft workflow definition created successfully");
         }
         catch (Exception ex)
@@ -86,53 +91,40 @@ public class DefinitionService : IDefinitionService
         {
             var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!tenantId.HasValue)
-            {
                 return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Tenant context required");
-            }
 
             var definition = await _context.WorkflowDefinitions
                 .FirstOrDefaultAsync(d => d.Id == definitionId && d.TenantId == tenantId.Value, cancellationToken);
 
             if (definition == null)
-            {
                 return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Workflow definition not found");
-            }
-
             if (definition.IsPublished)
-            {
                 return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Cannot update published workflow definition");
-            }
 
-            // Update fields if provided
             if (!string.IsNullOrEmpty(request.Name))
                 definition.Name = request.Name;
-
             if (request.Description != null)
                 definition.Description = request.Description;
-
-            if (!string.IsNullOrEmpty(request.JSONDefinition))
-            {
-                // Validate new JSON definition
-                var validationResult = await ValidateDefinitionInternalAsync(request.JSONDefinition);
-                if (!validationResult.IsValid)
-                {
-                    return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(
-                        $"Invalid workflow definition: {string.Join(", ", validationResult.Errors)}");
-                }
-                definition.JSONDefinition = request.JSONDefinition;
-            }
-
             if (request.Tags != null)
                 definition.Tags = request.Tags;
 
-            definition.UpdatedAt = DateTime.UtcNow;
+            if (!string.IsNullOrEmpty(request.JSONDefinition))
+            {
+                var validationResult = await ValidateDefinitionInternalAsync(request.JSONDefinition);
+                if (!validationResult.IsValid)
+                    return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult($"Invalid workflow definition: {string.Join(", ", validationResult.Errors)}");
+                definition.JSONDefinition = request.JSONDefinition.EnrichEdgesForGateway();
+            }
+            else
+            {
+                ApplyGatewayBackfill(definition, persistIfChanged: false);
+            }
 
+            definition.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
 
             var dto = _mapper.Map<WorkflowDefinitionDto>(definition);
-
             _logger.LogInformation("Updated draft workflow definition {DefinitionId}", definitionId);
-
             return ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto, "Draft workflow definition updated successfully");
         }
         catch (Exception ex)
@@ -148,30 +140,19 @@ public class DefinitionService : IDefinitionService
         {
             var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!tenantId.HasValue)
-            {
                 return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Tenant context required");
-            }
 
             var definition = await _context.WorkflowDefinitions
                 .FirstOrDefaultAsync(d => d.Id == definitionId && d.TenantId == tenantId.Value, cancellationToken);
 
             if (definition == null)
-            {
                 return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Workflow definition not found");
-            }
-
             if (definition.IsPublished && !request.ForcePublish)
-            {
                 return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Workflow definition is already published");
-            }
 
-            // Final validation before publishing
             var validationResult = await ValidateDefinitionInternalAsync(definition.JSONDefinition);
             if (!validationResult.IsValid)
-            {
-                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(
-                    $"Cannot publish invalid workflow definition: {string.Join(", ", validationResult.Errors)}");
-            }
+                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult($"Cannot publish invalid workflow definition: {string.Join(", ", validationResult.Errors)}");
 
             definition.IsPublished = true;
             definition.PublishedAt = DateTime.UtcNow;
@@ -179,15 +160,10 @@ public class DefinitionService : IDefinitionService
             definition.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);
-
-            // Publish event
             await _eventPublisher.PublishDefinitionPublishedAsync(definition, cancellationToken);
 
             var dto = _mapper.Map<WorkflowDefinitionDto>(definition);
-
-            _logger.LogInformation("Published workflow definition {DefinitionId} version {Version}", 
-                definitionId, definition.Version);
-
+            _logger.LogInformation("Published workflow definition {DefinitionId} version {Version}", definitionId, definition.Version);
             return ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto, "Workflow definition published successfully");
         }
         catch (Exception ex)
@@ -203,27 +179,17 @@ public class DefinitionService : IDefinitionService
         {
             var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!tenantId.HasValue)
-            {
                 return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Tenant context required");
-            }
 
-            var query = _context.WorkflowDefinitions
-                .Where(d => d.Id == definitionId && d.TenantId == tenantId.Value);
-
-            if (version.HasValue)
-            {
-                query = query.Where(d => d.Version == version.Value);
-            }
+            var query = _context.WorkflowDefinitions.Where(d => d.Id == definitionId && d.TenantId == tenantId.Value);
+            if (version.HasValue) query = query.Where(d => d.Version == version.Value);
 
             var definition = await query.FirstOrDefaultAsync(cancellationToken);
-
             if (definition == null)
-            {
                 return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Workflow definition not found");
-            }
 
+            definition.JSONDefinition = definition.JSONDefinition.EnrichEdgesForGateway();
             var dto = _mapper.Map<WorkflowDefinitionDto>(definition);
-
             return ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto);
         }
         catch (Exception ex)
@@ -239,31 +205,18 @@ public class DefinitionService : IDefinitionService
         {
             var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!tenantId.HasValue)
-            {
                 return ApiResponseDto<PagedResultDto<WorkflowDefinitionDto>>.ErrorResult("Tenant context required");
-            }
 
-            var query = _context.WorkflowDefinitions
-                .Where(d => d.TenantId == tenantId.Value);
+            var query = _context.WorkflowDefinitions.Where(d => d.TenantId == tenantId.Value);
 
-            // Apply filters
             if (!string.IsNullOrEmpty(request.SearchTerm))
-            {
-                query = query.Where(d => d.Name.Contains(request.SearchTerm) || 
-                                        (d.Description != null && d.Description.Contains(request.SearchTerm)));
-            }
-
+                query = query.Where(d => d.Name.Contains(request.SearchTerm) ||
+                                         (d.Description != null && d.Description.Contains(request.SearchTerm)));
             if (request.IsPublished.HasValue)
-            {
                 query = query.Where(d => d.IsPublished == request.IsPublished.Value);
-            }
-
             if (!string.IsNullOrEmpty(request.Tags))
-            {
                 query = query.Where(d => d.Tags != null && d.Tags.Contains(request.Tags));
-            }
 
-            // Apply sorting
             query = request.SortBy.ToLower() switch
             {
                 "name" => request.SortDescending ? query.OrderByDescending(d => d.Name) : query.OrderBy(d => d.Name),
@@ -273,24 +226,24 @@ public class DefinitionService : IDefinitionService
             };
 
             var totalCount = await query.CountAsync(cancellationToken);
-            
             var definitions = await query
                 .Skip((request.Page - 1) * request.PageSize)
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
 
+            foreach (var def in definitions)
+                ApplyGatewayBackfill(def, persistIfChanged: false);
+
             var dtos = _mapper.Map<List<WorkflowDefinitionDto>>(definitions);
 
-            var pagedResult = new PagedResultDto<WorkflowDefinitionDto>
+            var paged = new PagedResultDto<WorkflowDefinitionDto>
             {
                 Items = dtos,
                 TotalCount = totalCount,
                 Page = request.Page,
                 PageSize = request.PageSize
-                //TotalPages = (int)Math.Ceiling((double)totalCount / request.PageSize)
             };
-
-            return ApiResponseDto<PagedResultDto<WorkflowDefinitionDto>>.SuccessResult(pagedResult);
+            return ApiResponseDto<PagedResultDto<WorkflowDefinitionDto>>.SuccessResult(paged);
         }
         catch (Exception ex)
         {
@@ -319,37 +272,24 @@ public class DefinitionService : IDefinitionService
         {
             var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!tenantId.HasValue)
-            {
                 return ApiResponseDto<bool>.ErrorResult("Tenant context required");
-            }
 
             var definition = await _context.WorkflowDefinitions
                 .FirstOrDefaultAsync(d => d.Id == definitionId && d.TenantId == tenantId.Value, cancellationToken);
-
             if (definition == null)
-            {
                 return ApiResponseDto<bool>.ErrorResult("Workflow definition not found");
-            }
-
             if (definition.IsPublished)
-            {
                 return ApiResponseDto<bool>.ErrorResult("Cannot delete published workflow definition");
-            }
 
-            // Check if there are any instances
             var hasInstances = await _context.WorkflowInstances
                 .AnyAsync(i => i.WorkflowDefinitionId == definitionId, cancellationToken);
-
             if (hasInstances)
-            {
-                return ApiResponseDto<bool>.ErrorResult("Cannot delete workflow definition with existing instances");
-            }
+                return ApiResponseDto<bool>.ErrorResult("Cannot delete definition with existing instances");
 
             _context.WorkflowDefinitions.Remove(definition);
             await _context.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation("Deleted draft workflow definition {DefinitionId}", definitionId);
-
             return ApiResponseDto<bool>.SuccessResult(true, "Draft workflow definition deleted successfully");
         }
         catch (Exception ex)
@@ -365,57 +305,45 @@ public class DefinitionService : IDefinitionService
         {
             var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
             if (!tenantId.HasValue)
-            {
                 return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Tenant context required");
-            }
 
-            var existingDefinition = await _context.WorkflowDefinitions
+            var existing = await _context.WorkflowDefinitions
                 .Where(d => d.Id == definitionId && d.TenantId == tenantId.Value)
                 .OrderByDescending(d => d.Version)
                 .FirstOrDefaultAsync(cancellationToken);
-
-            if (existingDefinition == null)
-            {
+            if (existing == null)
                 return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Base workflow definition not found");
-            }
 
-            // Validate the new JSON definition
             var validationResult = await ValidateDefinitionInternalAsync(request.JSONDefinition);
             if (!validationResult.IsValid)
-            {
-                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(
-                    $"Invalid workflow definition: {string.Join(", ", validationResult.Errors)}");
-            }
+                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult($"Invalid workflow definition: {string.Join(", ", validationResult.Errors)}");
 
-            var newDefinition = new WorkflowDefinition
+            var newDef = new WorkflowDefinition
             {
                 TenantId = tenantId.Value,
                 Name = request.Name,
                 Description = request.Description,
-                JSONDefinition = request.JSONDefinition,
-                Version = existingDefinition.Version + 1,
+                JSONDefinition = request.JSONDefinition.EnrichEdgesForGateway(),
+                Version = existing.Version + 1,
                 IsPublished = false,
                 Tags = request.Tags,
                 VersionNotes = request.VersionNotes,
-                ParentDefinitionId = existingDefinition.Id,
+                ParentDefinitionId = existing.Id,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
 
-            _context.WorkflowDefinitions.Add(newDefinition);
+            _context.WorkflowDefinitions.Add(newDef);
             await _context.SaveChangesAsync(cancellationToken);
 
-            var dto = _mapper.Map<WorkflowDefinitionDto>(newDefinition);
-
-            _logger.LogInformation("Created new version {Version} of workflow definition {DefinitionId}", 
-                newDefinition.Version, definitionId);
-
-            return ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto, "New workflow definition version created successfully");
+            var dto = _mapper.Map<WorkflowDefinitionDto>(newDef);
+            _logger.LogInformation("Created new version {Version} for definition {DefinitionId}", newDef.Version, definitionId);
+            return ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto, "New version created");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating new version of workflow definition {DefinitionId}", definitionId);
-            return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Failed to create new workflow definition version");
+            _logger.LogError(ex, "Error creating new version for workflow definition {DefinitionId}", definitionId);
+            return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Failed to create new version");
         }
     }
 
@@ -423,21 +351,20 @@ public class DefinitionService : IDefinitionService
     {
         try
         {
-            var workflowDef = WorkflowDefinitionJson.FromJson(jsonDefinition);
-            var validationResult = workflowDef.Validate();
-
+            var wf = WorkflowDefinitionJson.FromJson(jsonDefinition);
+            var v = wf.Validate();
             return new ValidationResultDto
             {
-                IsValid = validationResult.IsValid,
-                Errors = validationResult.Errors,
-                Warnings = validationResult.Warnings,
+                IsValid = v.IsValid,
+                Errors = v.Errors,
+                Warnings = v.Warnings,
                 Metadata = new Dictionary<string, object>
                 {
-                    ["nodeCount"] = workflowDef.Nodes.Count,
-                    ["edgeCount"] = workflowDef.Edges.Count,
-                    ["hasStartNode"] = workflowDef.Nodes.Any(n => n.IsStart()),
-                    ["hasEndNode"] = workflowDef.Nodes.Any(n => n.IsEnd()),
-                    ["nodeTypes"] = workflowDef.Nodes.GroupBy(n => n.Type).ToDictionary(g => g.Key, g => g.Count())
+                    ["nodeCount"] = wf.Nodes.Count,
+                    ["edgeCount"] = wf.Edges.Count,
+                    ["hasStartNode"] = wf.Nodes.Any(n => n.IsStart()),
+                    ["hasEndNode"] = wf.Nodes.Any(n => n.IsEnd()),
+                    ["nodeTypes"] = wf.Nodes.GroupBy(n => n.Type).ToDictionary(g => g.Key, g => g.Count())
                 }
             };
         }

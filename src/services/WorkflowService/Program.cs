@@ -86,8 +86,8 @@ builder.Services.AddDbContext<WorkflowDbContext>(options =>
 });
 
 // ✅ STEP 1: Add Workflow Engine Services (COMPLETED)
-builder.Services.AddScoped<IWorkflowRuntime, WorkflowRuntime>();
 builder.Services.AddScoped<IConditionEvaluator, JsonLogicConditionEvaluator>();
+builder.Services.AddScoped<IWorkflowRuntime, WorkflowRuntime>();
 
 // Add Node Executors
 builder.Services.AddScoped<INodeExecutor, StartEndExecutor>();

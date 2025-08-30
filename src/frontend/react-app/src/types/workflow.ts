@@ -41,14 +41,14 @@ export enum TaskStatus {
 }
 
 // =====================================
-// WORKFLOW DEFINITION TYPES
+// WORKFLOW DEFINITION TYPES (API DTO)
 // =====================================
 
 export interface WorkflowDefinitionDto {
   id: number;
   name: string;
   version: number;
-  jsonDefinition: string; // ✅ KEEP camelCase - our apiClient handles conversion
+  jsonDefinition: string;
   isPublished: boolean;
   description?: string;
   publishedAt?: string;
@@ -59,14 +59,14 @@ export interface WorkflowDefinitionDto {
 
 export interface CreateWorkflowDefinitionDto {
   name: string;
-  jsonDefinition: string; // ✅ KEEP camelCase 
+  jsonDefinition: string;
   description?: string;
   tags?: string;
 }
 
 export interface UpdateWorkflowDefinitionDto {
   name?: string;
-  jsonDefinition?: string; // ✅ KEEP camelCase
+  jsonDefinition?: string;
   description?: string;
   tags?: string;
 }
@@ -106,7 +106,7 @@ export interface CreateNewVersionRequestDto {
 }
 
 // =====================================
-// WORKFLOW INSTANCE TYPES  
+// WORKFLOW INSTANCE TYPES
 // =====================================
 
 export interface WorkflowInstanceDto {
@@ -164,7 +164,7 @@ export interface InstanceStatusDto {
   currentNodeNames: string[];
   progressPercentage: number;
   lastUpdated: string;
-  runtime: string; // TimeSpan as string
+  runtime: string;
   activeTasksCount: number;
   errorMessage?: string;
 }
@@ -199,7 +199,7 @@ export interface TaskSummaryDto {
   workflowInstanceId: number;
   dueDate?: string;
   createdAt: string;
-  nodeId?: string; // NEW
+  nodeId?: string;
 }
 
 export interface CompleteTaskRequestDto {
@@ -328,7 +328,7 @@ export interface GetAnalyticsRequestDto {
   startDate?: string;
   endDate?: string;
   workflowDefinitionId?: number;
-  groupBy?: string; // day, week, month
+  groupBy?: string;
 }
 
 export interface WorkflowAnalyticsDto {
@@ -355,17 +355,17 @@ export interface WorkflowPerformanceDto {
 }
 
 export interface WorkflowSystemHealthDto {
-  status: string; // Healthy, Degraded, Unhealthy
+  status: string;
   checkedAt: string;
   activeInstances: number;
   pendingTasks: number;
-  backgroundWorkerStatus: number; // 0=Stopped, 1=Running, 2=Error
+  backgroundWorkerStatus: number;
   systemMetrics: Record<string, any>;
   issues: string[];
 }
 
 export interface BulkInstanceOperationRequestDto {
-  operation: string; // cancel, retry, terminate
+  operation: string;
   instanceIds?: number[];
   workflowDefinitionId?: number;
   status?: InstanceStatus;
@@ -393,8 +393,6 @@ export interface WorkflowAuditEntryDto {
   ipAddress?: string;
   userAgent?: string;
 }
-
-// Add these interfaces to your types
 
 export interface RoleUsageInWorkflowsDto {
   isUsedInWorkflows: boolean;
@@ -432,4 +430,55 @@ export interface InstanceRuntimeSnapshotDto {
   traversedEdgeIds: string[];
   visitedNodeIds: string[];
   currentNodeIds: string[];
+}
+
+// =====================================
+// WORKFLOW BUILDER TYPES (EDITOR)
+// =====================================
+
+/**
+ * These editor types are local to the React Flow builder.
+ * They include fromHandle so gateway branch connections (true/false/else)
+ * persist & rehydrate cleanly.
+ */
+
+export interface EditorWorkflowNode {
+  id: string;
+  type: string;
+  label?: string;
+  x: number;
+  y: number;
+  dueInMinutes?: number;
+  assigneeRoles?: string[];
+  condition?: string;
+  action?: any;
+  [key: string]: any;
+}
+
+export interface EditorWorkflowEdge {
+  id: string;
+  from: string;
+  to: string;
+  fromHandle?: string | null;
+  label?: string | null;
+}
+
+export interface EditorWorkflowDefinition {
+  key?: string;
+  nodes: EditorWorkflowNode[];
+  edges: EditorWorkflowEdge[];
+  [key: string]: any;
+}
+
+// React Flow runtime shapes (lightweight)
+export interface RFNodeData {
+  label?: string;
+  dueInMinutes?: number;
+  assigneeRoles?: string[];
+  condition?: string;
+  action?: any;
+}
+
+export interface RFEdgeData {
+  fromHandle?: string | null;
 }

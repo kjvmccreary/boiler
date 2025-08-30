@@ -117,6 +117,6 @@ public class GatewayEvaluator : INodeExecutor
         }
     }
 
-    // ✅ REMOVE: The broken EvaluateGatewayConditions method
-    // Let the WorkflowRuntime handle edge-based next node calculation
+    // NOTE: Edge selection & condition branching now handled centrally in WorkflowRuntime.
+    // This executor only records evaluation success/failure context
 }

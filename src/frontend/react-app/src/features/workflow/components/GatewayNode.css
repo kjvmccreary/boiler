@@ -1,0 +1,44 @@
+.wf-gateway-node {
+  font-family: system-ui, sans-serif;
+  font-size: 12px;
+  background: #1e293b;
+  color: #e2e8f0;
+  border: 2px solid #334155;
+  border-radius: 6px;
+  min-width: 140px;
+  position: relative;
+  padding: 4px 6px 8px;
+}
+
+.wf-gateway-node.wf-selected {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 2px #0ea5e955;
+}
+
+.wf-gateway-header {
+  font-weight: 600;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.wf-gateway-body {
+  display: flex;
+  justify-content: center;
+}
+
+.wf-gateway-condition {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wf-muted {
+  opacity: 0.6;
+}
+
+.react-flow__handle {
+  outline: 1px solid rgba(255, 255, 255, 0.4);
+  width: 10px;
+  height: 10px;
+}

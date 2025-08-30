@@ -9,27 +9,31 @@ using DTOs.Common;
 using DTOs.Workflow;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
-using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus; // Fix ambiguity
-using WorkflowService.Services.Interfaces; // NEW: interface for execution service
+using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
+using WorkflowService.Engine.Interfaces; // CHANGED: runtime instead of execution
+using Contracts.Services;
 
 namespace WorkflowService.Tests.Controllers;
 
 public class TasksControllerTests : TestBase
 {
     private readonly Mock<ILogger<TasksController>> _mockLogger;
-    private readonly Mock<IWorkflowExecutionService> _mockExecution; // NEW
+    private readonly Mock<IWorkflowRuntime> _mockRuntime;
+    private readonly Mock<ITenantProvider> _mockTenantProvider;
     private readonly TasksController _controller;
 
     public TasksControllerTests()
     {
         _mockLogger = CreateMockLogger<TasksController>();
-        _mockExecution = new Mock<IWorkflowExecutionService>();
+        _mockRuntime = new Mock<IWorkflowRuntime>();
+        _mockTenantProvider = new Mock<ITenantProvider>();
+        _mockTenantProvider.Setup(t => t.GetCurrentTenantIdAsync()).ReturnsAsync(1);
 
         _controller = new TasksController(
             DbContext,
             _mockLogger.Object,
-            _mockExecution.Object   // NEW required parameter
-        );
+            _mockRuntime.Object,
+            _mockTenantProvider.Object);
 
         SetupControllerContext();
     }
@@ -77,7 +81,7 @@ public class TasksControllerTests : TestBase
     }
 
     [Fact]
-    public async Task CompleteTask_ValidRequest_ShouldReturnOkResult()
+    public async Task CompleteTask_ValidRequest_ShouldInvokeRuntime()
     {
         // Arrange
         var task = await CreateTestTaskAsync(WorkflowTaskStatus.Claimed, assignedUserId: 1);
@@ -95,7 +99,7 @@ public class TasksControllerTests : TestBase
         var actionResult = result.Result as OkObjectResult;
         actionResult.Should().NotBeNull();
         actionResult!.StatusCode.Should().Be(200);
-        _mockExecution.Verify(x => x.AdvanceAfterTaskCompletionAsync(It.IsAny<WorkflowService.Domain.Models.WorkflowTask>()), Times.Once);
+        _mockRuntime.Verify(r => r.CompleteTaskAsync(task.Id, It.IsAny<string>(), 1, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private async Task SeedTestTasksAsync()
