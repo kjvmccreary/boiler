@@ -23,7 +23,10 @@ import type {
   BulkOperationResultDto,
   TaskStatisticsDto,
   PagedResultDto,
-  InstanceRuntimeSnapshotDto
+  InstanceRuntimeSnapshotDto,
+  ValidateDefinitionRequestDto,
+  ValidationResultDto,
+  CreateNewVersionRequestDto
 } from '@/types/workflow';
 
 // -------------------- API Response Wrapper --------------------
@@ -34,7 +37,6 @@ interface ApiResponse<T> {
   errors?: unknown;
 }
 
-// Gracefully unwrap either ApiResponse<T> or raw T
 function unwrap<T>(payload: any): T {
   if (payload && typeof payload === 'object' && 'success' in payload && 'data' in payload) {
     return (payload as ApiResponse<T>).data;
@@ -42,7 +44,7 @@ function unwrap<T>(payload: any): T {
   return payload as T;
 }
 
-// -------------------- Enum Normalization --------------------
+// Enums normalization maps (unchanged)
 const INSTANCE_STATUS_NUM_MAP: Record<number, InstanceStatus> = {
   1: InstanceStatus.Running,
   2: InstanceStatus.Completed,
@@ -59,6 +61,7 @@ const TASK_STATUS_NUM_MAP: Record<number, TaskStatus> = {
   6: TaskStatus.Cancelled,
   7: TaskStatus.Failed
 };
+
 function normalizeInstanceStatus(v: unknown): InstanceStatus {
   if (typeof v === 'string' && Object.values(InstanceStatus).includes(v as InstanceStatus)) return v as InstanceStatus;
   if (typeof v === 'number') return INSTANCE_STATUS_NUM_MAP[v] ?? InstanceStatus.Running;
@@ -78,7 +81,6 @@ function normalizeTaskStatus(v: unknown): TaskStatus {
   return TaskStatus.Created;
 }
 
-// -------------------- Mapping Helpers --------------------
 function mapInstance(i: WorkflowInstanceDto): WorkflowInstanceDto {
   return { ...i, status: normalizeInstanceStatus(i.status) };
 }
@@ -86,7 +88,7 @@ function mapInstances(list: WorkflowInstanceDto[]) { return list.map(mapInstance
 function mapTask(t: WorkflowTaskDto): WorkflowTaskDto { return { ...t, status: normalizeTaskStatus(t.status) }; }
 function mapTasks(list: WorkflowTaskDto[]) { return list.map(mapTask); }
 
-// -------------------- Filter Interfaces --------------------
+// Filters
 export interface WorkflowDefinitionsFilters { published?: boolean; }
 export interface WorkflowInstancesFilters {
   status?: InstanceStatus;
@@ -116,7 +118,6 @@ export interface WorkflowEventsFilters {
   pageSize?: number;
 }
 
-// -------------------- Service --------------------
 export class WorkflowService {
   // ===== Definitions =====
   async getDefinitions(filters?: WorkflowDefinitionsFilters): Promise<WorkflowDefinitionDto[]> {
@@ -148,8 +149,7 @@ export class WorkflowService {
 
   async deleteDefinition(id: number): Promise<boolean> {
     const resp = await apiClient.delete(`/api/workflow/definitions/${id}`);
-    const val = unwrap<boolean>(resp.data);
-    return !!val;
+    return !!unwrap<boolean>(resp.data);
   }
 
   async unpublishDefinition(id: number) {
@@ -165,6 +165,21 @@ export class WorkflowService {
   async terminateDefinitionInstances(id: number) {
     const resp = await apiClient.post(`/api/workflow/definitions/${id}/terminate-running`, {});
     return unwrap<{ terminated: number }>(resp.data);
+  }
+
+  async validateDefinition(jsonDefinition: string): Promise<ValidationResultDto> {
+    const resp = await apiClient.post('/api/workflow/definitions/validate', { jsonDefinition });
+    return unwrap<ValidationResultDto>(resp.data);
+  }
+
+  async createNewVersion(id: number, request: CreateNewVersionRequestDto) {
+    const resp = await apiClient.post(`/api/workflow/definitions/${id}/new-version`, request);
+    return unwrap<WorkflowDefinitionDto>(resp.data);
+  }
+
+  async revalidateDefinition(id: number) {
+    const resp = await apiClient.post(`/api/workflow/definitions/${id}/revalidate`, {});
+    return unwrap<ValidationResultDto>(resp.data);
   }
 
   // ===== Instances =====
@@ -198,8 +213,7 @@ export class WorkflowService {
 
   async getInstance(id: number) {
     const resp = await apiClient.get(`/api/workflow/instances/${id}`);
-    const dto = unwrap<WorkflowInstanceDto>(resp.data);
-    return mapInstance(dto);
+    return mapInstance(unwrap<WorkflowInstanceDto>(resp.data));
   }
 
   async startInstance(request: StartInstanceRequestDto) {
@@ -319,16 +333,10 @@ export class WorkflowService {
     return unwrap<TaskStatisticsDto>(resp.data);
   }
 
-  async validateDefinition(jsonDefinition: string): Promise<{ isValid: boolean; errors: string[] }> {
-    const resp = await apiClient.post('/api/workflow/definitions/validate', { jsonDefinition });
-    return unwrap<{ isValid: boolean; errors: string[] }>(resp.data);
-  }
-
   // ===== Runtime Snapshot =====
   async getRuntimeSnapshot(instanceId: number): Promise<InstanceRuntimeSnapshotDto> {
     const resp = await apiClient.get(`/api/workflow/instances/${instanceId}/runtime-snapshot`);
-    const wrapper = unwrap<InstanceRuntimeSnapshotDto>(resp.data);
-    return wrapper;
+    return unwrap<InstanceRuntimeSnapshotDto>(resp.data);
   }
 }
 

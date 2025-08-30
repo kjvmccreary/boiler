@@ -98,6 +98,10 @@ builder.Services.AddScoped<INodeExecutor, TimerExecutor>();
 
 // Add Background Services
 builder.Services.AddHostedService<TimerWorker>();
+builder.Services.AddHostedService<OutboxWorker>();
+
+// Outbox dispatcher (logging-only MVP)
+builder.Services.AddScoped<IOutboxDispatcher, LoggingOutboxDispatcher>();
 
 // 🚀 STEP 2: Add Workflow Business Services (NEW)
 builder.Services.AddScoped<IDefinitionService, DefinitionService>();

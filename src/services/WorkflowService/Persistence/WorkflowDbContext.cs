@@ -69,6 +69,7 @@ public class WorkflowDbContext : DbContext
 
         modelBuilder.Entity<WorkflowEvent>().HasQueryFilter(we =>
             EF.Property<int>(we, "TenantId") == GetCurrentTenantIdFromProvider());
+        // NOTE: OutboxMessages intentionally NOT filtered (cross-tenant ops / diagnostics possible)
     }
 
     private int? GetCurrentTenantIdFromProvider()
@@ -105,7 +106,6 @@ public class WorkflowDbContext : DbContext
         if (!tenantId.HasValue)
         {
             _logger.LogWarning("❌ WorkflowDbContext: No tenant ID available - DB constraint will likely fail");
-            // Still stamp timestamps to keep behavior consistent
             UpdateTimestamps();
             return await base.SaveChangesAsync(cancellationToken);
         }
@@ -113,7 +113,6 @@ public class WorkflowDbContext : DbContext
         var strategy = Database.CreateExecutionStrategy();
         return await strategy.ExecuteAsync(async () =>
         {
-            // Ensure one connection and a transaction for GUC + INSERT
             if (Database.GetDbConnection().State != ConnectionState.Open)
             {
                 await Database.GetDbConnection().OpenAsync(cancellationToken);
@@ -121,18 +120,12 @@ public class WorkflowDbContext : DbContext
 
             await using var tx = await Database.BeginTransactionAsync(cancellationToken);
 
-            // Transaction-local tenant context (RLS)
             await Database.ExecuteSqlRawAsync(
                 "SELECT set_config('app.tenant_id', {0}, true)",
                 tenantId.Value.ToString());
 
             _logger.LogDebug("✅ WorkflowDbContext: Transaction-local tenant set to {TenantId}", tenantId.Value);
 
-            // Optional: verify GUC (useful while stabilizing)
-            // var guc = await Database.SqlQueryRaw<string>("SELECT current_setting('app.tenant_id', true)").SingleAsync();
-            // _logger.LogDebug("🔎 Verified app.tenant_id GUC = '{Guc}'", guc ?? "<null>");
-
-            // Auto-populate and timestamps just before saving
             SetTenantIdForNewEntities(tenantId.Value);
             UpdateTimestamps();
 
@@ -151,42 +144,43 @@ public class WorkflowDbContext : DbContext
         {
             if (entry.State != EntityState.Added) continue;
 
-            if (entry.Entity is WorkflowDefinition wd)
+            switch (entry.Entity)
             {
-                if (wd.TenantId == 0)
-                {
+                case WorkflowDefinition wd when wd.TenantId == 0:
                     wd.TenantId = tenantId;
                     entitiesUpdated++;
-                    _logger.LogDebug("✅ Set TenantId={TenantId} for WorkflowDefinition: {Name}", tenantId, wd.Name);
-                }
-
-                // Normalize optional strings to NULL
-                foreach (var property in entry.Properties)
-                {
-                    var value = property.CurrentValue;
-                    var propertyName = property.Metadata.Name;
-                    var clrType = property.Metadata.ClrType;
-
-                    if (clrType == typeof(string) && value is string s && s == "" &&
-                        (propertyName == "Tags" || propertyName == "PublishNotes" || propertyName == "VersionNotes" || propertyName == "Description"))
+                    foreach (var property in entry.Properties)
                     {
-                        property.CurrentValue = null;
-                    }
-                }
+                        var value = property.CurrentValue;
+                        var propertyName = property.Metadata.Name;
+                        var clrType = property.Metadata.ClrType;
 
-                _logger.LogInformation("🔧 Null enforcement applied to WorkflowDefinition: {Name}", wd.Name);
-            }
-            else if (entry.Entity is WorkflowInstance wi && wi.TenantId == 0)
-            {
-                wi.TenantId = tenantId; entitiesUpdated++;
-            }
-            else if (entry.Entity is WorkflowTask wt && wt.TenantId == 0)
-            {
-                wt.TenantId = tenantId; entitiesUpdated++;
-            }
-            else if (entry.Entity is WorkflowEvent we && we.TenantId == 0)
-            {
-                we.TenantId = tenantId; entitiesUpdated++;
+                        if (clrType == typeof(string) && value is string s && s == "" &&
+                            (propertyName == "Tags" || propertyName == "PublishNotes" ||
+                             propertyName == "VersionNotes" || propertyName == "Description"))
+                        {
+                            property.CurrentValue = null;
+                        }
+                    }
+                    _logger.LogInformation("🔧 Null enforcement applied to WorkflowDefinition: {Name}", wd.Name);
+                    break;
+
+                case WorkflowInstance wi when wi.TenantId == 0:
+                    wi.TenantId = tenantId; entitiesUpdated++;
+                    break;
+
+                case WorkflowTask wt when wt.TenantId == 0:
+                    wt.TenantId = tenantId; entitiesUpdated++;
+                    break;
+
+                case WorkflowEvent we when we.TenantId == 0:
+                    we.TenantId = tenantId; entitiesUpdated++;
+                    break;
+
+                case OutboxMessage om when om.TenantId == 0:
+                    // New addition: ensure OutboxMessages inherit tenant automatically
+                    om.TenantId = tenantId; entitiesUpdated++;
+                    break;
             }
         }
 
@@ -241,7 +235,7 @@ public class WorkflowDbContext : DbContext
             entity.Property(e => e.VersionNotes).IsRequired(false).HasMaxLength(1000);
             entity.Property(e => e.PublishedByUserId).IsRequired(false);
             entity.Property(e => e.PublishedAt).IsRequired(false);
-            entity.Property(e => e.ParentDefinitionId).IsRequired(false); // keep mapped for versioning
+            entity.Property(e => e.ParentDefinitionId).IsRequired(false);
         });
     }
 
@@ -356,6 +350,7 @@ public class WorkflowDbContext : DbContext
             entity.Property(e => e.RetryCount).IsRequired();
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();
+            // TenantId present (not filtered) for multi-tenant diagnostics and cross-tenant admin ops.
         });
     }
 

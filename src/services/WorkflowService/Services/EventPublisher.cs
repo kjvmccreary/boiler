@@ -380,10 +380,20 @@ public class EventPublisher : IEventPublisher
 
     private int GetTenantIdFromTask(WorkflowTask task)
     {
-        // In a real implementation, you'd either:
-        // 1. Load the WorkflowInstance to get TenantId
-        // 2. Have TenantId on the Task entity itself
-        // For now, we'll return a placeholder
-        return 1; // TODO: Implement proper tenant ID resolution
+        // Resolve tenant via instance (avoids schema change at this step).
+        // NOTE: This adds a query per call; acceptable for MVP volume.
+        try
+        {
+            var instance = _context.WorkflowInstances
+                .AsNoTracking()
+                .Where(i => i.Id == task.WorkflowInstanceId)
+                .Select(i => new { i.TenantId })
+                .FirstOrDefault();
+            return instance?.TenantId ?? 0;
+        }
+        catch
+        {
+            return 0;
+        }
     }
 }

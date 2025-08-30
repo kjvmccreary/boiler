@@ -120,6 +120,13 @@ services:
       Redis__ConnectionString: "redis:6379"
       TenantSettings__DefaultTenantId: "1"
       TenantSettings__RequireTenantContext: "false"
+      # --- Workflow Engine Background Workers ---
+      WorkflowSettings__TimerWorkerIntervalSeconds: "30"
+      WorkflowSettings__Outbox__IntervalSeconds: "15"
+      WorkflowSettings__Outbox__BatchSize: "50"
+      WorkflowSettings__Outbox__MaxRetries: "5"
+      # (Optional) Serilog minimum level override:
+      Serilog__MinimumLevel__Override__WorkflowService.Engine.WorkflowRuntime: "Information"
     depends_on:
       postgres:
         condition: service_healthy

@@ -6,7 +6,6 @@ using WorkflowService.Engine.Interfaces;
 using WorkflowService.Persistence;
 using DTOs.Workflow.Enums;
 using Contracts.Services;
-using System.Linq;
 
 namespace WorkflowService.Engine;
 
@@ -25,6 +24,9 @@ public class WorkflowRuntime : IWorkflowRuntime
     private readonly ILogger<WorkflowRuntime> _logger;
     private readonly ITenantProvider _tenantProvider;
     private readonly IConditionEvaluator _conditionEvaluator;
+
+    // Cache to avoid repeated tenant lookups per instance during a run
+    private readonly Dictionary<int, int> _instanceTenantCache = new();
 
     public WorkflowRuntime(
         WorkflowDbContext context,
@@ -78,6 +80,8 @@ public class WorkflowRuntime : IWorkflowRuntime
         _context.WorkflowInstances.Add(instance);
         await _context.SaveChangesAsync(cancellationToken);
 
+        _instanceTenantCache[instance.Id] = tenantId.Value;
+
         _logger.LogInformation("WF_START Instance={InstanceId} Def={DefinitionId} Version={Version} StartNode={StartNode}",
             instance.Id, definitionId, definition.Version, startNode.Id);
 
@@ -96,6 +100,9 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         if (instance == null)
             throw new InvalidOperationException($"Workflow instance {instanceId} not found");
+
+        if (!_instanceTenantCache.ContainsKey(instance.Id))
+            _instanceTenantCache[instance.Id] = instance.TenantId;
 
         if (instance.Status != InstanceStatus.Running)
         {
@@ -137,10 +144,13 @@ public class WorkflowRuntime : IWorkflowRuntime
         if (instance == null)
             throw new InvalidOperationException($"Workflow instance {instanceId} not found");
 
+        if (!_instanceTenantCache.ContainsKey(instance.Id))
+            _instanceTenantCache[instance.Id] = instance.TenantId;
+
         await CreateEventAsync(instanceId, "Signal", signalName, signalData, userId);
         _logger.LogInformation("WF_SIGNAL Instance={InstanceId} Signal={Signal}", instanceId, signalName);
 
-        await ContinueWorkflowAsync(instanceId, cancellationToken);
+        await ContinueWorkflowAsync(instance.Id, cancellationToken);
     }
 
     public async Task CompleteTaskAsync(
@@ -158,6 +168,9 @@ public class WorkflowRuntime : IWorkflowRuntime
             throw new InvalidOperationException($"Workflow task {taskId} not found");
 
         var instance = task.WorkflowInstance;
+        if (!_instanceTenantCache.ContainsKey(instance.Id))
+            _instanceTenantCache[instance.Id] = instance.TenantId;
+
         if (instance.Status != InstanceStatus.Running)
             throw new InvalidOperationException($"Cannot complete task; instance {instance.Id} not running");
 
@@ -240,6 +253,9 @@ public class WorkflowRuntime : IWorkflowRuntime
             .FirstOrDefaultAsync(i => i.Id == instanceId, cancellationToken)
             ?? throw new InvalidOperationException($"Workflow instance {instanceId} not found");
 
+        if (!_instanceTenantCache.ContainsKey(instance.Id))
+            _instanceTenantCache[instance.Id] = instance.TenantId;
+
         instance.Status = InstanceStatus.Cancelled;
         instance.CompletedAt = DateTime.UtcNow;
 
@@ -274,6 +290,9 @@ public class WorkflowRuntime : IWorkflowRuntime
             .FirstOrDefaultAsync(i => i.Id == instanceId, cancellationToken)
             ?? throw new InvalidOperationException($"Workflow instance {instanceId} not found");
 
+        if (!_instanceTenantCache.ContainsKey(instance.Id))
+            _instanceTenantCache[instance.Id] = instance.TenantId;
+
         if (instance.Status != InstanceStatus.Failed)
             throw new InvalidOperationException($"Retry only allowed for Failed instances. Current={instance.Status}");
 
@@ -289,7 +308,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         await _context.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("WF_RETRY Instance={InstanceId} ResetTo={ResetNode}", instanceId, resetToNodeId);
 
-        await ContinueWorkflowAsync(instanceId, cancellationToken);
+        await ContinueWorkflowAsync(instance.Id, cancellationToken);
     }
 
     #endregion
@@ -376,7 +395,7 @@ public class WorkflowRuntime : IWorkflowRuntime
 
     #endregion
 
-    #region Gateway Selection (Unified)
+    #region Gateway Selection
 
     private List<string> GetNextNodeIdsWithGatewayAware(
         WorkflowNode currentNode,
@@ -406,17 +425,6 @@ public class WorkflowRuntime : IWorkflowRuntime
         return SelectGatewayTargets(currentNode, instance, edges, "advance-after-task");
     }
 
-    /// <summary>
-    /// Gateway target selection with full inference:
-    /// Order of precedence for classification:
-    /// 1. Explicit edge.Label
-    /// 2. Edge.FromHandle / Edge.SourceHandle (UI-provided handle id)
-    /// 3. Edge.Id pattern containing 'true','false','else'
-    /// 4. Fallback (unlabeled): 2 edges => [0]=true [1]=false; 3+ => true->first false->second
-    /// Selection logic:
-    /// - If condition true: true edges > else edges > first unlabeled
-    /// - If condition false: false edges > else edges > inferred fallback
-    /// </summary>
     private List<string> SelectGatewayTargets(
         WorkflowNode gateway,
         WorkflowInstance instance,
@@ -455,7 +463,6 @@ public class WorkflowRuntime : IWorkflowRuntime
             };
         }
 
-        // Ensure each edge has inferred label if missing (so FE can skip manual label early)
         foreach (var e in edges)
             e.InferLabelIfMissing();
 
@@ -537,11 +544,10 @@ public class WorkflowRuntime : IWorkflowRuntime
 
     #endregion
 
-    #region Advancement Helpers / Events / Context
+    #region Advancement / Events / Context
 
     private List<string> RecordAndReturn(IEnumerable<string?> targets, WorkflowNode currentNode, WorkflowInstance instance, string mode)
     {
-        // Filter out null / empty (avoids nullable warnings)
         var clean = targets
             .Where(t => !string.IsNullOrWhiteSpace(t))
             .Cast<string>()
@@ -633,9 +639,29 @@ public class WorkflowRuntime : IWorkflowRuntime
         string data,
         int? userId)
     {
+        // Resolve tenant (cache → quick lookup)
+        if (!_instanceTenantCache.TryGetValue(instanceId, out var tenantId))
+        {
+            try
+            {
+                tenantId = _context.WorkflowInstances
+                    .AsNoTracking()
+                    .Where(i => i.Id == instanceId)
+                    .Select(i => i.TenantId)
+                    .FirstOrDefault();
+                if (tenantId > 0)
+                    _instanceTenantCache[instanceId] = tenantId;
+            }
+            catch
+            {
+                tenantId = 0;
+            }
+        }
+
         var workflowEvent = new WorkflowEvent
         {
             WorkflowInstanceId = instanceId,
+            TenantId = tenantId, // explicit for clarity (DbContext could also stamp)
             Type = type,
             Name = name,
             Data = data,
@@ -660,7 +686,8 @@ public class WorkflowRuntime : IWorkflowRuntime
             EventType = $"workflow.{type}.{name}".ToLowerInvariant(),
             EventData = data,
             IsProcessed = false,
-            RetryCount = 0
+            RetryCount = 0,
+            TenantId = tenantId
         };
         _context.OutboxMessages.Add(outboxMessage);
 
