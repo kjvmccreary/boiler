@@ -11,7 +11,7 @@ import ReactFlow, {
 import { nanoid } from 'nanoid';
 import 'reactflow/dist/style.css';
 
-import GatewayNode from './GatewayNode';
+import BinaryGatewayNode from './BinaryGatewayNode';
 import { toDefinition, toGraph } from '../utils/definitionMapper';
 import { enrichDefinition } from '../utils/enrichEdges';
 import {
@@ -20,12 +20,12 @@ import {
   RFEdgeData
 } from '../../../types/workflow';
 
-const nodeTypes = { gateway: GatewayNode };
+const nodeTypes = { wfGateway: BinaryGatewayNode };
 
 interface Props {
   initialDefinitionJson?: EditorWorkflowDefinition | null;
   workflowKey: string;
-  onSave: (json: EditorWorkflowDefinition) => Promise<void> | void; // expects enriched def now
+  onSave: (json: EditorWorkflowDefinition) => Promise<void> | void;
 }
 
 const WorkflowBuilder: React.FC<Props> = ({ initialDefinitionJson, workflowKey, onSave }) => {
@@ -34,25 +34,34 @@ const WorkflowBuilder: React.FC<Props> = ({ initialDefinitionJson, workflowKey, 
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
 
   useEffect(() => {
-    if (initialDefinitionJson) {
-      const g = toGraph(initialDefinitionJson);
-      setNodes(g.nodes);
-      setEdges(g.edges);
-    }
+    if (!initialDefinitionJson) return;
+    const g = toGraph(initialDefinitionJson);
+    setNodes(g.nodes);
+    requestAnimationFrame(() => setEdges(g.edges));
   }, [initialDefinitionJson]);
 
   const onConnect = useCallback((params: Connection) => {
+    const logical =
+      params.sourceHandle === 'out_true' ? 'true'
+      : params.sourceHandle === 'out_false' ? 'false'
+      : undefined;
     setEdges(eds =>
       addEdge(
         {
           id: `e-${params.sourceHandle ?? 'h'}-${params.source}-${params.target}-${nanoid(4)}`,
           ...params,
           source: params.source,
-            target: params.target,
+          target: params.target,
           sourceHandle: params.sourceHandle ?? undefined,
-          data: { fromHandle: params.sourceHandle },
-          label: params.sourceHandle ?? undefined,
-          type: 'default'
+          data: { branch: logical },
+          label: logical,
+          type: 'straight',
+          style: {
+            stroke: logical === 'true' ? '#16a34a'
+                 : logical === 'false' ? '#dc2626'
+                 : '#64748b',
+            strokeWidth: 2
+          }
         } as Edge<RFEdgeData>,
         eds
       )
@@ -77,9 +86,9 @@ const WorkflowBuilder: React.FC<Props> = ({ initialDefinitionJson, workflowKey, 
     (changes: any) =>
       setEdges(es => {
         let next = [...es];
-        changes.forEach((c: any) => {
+        for (const c of changes) {
           if (c.type === 'remove') next = next.filter(e => e.id !== c.id);
-        });
+        }
         return next;
       }),
     []
@@ -89,9 +98,6 @@ const WorkflowBuilder: React.FC<Props> = ({ initialDefinitionJson, workflowKey, 
     if (!rfInstance) return;
     const raw = toDefinition(workflowKey, nodes, edges);
     const enriched = enrichDefinition(raw);
-    console.debug('[WF] Builder save enriched edges',
-      enriched.edges.map(e => ({ id: e.id, fromHandle: e.fromHandle, label: e.label }))
-    );
     await onSave(enriched);
   }, [rfInstance, nodes, edges, workflowKey, onSave]);
 
@@ -99,17 +105,17 @@ const WorkflowBuilder: React.FC<Props> = ({ initialDefinitionJson, workflowKey, 
     <div style={{ width: '100%', height: '100%' }}>
       <div style={{ padding: 4, background: '#0f172a', color: '#e2e8f0', display: 'flex', gap: 8 }}>
         <button onClick={handleSave}>Save</button>
-        <span style={{ fontSize: 12, opacity: 0.65 }}>Gateway edges retain true / false / else</span>
+        <span style={{ fontSize: 12, opacity: 0.7 }}>Binary gateway (true / false)</span>
       </div>
       <ReactFlow
+        fitView
         nodeTypes={nodeTypes}
         nodes={nodes}
         edges={edges}
+        onInit={setRfInstance}
         onConnect={onConnect}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onInit={setRfInstance}
-        fitView
       >
         <Background />
         <Controls />

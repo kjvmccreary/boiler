@@ -1,6 +1,11 @@
 import { EditorWorkflowDefinition } from '../../../types/workflow';
 import { enrichDefinition } from '../utils/enrichEdges';
 
+function ensureEnrichedJson(def: EditorWorkflowDefinition): string {
+  const enriched = enrichDefinition(def);
+  return JSON.stringify(enriched);
+}
+
 interface CreateDefinitionPayload {
   name: string;
   description?: string;
@@ -8,17 +13,12 @@ interface CreateDefinitionPayload {
 }
 
 export async function createWorkflowDefinitionDraft(p: CreateDefinitionPayload) {
-  const enriched = enrichDefinition(p.definition);
+  const jsonDefinition = ensureEnrichedJson(p.definition);
   const body = {
     name: p.name,
     description: p.description ?? '',
-    jsonDefinition: JSON.stringify(enriched)
+    jsonDefinition
   };
-
-  console.debug('[WF][POST] draft edges',
-    enriched.edges.map(e => ({ id: e.id, fromHandle: e.fromHandle, label: e.label }))
-  );
-
   const res = await fetch('/api/workflow/definitions/draft', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -36,17 +36,10 @@ interface UpdateDefinitionPayload {
 }
 
 export async function updateWorkflowDefinitionDraft(p: UpdateDefinitionPayload) {
-  const enriched = p.definition ? enrichDefinition(p.definition) : undefined;
   const body: any = {};
   if (p.name !== undefined) body.name = p.name;
   if (p.description !== undefined) body.description = p.description;
-  if (enriched) body.jsonDefinition = JSON.stringify(enriched);
-
-  if (enriched) {
-    console.debug('[WF][PUT] draft edges', p.id,
-      enriched.edges.map(e => ({ id: e.id, fromHandle: e.fromHandle, label: e.label }))
-    );
-  }
+  if (p.definition) body.jsonDefinition = ensureEnrichedJson(p.definition);
 
   const res = await fetch(`/api/workflow/definitions/${p.id}`, {
     method: 'PUT',

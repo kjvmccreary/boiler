@@ -1,61 +1,68 @@
-PS C:\Users\mccre\dev\boiler> docker logs --tail 400 boiler-workflow
-[16:26:04 INF] Starting WorkflowService with Engine and Service Layer {}
-=== WorkflowService Starting with Engine and Service Layer ===
-[16:26:04 WRN] Entity 'Role' has a global query filter defined and is the required end of a relationship with the entity 'RolePermission'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information. {"EventId": {"Id": 10622, "Name": "Microsoft.EntityFrameworkCore.Model.Validation.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
-[16:26:04 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId": {"Id": 10400, "Name": "Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
-✅ Main database migrations applied
-✅ Workflow database migrations applied
-[16:26:04 WRN] Storing keys in a directory '/app/.aspnet/DataProtection-Keys' that may not be persisted outside of the container. Protected data will be unavailable when container is destroyed. For more information go to https://aka.ms/aspnet/dataprotectionwarning {"EventId": {"Id": 60, "Name": "UsingEphemeralFileSystemLocationInContainer"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.Repositories.FileSystemXmlRepository"}
-[16:26:04 WRN] No XML encryptor configured. Key {b75b56ba-6b96-48bd-891d-4f4af292d90d} may be persisted to storage in unencrypted form. {"EventId": {"Id": 35, "Name": "NoXMLEncryptorConfiguredKeyMayBePersistedToStorageInUnencryptedForm"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"}
-[16:26:04 INF] WF_TIMER_WORKER_START IntervalSeconds=10 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:26:05 WRN] Overriding HTTP_PORTS '8080' and HTTPS_PORTS ''. Binding to values defined by URLS instead 'https://+:7003;http://+:5003'. {"EventId": {"Id": 15}, "SourceContext": "Microsoft.AspNetCore.Hosting.Diagnostics"}
-[16:26:05 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-Now listening on: https://[::]:7003
-[16:26:05 INF] Now listening on: https://[::]:7003 {}
-Now listening on: http://[::]:5003
-[16:26:05 INF] Now listening on: http://[::]:5003 {}
-🌊 WorkflowService started with workflow engine and service layer enabled
-[16:26:05 INF] WorkflowService started - workflow engine, service layer, and background workers operational {}
-[16:26:08 INF] HTTP GET /health responded 200 in 52.9657 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:26:14 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:26:24 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:26:34 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:26:39 INF] HTTP GET /health responded 200 in 13.9684 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:26:44 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:26:54 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:27:04 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:27:09 INF] HTTP GET /health responded 200 in 11.6580 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:27:14 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:27:24 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:27:34 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:27:39 INF] HTTP GET /health responded 200 in 11.4253 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:27:44 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:27:51 INF] HTTP GET /api/workflow/definitions responded 200 in 175.4626 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:27:54 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:28:04 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:28:09 INF] HTTP GET /health responded 200 in 9.5315 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:28:14 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:28:24 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:28:34 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:28:39 INF] HTTP GET /health responded 200 in 7.9777 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:28:44 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:28:54 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:29:04 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:29:09 INF] HTTP GET /health responded 200 in 10.4996 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:29:14 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:29:24 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:29:32 INF] 🔍 WorkflowDbContext: Starting SaveChangesAsync {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7705e4e6-8d27-4b75-8953-cc9ae73d32d7", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF7S7MHTR7P:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF7S7MHTR7P"}
-[16:29:32 INF] 🏢 WorkflowDbContext: Tenant ID resolved as: 1 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7705e4e6-8d27-4b75-8953-cc9ae73d32d7", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF7S7MHTR7P:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF7S7MHTR7P"}
-[16:29:32 DBG] ✅ WorkflowDbContext: Transaction-local tenant set to 1 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7705e4e6-8d27-4b75-8953-cc9ae73d32d7", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF7S7MHTR7P:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF7S7MHTR7P"}
-[16:29:32 DBG] ✅ Set TenantId=1 for WorkflowDefinition: Has Gateway 06 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7705e4e6-8d27-4b75-8953-cc9ae73d32d7", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF7S7MHTR7P:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF7S7MHTR7P"}
-[16:29:32 INF] 🔧 Null enforcement applied to WorkflowDefinition: Has Gateway 06 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7705e4e6-8d27-4b75-8953-cc9ae73d32d7", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF7S7MHTR7P:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF7S7MHTR7P"}
-[16:29:32 INF] ✅ WorkflowDbContext: Updated TenantId for 1 entities {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7705e4e6-8d27-4b75-8953-cc9ae73d32d7", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF7S7MHTR7P:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF7S7MHTR7P"}
-[16:29:32 INF] Created workflow definition draft Has Gateway 06 (ID=27) {"SourceContext": "WorkflowService.Controllers.DefinitionsController", "ActionId": "7705e4e6-8d27-4b75-8953-cc9ae73d32d7", "ActionName": "WorkflowService.Controllers.DefinitionsController.CreateDraft (WorkflowService)", "RequestId": "0HNF7S7MHTR7P:00000001", "RequestPath": "/api/workflow/definitions/draft", "ConnectionId": "0HNF7S7MHTR7P"}
-[16:29:32 INF] HTTP POST /api/workflow/definitions/draft responded 201 in 149.4392 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:29:32 INF] HTTP GET /api/workflow/definitions/27 responded 200 in 14.8129 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:29:34 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:29:36 INF] HTTP GET /api/workflow/definitions responded 200 in 6.1620 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:29:39 INF] HTTP GET /health responded 200 in 7.7374 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:29:40 INF] HTTP GET /api/workflow/definitions/27 responded 200 in 5.7188 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:29:44 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-PS C:\Users\mccre\dev\boiler>
+api.client.ts:44 🔍 API REQUEST (with JWT): POST /api/workflow/definitions/draft
+api.client.ts:57 ✅ API RESPONSE: /api/workflow/definitions/draft 201
+api.client.ts:143 🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure: {success: true, message: 'Draft created', hasData: true, errors: 0}
+api.client.ts:61 🔍 API CLIENT: Unwrapped response for /api/workflow/definitions/draft : {id: 34, name: 'Has Gateway 13', version: 1, jsonDefinition: '{\n  "key": "has-gateway-13",\n  "nodes": [\n    {\n  …432",\n      "to": "end-1756577349869"\n    }\n  ]\n}', isPublished: false, …}
+ 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
+ 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
+ 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
+ 🔍 PermissionContext: Permission check: {permission: 'users.view', hasPermission: true, allPermissions: Array(10)}
+ 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
+ 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
+ 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
+ 🔍 PermissionContext: Permission check: {permission: 'roles.view', hasPermission: true, allPermissions: Array(10)}
+ 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
+ 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
+ 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
+ 🔍 PermissionContext: Permission check: {permission: 'workflow.read', hasPermission: true, allPermissions: Array(10)}
+ 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
+ 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
+ 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
+ 🔍 PermissionContext: Permission check: {permission: 'workflow.read', hasPermission: true, allPermissions: Array(10)}
+token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
+token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
+PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
+PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.read', hasPermission: true, allPermissions: Array(10)}
+token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
+token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
+PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
+PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.read', hasPermission: true, allPermissions: Array(10)}
+token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
+token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
+PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
+PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.write', hasPermission: true, allPermissions: Array(10)}
+token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
+token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
+PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
+PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'users.view', hasPermission: true, allPermissions: Array(10)}
+token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
+token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
+PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
+PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'roles.view', hasPermission: true, allPermissions: Array(10)}
+token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
+token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
+PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
+PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.read', hasPermission: true, allPermissions: Array(10)}
+token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
+token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
+PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
+PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.read', hasPermission: true, allPermissions: Array(10)}
+token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
+token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
+PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
+PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.read', hasPermission: true, allPermissions: Array(10)}
+token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
+token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
+PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
+PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.read', hasPermission: true, allPermissions: Array(10)}
+token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
+token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
+PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
+PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.write', hasPermission: true, allPermissions: Array(10)}
+token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
+token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
+PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
+PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.write', hasPermission: true, allPermissions: Array(10)}
+api.client.ts:44 🔍 API REQUEST (with JWT): GET /api/workflow/definitions/34
+api.client.ts:57 ✅ API RESPONSE: /api/workflow/definitions/34 200
+api.client.ts:143 🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure: {success: true, message: '', hasData: true, errors: 0}
+api.client.ts:61 🔍 API CLIENT: Unwrapped response for /api/workflow/definitions/34 : {id: 34, name: 'Has Gateway 13', version: 1, jsonDefinition: '{\n  "key": "has-gateway-13",\n  "edges": [\n    {\n  …u0022: \\u0022approved\\u0022}, true]}"\n    }\n  ]\n}', isPublished: false, …}

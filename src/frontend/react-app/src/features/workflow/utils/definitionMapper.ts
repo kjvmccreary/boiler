@@ -8,41 +8,79 @@ import {
 } from '../../../types/workflow';
 import { Edge, Node } from 'reactflow';
 
-function rawInfer(edge: EditorWorkflowEdge): string | null {
-  if (edge.label) return edge.label;
-  if (edge.fromHandle) return edge.fromHandle;
-  const idLower = edge.id.toLowerCase();
-  if (idLower.includes('true')) return 'true';
-  if (idLower.includes('false')) return 'false';
-  if (idLower.includes('else')) return 'else';
-  return null;
+function normalize(v?: string | null): string | undefined {
+  if (!v) return undefined;
+  const l = v.trim().toLowerCase();
+  if (l === 'yes') return 'true';
+  if (l === 'no') return 'false';
+  if (l === 'default' || l === 'else') return 'else';
+  if (['true','false'].includes(l)) return l;
+  return undefined;
 }
 
-function assignElsePerGateway(edges: EditorWorkflowEdge[]) {
-  const bySource = edges.reduce<Record<string, EditorWorkflowEdge[]>>((acc, e) => {
-    acc[e.from] = acc[e.from] || [];
-    acc[e.from].push(e);
+function infer(edge: EditorWorkflowEdge): string | undefined {
+  return normalize(edge.fromHandle) ||
+         normalize(edge.label) ||
+         (() => {
+           const id = edge.id.toLowerCase();
+           if (id.includes('true')) return 'true';
+           if (id.includes('false')) return 'false';
+           if (id.includes('else')) return 'else';
+           return undefined;
+         })();
+}
+
+function binaryCollapse(edges: EditorWorkflowEdge[]) {
+  const groups = edges.reduce<Record<string, EditorWorkflowEdge[]>>((acc, e) => {
+    (acc[e.from] ||= []).push(e);
     return acc;
   }, {});
-  for (const group of Object.values(bySource)) {
-    if (group.length < 2) continue;
-    const labels = group.map(e => e.fromHandle || e.label);
-    const hasTrue = labels.includes('true');
-    const hasFalse = labels.includes('false');
-    const hasElse = labels.includes('else');
-    const unlabeled = group.filter(e => !e.fromHandle && !e.label);
-    if ((hasTrue || hasFalse) && !hasElse && unlabeled.length === 1) {
-      unlabeled[0].fromHandle = 'else';
-      unlabeled[0].label = 'else';
+  for (const list of Object.values(groups)) {
+    const trues  = list.filter(e => infer(e) === 'true');
+    const falses = list.filter(e => infer(e) === 'false');
+    const elses  = list.filter(e => infer(e) === 'else');
+
+    if (elses.length) {
+      if (!trues.length && !falses.length) {
+        elses.forEach(e => { e.fromHandle = 'false'; e.label = 'false'; });
+      } else {
+        const ids = new Set(elses.map(e => e.id));
+        for (let i = edges.length - 1; i >= 0; i--) {
+          if (ids.has(edges[i].id)) edges.splice(i, 1);
+        }
+      }
+    }
+    // enforce single true/false
+    let seenTrue = false;
+    let seenFalse = false;
+    for (const e of list) {
+      const lg = infer(e);
+      if (lg === 'true') {
+        if (seenTrue) {
+          const idx = edges.findIndex(x => x.id === e.id);
+          if (idx >= 0) edges.splice(idx, 1);
+        }
+        seenTrue = true;
+      } else if (lg === 'false') {
+        if (seenFalse) {
+          const idx = edges.findIndex(x => x.id === e.id);
+          if (idx >= 0) edges.splice(idx, 1);
+        }
+        seenFalse = true;
+      }
     }
   }
 }
 
 export function toGraph(def: EditorWorkflowDefinition) {
+  const working = def.edges.map(e => ({ ...e }));
+  binaryCollapse(working);
+
   const nodes: Node<RFNodeData>[] = def.nodes.map(n => ({
     id: n.id,
-    type: n.type === 'gateway' ? 'gateway' : n.type,
-    position: { x: n.x ?? 0, y: n.y ?? 0 },
+    // Force the runtime node type to the new custom type to avoid legacy component
+    type: n.type === 'gateway' ? 'wfGateway' : (n.type === 'wfGateway' ? 'wfGateway' : n.type),
+    position: { x: (n as any).x ?? 0, y: (n as any).y ?? 0 },
     data: {
       label: n.label,
       dueInMinutes: (n as any).dueInMinutes,
@@ -52,29 +90,30 @@ export function toGraph(def: EditorWorkflowDefinition) {
     }
   }));
 
-  const working = def.edges.map(e => ({ ...e }));
-  assignElsePerGateway(working);
-
   const edges: Edge<RFEdgeData>[] = working.map(e => {
-    const label = e.label ?? rawInfer(e);
-    const handle = e.fromHandle ?? label ?? undefined;
-    const edge: Edge<RFEdgeData> = {
+    const logical = infer(e);
+    const physical = logical === 'true'
+      ? 'out_true'
+      : logical === 'false'
+      ? 'out_false'
+      : undefined;
+
+    return {
       id: e.id || nanoid(),
       source: e.from,
       target: e.to,
-      sourceHandle: handle,
-      data: { fromHandle: handle },
-      label: label || undefined,
-      type: 'default'
-    };
-    return edge;
+      sourceHandle: physical,
+      data: { branch: logical },
+      label: logical,
+      type: 'straight',
+      style: {
+        stroke: logical === 'true' ? '#16a34a'
+             : logical === 'false' ? '#dc2626'
+             : '#64748b',
+        strokeWidth: 2
+      }
+    } as Edge<RFEdgeData>;
   });
-
-  // Debug log
-  // eslint-disable-next-line no-console
-  console.debug('[WF][toGraph] edges hydrated',
-    edges.map(e => ({ id: e.id, source: e.source, target: e.target, sourceHandle: e.sourceHandle, label: e.label }))
-  );
 
   return { nodes, edges };
 }
@@ -87,7 +126,8 @@ export function toDefinition(
 ): EditorWorkflowDefinition {
   const defNodes: EditorWorkflowNode[] = nodes.map(n => ({
     id: n.id,
-    type: n.type ?? 'humanTask',
+    // Persist original semantic type as "gateway" (optional) or keep 'wfGateway'
+    type: n.type === 'wfGateway' ? 'gateway' : (n.type ?? 'humanTask'),
     label: n.data?.label,
     x: n.position.x,
     y: n.position.y,
@@ -98,26 +138,20 @@ export function toDefinition(
   }));
 
   const defEdges: EditorWorkflowEdge[] = edges.map(e => {
-    const fromHandle =
-      e.sourceHandle ||
-      e.data?.fromHandle ||
-      (e.label && ['true', 'false', 'else'].includes(e.label) ? e.label : undefined);
-
+    const logical =
+      (e.data as any)?.branch ||
+      (typeof e.label === 'string' ? normalize(e.label) : undefined) ||
+      (e.sourceHandle === 'out_true' ? 'true'
+        : e.sourceHandle === 'out_false' ? 'false'
+        : undefined);
     return {
       id: e.id,
       from: e.source,
       to: e.target,
-      fromHandle,
-      label: fromHandle
+      fromHandle: logical ?? null,
+      label: logical ?? null
     };
   });
 
-  assignElsePerGateway(defEdges);
-
-  return {
-    key,
-    nodes: defNodes,
-    edges: defEdges,
-    ...extras
-  };
+  return { key, nodes: defNodes, edges: defEdges, ...extras };
 }
