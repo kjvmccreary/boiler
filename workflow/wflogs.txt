@@ -1,68 +1,17 @@
-api.client.ts:44 🔍 API REQUEST (with JWT): POST /api/workflow/definitions/draft
-api.client.ts:57 ✅ API RESPONSE: /api/workflow/definitions/draft 201
-api.client.ts:143 🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure: {success: true, message: 'Draft created', hasData: true, errors: 0}
-api.client.ts:61 🔍 API CLIENT: Unwrapped response for /api/workflow/definitions/draft : {id: 34, name: 'Has Gateway 13', version: 1, jsonDefinition: '{\n  "key": "has-gateway-13",\n  "nodes": [\n    {\n  …432",\n      "to": "end-1756577349869"\n    }\n  ]\n}', isPublished: false, …}
- 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
- 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
- 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
- 🔍 PermissionContext: Permission check: {permission: 'users.view', hasPermission: true, allPermissions: Array(10)}
- 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
- 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
- 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
- 🔍 PermissionContext: Permission check: {permission: 'roles.view', hasPermission: true, allPermissions: Array(10)}
- 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
- 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
- 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
- 🔍 PermissionContext: Permission check: {permission: 'workflow.read', hasPermission: true, allPermissions: Array(10)}
- 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
- 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
- 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
- 🔍 PermissionContext: Permission check: {permission: 'workflow.read', hasPermission: true, allPermissions: Array(10)}
-token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
-token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
-PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
-PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.read', hasPermission: true, allPermissions: Array(10)}
-token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
-token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
-PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
-PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.read', hasPermission: true, allPermissions: Array(10)}
-token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
-token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
-PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
-PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.write', hasPermission: true, allPermissions: Array(10)}
-token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
-token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
-PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
-PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'users.view', hasPermission: true, allPermissions: Array(10)}
-token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
-token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
-PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
-PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'roles.view', hasPermission: true, allPermissions: Array(10)}
-token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
-token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
-PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
-PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.read', hasPermission: true, allPermissions: Array(10)}
-token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
-token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
-PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
-PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.read', hasPermission: true, allPermissions: Array(10)}
-token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
-token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
-PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
-PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.read', hasPermission: true, allPermissions: Array(10)}
-token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
-token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
-PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
-PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.read', hasPermission: true, allPermissions: Array(10)}
-token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
-token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
-PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
-PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.write', hasPermission: true, allPermissions: Array(10)}
-token.manager.ts:87 🔍 TokenManager: Token expiry check: {expiryTime: Sat Aug 30 2025 14:08:33 GMT-0500 (Central Daylight Time), currentTime: Sat Aug 30 2025 13:10:05 GMT-0500 (Central Daylight Time), isExpired: false}
-token.manager.ts:26 🔍 TokenManager: Current token info: {hasToken: true, tokenLength: 2909, isExpired: false, tokenPreview: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc...', claims: {…}}
-PermissionContext.tsx:63 🔍 PermissionContext: Extracting permissions from JWT token: {tokenClaims: Array(16), permissions: Array(69)}
-PermissionContext.tsx:126 🔍 PermissionContext: Permission check: {permission: 'workflow.write', hasPermission: true, allPermissions: Array(10)}
-api.client.ts:44 🔍 API REQUEST (with JWT): GET /api/workflow/definitions/34
-api.client.ts:57 ✅ API RESPONSE: /api/workflow/definitions/34 200
-api.client.ts:143 🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure: {success: true, message: '', hasData: true, errors: 0}
-api.client.ts:61 🔍 API CLIENT: Unwrapped response for /api/workflow/definitions/34 : {id: 34, name: 'Has Gateway 13', version: 1, jsonDefinition: '{\n  "key": "has-gateway-13",\n  "edges": [\n    {\n  …u0022: \\u0022approved\\u0022}, true]}"\n    }\n  ]\n}', isPublished: false, …}
+src/features/workflow/builder/BuilderPage.tsx:150:11 - error TS2345: Argument of type '{ label: string | undefined; data: { fromHandle: string; } | undefined; type: "default"; targetHandle?: string | undefined; id: string; source: string | null; target: string | null; sourceHandle: string | undefined; }' is not assignable to parameter of type 'Edge | Connection'.
+  Types of property 'source' are incompatible.
+    Type 'string | null' is not assignable to type 'string'.
+      Type 'null' is not assignable to type 'string'.
+
+150           {
+              ~
+151             id: `e-${params.source}-${params.sourceHandle ?? 'h'}-${params.target}-${Date.now()}`,
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+...
+159             type: 'default'
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+160           },
+    ~~~~~~~~~~~
+
+
+Found 1 error.

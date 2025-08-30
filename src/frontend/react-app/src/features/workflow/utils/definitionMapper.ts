@@ -6,7 +6,7 @@ import {
   RFEdgeData,
   RFNodeData
 } from '../../../types/workflow';
-import { Edge, Node } from 'reactflow';
+import { Edge as RFEdge, Node } from 'reactflow';
 
 function normalize(v?: string | null): string | undefined {
   if (!v) return undefined;
@@ -14,20 +14,22 @@ function normalize(v?: string | null): string | undefined {
   if (l === 'yes') return 'true';
   if (l === 'no') return 'false';
   if (l === 'default' || l === 'else') return 'else';
-  if (['true','false'].includes(l)) return l;
+  if (['true', 'false'].includes(l)) return l;
   return undefined;
 }
 
 function infer(edge: EditorWorkflowEdge): string | undefined {
-  return normalize(edge.fromHandle) ||
-         normalize(edge.label) ||
-         (() => {
-           const id = edge.id.toLowerCase();
-           if (id.includes('true')) return 'true';
-           if (id.includes('false')) return 'false';
-           if (id.includes('else')) return 'else';
-           return undefined;
-         })();
+  return (
+    normalize(edge.fromHandle) ||
+    normalize(edge.label) ||
+    (() => {
+      const id = edge.id.toLowerCase();
+      if (id.includes('true')) return 'true';
+      if (id.includes('false')) return 'false';
+      if (id.includes('else')) return 'else';
+      return undefined;
+    })()
+  );
 }
 
 function binaryCollapse(edges: EditorWorkflowEdge[]) {
@@ -36,13 +38,16 @@ function binaryCollapse(edges: EditorWorkflowEdge[]) {
     return acc;
   }, {});
   for (const list of Object.values(groups)) {
-    const trues  = list.filter(e => infer(e) === 'true');
+    const trues = list.filter(e => infer(e) === 'true');
     const falses = list.filter(e => infer(e) === 'false');
-    const elses  = list.filter(e => infer(e) === 'else');
+    const elses = list.filter(e => infer(e) === 'else');
 
     if (elses.length) {
       if (!trues.length && !falses.length) {
-        elses.forEach(e => { e.fromHandle = 'false'; e.label = 'false'; });
+        elses.forEach(e => {
+          e.fromHandle = 'false';
+          e.label = 'false';
+        });
       } else {
         const ids = new Set(elses.map(e => e.id));
         for (let i = edges.length - 1; i >= 0; i--) {
@@ -78,8 +83,7 @@ export function toGraph(def: EditorWorkflowDefinition) {
 
   const nodes: Node<RFNodeData>[] = def.nodes.map(n => ({
     id: n.id,
-    // Force the runtime node type to the new custom type to avoid legacy component
-    type: n.type === 'gateway' ? 'wfGateway' : (n.type === 'wfGateway' ? 'wfGateway' : n.type),
+    type: n.type === 'gateway' ? 'wfGateway' : n.type,
     position: { x: (n as any).x ?? 0, y: (n as any).y ?? 0 },
     data: {
       label: n.label,
@@ -90,13 +94,14 @@ export function toGraph(def: EditorWorkflowDefinition) {
     }
   }));
 
-  const edges: Edge<RFEdgeData>[] = working.map(e => {
+  const edges: RFEdge<RFEdgeData>[] = working.map(e => {
     const logical = infer(e);
-    const physical = logical === 'true'
-      ? 'out_true'
-      : logical === 'false'
-      ? 'out_false'
-      : undefined;
+    const physical =
+      logical === 'true'
+        ? 'out_true'
+        : logical === 'false'
+          ? 'out_false'
+          : undefined;
 
     return {
       id: e.id || nanoid(),
@@ -107,12 +112,15 @@ export function toGraph(def: EditorWorkflowDefinition) {
       label: logical,
       type: 'straight',
       style: {
-        stroke: logical === 'true' ? '#16a34a'
-             : logical === 'false' ? '#dc2626'
-             : '#64748b',
+        stroke:
+          logical === 'true'
+            ? '#16a34a'
+            : logical === 'false'
+              ? '#dc2626'
+              : '#64748b',
         strokeWidth: 2
       }
-    } as Edge<RFEdgeData>;
+    } as RFEdge<RFEdgeData>;
   });
 
   return { nodes, edges };
@@ -121,12 +129,11 @@ export function toGraph(def: EditorWorkflowDefinition) {
 export function toDefinition(
   key: string,
   nodes: Node<RFNodeData>[],
-  edges: Edge<RFEdgeData>[],
+  edges: RFEdge<RFEdgeData>[],
   extras: Partial<EditorWorkflowDefinition> = {}
 ): EditorWorkflowDefinition {
   const defNodes: EditorWorkflowNode[] = nodes.map(n => ({
     id: n.id,
-    // Persist original semantic type as "gateway" (optional) or keep 'wfGateway'
     type: n.type === 'wfGateway' ? 'gateway' : (n.type ?? 'humanTask'),
     label: n.data?.label,
     x: n.position.x,
@@ -139,17 +146,24 @@ export function toDefinition(
 
   const defEdges: EditorWorkflowEdge[] = edges.map(e => {
     const logical =
-      (e.data as any)?.branch ||
+      (e.data as any)?.fromHandle ||
       (typeof e.label === 'string' ? normalize(e.label) : undefined) ||
-      (e.sourceHandle === 'out_true' ? 'true'
-        : e.sourceHandle === 'out_false' ? 'false'
-        : undefined);
+      (e.sourceHandle ? normalize(e.sourceHandle) : undefined);
+
+    // FAIL-SAFE: inject label/fromHandle if sourceHandle has truthy branch
+    const finalLogical =
+      logical === 'true' || logical === 'false'
+        ? logical
+        : (e.sourceHandle === 'true' || e.sourceHandle === 'false'
+            ? (e.sourceHandle as 'true' | 'false')
+            : undefined);
+
     return {
       id: e.id,
       from: e.source,
       to: e.target,
-      fromHandle: logical ?? null,
-      label: logical ?? null
+      fromHandle: finalLogical ?? null,
+      label: finalLogical ?? null
     };
   });
 

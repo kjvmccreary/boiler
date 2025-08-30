@@ -1,125 +1,72 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import ReactFlow, {
-  Background,
-  Controls,
-  addEdge,
-  Connection,
-  Edge,
-  Node,
-  ReactFlowInstance
-} from 'reactflow';
-import { nanoid } from 'nanoid';
-import 'reactflow/dist/style.css';
-
-import BinaryGatewayNode from './BinaryGatewayNode';
-import { toDefinition, toGraph } from '../utils/definitionMapper';
+import React, { useEffect, useState, useCallback } from 'react';
+import { BuilderCanvas } from '../builder/BuilderCanvas';
+import type { Node, Edge } from 'reactflow';
+import { toGraph, toDefinition } from '../utils/definitionMapper';
 import { enrichDefinition } from '../utils/enrichEdges';
-import {
-  EditorWorkflowDefinition,
-  RFNodeData,
-  RFEdgeData
-} from '../../../types/workflow';
-
-const nodeTypes = { wfGateway: BinaryGatewayNode };
+import type { EditorWorkflowDefinition } from '../../../types/workflow';
 
 interface Props {
-  initialDefinitionJson?: EditorWorkflowDefinition | null;
+  initialDefinitionJson?: EditorWorkflowDefinition | null; // parsed JSON object of saved workflow
   workflowKey: string;
-  onSave: (json: EditorWorkflowDefinition) => Promise<void> | void;
+  onSave: (def: EditorWorkflowDefinition) => Promise<void> | void;
 }
 
-const WorkflowBuilder: React.FC<Props> = ({ initialDefinitionJson, workflowKey, onSave }) => {
-  const [nodes, setNodes] = useState<Node<RFNodeData>[]>([]);
-  const [edges, setEdges] = useState<Edge<RFEdgeData>[]>([]);
-  const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
+function rehydrateEdges(edges: Edge[]): Edge[] {
+  return edges.map(e => {
+    if (e.sourceHandle === 'true' || e.sourceHandle === 'false') return e;
+    const h =
+      (e as any).data?.fromHandle ||
+      (typeof e.label === 'string' ? e.label : undefined);
+    if (h === 'true' || h === 'false') {
+      return {
+        ...e,
+        sourceHandle: h,
+        label: h,
+        data: { ...(e.data || {}), fromHandle: h }
+      };
+    }
+    return e;
+  });
+}
 
+export const WorkflowBuilder: React.FC<Props> = ({
+  initialDefinitionJson,
+  workflowKey,
+  onSave
+}) => {
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
+
+  // Load + rehydrate on mount / change
   useEffect(() => {
     if (!initialDefinitionJson) return;
     const g = toGraph(initialDefinitionJson);
     setNodes(g.nodes);
-    requestAnimationFrame(() => setEdges(g.edges));
+    setEdges(rehydrateEdges(g.edges));
   }, [initialDefinitionJson]);
 
-  const onConnect = useCallback((params: Connection) => {
-    const logical =
-      params.sourceHandle === 'out_true' ? 'true'
-      : params.sourceHandle === 'out_false' ? 'false'
-      : undefined;
-    setEdges(eds =>
-      addEdge(
-        {
-          id: `e-${params.sourceHandle ?? 'h'}-${params.source}-${params.target}-${nanoid(4)}`,
-          ...params,
-          source: params.source,
-          target: params.target,
-          sourceHandle: params.sourceHandle ?? undefined,
-          data: { branch: logical },
-          label: logical,
-          type: 'straight',
-          style: {
-            stroke: logical === 'true' ? '#16a34a'
-                 : logical === 'false' ? '#dc2626'
-                 : '#64748b',
-            strokeWidth: 2
-          }
-        } as Edge<RFEdgeData>,
-        eds
-      )
-    );
-  }, []);
-
-  const onNodesChange = useCallback(
-    (changes: any) =>
-      setNodes(nds =>
-        nds.map(n => {
-          const change = changes.find((c: any) => c.id === n.id);
-          if (!change) return n;
-          if (change.type === 'position' && change.position)
-            return { ...n, position: change.position };
-          return n;
-        })
-      ),
-    []
-  );
-
-  const onEdgesChange = useCallback(
-    (changes: any) =>
-      setEdges(es => {
-        let next = [...es];
-        for (const c of changes) {
-          if (c.type === 'remove') next = next.filter(e => e.id !== c.id);
-        }
-        return next;
-      }),
-    []
-  );
-
-  const handleSave = useCallback(async () => {
-    if (!rfInstance) return;
-    const raw = toDefinition(workflowKey, nodes, edges);
-    const enriched = enrichDefinition(raw);
-    await onSave(enriched);
-  }, [rfInstance, nodes, edges, workflowKey, onSave]);
+  const handleSave = useCallback(() => {
+    const def = toDefinition(workflowKey, nodes, edges);
+    const enriched = enrichDefinition(def); // ensure branch labels still enforced
+    onSave(enriched);
+  }, [workflowKey, nodes, edges, onSave]);
 
   return (
-    <div style={{ width: '100%', height: '100%' }}>
-      <div style={{ padding: 4, background: '#0f172a', color: '#e2e8f0', display: 'flex', gap: 8 }}>
-        <button onClick={handleSave}>Save</button>
-        <span style={{ fontSize: 12, opacity: 0.7 }}>Binary gateway (true / false)</span>
+    <div style={{ display: 'flex', height: '100%', width: '100%' }}>
+      <div style={{ flex: 1, position: 'relative' }}>
+        <BuilderCanvas
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={changes => setNodes(chs => [...chs])} // delegate to internal apply in real code
+          onEdgesChange={changes => setEdges(chs => [...chs])}
+          onNodeClick={() => { }}
+          setNodes={setNodes}
+          setEdges={setEdges}
+        />
+        <div style={{ position: 'absolute', top: 8, left: 8, zIndex: 10 }}>
+          <button onClick={handleSave}>Save</button>
+        </div>
       </div>
-      <ReactFlow
-        fitView
-        nodeTypes={nodeTypes}
-        nodes={nodes}
-        edges={edges}
-        onInit={setRfInstance}
-        onConnect={onConnect}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-      >
-        <Background />
-        <Controls />
-      </ReactFlow>
     </div>
   );
 };

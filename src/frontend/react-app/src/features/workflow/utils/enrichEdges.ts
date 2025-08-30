@@ -63,6 +63,11 @@ export function enrichDefinition(def: EditorWorkflowDefinition): EditorWorkflowD
       if (i >= 0) copy.edges.splice(i, 1);
     });
   }
-
+  for (const e of copy.edges) {
+    if (!e.fromHandle && (e as any).sourceHandle && ['true','false'].includes((e as any).sourceHandle)) {
+      e.fromHandle = (e as any).sourceHandle;
+      e.label = (e as any).sourceHandle;
+    }
+  }
   return copy;
 }

@@ -56,6 +56,7 @@ export interface DslEdge {
   from: NodeId;
   to: NodeId;
   label?: string;
+  fromHandle?: string; // OPTIONAL: branch indicator ('true' | 'false')
 }
 
 // Complete workflow definition

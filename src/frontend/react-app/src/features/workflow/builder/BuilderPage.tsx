@@ -4,25 +4,27 @@ import {
   Box,
   Typography,
   Button,
-  Alert,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
-  Drawer,
   IconButton,
-  Tooltip,
-  Divider,
+  Tooltip
 } from '@mui/material';
 import {
   Save as SaveIcon,
   Publish as PublishIcon,
   ArrowBack as ArrowBackIcon,
-  Settings as SettingsIcon,
-  Close as CloseIcon,
+  Settings as SettingsIcon
 } from '@mui/icons-material';
-import { ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState, addEdge, Connection, Edge } from 'reactflow';
+import {
+  useNodesState,
+  useEdgesState,
+  addEdge,
+  Connection,
+  Edge
+} from 'reactflow';
 import 'reactflow/dist/style.css';
 
 import { BuilderCanvas } from './BuilderCanvas';
@@ -36,27 +38,68 @@ import type { WorkflowDefinitionDto } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
 
+// --- Helpers to enforce gateway branch metadata ---
+function extractBranch(edge: Edge): 'true' | 'false' | undefined {
+  const sh = edge.sourceHandle;
+  if (sh === 'true' || sh === 'false') return sh;
+  const d = (edge as any).data?.fromHandle;
+  if (d === 'true' || d === 'false') return d;
+  const lbl = typeof edge.label === 'string' ? edge.label.toLowerCase() : undefined;
+  if (lbl === 'true' || lbl === 'false') return lbl as 'true' | 'false';
+  return undefined;
+}
+
+function applyGatewayBranchMetadata(dsl: DslDefinition, flowEdges: Edge[]): DslDefinition {
+  const map = new Map(flowEdges.map(e => [e.id, e]));
+  const nextEdges = dsl.edges.map(e => {
+    const fe = map.get(e.id);
+    if (!fe) return e;
+    const branch = extractBranch(fe);
+    if (!branch) return e;
+    return {
+      ...e,
+      label: branch,
+      fromHandle: branch
+    } as any;
+  });
+
+  // Deduplicate per gateway (one true, one false)
+  const byFrom: Record<string, any[]> = {};
+  for (const e of nextEdges) (byFrom[e.from] ||= []).push(e);
+  const filtered: any[] = [];
+  for (const list of Object.values(byFrom)) {
+    let trueSeen = false, falseSeen = false;
+    for (const e of list) {
+      if (e.label === 'true') {
+        if (trueSeen) continue;
+        trueSeen = true;
+      } else if (e.label === 'false') {
+        if (falseSeen) continue;
+        falseSeen = true;
+      }
+      filtered.push(e);
+    }
+  }
+  return { ...dsl, edges: filtered };
+}
+
 export function BuilderPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { currentTenant } = useTenant();
 
-  // ReactFlow state
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  
-  // Builder state
+
   const [selectedNode, setSelectedNode] = useState<DslNode | null>(null);
   const [propertyPanelOpen, setPropertyPanelOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [definition, setDefinition] = useState<WorkflowDefinitionDto | null>(null);
-  
-  // Workflow metadata
+
   const [workflowName, setWorkflowName] = useState('');
   const [workflowDescription, setWorkflowDescription] = useState('');
-  
-  // Dialogs
+
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [publishNotes, setPublishNotes] = useState('');
 
@@ -66,7 +109,6 @@ export function BuilderPage() {
     if (!isNewWorkflow && id) {
       loadDefinition();
     } else {
-      // Initialize new workflow
       setWorkflowName('New Workflow');
       setWorkflowDescription('');
     }
@@ -74,7 +116,6 @@ export function BuilderPage() {
 
   const loadDefinition = async () => {
     if (!id || isNewWorkflow) return;
-
     try {
       setLoading(true);
       const definitionData = await workflowService.getDefinition(parseInt(id));
@@ -82,38 +123,79 @@ export function BuilderPage() {
       setWorkflowName(definitionData.name);
       setWorkflowDescription(definitionData.description || '');
 
-      // ✅ FIX: Parse JSON string to DslDefinition object
       if (definitionData.jsonDefinition) {
-        const dslDefinition: DslDefinition = JSON.parse(definitionData.jsonDefinition);
-        const { nodes: flowNodes, edges: flowEdges } = deserializeFromDsl(dslDefinition);
+        const dsl: DslDefinition = JSON.parse(definitionData.jsonDefinition);
+        const { nodes: flowNodes, edges: flowEdges } = deserializeFromDsl(dsl);
+
+        // Defer edges until after nodes mount so gateway handles exist
         setNodes(flowNodes);
-        setEdges(flowEdges);
+        requestAnimationFrame(() => {
+          // Safety: ensure sourceHandle set if label indicates branch
+            const fixed = flowEdges.map(e => {
+            const lbl = typeof e.label === 'string' ? e.label.toLowerCase() : '';
+            if ((lbl === 'true' || lbl === 'false') && !e.sourceHandle) {
+              return {
+                ...e,
+                sourceHandle: lbl,
+                data: { ...(e.data || {}), fromHandle: lbl }
+              };
+            }
+            return e;
+          });
+          setEdges(fixed);
+        });
       }
-    } catch (error) {
-      console.error('Failed to load definition:', error);
+    } catch (err) {
+      console.error('Failed to load definition:', err);
       toast.error('Failed to load workflow definition');
     } finally {
       setLoading(false);
     }
   };
 
+  // FIX: Narrow source/target before constructing Edge object
+  const onConnect = useCallback(
+    (params: Connection) => {
+      const { source, target, sourceHandle, targetHandle } = params;
+      if (!source || !target) return; // Narrow to string
+
+      const branch =
+        sourceHandle === 'true' || sourceHandle === 'false'
+          ? sourceHandle
+          : undefined;
+
+      setEdges(eds =>
+        addEdge(
+          {
+            id: `e-${source}-${sourceHandle ?? 'h'}-${target}-${Date.now()}`,
+            source,
+            target,
+            sourceHandle: sourceHandle ?? undefined,
+            ...(targetHandle ? { targetHandle } : {}),
+            label: branch,
+            data: branch ? { fromHandle: branch } : undefined,
+            type: 'default'
+          } as Edge,
+          eds
+        )
+      );
+    },
+    [setEdges]
+  );
+
   const handleSave = async () => {
     try {
       setSaving(true);
-      
-      // Serialize ReactFlow to DSL
-      const dslDefinition: DslDefinition = serializeToDsl(
+      let dslDefinition: DslDefinition = serializeToDsl(
         nodes,
         edges,
         workflowName.toLowerCase().replace(/\s+/g, '-'),
         definition?.version
       );
-
-      // ✅ FIX: Convert DslDefinition to JSON string
+      dslDefinition = applyGatewayBranchMetadata(dslDefinition, edges);
       const jsonDefinitionString = JSON.stringify(dslDefinition);
 
       if (isNewWorkflow) {
-        // Create new draft
         const response = await workflowService.createDraft({
           name: workflowName,
           description: workflowDescription,
@@ -121,11 +203,8 @@ export function BuilderPage() {
         });
         setDefinition(response);
         toast.success('Workflow saved as draft');
-        
-        // Update URL to edit mode
         navigate(`/app/workflow/builder/${response.id}`, { replace: true });
       } else {
-        // Update existing draft
         const response = await workflowService.updateDefinition(parseInt(id!), {
           name: workflowName,
           description: workflowDescription,
@@ -134,8 +213,8 @@ export function BuilderPage() {
         setDefinition(response);
         toast.success('Workflow updated');
       }
-    } catch (error) {
-      console.error('Failed to save workflow:', error);
+    } catch (err) {
+      console.error('Failed to save workflow:', err);
       toast.error('Failed to save workflow');
     } finally {
       setSaving(false);
@@ -147,26 +226,20 @@ export function BuilderPage() {
       toast.error('Please save the workflow first');
       return;
     }
-
-    // Validate before publishing
-    const dslDefinition = serializeToDsl(nodes, edges, workflowName.toLowerCase().replace(/\s+/g, '-'));
+    const dslDefinition = applyGatewayBranchMetadata(
+      serializeToDsl(nodes, edges, workflowName.toLowerCase().replace(/\s+/g, '-')),
+      edges
+    );
     const validation = validateDefinition(dslDefinition);
-
     if (!validation.isValid) {
       toast.error(`Cannot publish: ${validation.errors.join(', ')}`);
       return;
     }
-
-    if (validation.warnings.length > 0) {
-      console.warn('Workflow has warnings:', validation.warnings);
-    }
-
     setPublishDialogOpen(true);
   };
 
   const handlePublishConfirm = async () => {
     if (!definition) return;
-
     try {
       await workflowService.publishDefinition(definition.id, {
         publishNotes: publishNotes || undefined
@@ -174,41 +247,34 @@ export function BuilderPage() {
       toast.success('Workflow published successfully');
       setPublishDialogOpen(false);
       setPublishNotes('');
-      
-      // Reload to get updated status
       loadDefinition();
-    } catch (error) {
-      console.error('Failed to publish workflow:', error);
+    } catch (err) {
+      console.error('Failed to publish workflow:', err);
       toast.error('Failed to publish workflow');
     }
   };
 
-  const onConnect = useCallback((params: Connection) => {
-    setEdges((eds) => addEdge(params, eds));
-  }, [setEdges]);
+  const handleNodeClick = useCallback(
+    (_evt: React.MouseEvent, node: any) => {
+      const dslNode = nodes.find(n => n.id === node.id)?.data as DslNode;
+      if (dslNode) {
+        setSelectedNode(dslNode);
+        setPropertyPanelOpen(true);
+      }
+    },
+    [nodes]
+  );
 
-  const handleNodeClick = useCallback((event: React.MouseEvent, node: any) => {
-    // Find the corresponding DSL node
-    const dslNode = nodes.find(n => n.id === node.id)?.data as DslNode;
-    if (dslNode) {
-      setSelectedNode(dslNode);
-      setPropertyPanelOpen(true);
-    }
-  }, [nodes]);
+  const handleNodeUpdate = useCallback(
+    (updated: DslNode) => {
+      setNodes(nds =>
+        nds.map(n => (n.id === updated.id ? { ...n, data: updated } : n))
+      );
+    },
+    [setNodes]
+  );
 
-  const handleNodeUpdate = useCallback((updatedNode: DslNode) => {
-    setNodes((nds) =>
-      nds.map((node) =>
-        node.id === updatedNode.id
-          ? { ...node, data: updatedNode }
-          : node
-      )
-    );
-  }, [setNodes]);
-
-  const handleBack = () => {
-    navigate('/app/workflow/definitions');
-  };
+  const handleBack = () => navigate('/app/workflow/definitions');
 
   if (!currentTenant) {
     return (
@@ -220,25 +286,26 @@ export function BuilderPage() {
 
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        p: 2, 
-        borderBottom: 1, 
-        borderColor: 'divider',
-        bgcolor: 'background.paper'
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <IconButton onClick={handleBack} sx={{ mr: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          p: 2,
+          borderBottom: 1,
+          borderColor: 'divider',
+          bgcolor: 'background.paper'
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <IconButton onClick={handleBack}>
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h5" component="h1">
+          <Typography variant="h5">
             {isNewWorkflow ? 'Create Workflow' : 'Edit Workflow'}
           </Typography>
           {definition && (
-            <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>
+            <Typography variant="body2" color="text.secondary">
               v{definition.version} • {definition.isPublished ? 'Published' : 'Draft'}
             </Typography>
           )}
@@ -249,10 +316,9 @@ export function BuilderPage() {
             size="small"
             placeholder="Workflow Name"
             value={workflowName}
-            onChange={(e) => setWorkflowName(e.target.value)}
+            onChange={e => setWorkflowName(e.target.value)}
             sx={{ width: 200 }}
           />
-          
           <Button
             variant="outlined"
             startIcon={<SaveIcon />}
@@ -261,7 +327,6 @@ export function BuilderPage() {
           >
             {saving ? 'Saving...' : 'Save'}
           </Button>
-
           {definition && !definition.isPublished && (
             <Button
               variant="contained"
@@ -272,9 +337,8 @@ export function BuilderPage() {
               Publish
             </Button>
           )}
-
           <Tooltip title="Properties">
-            <IconButton 
+            <IconButton
               onClick={() => setPropertyPanelOpen(true)}
               color={propertyPanelOpen ? 'primary' : 'default'}
             >
@@ -284,12 +348,8 @@ export function BuilderPage() {
         </Box>
       </Box>
 
-      {/* Main Content */}
       <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        {/* Node Palette */}
         <NodePalette />
-
-        {/* Builder Canvas */}
         <Box sx={{ flex: 1, position: 'relative' }}>
           <BuilderCanvas
             nodes={nodes}
@@ -302,8 +362,6 @@ export function BuilderPage() {
             setEdges={setEdges}
           />
         </Box>
-
-        {/* Property Panel */}
         <PropertyPanel
           open={propertyPanelOpen}
           onClose={() => setPropertyPanelOpen(false)}
@@ -316,13 +374,17 @@ export function BuilderPage() {
         />
       </Box>
 
-      {/* Publish Dialog */}
-      <Dialog open={publishDialogOpen} onClose={() => setPublishDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={publishDialogOpen}
+        onClose={() => setPublishDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Publish Workflow</DialogTitle>
         <DialogContent>
           <Typography sx={{ mb: 2 }}>
-            Publishing will make this workflow immutable and available for creating instances.
-            Are you sure you want to publish "{workflowName}"?
+            Publishing will make this workflow immutable and available for creating
+            instances. Are you sure you want to publish "{workflowName}"?
           </Typography>
           <TextField
             fullWidth
@@ -330,7 +392,7 @@ export function BuilderPage() {
             multiline
             rows={3}
             value={publishNotes}
-            onChange={(e) => setPublishNotes(e.target.value)}
+            onChange={e => setPublishNotes(e.target.value)}
             placeholder="Add notes about this version..."
           />
         </DialogContent>
