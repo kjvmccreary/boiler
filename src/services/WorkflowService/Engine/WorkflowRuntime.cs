@@ -639,29 +639,23 @@ public class WorkflowRuntime : IWorkflowRuntime
         string data,
         int? userId)
     {
-        // Resolve tenant (cache → quick lookup)
-        if (!_instanceTenantCache.TryGetValue(instanceId, out var tenantId))
+        // Resolve tenant (cached earlier)
+        int tenantId;
+        if (!_instanceTenantCache.TryGetValue(instanceId, out tenantId))
         {
-            try
-            {
-                tenantId = _context.WorkflowInstances
-                    .AsNoTracking()
-                    .Where(i => i.Id == instanceId)
-                    .Select(i => i.TenantId)
-                    .FirstOrDefault();
-                if (tenantId > 0)
-                    _instanceTenantCache[instanceId] = tenantId;
-            }
-            catch
-            {
-                tenantId = 0;
-            }
+            tenantId = _context.WorkflowInstances
+                .AsNoTracking()
+                .Where(i => i.Id == instanceId)
+                .Select(i => i.TenantId)
+                .FirstOrDefault();
+            if (tenantId > 0)
+                _instanceTenantCache[instanceId] = tenantId;
         }
 
         var workflowEvent = new WorkflowEvent
         {
             WorkflowInstanceId = instanceId,
-            TenantId = tenantId, // explicit for clarity (DbContext could also stamp)
+            TenantId = tenantId,
             Type = type,
             Name = name,
             Data = data,
@@ -672,17 +666,6 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         var outboxMessage = new OutboxMessage
         {
-            Type = $"Workflow{type}{name}",
-            Payload = JsonSerializer.Serialize(new
-            {
-                InstanceId = instanceId,
-                EventType = type,
-                EventName = name,
-                EventData = TryParseOrRaw(data),
-                UserId = userId,
-                OccurredAt = DateTime.UtcNow
-            }),
-            Processed = false,
             EventType = $"workflow.{type}.{name}".ToLowerInvariant(),
             EventData = data,
             IsProcessed = false,

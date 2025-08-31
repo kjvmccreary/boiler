@@ -1,0 +1,42 @@
+[2025-08-31 08:14:38.231 -05:00 ERR] Failed executing DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE "OutboxMessages" ALTER COLUMN "EventData" TYPE jsonb; {"EventId":{"Id":20102,"Name":"Microsoft.EntityFrameworkCore.Database.Command.CommandError"},"SourceContext":"Microsoft.EntityFrameworkCore.Database.Command"}
+[2025-08-31 08:17:08.951 -05:00 ERR] Failed executing DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE "OutboxMessages" ALTER COLUMN "EventData" TYPE jsonb; {"EventId":{"Id":20102,"Name":"Microsoft.EntityFrameworkCore.Database.Command.CommandError"},"SourceContext":"Microsoft.EntityFrameworkCore.Database.Command"}
+[2025-08-31 08:25:26.482 -05:00 ERR] Failed executing DbCommand (6ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+
+                ALTER TABLE "OutboxMessages"
+                ALTER COLUMN "EventData" TYPE jsonb
+                USING
+                    CASE
+                        WHEN "EventData" IS NULL OR btrim("EventData") = '' THEN '{}'::jsonb
+                        ELSE "EventData"::jsonb
+                    END; {"EventId":{"Id":20102,"Name":"Microsoft.EntityFrameworkCore.Database.Command.CommandError"},"SourceContext":"Microsoft.EntityFrameworkCore.Database.Command"}
+[2025-08-31 08:35:58.175 -05:00 ERR] Failed executing DbCommand (11ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+
+UPDATE "OutboxMessages"
+SET "EventData" = CASE
+    WHEN ("EventData"::text IS NULL OR "EventData"::text = '' OR "EventData" = '{}'::jsonb)
+         AND Payload IS NOT NULL AND btrim(Payload) <> '' THEN
+        CASE
+            WHEN Payload ~ '^\s*[{[]' THEN Payload::jsonb
+            ELSE jsonb_build_object('legacyPayload', Payload)
+        END
+    ELSE "EventData"
+END; {"EventId":{"Id":20102,"Name":"Microsoft.EntityFrameworkCore.Database.Command.CommandError"},"SourceContext":"Microsoft.EntityFrameworkCore.Database.Command"}
+[2025-08-31 08:49:44.198 -05:00 ERR] Failed executing DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+
+UPDATE "OutboxMessages"
+SET "EventData" = CASE
+    WHEN (("EventData"::text IS NULL OR "EventData"::text = '' OR "EventData" = '{}'::jsonb)
+          AND "Payload" IS NOT NULL AND btrim("Payload") <> '')
+    THEN
+        CASE
+            WHEN "Payload" ~ '^\s*[{[]' THEN "Payload"::jsonb
+            ELSE jsonb_build_object('legacyPayload', "Payload")
+        END
+    ELSE "EventData"
+END
+WHERE EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'OutboxMessages' AND column_name = 'Payload'
+); {"EventId":{"Id":20102,"Name":"Microsoft.EntityFrameworkCore.Database.Command.CommandError"},"SourceContext":"Microsoft.EntityFrameworkCore.Database.Command"}

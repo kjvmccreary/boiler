@@ -15,12 +15,15 @@ public class LoggingOutboxDispatcher : IOutboxDispatcher
     public Task<bool> DispatchAsync(OutboxMessage message, CancellationToken ct)
     {
         // MVP: just log. Future: publish to broker / webhook.
-        _logger.LogInformation("OUTBOX_DISPATCH EventType={EventType} Id={Id} Tenant={TenantId} Retry={Retry} PayloadSize={Size}",
-            message.EventType ?? message.Type,
+        var size = message.EventData?.Length ?? 0;
+
+        _logger.LogInformation(
+            "OUTBOX_DISPATCH EventType={EventType} Id={Id} Tenant={TenantId} Retry={Retry} PayloadSize={Size}",
+            message.EventType,
             message.Id,
             message.TenantId,
             message.RetryCount,
-            message.EventData?.Length ?? message.Payload?.Length ?? 0);
+            size);
 
         return Task.FromResult(true);
     }

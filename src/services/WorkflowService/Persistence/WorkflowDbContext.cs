@@ -339,18 +339,17 @@ public class WorkflowDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
 
-            entity.HasIndex(e => new { e.Processed, e.CreatedAt });
-            entity.HasIndex(e => new { e.Type, e.Processed });
+            entity.HasIndex(e => new { e.IsProcessed, e.CreatedAt });
+            entity.HasIndex(e => new { e.EventType, e.IsProcessed });
             entity.HasIndex(e => e.NextRetryAt);
 
-            entity.Property(e => e.Type).IsRequired().HasMaxLength(255);
-            entity.Property(e => e.Payload).IsRequired().HasColumnType("jsonb");
-            entity.Property(e => e.Processed).IsRequired();
-            entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
+            entity.Property(e => e.EventType).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.EventData).IsRequired().HasColumnType("jsonb");
+            entity.Property(e => e.IsProcessed).IsRequired();
             entity.Property(e => e.RetryCount).IsRequired();
+            entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
             entity.Property(e => e.CreatedAt).IsRequired();
             entity.Property(e => e.UpdatedAt).IsRequired();
-            // TenantId present (not filtered) for multi-tenant diagnostics and cross-tenant admin ops.
         });
     }
 

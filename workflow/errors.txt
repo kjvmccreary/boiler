@@ -1,18 +1,61 @@
- WorkflowService failed with 12 error(s) and 5 warning(s) (1.7s)
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Migrations\20250826191453_mig.cs(8,26): warning CS8981: The type name 'mig' only contains lower-cased ascii characters. Such names may become reserved for the language.
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Migrations\20250826191453_mig.Designer.cs(16,19): warning CS8981: The type name 'mig' only contains lower-cased ascii characters. Such names may become reserved for the language.
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\WorkflowExecutionService.cs(140,26): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\WorkflowExecutionService.cs(148,31): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\WorkflowExecutionService.cs(165,26): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\WorkflowExecutionService.cs(178,44): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\WorkflowExecutionService.cs(179,44): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\WorkflowExecutionService.cs(180,44): error CS0104: 'TaskStatus' is an ambiguous reference between 'DTOs.Workflow.Enums.TaskStatus' and 'System.Threading.Tasks.TaskStatus'
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Controllers\InstancesController.cs(313,26): error CS0103: The name '_context' does not exist in the current context
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Controllers\InstancesController.cs(319,15): error CS0103: The name '_context' does not exist in the current context
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Controllers\InstancesController.cs(320,69): error CS0103: The name '_mapper' does not exist in the current context
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Controllers\InstancesController.cs(329,26): error CS0103: The name '_context' does not exist in the current context
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Controllers\InstancesController.cs(335,15): error CS0103: The name '_context' does not exist in the current context
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Controllers\InstancesController.cs(336,69): error CS0103: The name '_mapper' does not exist in the current context
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Engine\Executors\TimerExecutor.cs(24,44): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Engine\Executors\TimerExecutor.cs(155,26): warning CS0168: The variable 'ex' is declared but never used
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\DefinitionService.cs(422,45): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
+PS C:\Users\mccre\dev\boiler\src\services\WorkflowService> dotnet ef database update --context WorkflowDbContext
+Build started...
+Build succeeded.
+[08:49:44 ERR] Failed executing DbCommand (5ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+
+UPDATE "OutboxMessages"
+SET "EventData" = CASE
+    WHEN (("EventData"::text IS NULL OR "EventData"::text = '' OR "EventData" = '{}'::jsonb)
+          AND "Payload" IS NOT NULL AND btrim("Payload") <> '')
+    THEN
+        CASE
+            WHEN "Payload" ~ '^\s*[{[]' THEN "Payload"::jsonb
+            ELSE jsonb_build_object('legacyPayload', "Payload")
+        END
+    ELSE "EventData"
+END
+WHERE EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'OutboxMessages' AND column_name = 'Payload'
+); {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command"}
+Npgsql.PostgresException (0x80004005): 42883: function btrim(jsonb) does not exist
+
+POSITION: 186
+   at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlDataReader.NextResult()
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteNonQuery()
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQuery(RelationalCommandParameterObject parameterObject)
+   at Microsoft.EntityFrameworkCore.Migrations.MigrationCommand.ExecuteNonQuery(IRelationalConnection connection, IReadOnlyDictionary`2 parameterValues)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.Execute(IReadOnlyList`1 migrationCommands, IRelationalConnection connection, MigrationExecutionState executionState, Boolean beginTransaction, Boolean commitTransaction, Nullable`1 isolationLevel)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.<>c.<ExecuteNonQuery>b__3_1(DbContext _, ValueTuple`6 s)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQuery(IReadOnlyList`1 migrationCommands, IRelationalConnection connection, MigrationExecutionState executionState, Boolean commitTransaction, Nullable`1 isolationLevel)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.MigrateImplementation(DbContext context, String targetMigration, MigrationExecutionState state, Boolean useTransaction)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.<>c.<Migrate>b__20_1(DbContext c, ValueTuple`4 s)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass28_0`2.<Execute>b__0(DbContext context, TState state)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementation[TState,TResult](Func`3 operation, Func`3 verifySucceeded, TState state)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(String targetMigration)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal.NpgsqlMigrator.Migrate(String targetMigration)
+   at Microsoft.EntityFrameworkCore.Design.Internal.MigrationsOperations.UpdateDatabase(String targetMigration, String connectionString, String contextType)
+   at Microsoft.EntityFrameworkCore.Design.OperationExecutor.UpdateDatabaseImpl(String targetMigration, String connectionString, String contextType)
+   at Microsoft.EntityFrameworkCore.Design.OperationExecutor.UpdateDatabase.<>c__DisplayClass0_0.<.ctor>b__0()
+   at Microsoft.EntityFrameworkCore.Design.OperationExecutor.OperationBase.Execute(Action action)
+  Exception data:
+    Severity: ERROR
+    SqlState: 42883
+    MessageText: function btrim(jsonb) does not exist
+    Hint: No function matches the given name and argument types. You might need to add explicit type casts.
+    Position: 186
+    File: parse_func.c
+    Line: 629
+    Routine: ParseFuncOrColumn
+42883: function btrim(jsonb) does not exist
+
+POSITION: 186
