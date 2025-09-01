@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -6,7 +6,6 @@ import {
   CardContent,
   Chip,
   Button,
-  Grid, // ✅ FIX: Use regular Grid, not Grid2
   Divider,
   Alert,
   IconButton,
@@ -31,11 +30,12 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { workflowService } from '@/services/workflow.service';
-import type { 
-  WorkflowInstanceDto, 
-  WorkflowEventDto, 
-  TaskSummaryDto, 
-  InstanceStatus 
+import type {
+  WorkflowInstanceDto,
+  WorkflowEventDto,
+  TaskSummaryDto,
+  InstanceStatus,
+  InstanceRuntimeSnapshotDto
 } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
@@ -46,10 +46,13 @@ export function InstanceDetailsPage() {
   const [instance, setInstance] = useState<WorkflowInstanceDto | null>(null);
   const [events, setEvents] = useState<WorkflowEventDto[]>([]);
   const [tasks, setTasks] = useState<TaskSummaryDto[]>([]);
+  const [definitionJson, setDefinitionJson] = useState<string | null>(null);
+  const [traversedEdgeIds, setTraversedEdgeIds] = useState<string[]>([]);
+  const [visitedNodeIds, setVisitedNodeIds] = useState<string[]>([]);
+  const [currentNodeIds, setCurrentNodeIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [eventsLoading, setEventsLoading] = useState(false);
-  const [tasksLoading, setTasksLoading] = useState(false);
-  const [definitionJson, setDefinitionJson] = useState<string | null>(null); // ADD state
+  const [eventsLoading] = useState(false);
+  const [tasksLoading] = useState(false);
 
   const navigate = useNavigate();
   const { currentTenant } = useTenant();
@@ -58,12 +61,15 @@ export function InstanceDetailsPage() {
     if (!id) return;
     try {
       setLoading(true);
-      const snapshot = await workflowService.getRuntimeSnapshot(parseInt(id));
+      const snapshot: InstanceRuntimeSnapshotDto = await workflowService.getRuntimeSnapshot(parseInt(id));
       setInstance(snapshot.instance);
       setTasks(snapshot.tasks);
       setEvents(snapshot.events);
       setDefinitionJson(snapshot.definitionJson);
-    } catch (e) {
+      setTraversedEdgeIds(snapshot.traversedEdgeIds || []);
+      setVisitedNodeIds(snapshot.visitedNodeIds || []);
+      setCurrentNodeIds(snapshot.currentNodeIds || []);
+    } catch {
       toast.error('Failed to load runtime snapshot');
     } finally {
       setLoading(false);
@@ -71,180 +77,113 @@ export function InstanceDetailsPage() {
   };
 
   useEffect(() => {
-    if (currentTenant && id) {
-      loadSnapshot();
-    }
+    if (currentTenant && id) loadSnapshot();
   }, [currentTenant, id]);
 
-  const handleRefresh = () => {
-    loadSnapshot();
-  };
+  const handleRefresh = () => loadSnapshot();
 
   const handleTerminateInstance = async () => {
     if (!instance) return;
-
     try {
       await workflowService.terminateInstance(instance.id);
       toast.success('Workflow instance terminated');
       loadSnapshot();
-    } catch (error) {
-      console.error('Failed to terminate instance:', error);
+    } catch {
       toast.error('Failed to terminate workflow instance');
     }
   };
 
   const handleSuspendInstance = async () => {
     if (!instance) return;
-
     try {
       await workflowService.suspendInstance(instance.id);
       toast.success('Workflow instance suspended');
       loadSnapshot();
-    } catch (error) {
-      console.error('Failed to suspend instance:', error);
+    } catch {
       toast.error('Failed to suspend workflow instance');
     }
   };
 
   const handleResumeInstance = async () => {
     if (!instance) return;
-
     try {
       await workflowService.resumeInstance(instance.id);
       toast.success('Workflow instance resumed');
       loadSnapshot();
-    } catch (error) {
-      console.error('Failed to resume instance:', error);
+    } catch {
       toast.error('Failed to resume workflow instance');
     }
   };
 
   const getStatusChip = (status: InstanceStatus) => {
     switch (status) {
-      case 'Running':
-        return <Chip label="Running" color="primary" size="small" icon={<StartIcon />} />;
-      case 'Completed':
-        return <Chip label="Completed" color="success" size="small" />;
-      case 'Failed':
-        return <Chip label="Failed" color="error" size="small" />;
-      case 'Cancelled':
-        return <Chip label="Cancelled" color="default" size="small" />;
-      case 'Suspended':
-        return <Chip label="Suspended" color="warning" size="small" icon={<PauseIcon />} />;
-      default:
-        return <Chip label={status} color="default" size="small" />;
+      case 'Running': return <Chip label="Running" color="primary" size="small" icon={<StartIcon />} />;
+      case 'Completed': return <Chip label="Completed" color="success" size="small" />;
+      case 'Failed': return <Chip label="Failed" color="error" size="small" />;
+      case 'Cancelled': return <Chip label="Cancelled" size="small" />;
+      case 'Suspended': return <Chip label="Suspended" color="warning" size="small" icon={<PauseIcon />} />;
+      default: return <Chip label={status} size="small" />;
     }
   };
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
-  };
+  const formatDateTime = (d: string) => new Date(d).toLocaleString();
 
   const calculateDuration = () => {
     if (!instance) return 'Unknown';
-    
-    const start = new Date(instance.startedAt);
-    const end = instance.completedAt ? new Date(instance.completedAt) : new Date();
-    const diffMs = end.getTime() - start.getTime();
-    
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
-    return `${minutes}m`;
+    const start = new Date(instance.startedAt).getTime();
+    const end = (instance.completedAt ? new Date(instance.completedAt) : new Date()).getTime();
+    const diff = end - start;
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
   };
 
-  // Event columns for DataGrid
   const eventColumns: GridColDef[] = [
-    {
-      field: 'occurredAt',
-      headerName: 'Time',
-      width: 180,
-      type: 'dateTime',
-      valueGetter: (value) => new Date(value),
-    },
-    {
-      field: 'type',
-      headerName: 'Type',
-      width: 120,
-    },
-    {
-      field: 'name',
-      headerName: 'Event',
-      flex: 1,
-      minWidth: 200,
-    },
+    { field: 'occurredAt', headerName: 'Time', width: 180, type: 'dateTime', valueGetter: v => new Date(v) },
+    { field: 'type', headerName: 'Type', width: 120 },
+    { field: 'name', headerName: 'Event', flex: 1, minWidth: 200 },
     {
       field: 'data',
       headerName: 'Details',
       flex: 1,
       minWidth: 250,
-      renderCell: (params) => (
+      renderCell: p => (
         <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
-          {params.value.length > 100 ? `${params.value.substring(0, 100)}...` : params.value}
+          {p.value.length > 100 ? `${p.value.substring(0, 100)}...` : p.value}
         </Typography>
-      ),
+      )
     },
-    {
-      field: 'userId',
-      headerName: 'User',
-      width: 100,
-      renderCell: (params) => params.value || 'System',
-    },
+    { field: 'userId', headerName: 'User', width: 100, renderCell: p => p.value || 'System' }
   ];
 
-  // Task columns for DataGrid
   const taskColumns: GridColDef[] = [
-    {
-      field: 'taskName',
-      headerName: 'Task',
-      flex: 1,
-      minWidth: 200,
-    },
+    { field: 'taskName', headerName: 'Task', flex: 1, minWidth: 200 },
     {
       field: 'status',
       headerName: 'Status',
       width: 130,
-      renderCell: (params) => {
-        const status = params.value;
-        switch (status) {
-          case 'Created':
-            return <Chip label="Available" color="default" size="small" />;
-          case 'Assigned':
-            return <Chip label="Assigned" color="info" size="small" />;
-          case 'Claimed':
-            return <Chip label="Claimed" color="primary" size="small" />;
-          case 'InProgress':
-            return <Chip label="In Progress" color="warning" size="small" />;
-          case 'Completed':
-            return <Chip label="Completed" color="success" size="small" />;
-          case 'Cancelled':
-            return <Chip label="Cancelled" color="error" size="small" />;
-          default:
-            return <Chip label={status} color="default" size="small" />;
+      renderCell: p => {
+        const s = p.value;
+        switch (s) {
+          case 'Created': return <Chip label="Available" size="small" />;
+          case 'Assigned': return <Chip label="Assigned" color="info" size="small" />;
+          case 'Claimed': return <Chip label="Claimed" color="primary" size="small" />;
+          case 'InProgress': return <Chip label="In Progress" color="warning" size="small" />;
+          case 'Completed': return <Chip label="Completed" color="success" size="small" />;
+          case 'Cancelled': return <Chip label="Cancelled" color="error" size="small" />;
+          default: return <Chip label={s} size="small" />;
         }
-      },
+      }
     },
     {
       field: 'dueDate',
       headerName: 'Due Date',
       width: 160,
       type: 'dateTime',
-      valueGetter: (value) => value ? new Date(value) : null,
-      renderCell: (params) => {
-        if (!params.value) return 'No due date';
-        return new Date(params.value).toLocaleString();
-      },
+      valueGetter: v => (v ? new Date(v) : null),
+      renderCell: p => p.value ? new Date(p.value).toLocaleString() : 'No due date'
     },
-    {
-      field: 'createdAt',
-      headerName: 'Created',
-      width: 120,
-      type: 'date',
-      valueGetter: (value) => new Date(value),
-    },
+    { field: 'createdAt', headerName: 'Created', width: 120, type: 'date', valueGetter: v => new Date(v) },
     {
       field: 'actions',
       type: 'actions',
@@ -252,18 +191,19 @@ export function InstanceDetailsPage() {
       width: 100,
       getActions: (params: GridRowParams) => [
         <GridActionsCellItem
+          key="view"
           icon={<ViewIcon />}
           label="View Task"
-          onClick={() => navigate(`/app/workflow/tasks/${params.id}`)}  // ✅ Correct
-        />,
-      ],
-    },
+          onClick={() => navigate(`/app/workflow/tasks/${params.id}`)}
+        />
+      ]
+    }
   ];
 
   if (!currentTenant) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
-        <Typography>Please select a tenant to view workflow instances</Typography>
+        <Typography>Select a tenant to view workflow instances</Typography>
       </Box>
     );
   }
@@ -279,16 +219,10 @@ export function InstanceDetailsPage() {
   if (!instance) {
     return (
       <Box sx={{ p: 3 }}>
-        <Button
-          startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/app/workflow/instances')}
-          sx={{ mb: 2 }}
-        >
+        <Button startIcon={<ArrowBackIcon />} onClick={() => navigate('/app/workflow/instances')} sx={{ mb: 2 }}>
           Back to Instances
         </Button>
-        <Alert severity="error">
-          Workflow instance not found
-        </Alert>
+        <Alert severity="error">Workflow instance not found</Alert>
       </Box>
     );
   }
@@ -298,10 +232,7 @@ export function InstanceDetailsPage() {
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <IconButton
-            onClick={() => navigate('/app/workflow/instances')}
-            sx={{ mr: 1 }}
-          >
+          <IconButton onClick={() => navigate('/app/workflow/instances')} sx={{ mr: 1 }}>
             <ArrowBackIcon />
           </IconButton>
           <Typography variant="h4" component="h1">
@@ -311,200 +242,146 @@ export function InstanceDetailsPage() {
             </Typography>
           </Typography>
         </Box>
-
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Tooltip title="Refresh">
             <IconButton onClick={handleRefresh}>
               <RefreshIcon />
             </IconButton>
           </Tooltip>
-
           {instance.status === 'Running' && (
             <>
-              <Button
-                variant="outlined"
-                startIcon={<PauseIcon />}
-                onClick={handleSuspendInstance}
-                size="small"
-              >
+              <Button variant="outlined" startIcon={<PauseIcon />} onClick={handleSuspendInstance} size="small">
                 Suspend
               </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<StopIcon />}
-                onClick={handleTerminateInstance}
-                size="small"
-              >
+              <Button variant="outlined" color="error" startIcon={<StopIcon />} onClick={handleTerminateInstance} size="small">
                 Terminate
               </Button>
             </>
           )}
-
           {instance.status === 'Suspended' && (
-            <Button
-              variant="outlined"
-              color="primary"
-              startIcon={<StartIcon />}
-              onClick={handleResumeInstance}
-              size="small"
-            >
+            <Button variant="outlined" color="primary" startIcon={<StartIcon />} onClick={handleResumeInstance} size="small">
               Resume
             </Button>
           )}
         </Box>
       </Box>
 
-      {/* Instance Overview */}
+      {/* Overview */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Instance Overview
-          </Typography>
-          
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 6 }}>
+          <Typography variant="h6" gutterBottom>Instance Overview</Typography>
+          <Box
+            sx={{
+              display: 'grid',
+              gap: 3,
+              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }
+            }}
+          >
+            {/* Left Column */}
+            <Box>
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Status
-                </Typography>
+                <Typography variant="subtitle2" color="text.secondary">Status</Typography>
                 {getStatusChip(instance.status)}
               </Box>
-              
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Workflow Definition
-                </Typography>
-                <Typography variant="body1">
-                  {instance.workflowDefinitionName} (v{instance.definitionVersion})
+                <Typography variant="subtitle2" color="text.secondary">Workflow Definition</Typography>
+                <Typography>{instance.workflowDefinitionName} (v{instance.definitionVersion})</Typography>
+              </Box>
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" color="text.secondary">Current Nodes</Typography>
+                <Typography sx={{ fontFamily: 'monospace' }}>
+                  {currentNodeIds.join(', ') || 'None'}
                 </Typography>
               </Box>
+            </Box>
 
+            {/* Right Column */}
+            <Box>
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Current Nodes
-                </Typography>
-                <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                  {instance.currentNodeIds || 'None'}
-                </Typography>
-              </Box>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Started
-                </Typography>
-                <Typography variant="body1">
-                  {formatDateTime(instance.startedAt)}
-                </Typography>
+                <Typography variant="subtitle2" color="text.secondary">Started</Typography>
+                <Typography>{formatDateTime(instance.startedAt)}</Typography>
                 {instance.startedByUserId && (
                   <Typography variant="caption" color="text.secondary">
                     By User {instance.startedByUserId}
                   </Typography>
                 )}
               </Box>
-
               {instance.completedAt && (
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Completed
-                  </Typography>
-                  <Typography variant="body1">
-                    {formatDateTime(instance.completedAt)}
-                  </Typography>
+                  <Typography variant="subtitle2" color="text.secondary">Completed</Typography>
+                  <Typography>{formatDateTime(instance.completedAt)}</Typography>
                 </Box>
               )}
-
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">
-                  Duration
-                </Typography>
-                <Typography variant="body1">
-                  {calculateDuration()}
-                </Typography>
+                <Typography variant="subtitle2" color="text.secondary">Duration</Typography>
+                <Typography>{calculateDuration()}</Typography>
               </Box>
-            </Grid>
+            </Box>
 
+            {/* Error row spans full width */}
             {instance.errorMessage && (
-              <Grid size={{ xs: 12 }}>
-                <Alert severity="error" sx={{ mt: 2 }}>
+              <Box sx={{ gridColumn: '1 / -1' }}>
+                <Alert severity="error" sx={{ mt: 1 }}>
                   <Typography variant="subtitle2">Error Message</Typography>
                   <Typography variant="body2">{instance.errorMessage}</Typography>
                 </Alert>
-              </Grid>
+              </Box>
             )}
 
-            <Grid size={{ xs: 12 }}>
+            {/* Context Data full width */}
+            <Box sx={{ gridColumn: '1 / -1' }}>
               <Divider sx={{ my: 2 }} />
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Context Data
-              </Typography>
-              <Box sx={{ 
-                backgroundColor: 'grey.50', 
-                p: 2, 
-                borderRadius: 1,
-                fontFamily: 'monospace',
-                fontSize: '0.875rem',
-                maxHeight: 200,
-                overflow: 'auto'
-              }}>
+              <Typography variant="subtitle2" color="text.secondary" gutterBottom>Context Data</Typography>
+              <Box
+                sx={{
+                  backgroundColor: 'grey.50',
+                  p: 2,
+                  borderRadius: 1,
+                  fontFamily: 'monospace',
+                  fontSize: '0.875rem',
+                  maxHeight: 200,
+                  overflow: 'auto'
+                }}
+              >
                 <pre>{JSON.stringify(JSON.parse(instance.context || '{}'), null, 2)}</pre>
               </Box>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
 
       {/* Runtime Diagram */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Runtime Diagram
-          </Typography>
+          <Typography variant="h6" gutterBottom>Runtime Diagram</Typography>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
             Visual overlay of active, completed, overdue and traversed path.
           </Typography>
-          {instance.workflowDefinitionId && instance.workflowDefinitionName && (
-            <DefinitionDiagram
-              jsonDefinition={definitionJson}
-              currentNodeIds={instance.currentNodeIds}
-              tasks={tasks.map(t => ({
+          <DefinitionDiagram
+            jsonDefinition={definitionJson}
+            currentNodeIds={currentNodeIds}
+            tasks={tasks
+              .map(t => ({
                 nodeId: t.nodeId || '',
-                status: t.status,
+                status: t.status as string,
                 dueDate: t.dueDate
-              })).filter(t => t.nodeId)}
-              traversedEdgeIds={events
-                .filter(e => e.type === 'Edge' && e.name === 'EdgeTraversed')
-                .map(e => {
-                  try { return JSON.parse(e.data || '{}').edgeId; } catch { return undefined; }
-                })
-                .filter(Boolean) as string[]}
-              visitedNodeIds={events
-                .filter(e => e.type === 'Node')
-                .map(e => {
-                  try { return JSON.parse(e.data || '{}').nodeId; } catch { return undefined; }
-                })
-                .filter(Boolean) as string[]}
-              dueSoonMinutes={15}
-            />
-          )}
-          {!tasks.length && (
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-              (Task node positions shown after first activation if nodeId not yet emitted by backend.)
-            </Typography>
-          )}
+              }))
+              .filter(t => t.nodeId)}
+            traversedEdgeIds={traversedEdgeIds}
+            visitedNodeIds={visitedNodeIds}
+            instanceStatus={instance.status}
+            dueSoonMinutes={15}
+          />
         </CardContent>
       </Card>
 
-      {/* Tasks Section */}
+      {/* Tasks */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
             <TaskIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
             Tasks ({tasks.length})
           </Typography>
-          
           <Box sx={{ height: 300 }}>
             <DataGridPremium
               rows={tasks}
@@ -512,28 +389,21 @@ export function InstanceDetailsPage() {
               loading={tasksLoading}
               pagination
               pageSizeOptions={[5, 10, 25]}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 5 } },
-              }}
+              initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
               disableRowSelectionOnClick
-              sx={{
-                '& .MuiDataGrid-row:hover': {
-                  backgroundColor: 'action.hover',
-                },
-              }}
+              sx={{ '& .MuiDataGrid-row:hover': { backgroundColor: 'action.hover' } }}
             />
           </Box>
         </CardContent>
       </Card>
 
-      {/* Events Timeline */}
+      {/* Events */}
       <Card>
         <CardContent>
           <Typography variant="h6" gutterBottom>
             <TimelineIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
             Event Timeline ({events.length})
           </Typography>
-          
           <Box sx={{ height: 400 }}>
             <DataGridPremium
               rows={events}
@@ -543,28 +413,14 @@ export function InstanceDetailsPage() {
               pageSizeOptions={[10, 25, 50]}
               initialState={{
                 pagination: { paginationModel: { pageSize: 10 } },
-                sorting: {
-                  sortModel: [{ field: 'occurredAt', sort: 'desc' }],
-                },
+                sorting: { sortModel: [{ field: 'occurredAt', sort: 'desc' }] }
               }}
-              slots={{
-                toolbar: GridToolbar,
-              }}
+              slots={{ toolbar: GridToolbar }}
               slotProps={{
-                toolbar: {
-                  showQuickFilter: true,
-                  quickFilterProps: { 
-                    debounceMs: 500,
-                    // ✅ FIX: Remove placeholder property
-                  },
-                },
+                toolbar: { showQuickFilter: true, quickFilterProps: { debounceMs: 500 } }
               }}
               disableRowSelectionOnClick
-              sx={{
-                '& .MuiDataGrid-row:hover': {
-                  backgroundColor: 'action.hover',
-                },
-              }}
+              sx={{ '& .MuiDataGrid-row:hover': { backgroundColor: 'action.hover' } }}
             />
           </Box>
         </CardContent>

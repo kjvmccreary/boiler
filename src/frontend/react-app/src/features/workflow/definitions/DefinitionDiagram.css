@@ -1,0 +1,9 @@
+@keyframes flow-edge-dash {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -40; }
+}
+
+/* ReactFlow edges use inline stroke/animation; include fallback class support */
+.react-flow__edge.animated path {
+  animation: flow-edge-dash 1.2s linear infinite;
+}

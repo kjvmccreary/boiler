@@ -1,0 +1,15 @@
+[2025-09-01 09:02:20.508 -05:00 ERR] Failed executing DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+
+                UPDATE "WorkflowTasks" 
+                SET "NodeType"='timer' 
+                WHERE LOWER("TaskName") LIKE '%timer%' AND "NodeType"='human'; {"EventId":{"Id":20102,"Name":"Microsoft.EntityFrameworkCore.Database.Command.CommandError"},"SourceContext":"Microsoft.EntityFrameworkCore.Database.Command"}
+[2025-09-01 09:03:05.158 -05:00 ERR] Failed executing DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+
+                UPDATE "WorkflowTasks" 
+                SET "NodeType"='timer' 
+                WHERE LOWER("TaskName") LIKE '%timer%' AND "NodeType"='human'; {"EventId":{"Id":20102,"Name":"Microsoft.EntityFrameworkCore.Database.Command.CommandError"},"SourceContext":"Microsoft.EntityFrameworkCore.Database.Command"}
+[2025-09-01 09:05:56.539 -05:00 ERR] Failed executing DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+
+                ALTER TABLE "WorkflowTasks" 
+                ADD CONSTRAINT "CK_WorkflowTask_TenantId" 
+                CHECK ("TenantId" = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''),'0')::int); {"EventId":{"Id":20102,"Name":"Microsoft.EntityFrameworkCore.Database.Command.CommandError"},"SourceContext":"Microsoft.EntityFrameworkCore.Database.Command"}

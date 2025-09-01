@@ -213,7 +213,13 @@ public class WorkflowRuntime : IWorkflowRuntime
         foreach (var target in nextNodeIds)
         {
             await CreateEventAsync(instance.Id, "Edge", "EdgeTraversed",
-                JsonSerializer.Serialize(new { from = node.Id, to = target, mode = "TaskCompletionAdvance" }), null);
+                JsonSerializer.Serialize(new
+                {
+                    edgeId = FindEdgeId(node.Id, target, workflowDef),
+                    from = node.Id,
+                    to = target,
+                    mode = "TaskCompletionAdvance"
+                }), null);
         }
 
         if (!nextNodeIds.Any())
@@ -406,10 +412,10 @@ public class WorkflowRuntime : IWorkflowRuntime
         if (!edges.Any()) return new List<string>();
 
         if (!currentNode.IsGateway())
-            return RecordAndReturn(edges.Select(e => e.Target).ToList(), currentNode, instance, "LinearAdvance");
+            return RecordAndReturn(workflowDef, edges.Select(e => e.Target).ToList(), currentNode, instance, "LinearAdvance");
 
         var selected = SelectGatewayTargets(currentNode, instance, edges, "inline-exec");
-        return RecordAndReturn(selected, currentNode, instance, "GatewayAdvance");
+        return RecordAndReturn(workflowDef, selected, currentNode, instance, "GatewayAdvance");
     }
 
     private List<string> GetOutgoingTargetsForAdvance(
@@ -548,6 +554,7 @@ public class WorkflowRuntime : IWorkflowRuntime
 
     private List<string> RecordAndReturn(IEnumerable<string?> targets, WorkflowNode currentNode, WorkflowInstance instance, string mode)
     {
+        // Filter out null / empty (avoids nullable warnings)
         var clean = targets
             .Where(t => !string.IsNullOrWhiteSpace(t))
             .Cast<string>()
@@ -561,6 +568,32 @@ public class WorkflowRuntime : IWorkflowRuntime
         }
         return clean;
     }
+
+    // New overload including workflowDef so we can find original edge id
+    private List<string> RecordAndReturn(WorkflowDefinitionJson workflowDef, IEnumerable<string?> targets, WorkflowNode currentNode, WorkflowInstance instance, string mode)
+    {
+        var clean = targets
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .Cast<string>()
+            .ToList();
+
+        foreach (var t in clean)
+        {
+            var edgeId = FindEdgeId(currentNode.Id, t, workflowDef);
+            CreateEventAsync(instance.Id, "Edge", "EdgeTraversed",
+                JsonSerializer.Serialize(new
+                {
+                    edgeId,
+                    from = currentNode.Id,
+                    to = t,
+                    mode
+                }), null).GetAwaiter().GetResult();
+        }
+        return clean;
+    }
+
+    private static string? FindEdgeId(string from, string to, WorkflowDefinitionJson def)
+        => def.Edges.FirstOrDefault(e => e.Source == from && e.Target == to)?.Id;
 
     private void AdvanceToNextNodes(
         WorkflowInstance instance,

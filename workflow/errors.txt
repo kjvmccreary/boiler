@@ -1,26 +1,12 @@
 PS C:\Users\mccre\dev\boiler\src\services\WorkflowService> dotnet ef database update --context WorkflowDbContext
 Build started...
 Build succeeded.
-[08:49:44 ERR] Failed executing DbCommand (5ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+[09:05:56 ERR] Failed executing DbCommand (7ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
 
-UPDATE "OutboxMessages"
-SET "EventData" = CASE
-    WHEN (("EventData"::text IS NULL OR "EventData"::text = '' OR "EventData" = '{}'::jsonb)
-          AND "Payload" IS NOT NULL AND btrim("Payload") <> '')
-    THEN
-        CASE
-            WHEN "Payload" ~ '^\s*[{[]' THEN "Payload"::jsonb
-            ELSE jsonb_build_object('legacyPayload', "Payload")
-        END
-    ELSE "EventData"
-END
-WHERE EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'OutboxMessages' AND column_name = 'Payload'
-); {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command"}
-Npgsql.PostgresException (0x80004005): 42883: function btrim(jsonb) does not exist
-
-POSITION: 186
+                ALTER TABLE "WorkflowTasks"
+                ADD CONSTRAINT "CK_WorkflowTask_TenantId"
+                CHECK ("TenantId" = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''),'0')::int); {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command"}
+Npgsql.PostgresException (0x80004005): 23514: check constraint "CK_WorkflowTask_TenantId" of relation "WorkflowTasks" is violated by some row
    at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
    at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
@@ -49,13 +35,12 @@ POSITION: 186
    at Microsoft.EntityFrameworkCore.Design.OperationExecutor.OperationBase.Execute(Action action)
   Exception data:
     Severity: ERROR
-    SqlState: 42883
-    MessageText: function btrim(jsonb) does not exist
-    Hint: No function matches the given name and argument types. You might need to add explicit type casts.
-    Position: 186
-    File: parse_func.c
-    Line: 629
-    Routine: ParseFuncOrColumn
-42883: function btrim(jsonb) does not exist
-
-POSITION: 186
+    SqlState: 23514
+    MessageText: check constraint "CK_WorkflowTask_TenantId" of relation "WorkflowTasks" is violated by some row
+    SchemaName: public
+    TableName: WorkflowTasks
+    ConstraintName: CK_WorkflowTask_TenantId
+    File: tablecmds.c
+    Line: 6066
+    Routine: ATRewriteTable
+23514: check constraint "CK_WorkflowTask_TenantId" of relation "WorkflowTasks" is violated by some row

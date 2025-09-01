@@ -1,5 +1,8 @@
 import { apiClient } from './api.client';
-import { InstanceStatus, TaskStatus } from '@/types/workflow';
+import {
+  InstanceStatus,
+  TaskStatus
+} from '@/types/workflow';
 import type {
   WorkflowDefinitionDto,
   CreateWorkflowDefinitionDto,
@@ -29,7 +32,6 @@ import type {
   CreateNewVersionRequestDto
 } from '@/types/workflow';
 
-// -------------------- API Response Wrapper --------------------
 interface ApiResponse<T> {
   success: boolean;
   data: T;
@@ -44,7 +46,6 @@ function unwrap<T>(payload: any): T {
   return payload as T;
 }
 
-// Enums normalization maps (unchanged)
 const INSTANCE_STATUS_NUM_MAP: Record<number, InstanceStatus> = {
   1: InstanceStatus.Running,
   2: InstanceStatus.Completed,
@@ -52,6 +53,7 @@ const INSTANCE_STATUS_NUM_MAP: Record<number, InstanceStatus> = {
   4: InstanceStatus.Failed,
   5: InstanceStatus.Suspended
 };
+
 const TASK_STATUS_NUM_MAP: Record<number, TaskStatus> = {
   1: TaskStatus.Created,
   2: TaskStatus.Assigned,
@@ -71,6 +73,7 @@ function normalizeInstanceStatus(v: unknown): InstanceStatus {
   }
   return InstanceStatus.Running;
 }
+
 function normalizeTaskStatus(v: unknown): TaskStatus {
   if (typeof v === 'string' && Object.values(TaskStatus).includes(v as TaskStatus)) return v as TaskStatus;
   if (typeof v === 'number') return TASK_STATUS_NUM_MAP[v] ?? TaskStatus.Created;
@@ -84,11 +87,16 @@ function normalizeTaskStatus(v: unknown): TaskStatus {
 function mapInstance(i: WorkflowInstanceDto): WorkflowInstanceDto {
   return { ...i, status: normalizeInstanceStatus(i.status) };
 }
-function mapInstances(list: WorkflowInstanceDto[]) { return list.map(mapInstance); }
-function mapTask(t: WorkflowTaskDto): WorkflowTaskDto { return { ...t, status: normalizeTaskStatus(t.status) }; }
-function mapTasks(list: WorkflowTaskDto[]) { return list.map(mapTask); }
+function mapInstances(list: WorkflowInstanceDto[]) {
+  return list.map(mapInstance);
+}
+function mapTask(t: WorkflowTaskDto): WorkflowTaskDto {
+  return { ...t, status: normalizeTaskStatus(t.status) };
+}
+function mapTasks(list: WorkflowTaskDto[]) {
+  return list.map(mapTask);
+}
 
-// Filters
 export interface WorkflowDefinitionsFilters { published?: boolean; }
 export interface WorkflowInstancesFilters {
   status?: InstanceStatus;
@@ -119,7 +127,7 @@ export interface WorkflowEventsFilters {
 }
 
 export class WorkflowService {
-  // ===== Definitions =====
+  // Definitions
   async getDefinitions(filters?: WorkflowDefinitionsFilters): Promise<WorkflowDefinitionDto[]> {
     const params = new URLSearchParams();
     if (filters?.published !== undefined) params.append('published', String(filters.published));
@@ -127,7 +135,7 @@ export class WorkflowService {
     return unwrap<WorkflowDefinitionDto[]>(resp.data);
   }
 
-  async getDefinition(id: number): Promise<WorkflowDefinitionDto> {
+  async getDefinition(id: number) {
     const resp = await apiClient.get(`/api/workflow/definitions/${id}`);
     return unwrap<WorkflowDefinitionDto>(resp.data);
   }
@@ -147,7 +155,7 @@ export class WorkflowService {
     return unwrap<WorkflowDefinitionDto>(resp.data);
   }
 
-  async deleteDefinition(id: number): Promise<boolean> {
+  async deleteDefinition(id: number) {
     const resp = await apiClient.delete(`/api/workflow/definitions/${id}`);
     return !!unwrap<boolean>(resp.data);
   }
@@ -182,8 +190,8 @@ export class WorkflowService {
     return unwrap<ValidationResultDto>(resp.data);
   }
 
-  // ===== Instances =====
-  async getInstances(filters?: WorkflowInstancesFilters): Promise<WorkflowInstanceDto[]> {
+  // Instances
+  async getInstances(filters?: WorkflowInstancesFilters) {
     const params = new URLSearchParams();
     if (filters?.status) params.append('status', filters.status);
     if (filters?.workflowDefinitionId) params.append('workflowDefinitionId', String(filters.workflowDefinitionId));
@@ -197,7 +205,7 @@ export class WorkflowService {
     return paged.items;
   }
 
-  async getInstancesPaged(filters?: WorkflowInstancesFilters): Promise<PagedResultDto<WorkflowInstanceDto>> {
+  async getInstancesPaged(filters?: WorkflowInstancesFilters) {
     const params = new URLSearchParams();
     if (filters?.status) params.append('status', filters.status);
     if (filters?.workflowDefinitionId) params.append('workflowDefinitionId', String(filters.workflowDefinitionId));
@@ -226,7 +234,7 @@ export class WorkflowService {
     return mapInstance(unwrap<WorkflowInstanceDto>(resp.data));
   }
 
-  async terminateInstance(id: number): Promise<boolean> {
+  async terminateInstance(id: number) {
     const resp = await apiClient.delete(`/api/workflow/instances/${id}`);
     return unwrap<boolean>(resp.data);
   }
@@ -251,7 +259,7 @@ export class WorkflowService {
     return mapInstance(unwrap<WorkflowInstanceDto>(resp.data));
   }
 
-  // ===== Tasks =====
+  // Tasks
   async getTasks(filters?: WorkflowTasksFilters): Promise<WorkflowTaskDto[]> {
     const params = new URLSearchParams();
     if (filters?.mine !== undefined) params.append('mine', String(filters.mine));
@@ -263,11 +271,10 @@ export class WorkflowService {
     if (filters?.page) params.append('page', String(filters.page));
     if (filters?.pageSize) params.append('pageSize', String(filters.pageSize));
     const resp = await apiClient.get(`/api/workflow/tasks${params.size ? `?${params}` : ''}`);
-    const arr = unwrap<WorkflowTaskDto[]>(resp.data);
-    return mapTasks(arr);
+    return mapTasks(unwrap<WorkflowTaskDto[]>(resp.data));
   }
 
-  async getMyTasks(status?: TaskStatus): Promise<TaskSummaryDto[]> {
+  async getMyTasks(status?: TaskStatus) {
     const resp = await apiClient.get(`/api/workflow/tasks/mine${status ? `?status=${status}` : ''}`);
     const arr = unwrap<TaskSummaryDto[]>(resp.data);
     return arr.map(t => ({ ...t, status: normalizeTaskStatus(t.status) }));
@@ -303,8 +310,8 @@ export class WorkflowService {
     return mapTask(unwrap<WorkflowTaskDto>(resp.data));
   }
 
-  // ===== Events / Admin =====
-  async getWorkflowEvents(filters?: WorkflowEventsFilters): Promise<WorkflowEventDto[]> {
+  // Events / Admin
+  async getWorkflowEvents(filters?: WorkflowEventsFilters) {
     const params = new URLSearchParams();
     if (filters?.instanceId) params.append('instanceId', String(filters.instanceId));
     if (filters?.eventType) params.append('eventType', filters.eventType);
@@ -327,13 +334,12 @@ export class WorkflowService {
     return unwrap<BulkOperationResultDto>(resp.data);
   }
 
-  // ===== Metrics =====
   async getTaskStatistics() {
     const resp = await apiClient.get('/api/workflow/tasks/statistics');
     return unwrap<TaskStatisticsDto>(resp.data);
   }
 
-  // ===== Runtime Snapshot =====
+  // Snapshot
   async getRuntimeSnapshot(instanceId: number): Promise<InstanceRuntimeSnapshotDto> {
     const resp = await apiClient.get(`/api/workflow/instances/${instanceId}/runtime-snapshot`);
     return unwrap<InstanceRuntimeSnapshotDto>(resp.data);

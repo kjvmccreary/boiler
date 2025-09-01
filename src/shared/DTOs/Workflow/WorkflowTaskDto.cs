@@ -9,6 +9,7 @@ public class WorkflowTaskDto
     public string NodeId { get; set; } = string.Empty;
     public string TaskName { get; set; } = string.Empty;
     public DTOs.Workflow.Enums.TaskStatus Status { get; set; }
+    public string NodeType { get; set; } = "human"; // NEW
     public int? AssignedToUserId { get; set; }
     public string? AssignedToRole { get; set; }
     public DateTime? DueDate { get; set; }
@@ -30,8 +31,8 @@ public class TaskSummaryDto
     public int WorkflowInstanceId { get; set; }
     public DateTime? DueDate { get; set; }
     public DateTime CreatedAt { get; set; }
-    // NEW: Node mapping for diagram overlays
     public string NodeId { get; set; } = string.Empty;
+    public string NodeType { get; set; } = "human"; // NEW
 }
 
 public class CompleteTaskRequestDto

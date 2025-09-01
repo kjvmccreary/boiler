@@ -54,10 +54,10 @@ public class TaskService : ITaskService
             }
 
             var query = _context.WorkflowTasks
-                .Include(t => t.WorkflowInstance)
-                    .ThenInclude(i => i.WorkflowDefinition)
+                .Include(t => t.WorkflowInstance).ThenInclude(i => i.WorkflowDefinition)
                 .Where(t => t.WorkflowInstance.TenantId == tenantId.Value)
-                .Where(t => t.AssignedToUserId == currentUserId.Value || 
+                .Where(t => t.NodeType != "timer") // NEW filter
+                .Where(t => t.AssignedToUserId == currentUserId.Value ||
                            (t.AssignedToRole != null && UserHasRole(t.AssignedToRole)));
 
             var result = await ApplyTaskFiltersAndPagination(query, request, cancellationToken);
@@ -458,16 +458,17 @@ public class TaskService : ITaskService
         var tasks = await query
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(t => new TaskSummaryDto
-            {
+            .Select(t => new TaskSummaryDto {
                 Id = t.Id,
                 TaskName = t.TaskName,
                 Status = t.Status,
                 WorkflowDefinitionName = t.WorkflowInstance.WorkflowDefinition.Name,
                 WorkflowInstanceId = t.WorkflowInstanceId,
                 DueDate = t.DueDate,
-                CreatedAt = t.CreatedAt
-            })
+                CreatedAt = t.CreatedAt,
+                NodeId = t.NodeId,
+                NodeType = t.NodeType // NEW
+})
             .ToListAsync(cancellationToken);
 
         var pagedResult = new PagedResultDto<TaskSummaryDto>

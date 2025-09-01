@@ -1,3 +1,4 @@
+/* Updated with instanceStatus prop & edge animation logic */
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Box, Alert, CircularProgress, Chip, Stack, Tooltip } from '@mui/material';
 import ReactFlow, {
@@ -11,6 +12,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css';
 import { deserializeFromDsl } from '../dsl/dsl.serialize';
 import type { DslDefinition, DslNode } from '../dsl/dsl.types';
+import './DefinitionDiagram.css';
 
 type NodeRuntimeStatus =
   | 'active'
@@ -34,6 +36,7 @@ interface DefinitionDiagramProps {
   traversedEdgeIds?: string[];
   visitedNodeIds?: string[];
   dueSoonMinutes?: number;
+  instanceStatus?: string;
 }
 
 const DEFAULT_DUE_SOON_MIN = 15;
@@ -45,15 +48,14 @@ export function DefinitionDiagram({
   tasks,
   traversedEdgeIds,
   visitedNodeIds,
-  dueSoonMinutes = DEFAULT_DUE_SOON_MIN
+  dueSoonMinutes = DEFAULT_DUE_SOON_MIN,
+  instanceStatus
 }: DefinitionDiagramProps) {
-  // Raw parsed (base) nodes/edges – never augmented in state to avoid loops
   const [baseNodes, setBaseNodes] = useState<Node[]>([]);
   const [baseEdges, setBaseEdges] = useState<Edge[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Normalize current node IDs
   const currentSet = useMemo(() => {
     if (!currentNodeIds) return new Set<string>();
     if (Array.isArray(currentNodeIds)) return new Set(currentNodeIds);
@@ -69,7 +71,6 @@ export function DefinitionDiagram({
     return new Set(raw.split(',').map(s => s.trim()).filter(Boolean));
   }, [currentNodeIds]);
 
-  // Task lookups
   const taskByNode = useMemo(() => {
     const map = new Map<string, TaskRuntime>();
     (tasks || []).forEach(t => map.set(t.nodeId, t));
@@ -79,8 +80,8 @@ export function DefinitionDiagram({
   const traversedSet = useMemo(() => new Set(traversedEdgeIds || []), [traversedEdgeIds]);
   const visitedSet = useMemo(() => new Set(visitedNodeIds || []), [visitedNodeIds]);
   const now = Date.now();
+  const isRunning = instanceStatus === 'Running';
 
-  // Parse definition (once per jsonDefinition change)
   useEffect(() => {
     setError(null);
     setLoading(true);
@@ -107,7 +108,6 @@ export function DefinitionDiagram({
     }
   }, [jsonDefinition]);
 
-  // Node runtime status map (derived)
   const nodeStatusMap = useMemo<Record<string, NodeRuntimeStatus>>(() => {
     if (!baseNodes.length) return {};
     const map: Record<string, NodeRuntimeStatus> = {};
@@ -130,15 +130,14 @@ export function DefinitionDiagram({
     return map;
   }, [baseNodes, taskByNode, currentSet, visitedSet, now, dueSoonMinutes]);
 
-  // Styling helpers
   const getNodeStyle = (status: NodeRuntimeStatus, type?: string): React.CSSProperties => {
     const baseBg =
       type === 'start' ? '#E3F2FD' :
-        type === 'end' ? '#FCE4EC' :
-          type === 'humanTask' ? '#E8F5E9' :
-            type === 'automatic' ? '#FFF8E1' :
-              type === 'gateway' ? '#EDE7F6' :
-                type === 'timer' ? '#E0F7FA' : '#FAFAFA';
+      type === 'end' ? '#FCE4EC' :
+      type === 'humanTask' ? '#E8F5E9' :
+      type === 'automatic' ? '#FFF8E1' :
+      type === 'gateway' ? '#EDE7F6' :
+      type === 'timer' ? '#E0F7FA' : '#FAFAFA';
 
     const style: React.CSSProperties = {
       borderWidth: 2,
@@ -178,7 +177,6 @@ export function DefinitionDiagram({
     return style;
   };
 
-  // Derive augmented nodes (memoized, no setState)
   const displayNodes = useMemo<Node[]>(() => {
     if (!baseNodes.length) return [];
     return baseNodes.map(n => {
@@ -197,23 +195,26 @@ export function DefinitionDiagram({
     });
   }, [baseNodes, nodeStatusMap]);
 
-  // Derive augmented edges
   const displayEdges = useMemo<Edge[]>(() => {
     if (!baseEdges.length) return [];
     return baseEdges.map(e => {
       const traversed = traversedSet.has(e.id);
+      const sourceActive = currentSet.has(e.source);
+      const targetActive = currentSet.has(e.target);
+      const inflight = !traversed && isRunning && (targetActive || sourceActive);
       return {
         ...e,
         style: {
           ...(e.style || {}),
-          stroke: traversed ? '#1976d2' : '#B0BEC5',
-          strokeWidth: traversed ? 2 : 1.5,
-          strokeDasharray: traversed ? undefined : '3 3'
+          stroke: traversed ? '#1976d2' : inflight ? '#1976d2' : '#B0BEC5',
+          strokeWidth: traversed ? 2.5 : inflight ? 2 : 1.5,
+          strokeDasharray: traversed ? undefined : inflight ? '6 4' : '3 3',
+          animation: inflight ? 'flow-edge-dash 1.2s linear infinite' : undefined
         },
-        animated: traversed
+        animated: inflight
       };
     });
-  }, [baseEdges, traversedSet]);
+  }, [baseEdges, traversedSet, currentSet, isRunning]);
 
   const handleNodeClick: NodeMouseHandler = useCallback((_, node: Node) => {
     const dslNode = (node.data as DslNode) || null;
@@ -229,17 +230,12 @@ export function DefinitionDiagram({
     );
   }
 
-  if (error) {
-    return <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>;
-  }
-
-  if (!displayNodes.length) {
-    return <Alert severity="info">No nodes to display.</Alert>;
-  }
+  if (error) return <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>;
+  if (!displayNodes.length) return <Alert severity="info">No nodes to display.</Alert>;
 
   return (
     <Box sx={{ position: 'relative' }}>
-      <Box sx={{ height: 500, border: 1, borderColor: 'divider', borderRadius: 1, position: 'relative' }}>
+      <Box sx={{ height: 500, border: 1, borderColor: 'divider', borderRadius: 1 }}>
         <ReactFlow
           nodes={displayNodes}
           edges={displayEdges}
@@ -266,7 +262,6 @@ export function DefinitionDiagram({
   );
 }
 
-// Legend component
 function RuntimeLegend() {
   const item = (label: string, color: string, variant: 'filled' | 'outlined' = 'filled') => (
     <Tooltip title={label}>
@@ -295,7 +290,7 @@ function RuntimeLegend() {
         borderColor: 'divider',
         borderRadius: 1,
         boxShadow: 1,
-        maxWidth: 260
+        maxWidth: 300
       }}
     >
       <Stack direction="row" flexWrap="wrap" gap={1}>
@@ -308,8 +303,8 @@ function RuntimeLegend() {
         <Tooltip title="Traversed Edge">
           <Chip size="small" label="Edge Traversed" sx={{ background: '#1976d2', color: '#fff' }} />
         </Tooltip>
-        <Tooltip title="Edge Pending">
-          <Chip size="small" label="Edge Pending" variant="outlined" sx={{ borderColor: '#B0BEC5' }} />
+        <Tooltip title="In-Flight Edge">
+          <Chip size="small" label="In-Flight" variant="outlined" sx={{ borderColor: '#1976d2' }} />
         </Tooltip>
       </Stack>
     </Box>

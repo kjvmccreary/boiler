@@ -170,6 +170,7 @@ namespace WorkflowService.Services
                 NodeId = node.id,
                 TaskName = node.label ?? "Task",
                 Status = WorkflowTaskStatus.Created,
+                NodeType = "human", // NEW
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -193,6 +194,7 @@ namespace WorkflowService.Services
                 NodeId = node.id,
                 TaskName = node.label ?? "Timer",
                 Status = WorkflowTaskStatus.Created,
+                NodeType = "timer", // NEW
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 DueDate = node.delayMinutes.HasValue ? DateTime.UtcNow.AddMinutes(node.delayMinutes.Value) : null

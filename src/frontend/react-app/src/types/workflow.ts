@@ -2,7 +2,6 @@
 // WORKFLOW TYPES
 // =====================================
 
-// Base API Response Types
 export interface ApiResponseDto<T> {
   success: boolean;
   data: T;
@@ -19,7 +18,7 @@ export interface PagedResultDto<T> {
 }
 
 // =====================================
-// WORKFLOW ENUMS
+// ENUMS
 // =====================================
 
 export enum InstanceStatus {
@@ -32,7 +31,7 @@ export enum InstanceStatus {
 
 export enum TaskStatus {
   Created = 'Created',
-  Assigned = 'Assigned', 
+  Assigned = 'Assigned',
   Claimed = 'Claimed',
   InProgress = 'InProgress',
   Completed = 'Completed',
@@ -41,7 +40,7 @@ export enum TaskStatus {
 }
 
 // =====================================
-// WORKFLOW DEFINITION TYPES (API DTO)
+// DEFINITIONS
 // =====================================
 
 export interface WorkflowDefinitionDto {
@@ -76,16 +75,6 @@ export interface PublishDefinitionRequestDto {
   forcePublish?: boolean;
 }
 
-export interface GetWorkflowDefinitionsRequestDto {
-  searchTerm?: string;
-  isPublished?: boolean;
-  tags?: string;
-  page?: number;
-  pageSize?: number;
-  sortBy?: string;
-  sortDescending?: boolean;
-}
-
 export interface ValidateDefinitionRequestDto {
   jsonDefinition: string;
 }
@@ -106,7 +95,7 @@ export interface CreateNewVersionRequestDto {
 }
 
 // =====================================
-// WORKFLOW INSTANCE TYPES
+// INSTANCES
 // =====================================
 
 export interface WorkflowInstanceDto {
@@ -115,7 +104,7 @@ export interface WorkflowInstanceDto {
   workflowDefinitionName: string;
   definitionVersion: number;
   status: InstanceStatus;
-  currentNodeIds: string;
+  currentNodeIds: string; // raw json array or csv
   context: string;
   startedAt: string;
   completedAt?: string;
@@ -139,22 +128,20 @@ export interface SignalInstanceRequestDto {
   signalData?: string;
 }
 
-export interface GetInstancesRequestDto {
-  workflowDefinitionId?: number;
-  status?: InstanceStatus;
-  startedAfter?: string;
-  startedBefore?: string;
-  startedByUserId?: number;
-  searchTerm?: string;
-  page?: number;
-  pageSize?: number;
-  sortBy?: string;
-  sortDescending?: boolean;
-}
-
 export interface TerminateInstanceRequestDto {
   reason: string;
   forceTerminate?: boolean;
+}
+
+export interface RetryInstanceRequestDto {
+  retryReason?: string;
+  resetToNodeId?: string;
+}
+
+export interface MoveToNodeRequestDto {
+  targetNodeId: string;
+  contextUpdates?: string;
+  reason?: string;
 }
 
 export interface InstanceStatusDto {
@@ -170,7 +157,7 @@ export interface InstanceStatusDto {
 }
 
 // =====================================
-// WORKFLOW TASK TYPES
+// TASKS
 // =====================================
 
 export interface WorkflowTaskDto {
@@ -194,7 +181,7 @@ export interface WorkflowTaskDto {
 export interface TaskSummaryDto {
   id: number;
   taskName: string;
-  status: TaskStatus;
+  status: TaskStatus | string;
   workflowDefinitionName: string;
   workflowInstanceId: number;
   dueDate?: string;
@@ -211,46 +198,21 @@ export interface ClaimTaskRequestDto {
   claimNotes?: string;
 }
 
-export interface GetTasksRequestDto {
-  status?: TaskStatus;
-  workflowDefinitionId?: number;
-  assignedToUserId?: number;
-  assignedToRole?: string;
-  dueBefore?: string;
-  dueAfter?: string;
-  searchTerm?: string;
-  page?: number;
-  pageSize?: number;
-  sortBy?: string;
-  sortDescending?: boolean;
-}
-
-export interface ReassignTaskRequestDto {
-  assignToUserId?: number;
-  assignToRole?: string;
-  reason: string;
-}
-
-export interface TaskStatisticsDto {
-  totalTasks: number;
-  pendingTasks: number;
-  inProgressTasks: number;
-  completedTasks: number;
-  overdueTasks: number;
-  tasksByType: Record<string, number>;
-  tasksByStatus: Record<TaskStatus, number>;
-  averageCompletionTime: number;
-  lastUpdated: string;
-}
-
 export interface AssignTaskRequestDto {
   assignedToUserId?: number;
   assignedToRole?: string;
   assignmentNotes?: string;
 }
 
+export interface ResetTaskRequestDto {
+  newStatus: TaskStatus;
+  assignToUserId?: number;
+  errorMessage?: string;
+  reason?: string;
+}
+
 // =====================================
-// WORKFLOW EVENT TYPES
+// EVENTS
 // =====================================
 
 export interface WorkflowEventDto {
@@ -266,7 +228,52 @@ export interface WorkflowEventDto {
 }
 
 // =====================================
-// ADMIN OPERATION TYPES
+// SNAPSHOT
+// =====================================
+
+export interface InstanceRuntimeSnapshotDto {
+  instance: WorkflowInstanceDto;
+  definitionJson: string;
+  tasks: TaskSummaryDto[];
+  events: WorkflowEventDto[];
+  traversedEdgeIds: string[];
+  visitedNodeIds: string[];
+  currentNodeIds: string[];
+}
+
+// =====================================
+// ROLE USAGE (re-added for RoleWorkflowUsageDialog)
+// =====================================
+
+export interface WorkflowNodeUsageDto {
+  nodeId: string;
+  nodeName: string;
+  nodeType: string;
+}
+
+export interface WorkflowDefinitionUsageDto {
+  definitionId: number;
+  definitionName: string;
+  version: number;
+  isPublished: boolean;
+  usageCount: number;
+  usedInNodes: WorkflowNodeUsageDto[];
+}
+
+export interface RoleUsageInWorkflowsDto {
+  isUsedInWorkflows: boolean;
+  usedInDefinitions: WorkflowDefinitionUsageDto[];
+  totalUsageCount: number;
+  roleName: string;
+  message: string;
+}
+
+export interface CheckRoleUsageRequestDto {
+  roleName: string;
+}
+
+// =====================================
+// ADMIN / ANALYTICS (subset)
 // =====================================
 
 export interface WorkflowStatsDto {
@@ -286,22 +293,16 @@ export interface WorkflowStatsDto {
   eventsLast24Hours: number;
 }
 
-export interface RetryInstanceRequestDto {
-  retryReason?: string;
-  resetToNodeId?: string;
-}
-
-export interface MoveToNodeRequestDto {
-  targetNodeId: string;
-  contextUpdates?: string;
-  reason?: string;
-}
-
-export interface ResetTaskRequestDto {
-  newStatus: TaskStatus;
-  assignToUserId?: number;
-  errorMessage?: string;
-  reason?: string;
+export interface TaskStatisticsDto {
+  totalTasks: number;
+  pendingTasks: number;
+  inProgressTasks: number;
+  completedTasks: number;
+  overdueTasks: number;
+  tasksByType: Record<string, number>;
+  tasksByStatus: Record<TaskStatus, number>;
+  averageCompletionTime: number;
+  lastUpdated: string;
 }
 
 export interface BulkCancelInstancesRequestDto {
@@ -318,129 +319,9 @@ export interface BulkOperationResultDto {
   operationType: string;
 }
 
-export interface ForceCompleteRequestDto {
-  reason: string;
-  finalContext?: string;
-  completionNodeId?: string;
-}
-
-export interface GetAnalyticsRequestDto {
-  startDate?: string;
-  endDate?: string;
-  workflowDefinitionId?: number;
-  groupBy?: string;
-}
-
-export interface WorkflowAnalyticsDto {
-  startDate: string;
-  endDate: string;
-  totalInstances: number;
-  completedInstances: number;
-  failedInstances: number;
-  runningInstances: number;
-  averageCompletionTime: number;
-  successRate: number;
-  instancesByStatus: Record<string, number>;
-  instancesByDefinition: Record<string, number>;
-  instancesByDate: Record<string, number>;
-  topBottlenecks: WorkflowPerformanceDto[];
-}
-
-export interface WorkflowPerformanceDto {
-  nodeId: string;
-  nodeName: string;
-  nodeType: string;
-  averageTime: number;
-  instanceCount: number;
-}
-
-export interface WorkflowSystemHealthDto {
-  status: string;
-  checkedAt: string;
-  activeInstances: number;
-  pendingTasks: number;
-  backgroundWorkerStatus: number;
-  systemMetrics: Record<string, any>;
-  issues: string[];
-}
-
-export interface BulkInstanceOperationRequestDto {
-  operation: string;
-  instanceIds?: number[];
-  workflowDefinitionId?: number;
-  status?: InstanceStatus;
-  startedBefore?: string;
-  reason: string;
-}
-
-export interface GetAuditTrailRequestDto {
-  instanceId?: number;
-  userId?: number;
-  action?: string;
-  startDate?: string;
-  endDate?: string;
-  page?: number;
-  pageSize?: number;
-}
-
-export interface WorkflowAuditEntryDto {
-  id: number;
-  instanceId?: number;
-  userId?: number;
-  action: string;
-  details: string;
-  timestamp: string;
-  ipAddress?: string;
-  userAgent?: string;
-}
-
-export interface RoleUsageInWorkflowsDto {
-  isUsedInWorkflows: boolean;
-  usedInDefinitions: WorkflowDefinitionUsageDto[];
-  totalUsageCount: number;
-  roleName: string;
-  message: string;
-}
-
-export interface WorkflowDefinitionUsageDto {
-  definitionId: number;
-  definitionName: string;
-  version: number;
-  isPublished: boolean;
-  usedInNodes: WorkflowNodeUsageDto[];
-  usageCount: number;
-  lastModified: string;
-}
-
-export interface WorkflowNodeUsageDto {
-  nodeId: string;
-  nodeName: string;
-  nodeType: string;
-}
-
-export interface CheckRoleUsageRequestDto {
-  roleName: string;
-}
-
-export interface InstanceRuntimeSnapshotDto {
-  instance: WorkflowInstanceDto;
-  definitionJson: string;
-  tasks: TaskSummaryDto[];
-  events: WorkflowEventDto[];
-  traversedEdgeIds: string[];
-  visitedNodeIds: string[];
-  currentNodeIds: string[];
-}
-
 // =====================================
-// WORKFLOW BUILDER TYPES (EDITOR)
+// BUILDER (editor) TYPES (subset)
 // =====================================
-
-/**
- * These editor types are local to the React Flow builder.
- * They include fromHandle so gateway branch connections (true/false/else)
- * persist & rehydrate cleanly.
- */
 
 export interface EditorWorkflowNode {
   id: string;
@@ -470,7 +351,6 @@ export interface EditorWorkflowDefinition {
   [key: string]: any;
 }
 
-// React Flow runtime shapes (lightweight)
 export interface RFNodeData {
   label?: string;
   dueInMinutes?: number;

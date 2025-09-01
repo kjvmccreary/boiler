@@ -375,6 +375,28 @@ public class InstancesController : ControllerBase
 
             // Definition JSON
             var defJson = instanceEntity.WorkflowDefinition.JSONDefinition;
+            // Parse definition edges for edgeId reconstruction
+            var definitionEdgeMap = new Dictionary<string, string>(); // key: from->to => edgeId
+            try
+            {
+                using var defDoc = JsonDocument.Parse(defJson);
+                if (defDoc.RootElement.TryGetProperty("edges", out var edgesEl) && edgesEl.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var e in edgesEl.EnumerateArray())
+                    {
+                        var from = e.TryGetProperty("from", out var fEl) && fEl.ValueKind == JsonValueKind.String ? fEl.GetString() : null;
+                        var to = e.TryGetProperty("to", out var tEl) && tEl.ValueKind == JsonValueKind.String ? tEl.GetString() : null;
+                        var edgeId = e.TryGetProperty("id", out var idEl) && idEl.ValueKind == JsonValueKind.String ? idEl.GetString() : null;
+                        if (!string.IsNullOrWhiteSpace(from) && !string.IsNullOrWhiteSpace(to) && !string.IsNullOrWhiteSpace(edgeId))
+                        {
+                            var key = $"{from}->{to}";
+                            if (!definitionEdgeMap.ContainsKey(key))
+                                definitionEdgeMap[key] = edgeId;
+                        }
+                    }
+                }
+            }
+            catch { /* ignore parse errors; snapshot still usable */ }
 
             // Tasks (summary)
             var taskEntities = await _context.WorkflowTasks
@@ -426,11 +448,31 @@ public class InstancesController : ControllerBase
                     try
                     {
                         var json = JsonDocument.Parse(ev.Data);
+                        string? edgeId = null;
                         if (json.RootElement.TryGetProperty("edgeId", out var edgeProp) &&
-                            edgeProp.ValueKind == JsonValueKind.String)
+                            edgeProp.ValueKind == JsonValueKind.String &&
+                            !string.IsNullOrWhiteSpace(edgeProp.GetString()))
                         {
-                            traversedEdgeIds.Add(edgeProp.GetString()!);
+                            edgeId = edgeProp.GetString();
                         }
+                        else
+                        {
+                            // Reconstruct via from/to
+                            var from = json.RootElement.TryGetProperty("from", out var fromProp) && fromProp.ValueKind == JsonValueKind.String
+                                ? fromProp.GetString()
+                                : null;
+                            var to = json.RootElement.TryGetProperty("to", out var toProp) && toProp.ValueKind == JsonValueKind.String
+                                ? toProp.GetString()
+                                : null;
+                            if (!string.IsNullOrWhiteSpace(from) && !string.IsNullOrWhiteSpace(to))
+                            {
+                                var key = $"{from}->{to}";
+                                if (definitionEdgeMap.TryGetValue(key, out var defEdgeId))
+                                    edgeId = defEdgeId;
+                            }
+                        }
+                        if (!string.IsNullOrWhiteSpace(edgeId))
+                            traversedEdgeIds.Add(edgeId!);
                     }
                     catch { /* ignore malformed */ }
                 }

@@ -36,6 +36,7 @@ public class TimerExecutor : INodeExecutor
                 NodeId = node.Id,
                 TaskName = node.GetProperty<string>("label") ?? "Timer",
                 Status = DTOs.Workflow.Enums.TaskStatus.Created,
+                NodeType = "timer", // NEW
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 DueDate = dueDate
