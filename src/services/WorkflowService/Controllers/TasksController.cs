@@ -12,6 +12,7 @@ using System.Linq.Expressions; // ✅ Needed for expression projection
 using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
 using WorkflowService.Engine.Interfaces;
 using Contracts.Services;
+using WorkflowService.Services.Interfaces;
 
 namespace WorkflowService.Controllers;
 
@@ -24,6 +25,7 @@ public class TasksController : ControllerBase
     private readonly ILogger<TasksController> _logger;
     private readonly IWorkflowRuntime _runtime;
     private readonly ITenantProvider _tenantProvider;
+    private readonly ITaskService _taskService;
 
     // ✅ EF Core-friendly projection (Expression so async LINQ remains IQueryable)
     private static readonly Expression<Func<WorkflowTask, WorkflowTaskDto>> TaskProjection = t => new WorkflowTaskDto
@@ -50,12 +52,14 @@ public class TasksController : ControllerBase
         WorkflowDbContext context,
         ILogger<TasksController> logger,
         IWorkflowRuntime runtime,
-        ITenantProvider tenantProvider)
+        ITenantProvider tenantProvider,
+        ITaskService taskService)
     {
         _context = context;
         _logger = logger;
         _runtime = runtime;
         _tenantProvider = tenantProvider;
+        _taskService = taskService;
     }
 
     [HttpGet]
@@ -135,59 +139,24 @@ public class TasksController : ControllerBase
     public async Task<ActionResult<ApiResponseDto<List<TaskSummaryDto>>>> GetMyTasks(
         [FromQuery] WorkflowTaskStatus? status = null,
         [FromQuery] bool includeRoleTasks = true,
-        [FromQuery] bool includeUnassigned = true)
+        [FromQuery] bool includeUnassigned = true,
+        CancellationToken cancellationToken = default)
     {
-        try
-        {
-            var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
-            if (!tenantId.HasValue)
-                return BadRequest(ApiResponseDto<List<TaskSummaryDto>>.ErrorResult("Tenant context required"));
+        var response = await _taskService.GetMyTasksListAsync(status, includeRoleTasks, includeUnassigned, cancellationToken);
+        if (!response.Success)
+            return BadRequest(response);
 
-            var currentUserId = GetCurrentUserId();
-            var userRoles = GetCurrentUserRoles();
+        _logger.LogInformation("WF_API_MY_TASKS Count={Count}", response.Data!.Count);
+        return Ok(response);
+    }
 
-            var query = _context.WorkflowTasks
-                .Include(t => t.WorkflowInstance)
-                    .ThenInclude(i => i.WorkflowDefinition)
-                .Where(t => t.WorkflowInstance.TenantId == tenantId.Value)
-                .Where(t => t.NodeType == "human") // <-- FILTER OUT TIMER / OTHER
-                .Where(t =>
-                    t.AssignedToUserId == currentUserId
-                    || (includeRoleTasks && t.AssignedToRole != null && userRoles.Contains(t.AssignedToRole))
-                    || (includeUnassigned && t.AssignedToUserId == null && t.AssignedToRole == null &&
-                        (t.Status == WorkflowTaskStatus.Created || t.Status == WorkflowTaskStatus.Assigned)));
-
-            if (status.HasValue)
-                query = query.Where(t => t.Status == status.Value);
-
-            var tasks = await query
-                .OrderBy(t => t.DueDate ?? DateTime.MaxValue)
-                .ThenByDescending(t => t.CreatedAt)
-                .Select(t => new TaskSummaryDto
-                {
-                    Id = t.Id,
-                    TaskName = t.TaskName,
-                    Status = t.Status,
-                    WorkflowDefinitionName = t.WorkflowInstance.WorkflowDefinition.Name,
-                    WorkflowInstanceId = t.WorkflowInstanceId,
-                    DueDate = t.DueDate,
-                    CreatedAt = t.CreatedAt,
-                    NodeId = t.NodeId,
-                    NodeType = t.NodeType // <-- ADD TO SUMMARY
-                })
-                .ToListAsync();
-
-            _logger.LogInformation("WF_API_MY_TASKS Count={Count}", tasks.Count);
-
-            return Ok(ApiResponseDto<List<TaskSummaryDto>>.SuccessResult(
-                tasks, $"Retrieved {tasks.Count} tasks"));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "WF_API_MY_TASKS_ERROR");
-            return StatusCode(500, ApiResponseDto<List<TaskSummaryDto>>.ErrorResult(
-                "An error occurred while retrieving your tasks"));
-        }
+    [HttpGet("mine/summary")]
+    [RequiresPermission("workflow.view_tasks")]
+    public async Task<ActionResult<ApiResponseDto<TaskCountsDto>>> GetMyTaskSummary(CancellationToken ct)
+    {
+        var result = await _taskService.GetMyTaskCountsAsync(ct);
+        if (!result.Success) return BadRequest(result);
+        return Ok(result);
     }
 
     [HttpGet("{id}")]

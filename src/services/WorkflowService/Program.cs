@@ -100,6 +100,9 @@ builder.Services.AddScoped<INodeExecutor, TimerExecutor>();
 builder.Services.AddHostedService<TimerWorker>();
 builder.Services.AddHostedService<OutboxWorker>();
 
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IUserContext, UserContext>();
+
 // Outbox dispatcher (logging-only MVP)
 builder.Services.AddScoped<IOutboxDispatcher, LoggingOutboxDispatcher>();
 

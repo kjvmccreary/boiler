@@ -32,11 +32,11 @@ import type {
   CreateNewVersionRequestDto
 } from '@/types/workflow';
 
-interface ApiResponse<T> {
+export interface ApiResponse<T> {
   success: boolean;
-  data: T;
   message?: string;
-  errors?: unknown;
+  errors?: string[] | Record<string, unknown>;
+  data: T;
 }
 
 function unwrap<T>(payload: any): T {
@@ -347,3 +347,22 @@ export class WorkflowService {
 }
 
 export const workflowService = new WorkflowService();
+
+export interface TaskCountsDto {
+  available: number;
+  assignedToMe: number;
+  assignedToMyRoles: number;
+  claimed: number;
+  inProgress: number;
+  completedToday: number;
+  overdue: number;
+  failed: number;
+  totalActionable: number;
+}
+
+// Summary (badge) endpoint
+export async function getMyTaskSummary(): Promise<TaskCountsDto> {
+  // apiClient unwraps ApiResponseDto -> response.data is already TaskCountsDto
+  const res = await apiClient.get<TaskCountsDto>('/api/workflow/tasks/mine/summary');
+  return res.data;
+}

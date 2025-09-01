@@ -34,7 +34,7 @@ import {
   AccountTree as WorkflowIcon,
   FilterAltOff as FilterOffIcon
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { workflowService } from '@/services/workflow.service';
 import type { TaskSummaryDto, TaskStatus } from '@/types/workflow';
 import toast from 'react-hot-toast';
@@ -44,6 +44,7 @@ export function MyTasksPage() {
   const [tasks, setTasks] = useState<TaskSummaryDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<TaskStatus | ''>('');
+  const [overdueOnly, setOverdueOnly] = useState(false);
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
   const [taskToComplete, setTaskToComplete] = useState<TaskSummaryDto | null>(null);
   const [completionData, setCompletionData] = useState('{"approved": true}');
@@ -51,6 +52,25 @@ export function MyTasksPage() {
 
   const navigate = useNavigate();
   const { currentTenant } = useTenant();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Parse query params initially and when they change (e.g., from Task Bell)
+  useEffect(() => {
+    const spStatus = searchParams.get('status');
+    const spOverdue = searchParams.get('overdue');
+
+    if (spStatus) {
+      // Accept only known statuses
+      const allowed: TaskStatus[] = ['Created', 'Assigned', 'Claimed', 'InProgress', 'Completed', 'Cancelled', 'Failed'];
+      if (allowed.includes(spStatus as TaskStatus)) {
+        setStatusFilter(spStatus as TaskStatus);
+      }
+    } else {
+      setStatusFilter('');
+    }
+
+    setOverdueOnly(spOverdue === 'true');
+  }, [searchParams]);
 
   useEffect(() => {
     if (currentTenant) {
@@ -71,7 +91,14 @@ export function MyTasksPage() {
   };
 
   const handleStatusFilterChange = (event: any) => {
-    setStatusFilter(event.target.value);
+    const val = event.target.value as TaskStatus | '';
+    setStatusFilter(val);
+    const next = new URLSearchParams(searchParams);
+    if (val) next.set('status', val);
+    else next.delete('status');
+    next.delete('overdue'); // clear overdue flag when manually changing status
+    setOverdueOnly(false);
+    setSearchParams(next);
   };
 
   const handleViewTask = (id: GridRowId) => {
@@ -146,13 +173,17 @@ export function MyTasksPage() {
     return new Date(dueDate) < new Date();
   };
 
-  // Client-side safety filter: only show human tasks
-  const filteredTasks = useMemo(
-    () => tasks.filter(t => (t as any).nodeType === 'human'),
+  // Filter strictly to human tasks (nodeType handled in backend; defensive if future)
+  const filteredByNodeType = useMemo(
+    () => tasks.filter(t => (t as any).nodeType === 'human' || (t as any).nodeType === undefined),
     [tasks]
   );
 
-  const nonHumanCount = tasks.length - filteredTasks.length;
+  // Optional overdue-only filtering
+  const finalTasks = useMemo(() => {
+    if (!overdueOnly) return filteredByNodeType;
+    return filteredByNodeType.filter(t => isOverdue(t.dueDate) && t.status !== 'Completed' && t.status !== 'Cancelled');
+  }, [filteredByNodeType, overdueOnly]);
 
   const columns: GridColDef[] = [
     {
@@ -251,7 +282,7 @@ export function MyTasksPage() {
       getActions: (params: GridRowParams) => {
         const task = params.row as TaskSummaryDto & { nodeType?: string };
         const isHuman = !task.nodeType || task.nodeType === 'human';
-        const actions = [
+        const actions: any[] = [
           <GridActionsCellItem
             icon={<ViewIcon />}
             label="View Task"
@@ -292,7 +323,7 @@ export function MyTasksPage() {
     },
   ];
 
-  const overdueTasks = filteredTasks.filter(task => isOverdue(task.dueDate));
+  const overdueTasks = finalTasks.filter(task => isOverdue(task.dueDate));
 
   if (!currentTenant) {
     return (
@@ -327,18 +358,13 @@ export function MyTasksPage() {
               <MenuItem value="Claimed">Claimed</MenuItem>
               <MenuItem value="InProgress">In Progress</MenuItem>
               <MenuItem value="Completed">Completed</MenuItem>
+              <MenuItem value="Failed">Failed</MenuItem>
             </Select>
           </FormControl>
 
-          {nonHumanCount > 0 && (
-            <Tooltip title={`${nonHumanCount} non-human task(s) hidden`}>
-              <Chip
-                size="small"
-                color="secondary"
-                variant="outlined"
-                icon={<FilterOffIcon fontSize="small" />}
-                label={`${nonHumanCount} hidden`}
-              />
+          {overdueOnly && (
+            <Tooltip title="Showing only overdue tasks">
+              <Chip size="small" color="error" variant="outlined" label="Overdue" />
             </Tooltip>
           )}
 
@@ -353,7 +379,7 @@ export function MyTasksPage() {
         </Box>
       </Box>
 
-      {overdueTasks.length > 0 && (
+      {overdueTasks.length > 0 && !overdueOnly && (
         <Alert severity="warning" sx={{ mb: 2 }}>
           You have {overdueTasks.length} overdue task{overdueTasks.length === 1 ? '' : 's'}
         </Alert>
@@ -361,7 +387,7 @@ export function MyTasksPage() {
 
       <Box sx={{ flex: 1, minHeight: 0 }}>
         <DataGridPremium
-          rows={filteredTasks}
+          rows={finalTasks}
           columns={columns}
           loading={loading}
           pagination
@@ -403,7 +429,7 @@ export function MyTasksPage() {
             Complete task "{taskToComplete?.taskName}"
           </Typography>
 
-          <TextField
+            <TextField
             fullWidth
             label="Completion Data (JSON)"
             multiline

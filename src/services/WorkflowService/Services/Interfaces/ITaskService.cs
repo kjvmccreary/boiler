@@ -3,9 +3,6 @@ using DTOs.Workflow;
 
 namespace WorkflowService.Services.Interfaces;
 
-/// <summary>
-/// Service for managing workflow tasks
-/// </summary>
 public interface ITaskService
 {
     /// <summary>
@@ -47,4 +44,16 @@ public interface ITaskService
     /// Get task statistics for current tenant
     /// </summary>
     Task<ApiResponseDto<TaskStatisticsDto>> GetStatisticsAsync(CancellationToken cancellationToken = default);
+
+    // NEW: simple list variant for controller convenience
+    Task<ApiResponseDto<List<TaskSummaryDto>>> GetMyTasksListAsync(
+        DTOs.Workflow.Enums.TaskStatus? status,
+        bool includeRoleTasks,
+        bool includeUnassigned,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get task counts for current user
+    /// </summary>
+    Task<ApiResponseDto<TaskCountsDto>> GetMyTaskCountsAsync(CancellationToken cancellationToken = default);
 }
