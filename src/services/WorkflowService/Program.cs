@@ -13,6 +13,7 @@ using WorkflowService.Services.Interfaces;
 using WorkflowService.Services;
 using WorkflowService.Security;
 using System.Text.Json.Serialization;
+using WorkflowService.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -142,6 +143,10 @@ builder.Services.AddHealthChecks()
     .AddCheck("workflow-service", () => 
         Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy("Workflow service operational"));
 
+// Add SignalR services
+builder.Services.AddSignalR();
+builder.Services.AddScoped<ITaskNotificationDispatcher, TaskNotificationDispatcher>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline
@@ -172,6 +177,9 @@ app.UseTenantResolution();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR hubs
+app.MapHub<TaskNotificationsHub>("/api/workflow/hubs/tasks");
 
 // Add health check endpoints
 app.MapHealthChecks("/health");

@@ -17,6 +17,15 @@ import {
   Tooltip,
 } from '@mui/material';
 import {
+  Assignment as ClaimIcon,
+  CheckCircle as CompleteIcon,
+  Visibility as ViewIcon,
+  Schedule as TimerIcon,
+  Person as AssignedIcon,
+  Refresh as RefreshIcon,
+  AccountTree as WorkflowIcon
+} from '@mui/icons-material';
+import {
   DataGridPremium,
   GridColDef,
   GridRowParams,
@@ -24,19 +33,10 @@ import {
   GridRowId,
   GridToolbar,
 } from '@mui/x-data-grid-premium';
-import {
-  Assignment as ClaimIcon,
-  CheckCircle as CompleteIcon,
-  Visibility as ViewIcon,
-  Schedule as TimerIcon,
-  Person as AssignedIcon,
-  Refresh as RefreshIcon,
-  AccountTree as WorkflowIcon,
-  FilterAltOff as FilterOffIcon
-} from '@mui/icons-material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { workflowService } from '@/services/workflow.service';
 import type { TaskSummaryDto, TaskStatus } from '@/types/workflow';
+import { TASK_STATUSES } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
 
@@ -54,17 +54,13 @@ export function MyTasksPage() {
   const { currentTenant } = useTenant();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Parse query params initially and when they change (e.g., from Task Bell)
+  // Parse query params (from bell navigation)
   useEffect(() => {
     const spStatus = searchParams.get('status');
     const spOverdue = searchParams.get('overdue');
 
-    if (spStatus) {
-      // Accept only known statuses
-      const allowed: TaskStatus[] = ['Created', 'Assigned', 'Claimed', 'InProgress', 'Completed', 'Cancelled', 'Failed'];
-      if (allowed.includes(spStatus as TaskStatus)) {
-        setStatusFilter(spStatus as TaskStatus);
-      }
+    if (spStatus && TASK_STATUSES.includes(spStatus as TaskStatus)) {
+      setStatusFilter(spStatus as TaskStatus);
     } else {
       setStatusFilter('');
     }
@@ -94,26 +90,18 @@ export function MyTasksPage() {
     const val = event.target.value as TaskStatus | '';
     setStatusFilter(val);
     const next = new URLSearchParams(searchParams);
-    if (val) next.set('status', val);
-    else next.delete('status');
-    next.delete('overdue'); // clear overdue flag when manually changing status
+    if (val) next.set('status', val); else next.delete('status');
+    next.delete('overdue');
     setOverdueOnly(false);
     setSearchParams(next);
   };
 
-  const handleViewTask = (id: GridRowId) => {
-    navigate(`/app/workflow/tasks/${id}`);
-  };
-
-  const handleViewInstance = (task: TaskSummaryDto) => {
-    navigate(`/app/workflow/instances/${task.workflowInstanceId}`);
-  };
+  const handleViewTask = (id: GridRowId) => navigate(`/app/workflow/tasks/${id}`);
+  const handleViewInstance = (task: TaskSummaryDto) => navigate(`/app/workflow/instances/${task.workflowInstanceId}`);
 
   const handleClaimTask = async (task: TaskSummaryDto) => {
     try {
-      await workflowService.claimTask(task.id, {
-        claimNotes: 'Claimed from My Tasks page'
-      });
+      await workflowService.claimTask(task.id, { claimNotes: 'Claimed from My Tasks page' });
       toast.success('Task claimed successfully');
       loadMyTasks();
     } catch {
@@ -149,40 +137,29 @@ export function MyTasksPage() {
 
   const getStatusChip = (status: TaskStatus) => {
     switch (status) {
-      case 'Created':
-        return <Chip label="Available" color="default" size="small" />;
-      case 'Assigned':
-        return <Chip label="Assigned" color="info" size="small" icon={<AssignedIcon />} />;
-      case 'Claimed':
-        return <Chip label="Claimed" color="primary" size="small" />;
-      case 'InProgress':
-        return <Chip label="In Progress" color="warning" size="small" />;
-      case 'Completed':
-        return <Chip label="Completed" color="success" size="small" icon={<CompleteIcon />} />;
-      case 'Cancelled':
-        return <Chip label="Cancelled" color="error" size="small" />;
-      case 'Failed':
-        return <Chip label="Failed" color="error" size="small" />;
-      default:
-        return <Chip label={status} color="default" size="small" />;
+      case 'Created': return <Chip label="Available" size="small" />;
+      case 'Assigned': return <Chip label="Assigned" color="info" size="small" icon={<AssignedIcon />} />;
+      case 'Claimed': return <Chip label="Claimed" color="primary" size="small" />;
+      case 'InProgress': return <Chip label="In Progress" color="warning" size="small" />;
+      case 'Completed': return <Chip label="Completed" color="success" size="small" icon={<CompleteIcon />} />;
+      case 'Cancelled': return <Chip label="Cancelled" color="error" size="small" />;
+      case 'Failed': return <Chip label="Failed" color="error" size="small" />;
+      default: return <Chip label={status} size="small" />;
     }
   };
 
-  const isOverdue = (dueDate?: string) => {
-    if (!dueDate) return false;
-    return new Date(dueDate) < new Date();
-  };
+  const isOverdue = (dueDate?: string) => !!dueDate && new Date(dueDate) < new Date();
 
-  // Filter strictly to human tasks (nodeType handled in backend; defensive if future)
   const filteredByNodeType = useMemo(
     () => tasks.filter(t => (t as any).nodeType === 'human' || (t as any).nodeType === undefined),
     [tasks]
   );
 
-  // Optional overdue-only filtering
   const finalTasks = useMemo(() => {
     if (!overdueOnly) return filteredByNodeType;
-    return filteredByNodeType.filter(t => isOverdue(t.dueDate) && t.status !== 'Completed' && t.status !== 'Cancelled');
+    return filteredByNodeType.filter(
+      t => isOverdue(t.dueDate) && t.status !== 'Completed' && t.status !== 'Cancelled'
+    );
   }, [filteredByNodeType, overdueOnly]);
 
   const columns: GridColDef[] = [
@@ -196,32 +173,21 @@ export function MyTasksPage() {
         const overdue = isOverdue(task.dueDate);
         return (
           <Box>
-            <Typography variant="subtitle2" fontWeight="medium">
-              {params.value}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              ID: {task.id}
-            </Typography>
-            {task['nodeType'] && task['nodeType'] !== 'human' && (
-              <Chip
-                size="small"
-                label={task['nodeType']}
-                color="secondary"
-                variant="outlined"
-                sx={{ ml: 1, mt: 0.5, height: 18, fontSize: '0.6rem' }}
-              />
+            <Typography variant="subtitle2" fontWeight="medium">{params.value}</Typography>
+            <Typography variant="caption" color="text.secondary">ID: {task.id}</Typography>
+            {task.nodeType && task.nodeType !== 'human' && (
+              <Chip size="small" label={task.nodeType} color="secondary" variant="outlined"
+                sx={{ ml: 1, mt: 0.5, height: 18, fontSize: '0.6rem' }} />
             )}
             {overdue && (
               <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
                 <TimerIcon color="error" fontSize="small" sx={{ mr: 0.5 }} />
-                <Typography variant="caption" color="error">
-                  Overdue
-                </Typography>
+                <Typography variant="caption" color="error">Overdue</Typography>
               </Box>
             )}
           </Box>
         );
-      },
+      }
     },
     {
       field: 'workflowDefinitionName',
@@ -232,47 +198,41 @@ export function MyTasksPage() {
         const task = params.row as TaskSummaryDto;
         return (
           <Box>
-            <Typography variant="body2">
-              {params.value}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Instance: {task.workflowInstanceId}
-            </Typography>
+            <Typography variant="body2">{params.value}</Typography>
+            <Typography variant="caption" color="text.secondary">Instance: {task.workflowInstanceId}</Typography>
           </Box>
         );
-      },
+      }
     },
     {
       field: 'status',
       headerName: 'Status',
       width: 130,
-      renderCell: (params) => getStatusChip(params.value as TaskStatus),
+      renderCell: (params) => getStatusChip(params.value as TaskStatus)
     },
     {
       field: 'dueDate',
       headerName: 'Due Date',
       width: 160,
       type: 'dateTime',
-      valueGetter: (value) => value ? new Date(value) : null,
+      valueGetter: v => v ? new Date(v as string) : null,
       renderCell: (params) => {
-        if (!params.value) {
-          return <Typography variant="body2" color="text.secondary">No due date</Typography>;
-        }
+        if (!params.value) return <Typography variant="body2" color="text.secondary">No due date</Typography>;
         const task = params.row as TaskSummaryDto;
         const overdue = isOverdue(task.dueDate);
         return (
           <Typography variant="body2" color={overdue ? 'error' : 'inherit'}>
-            {new Date(params.value).toLocaleString()}
+            {new Date(params.value as Date).toLocaleString()}
           </Typography>
         );
-      },
+      }
     },
     {
       field: 'createdAt',
       headerName: 'Created',
       width: 120,
       type: 'date',
-      valueGetter: (value) => new Date(value),
+      valueGetter: v => new Date(v as string)
     },
     {
       field: 'actions',
@@ -282,22 +242,12 @@ export function MyTasksPage() {
       getActions: (params: GridRowParams) => {
         const task = params.row as TaskSummaryDto & { nodeType?: string };
         const isHuman = !task.nodeType || task.nodeType === 'human';
-        const actions: any[] = [
-          <GridActionsCellItem
-            icon={<ViewIcon />}
-            label="View Task"
-            onClick={() => handleViewTask(params.id)}
-          />,
-          <GridActionsCellItem
-            icon={<WorkflowIcon />}
-            label="View Instance"
-            onClick={() => handleViewInstance(task)}
-            showInMenu
-          />
+        const acts: any[] = [
+          <GridActionsCellItem icon={<ViewIcon />} label="View Task" onClick={() => handleViewTask(params.id)} />,
+          <GridActionsCellItem icon={<WorkflowIcon />} label="View Instance" onClick={() => handleViewInstance(task)} showInMenu />
         ];
-
         if (isHuman && (task.status === 'Created' || task.status === 'Assigned')) {
-          actions.push(
+          acts.push(
             <GridActionsCellItem
               icon={<ClaimIcon />}
               label="Claim Task"
@@ -306,9 +256,8 @@ export function MyTasksPage() {
             />
           );
         }
-
         if (isHuman && (task.status === 'Claimed' || task.status === 'InProgress')) {
-          actions.push(
+          acts.push(
             <GridActionsCellItem
               icon={<CompleteIcon />}
               label="Complete Task"
@@ -317,13 +266,12 @@ export function MyTasksPage() {
             />
           );
         }
-
-        return actions;
-      },
-    },
+        return acts;
+      }
+    }
   ];
 
-  const overdueTasks = finalTasks.filter(task => isOverdue(task.dueDate));
+  const overdueTasks = finalTasks.filter(t => isOverdue(t.dueDate));
 
   if (!currentTenant) {
     return (
@@ -342,7 +290,6 @@ export function MyTasksPage() {
             {currentTenant.name}
           </Typography>
         </Typography>
-
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <FormControl sx={{ minWidth: 150 }}>
             <InputLabel>Status Filter</InputLabel>
@@ -361,13 +308,11 @@ export function MyTasksPage() {
               <MenuItem value="Failed">Failed</MenuItem>
             </Select>
           </FormControl>
-
           {overdueOnly && (
             <Tooltip title="Showing only overdue tasks">
               <Chip size="small" color="error" variant="outlined" label="Overdue" />
             </Tooltip>
           )}
-
           <Button
             variant="outlined"
             startIcon={<RefreshIcon />}
@@ -378,13 +323,11 @@ export function MyTasksPage() {
           </Button>
         </Box>
       </Box>
-
       {overdueTasks.length > 0 && !overdueOnly && (
         <Alert severity="warning" sx={{ mb: 2 }}>
           You have {overdueTasks.length} overdue task{overdueTasks.length === 1 ? '' : 's'}
         </Alert>
       )}
-
       <Box sx={{ flex: 1, minHeight: 0 }}>
         <DataGridPremium
           rows={finalTasks}
@@ -394,14 +337,11 @@ export function MyTasksPage() {
           pageSizeOptions={[10, 25, 50, 100]}
           initialState={{
             pagination: { paginationModel: { pageSize: 25 } },
-            sorting: { sortModel: [{ field: 'dueDate', sort: 'asc' }] },
+            sorting: { sortModel: [{ field: 'dueDate', sort: 'asc' }] }
           }}
           slots={{ toolbar: GridToolbar }}
           slotProps={{
-            toolbar: {
-              showQuickFilter: true,
-              quickFilterProps: { debounceMs: 500 },
-            },
+            toolbar: { showQuickFilter: true, quickFilterProps: { debounceMs: 500 } }
           }}
           disableRowSelectionOnClick
           getRowClassName={(params) => {
@@ -412,24 +352,22 @@ export function MyTasksPage() {
             '& .MuiDataGrid-row:hover': { backgroundColor: 'action.hover' },
             '& .row-overdue': {
               backgroundColor: 'error.50',
-              '&:hover': { backgroundColor: 'error.100' },
+              '&:hover': { backgroundColor: 'error.100' }
             },
             '& .MuiDataGrid-cell': {
               borderBottom: '1px solid',
-              borderColor: 'divider',
-            },
+              borderColor: 'divider'
+            }
           }}
         />
       </Box>
-
       <Dialog open={completeDialogOpen} onClose={() => setCompleteDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Complete Task</DialogTitle>
         <DialogContent>
           <Typography sx={{ mb: 2 }}>
             Complete task "{taskToComplete?.taskName}"
           </Typography>
-
-            <TextField
+          <TextField
             fullWidth
             label="Completion Data (JSON)"
             multiline
@@ -440,7 +378,6 @@ export function MyTasksPage() {
             sx={{ mb: 2 }}
             helperText="Enter task completion data as JSON"
           />
-
           <TextField
             fullWidth
             label="Completion Notes (Optional)"

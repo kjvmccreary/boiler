@@ -13,6 +13,7 @@ import {
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { getMyTaskSummary, TaskCountsDto } from '@/services/workflow.service';
 import { useNavigate } from 'react-router-dom';
+import { startTaskHub, onTasksChanged } from '@/services/taskNotifications';
 
 export function AppTaskBell() {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -25,8 +26,6 @@ export function AppTaskBell() {
       setLoading(true);
       const s = await getMyTaskSummary();
       setSummary(s);
-    } catch {
-      // optionally toast
     } finally {
       setLoading(false);
     }
@@ -34,8 +33,12 @@ export function AppTaskBell() {
 
   useEffect(() => {
     load();
-    const id = setInterval(load, 60000);
-    return () => clearInterval(id);
+    startTaskHub().then(() => {
+      const off = onTasksChanged(() => load());
+      return () => off();
+    });
+    const pollId = setInterval(load, 120000);
+    return () => clearInterval(pollId);
   }, []);
 
   const open = Boolean(anchorEl);
@@ -48,45 +51,23 @@ export function AppTaskBell() {
   const actionable = summary?.totalActionable ?? 0;
 
   const navigateWith = (query: string) => {
-    navigate(`/app/workflow/tasks${query}`);
+    navigate(`/app/workflow/tasks/mine${query}`);
     handleClose();
   };
 
   const handleRowClick = (key: string, value: number) => {
     if (value === 0) return;
     switch (key) {
-      case 'Available (claimable)':
-        // Created (claimable)
-        navigateWith('?status=Created');
-        break;
-      case 'Assigned to me':
-        navigateWith('?status=Assigned');
-        break;
-      case 'Assigned to my roles':
-        // Also Assigned – but user can claim; same status filter.
-        navigateWith('?status=Assigned');
-        break;
-      case 'Claimed':
-        navigateWith('?status=Claimed');
-        break;
-      case 'In Progress':
-        navigateWith('?status=InProgress');
-        break;
-      case 'Overdue':
-        navigateWith('?overdue=true');
-        break;
-      case 'Completed today':
-        navigateWith('?status=Completed');
-        break;
-      case 'Failed':
-        navigateWith('?status=Failed');
-        break;
-      case 'Total Actionable':
-        navigateWith('');
-        break;
-      default:
-        navigateWith('');
-        break;
+      case 'Available (claimable)': navigateWith('?status=Created'); break;
+      case 'Assigned to me': navigateWith('?status=Assigned'); break;
+      case 'Assigned to my roles': navigateWith('?status=Assigned'); break;
+      case 'Claimed': navigateWith('?status=Claimed'); break;
+      case 'In Progress': navigateWith('?status=InProgress'); break;
+      case 'Overdue': navigateWith('?overdue=true'); break;
+      case 'Completed today': navigateWith('?status=Completed'); break;
+      case 'Failed': navigateWith('?status=Failed'); break;
+      case 'Total Actionable': navigateWith(''); break;
+      default: navigateWith('');
     }
   };
 
@@ -108,7 +89,7 @@ export function AppTaskBell() {
         <Box sx={{ px: 1.5, py: 1 }}>
           <Typography variant="subtitle1">Workflow Tasks</Typography>
           <Typography variant="caption" color="text.secondary">
-            {summary ? 'Status snapshot' : 'Loading...'}
+            {summary ? 'Live status' : 'Loading...'}
           </Typography>
         </Box>
         <Divider />
@@ -128,9 +109,7 @@ export function AppTaskBell() {
             <Button
               size="small"
               variant="contained"
-              onClick={() => {
-                navigateWith('');
-              }}
+              onClick={() => navigateWith('')}
             >
               Go to My Tasks
             </Button>
@@ -167,11 +146,7 @@ function Row({ label, value, strong, highlight, color, onClick }: RowProps) {
         color,
         cursor: clickable ? 'pointer' : 'default',
         transition: 'background-color .15s',
-        '&:hover': clickable
-          ? {
-            backgroundColor: 'action.selected'
-          }
-          : undefined
+        '&:hover': clickable ? { backgroundColor: 'action.selected' } : undefined
       }}
     >
       <span>{label}</span>

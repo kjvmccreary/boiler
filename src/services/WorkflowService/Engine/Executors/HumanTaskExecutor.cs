@@ -3,6 +3,7 @@ using WorkflowService.Domain.Dsl;
 using WorkflowService.Domain.Models;
 using WorkflowService.Engine.Interfaces;
 using Contracts.Services;
+using WorkflowService.Services.Interfaces;
 using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
 
 namespace WorkflowService.Engine.Executors;
@@ -14,13 +15,15 @@ public class HumanTaskExecutor : INodeExecutor
 {
     private readonly ILogger<HumanTaskExecutor> _logger;
     private readonly IRoleService _roleService;
+    private readonly ITaskNotificationDispatcher _notificationDispatcher;
 
     public string NodeType => NodeTypes.HumanTask;
 
-    public HumanTaskExecutor(ILogger<HumanTaskExecutor> logger, IRoleService roleService)
+    public HumanTaskExecutor(ILogger<HumanTaskExecutor> logger, IRoleService roleService, ITaskNotificationDispatcher notificationDispatcher)
     {
         _logger = logger;
         _roleService = roleService;
+        _notificationDispatcher = notificationDispatcher;
     }
 
     public bool CanExecute(WorkflowNode node) => node.IsHumanTask();
@@ -96,6 +99,8 @@ public class HumanTaskExecutor : INodeExecutor
 
             _logger.LogInformation("Successfully created human task '{TaskName}' for workflow instance {InstanceId} (Tenant {TenantId})",
                 taskName, instance.Id, instance.TenantId);
+
+            await _notificationDispatcher.NotifyTenantAsync(instance.TenantId);
 
             return new NodeExecutionResult
             {

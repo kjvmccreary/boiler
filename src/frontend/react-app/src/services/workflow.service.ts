@@ -1,7 +1,8 @@
 import { apiClient } from './api.client';
 import {
   InstanceStatus,
-  TaskStatus
+  TASK_STATUSES,
+  type TaskStatus
 } from '@/types/workflow';
 import type {
   WorkflowDefinitionDto,
@@ -55,13 +56,13 @@ const INSTANCE_STATUS_NUM_MAP: Record<number, InstanceStatus> = {
 };
 
 const TASK_STATUS_NUM_MAP: Record<number, TaskStatus> = {
-  1: TaskStatus.Created,
-  2: TaskStatus.Assigned,
-  3: TaskStatus.Claimed,
-  4: TaskStatus.InProgress,
-  5: TaskStatus.Completed,
-  6: TaskStatus.Cancelled,
-  7: TaskStatus.Failed
+  1: 'Created',
+  2: 'Assigned',
+  3: 'Claimed',
+  4: 'InProgress',
+  5: 'Completed',
+  6: 'Cancelled',
+  7: 'Failed'
 };
 
 function normalizeInstanceStatus(v: unknown): InstanceStatus {
@@ -75,13 +76,12 @@ function normalizeInstanceStatus(v: unknown): InstanceStatus {
 }
 
 function normalizeTaskStatus(v: unknown): TaskStatus {
-  if (typeof v === 'string' && Object.values(TaskStatus).includes(v as TaskStatus)) return v as TaskStatus;
-  if (typeof v === 'number') return TASK_STATUS_NUM_MAP[v] ?? TaskStatus.Created;
   if (typeof v === 'string') {
-    const low = v.toLowerCase();
-    return Object.values(TaskStatus).find(s => s.toLowerCase() === low) ?? TaskStatus.Created;
+    const match = TASK_STATUSES.find(s => s.toLowerCase() === v.toLowerCase());
+    if (match) return match;
   }
-  return TaskStatus.Created;
+  if (typeof v === 'number') return TASK_STATUS_NUM_MAP[v] ?? 'Created';
+  return 'Created';
 }
 
 function mapInstance(i: WorkflowInstanceDto): WorkflowInstanceDto {

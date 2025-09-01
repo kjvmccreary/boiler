@@ -22,6 +22,7 @@ public class TaskService : ITaskService
     private readonly IEventPublisher _eventPublisher;
     private readonly ILogger<TaskService> _logger;
     private readonly IUserContext _userContext;
+    private readonly ITaskNotificationDispatcher _notificationDispatcher;
 
     public TaskService(
         WorkflowDbContext context,
@@ -30,7 +31,8 @@ public class TaskService : ITaskService
         IWorkflowRuntime workflowRuntime,
         IEventPublisher eventPublisher,
         ILogger<TaskService> logger,
-        IUserContext userContext)
+        IUserContext userContext,
+        ITaskNotificationDispatcher notificationDispatcher)
     {
         _context = context;
         _mapper = mapper;
@@ -39,6 +41,7 @@ public class TaskService : ITaskService
         _eventPublisher = eventPublisher;
         _logger = logger;
         _userContext = userContext;
+        _notificationDispatcher = notificationDispatcher;
     }
 
     public async Task<ApiResponseDto<PagedResultDto<TaskSummaryDto>>> GetMyTasksAsync(GetTasksRequestDto request, CancellationToken cancellationToken = default)
@@ -169,6 +172,7 @@ public class TaskService : ITaskService
 
             await _context.SaveChangesAsync(cancellationToken);
             await _eventPublisher.PublishTaskAssignedAsync(task, currentUserId.Value, cancellationToken);
+            await _notificationDispatcher.NotifyUserAsync(tenantId.Value, currentUserId.Value, cancellationToken);
 
             var dto = _mapper.Map<WorkflowTaskDto>(task);
             _logger.LogInformation("User {UserId} claimed task {TaskId}", currentUserId.Value, taskId);
@@ -213,6 +217,7 @@ public class TaskService : ITaskService
 
             await _workflowRuntime.CompleteTaskAsync(taskId, request.CompletionData ?? "{}", currentUserId.Value, cancellationToken);
             await _context.Entry(task).ReloadAsync(cancellationToken);
+            await _notificationDispatcher.NotifyUserAsync(tenantId.Value, currentUserId.Value, cancellationToken);
 
             var dto = _mapper.Map<WorkflowTaskDto>(task);
             _logger.LogInformation("User {UserId} completed task {TaskId}", currentUserId.Value, taskId);
@@ -257,6 +262,7 @@ public class TaskService : ITaskService
             task.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);
+            await _notificationDispatcher.NotifyUserAsync(tenantId.Value, currentUserId.Value, cancellationToken);
 
             var dto = _mapper.Map<WorkflowTaskDto>(task);
             _logger.LogInformation("User {UserId} released task {TaskId}", currentUserId.Value, taskId);
@@ -298,7 +304,14 @@ public class TaskService : ITaskService
             await _context.SaveChangesAsync(cancellationToken);
 
             if (request.AssignToUserId.HasValue)
+            {
                 await _eventPublisher.PublishTaskAssignedAsync(task, request.AssignToUserId.Value, cancellationToken);
+                await _notificationDispatcher.NotifyUserAsync(tenantId.Value, request.AssignToUserId.Value, cancellationToken);
+            }
+            else
+            {
+                await _notificationDispatcher.NotifyTenantAsync(tenantId.Value, cancellationToken);
+            }
 
             var dto = _mapper.Map<WorkflowTaskDto>(task);
             _logger.LogInformation("Task {TaskId} reassigned: {Reason}", taskId, request.Reason);

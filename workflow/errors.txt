@@ -1,63 +1,22 @@
-PS C:\Users\mccre\dev\boiler\src\services\WorkflowService> dotnet ef database update --context WorkflowDbContext
-Build started...
-Build succeeded.
-[09:52:12 ERR] Failed executing DbCommand (11ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+PS C:\Users\mccre\dev\boiler\src\frontend\react-app> npm run build
 
-                CREATE OR REPLACE FUNCTION enforce_tenant()
-                RETURNS trigger
-                LANGUAGE plpgsql
-                AS $$
-                DECLARE
-                    g_tenant TEXT;
-                BEGIN
-                    g_tenant := current_setting('app.tenant_id', true);
-                    IF g_tenant IS NULL OR trim(g_tenant) = '' THEN
-                        RAISE EXCEPTION 'Tenant GUC app.tenant_id not set for table %'
-                            USING ERRCODE = '23514';
-                    END IF;
+> microservices-frontend@0.0.0 build
+> tsc -b && vite build
 
-                    IF NEW."TenantId" <> g_tenant::int THEN
-                        RAISE EXCEPTION 'Tenant mismatch (row=% application=%) on table %',
-                            NEW."TenantId", g_tenant, TG_TABLE_NAME
-                            USING ERRCODE = '23514';
-                    END IF;
+src/features/workflow/tasks/MyTasksPage.tsx:144:92 - error TS2304: Cannot find name 'CheckCircle'.
 
-                    RETURN NEW;
-                END;
-                $$; {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command"}
-Npgsql.PostgresException (0x80004005): 42601: too few parameters specified for RAISE
-   at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
-   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
-   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlDataReader.NextResult()
-   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlCommand.ExecuteNonQuery()
-   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQuery(RelationalCommandParameterObject parameterObject)
-   at Microsoft.EntityFrameworkCore.Migrations.MigrationCommand.ExecuteNonQuery(IRelationalConnection connection, IReadOnlyDictionary`2 parameterValues)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.Execute(IReadOnlyList`1 migrationCommands, IRelationalConnection connection, MigrationExecutionState executionState, Boolean beginTransaction, Boolean commitTransaction, Nullable`1 isolationLevel)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.<>c.<ExecuteNonQuery>b__3_1(DbContext _, ValueTuple`6 s)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQuery(IReadOnlyList`1 migrationCommands, IRelationalConnection connection, MigrationExecutionState executionState, Boolean commitTransaction, Nullable`1 isolationLevel)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.MigrateImplementation(DbContext context, String targetMigration, MigrationExecutionState state, Boolean useTransaction)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.<>c.<Migrate>b__20_1(DbContext c, ValueTuple`4 s)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass28_0`2.<Execute>b__0(DbContext context, TState state)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementation[TState,TResult](Func`3 operation, Func`3 verifySucceeded, TState state)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(String targetMigration)
-   at Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal.NpgsqlMigrator.Migrate(String targetMigration)
-   at Microsoft.EntityFrameworkCore.Design.Internal.MigrationsOperations.UpdateDatabase(String targetMigration, String connectionString, String contextType)
-   at Microsoft.EntityFrameworkCore.Design.OperationExecutor.UpdateDatabaseImpl(String targetMigration, String connectionString, String contextType)
-   at Microsoft.EntityFrameworkCore.Design.OperationExecutor.UpdateDatabase.<>c__DisplayClass0_0.<.ctor>b__0()
-   at Microsoft.EntityFrameworkCore.Design.OperationExecutor.OperationBase.Execute(Action action)
-  Exception data:
-    Severity: ERROR
-    SqlState: 42601
-    MessageText: too few parameters specified for RAISE
-    Where: compilation of PL/pgSQL function "enforce_tenant" near line 7
-    File: pl_gram.y
-    Line: 4087
-    Routine: check_raise_parameters
-42601: too few parameters specified for RAISE
+144       case 'Completed': return <Chip label="Completed" color="success" size="small" icon={<CheckCircle />} />;
+                                                                                               ~~~~~~~~~~~
+
+src/features/workflow/tasks/MyTasksPage.tsx:184:18 - error TS2304: Cannot find name 'ScheduleIcon'.
+
+184                 <ScheduleIcon color="error" fontSize="small" sx={{ mr: 0.5 }} />
+                     ~~~~~~~~~~~~
+
+src/features/workflow/tasks/MyTasksPage.tsx:262:22 - error TS2304: Cannot find name 'CheckCircle'.
+
+262               icon={<CheckCircle />}
+                         ~~~~~~~~~~~
+
+
+Found 3 errors.

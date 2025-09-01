@@ -1,149 +1,29 @@
-PS C:\Users\mccre\dev\boiler> docker logs --tail 200 boiler-workflow
-[15:42:58 INF] Starting WorkflowService with Engine and Service Layer {}
-=== WorkflowService Starting with Engine and Service Layer ===
-[15:42:58 WRN] Entity 'Role' has a global query filter defined and is the required end of a relationship with the entity 'RolePermission'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information. {"EventId": {"Id": 10622, "Name": "Microsoft.EntityFrameworkCore.Model.Validation.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
-[15:42:58 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId": {"Id": 10400, "Name": "Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
-✅ Main database migrations applied
-✅ Workflow database migrations applied
-[15:42:59 WRN] Storing keys in a directory '/app/.aspnet/DataProtection-Keys' that may not be persisted outside of the container. Protected data will be unavailable when container is destroyed. For more information go to https://aka.ms/aspnet/dataprotectionwarning {"EventId": {"Id": 60, "Name": "UsingEphemeralFileSystemLocationInContainer"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.Repositories.FileSystemXmlRepository"}
-[15:42:59 WRN] No XML encryptor configured. Key {d8fe5688-96c0-4246-90fd-0127ad58709d} may be persisted to storage in unencrypted form. {"EventId": {"Id": 35, "Name": "NoXMLEncryptorConfiguredKeyMayBePersistedToStorageInUnencryptedForm"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"}
-[15:42:59 INF] WF_TIMER_WORKER_START IntervalSeconds=30 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[15:42:59 INF] OUTBOX_WORKER_START Interval=15s BatchSize=50 MaxRetries=5 {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[15:42:59 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[15:42:59 WRN] Overriding HTTP_PORTS '8080' and HTTPS_PORTS ''. Binding to values defined by URLS instead 'https://+:7003;http://+:5003'. {"EventId": {"Id": 15}, "SourceContext": "Microsoft.AspNetCore.Hosting.Diagnostics"}
-[15:42:59 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-Now listening on: https://[::]:7003
-[15:43:00 INF] Now listening on: https://[::]:7003 {}
-Now listening on: http://[::]:5003
-[15:43:00 INF] Now listening on: http://[::]:5003 {}
-🌊 WorkflowService started with workflow engine and service layer enabled
-[15:43:00 INF] WorkflowService started - workflow engine, service layer, and background workers operational {}
-[15:43:03 INF] HTTP GET /health responded 200 in 79.0194 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[15:43:14 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[15:43:29 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[15:43:29 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[15:43:33 INF] HTTP GET /health responded 200 in 15.9818 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[15:43:44 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[15:43:59 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[15:43:59 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[15:44:03 INF] HTTP GET /health responded 200 in 8.4873 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[15:44:14 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[15:44:29 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[15:44:29 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[15:44:33 INF] HTTP GET /health responded 200 in 7.6886 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[15:44:44 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[15:44:59 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[15:44:59 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[15:45:03 INF] HTTP GET /health responded 200 in 11.5539 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[15:45:08 INF] HTTP GET /api/workflow/definitions responded 200 in 321.7337 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[15:45:12 INF] 🔍 WorkflowDbContext: Starting SaveChangesAsync {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] 🏢 WorkflowDbContext: Tenant ID resolved as: 1 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 DBG] ✅ WorkflowDbContext: Transaction-local tenant set to 1 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] ✅ WorkflowDbContext: Updated TenantId for 0 entities {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] WF_START Instance=25 Def=43 Version=1 StartNode=start-1756739583693 {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] WF_CONTINUE Instance=25 Nodes=[start-1756739583693] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] WF_NODE_EXEC_START Instance=25 Node=start-1756739583693 Type=start {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] Executing start node start-1756739583693 for instance 25 {"SourceContext": "WorkflowService.Engine.Executors.StartEndExecutor", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] WF_NODE_ADVANCE Instance=25 Node=start-1756739583693 Next=[timer-1756739588169] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] 🔍 WorkflowDbContext: Starting SaveChangesAsync {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] 🏢 WorkflowDbContext: Tenant ID resolved as: 1 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 DBG] ✅ WorkflowDbContext: Transaction-local tenant set to 1 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] ✅ WorkflowDbContext: Updated TenantId for 0 entities {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] WF_CONTINUE Instance=25 Nodes=[timer-1756739588169] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] WF_NODE_EXEC_START Instance=25 Node=timer-1756739588169 Type=timer {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] WF_TIMER_SCHEDULE Instance=25 Node=timer-1756739588169 DueUtc=09/01/2025 15:46:12 {"SourceContext": "WorkflowService.Engine.Executors.TimerExecutor", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] WF_NODE_WAIT Instance=25 Node=timer-1756739588169 Type=timer {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] 🔍 WorkflowDbContext: Starting SaveChangesAsync {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] 🏢 WorkflowDbContext: Tenant ID resolved as: 1 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 DBG] ✅ WorkflowDbContext: Transaction-local tenant set to 1 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] ✅ WorkflowDbContext: Updated TenantId for 0 entities {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] 🔍 WorkflowDbContext: Starting SaveChangesAsync {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] 🏢 WorkflowDbContext: Tenant ID resolved as: 1 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 DBG] ✅ WorkflowDbContext: Transaction-local tenant set to 1 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] ✅ WorkflowDbContext: Updated TenantId for 0 entities {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] Published instance started event for workflow instance 25 {"SourceContext": "WorkflowService.Services.EventPublisher", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] Started workflow instance 25 from definition 43 for tenant 1 {"SourceContext": "WorkflowService.Services.InstanceService", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] 🔍 WorkflowDbContext: Starting SaveChangesAsync {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] 🏢 WorkflowDbContext: Tenant ID resolved as: 1 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 DBG] ✅ WorkflowDbContext: Transaction-local tenant set to 1 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] ✅ WorkflowDbContext: Updated TenantId for 2 entities {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] Started workflow instance 25 from definition 43 by user 6 {"SourceContext": "WorkflowService.Controllers.InstancesController", "ActionId": "7288a363-78cd-42b0-b48a-551fec92bb4b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9DOUAQ6J6:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9DOUAQ6J6"}
-[15:45:12 INF] HTTP POST /api/workflow/instances responded 201 in 319.4752 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[15:45:12 INF] HTTP GET /api/workflow/instances/25/runtime-snapshot responded 200 in 89.0580 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[15:45:14 INF] OUTBOX_BATCH Size=6 {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[15:45:14 INF] OUTBOX_DISPATCH EventType=workflow.instance.started Id=191 Tenant=1 Retry=0 PayloadSize=38 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
-[15:45:14 INF] OUTBOX_DISPATCH EventType=workflow.edge.edgetraversed Id=192 Tenant=1 Retry=0 PayloadSize=156 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
-[15:45:14 INF] OUTBOX_DISPATCH EventType=workflow.node.executed Id=193 Tenant=1 Retry=0 PayloadSize=97 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
-[15:45:14 INF] OUTBOX_DISPATCH EventType=workflow.node.nodeactivated Id=194 Tenant=1 Retry=0 PayloadSize=85 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
-[15:45:14 INF] OUTBOX_DISPATCH EventType=workflow.node.executed Id=195 Tenant=1 Retry=0 PayloadSize=95 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
-[15:45:14 INF] OUTBOX_DISPATCH EventType=workflow.instance.started Id=196 Tenant=1 Retry=0 PayloadSize=106 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
-[15:45:14 INF] 🔍 WorkflowDbContext: Starting SaveChangesAsync {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
-[15:45:14 INF] 🏢 WorkflowDbContext: Tenant ID resolved as: 1 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
-[15:45:14 DBG] ✅ WorkflowDbContext: Transaction-local tenant set to 1 {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
-[15:45:14 INF] ✅ WorkflowDbContext: Updated TenantId for 0 entities {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
-[15:45:17 ERR] Error getting my tasks {"SourceContext": "WorkflowService.Services.TaskService", "ActionId": "e9f9a117-38da-4a92-a15f-a81f82458f56", "ActionName": "WorkflowService.Controllers.TasksController.GetMyTasks (WorkflowService)", "RequestId": "0HNF9DOUAQ6J8:00000001", "RequestPath": "/api/workflow/tasks/mine", "ConnectionId": "0HNF9DOUAQ6J8"}
-System.InvalidOperationException: The LINQ expression 'DbSet<WorkflowTask>()
-    .Where(w => (int?)EF.Property<int>(w, "TenantId") == __ef_filter__p_0)
-    .Join(
-        inner: DbSet<WorkflowInstance>()
-            .Where(w0 => (int?)EF.Property<int>(w0, "TenantId") == __ef_filter__p_0),
-        outerKeySelector: w => EF.Property<int?>(w, "WorkflowInstanceId"),
-        innerKeySelector: w0 => EF.Property<int?>(w0, "Id"),
-        resultSelector: (o, i) => new TransparentIdentifier<WorkflowTask, WorkflowInstance>(
-            Outer = o,
-            Inner = i
-        ))
-    .Where(w => w.Inner.TenantId == __tenantId_Value_0)
-    .Where(w => w.Outer.NodeType == "human")
-    .Where(w => w.Outer.AssignedToUserId == __currentUserId_Value_1 || w.Outer.AssignedToRole != null && TaskService.UserHasRole(w.Outer.AssignedToRole))' could not be translated. Additional information: Translation of method 'WorkflowService.Services.TaskService.UserHasRole' failed. If this method can be mapped to your custom function, see https://go.microsoft.com/fwlink/?linkid=2132413 for more information. Either rewrite the query in a form that can be translated, or switch to client evaluation explicitly by inserting a call to 'AsEnumerable', 'AsAsyncEnumerable', 'ToList', or 'ToListAsync'. See https://go.microsoft.com/fwlink/?linkid=2101038 for more information.
-   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.Translate(Expression expression)
-   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutorExpression[TResult](Expression query)
-   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutor[TResult](Expression query)
-   at Microsoft.EntityFrameworkCore.Storage.Database.CompileQuery[TResult](Expression query, Boolean async)
-   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.CompileQueryCore[TResult](IDatabase database, Expression query, IModel model, Boolean async)
-   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.<>c__DisplayClass11_0`1.<ExecuteCore>b__0()
-   at Microsoft.EntityFrameworkCore.Query.Internal.CompiledQueryCache.GetOrAddQuery[TResult](Object cacheKey, Func`1 compiler)
-   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteCore[TResult](Expression query, Boolean async, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteAsync[TResult](Expression query, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryProvider.ExecuteAsync[TResult](Expression expression, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ExecuteAsync[TSource,TResult](MethodInfo operatorMethodInfo, IQueryable`1 source, Expression expression, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ExecuteAsync[TSource,TResult](MethodInfo operatorMethodInfo, IQueryable`1 source, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
-   at WorkflowService.Services.TaskService.ApplyTaskFiltersAndPagination(IQueryable`1 query, GetTasksRequestDto request, CancellationToken cancellationToken) in /src/src/services/WorkflowService/Services/TaskService.cs:line 459
-   at WorkflowService.Services.TaskService.GetMyTasksAsync(GetTasksRequestDto request, CancellationToken cancellationToken) in /src/src/services/WorkflowService/Services/TaskService.cs:line 66
-[15:45:17 INF] HTTP GET /api/workflow/tasks/mine responded 400 in 23.4501 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[15:45:21 ERR] Error getting my tasks {"SourceContext": "WorkflowService.Services.TaskService", "ActionId": "e9f9a117-38da-4a92-a15f-a81f82458f56", "ActionName": "WorkflowService.Controllers.TasksController.GetMyTasks (WorkflowService)", "RequestId": "0HNF9DOUAQ6J9:00000001", "RequestPath": "/api/workflow/tasks/mine", "ConnectionId": "0HNF9DOUAQ6J9"}
-System.InvalidOperationException: The LINQ expression 'DbSet<WorkflowTask>()
-    .Where(w => (int?)EF.Property<int>(w, "TenantId") == __ef_filter__p_0)
-    .Join(
-        inner: DbSet<WorkflowInstance>()
-            .Where(w0 => (int?)EF.Property<int>(w0, "TenantId") == __ef_filter__p_0),
-        outerKeySelector: w => EF.Property<int?>(w, "WorkflowInstanceId"),
-        innerKeySelector: w0 => EF.Property<int?>(w0, "Id"),
-        resultSelector: (o, i) => new TransparentIdentifier<WorkflowTask, WorkflowInstance>(
-            Outer = o,
-            Inner = i
-        ))
-    .Where(w => w.Inner.TenantId == __tenantId_Value_0)
-    .Where(w => w.Outer.NodeType == "human")
-    .Where(w => w.Outer.AssignedToUserId == __currentUserId_Value_1 || w.Outer.AssignedToRole != null && TaskService.UserHasRole(w.Outer.AssignedToRole))' could not be translated. Additional information: Translation of method 'WorkflowService.Services.TaskService.UserHasRole' failed. If this method can be mapped to your custom function, see https://go.microsoft.com/fwlink/?linkid=2132413 for more information. Either rewrite the query in a form that can be translated, or switch to client evaluation explicitly by inserting a call to 'AsEnumerable', 'AsAsyncEnumerable', 'ToList', or 'ToListAsync'. See https://go.microsoft.com/fwlink/?linkid=2101038 for more information.
-   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.Translate(Expression expression)
-   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutorExpression[TResult](Expression query)
-   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutor[TResult](Expression query)
-   at Microsoft.EntityFrameworkCore.Storage.Database.CompileQuery[TResult](Expression query, Boolean async)
-   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.CompileQueryCore[TResult](IDatabase database, Expression query, IModel model, Boolean async)
-   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.<>c__DisplayClass11_0`1.<ExecuteCore>b__0()
-   at Microsoft.EntityFrameworkCore.Query.Internal.CompiledQueryCache.GetOrAddQuery[TResult](Object cacheKey, Func`1 compiler)
-   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteCore[TResult](Expression query, Boolean async, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteAsync[TResult](Expression query, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryProvider.ExecuteAsync[TResult](Expression expression, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ExecuteAsync[TSource,TResult](MethodInfo operatorMethodInfo, IQueryable`1 source, Expression expression, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ExecuteAsync[TSource,TResult](MethodInfo operatorMethodInfo, IQueryable`1 source, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.CountAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
-   at WorkflowService.Services.TaskService.ApplyTaskFiltersAndPagination(IQueryable`1 query, GetTasksRequestDto request, CancellationToken cancellationToken) in /src/src/services/WorkflowService/Services/TaskService.cs:line 459
-   at WorkflowService.Services.TaskService.GetMyTasksAsync(GetTasksRequestDto request, CancellationToken cancellationToken) in /src/src/services/WorkflowService/Services/TaskService.cs:line 66
-[15:45:21 INF] HTTP GET /api/workflow/tasks/mine responded 400 in 10.3083 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[15:45:29 DBG] WF_TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[15:45:29 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[15:45:33 INF] HTTP GET /health responded 200 in 12.5307 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-PS C:\Users\mccre\dev\boiler>
+vite v7.0.6 building for production...
+node_modules/@microsoft/signalr/dist/esm/Utils.js (190:0): A comment
+
+"/*#__PURE__*/"
+
+in "node_modules/@microsoft/signalr/dist/esm/Utils.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+node_modules/@microsoft/signalr/dist/esm/Utils.js (208:0): A comment
+
+"/*#__PURE__*/"
+
+in "node_modules/@microsoft/signalr/dist/esm/Utils.js" contains an annotation that Rollup cannot interpret due to the position of the comment. The comment will be removed to avoid issues.
+✓ 12711 modules transformed.
+dist/index.html                              0.97 kB │ gzip:   0.42 kB
+dist/assets/index-BNBpiCdN.css              15.58 kB │ gzip:   3.92 kB
+dist/assets/form-vendor-pHztbc5J.js          0.08 kB │ gzip:   0.10 kB │ map:     0.10 kB
+dist/assets/query-vendor-pHztbc5J.js         0.08 kB │ gzip:   0.10 kB │ map:     0.11 kB
+dist/assets/react-vendor-c5ypKtDW.js        12.00 kB │ gzip:   4.29 kB │ map:    42.10 kB
+dist/assets/router-vendor-tTK6oEdy.js       33.24 kB │ gzip:  12.31 kB │ map:   388.65 kB
+dist/assets/role-components-BnvRW05v.js     33.30 kB │ gzip:   9.09 kB │ map:   118.57 kB
+dist/assets/auth-components-Dnuw1KQD.js     53.48 kB │ gzip:  19.47 kB │ map:   229.78 kB
+dist/assets/user-components-C0SMOqg0.js     60.30 kB │ gzip:  18.07 kB │ map:   196.14 kB
+dist/assets/mui-vendor-YUAoiyEI.js         405.06 kB │ gzip: 121.69 kB │ map: 2,102.19 kB
+dist/assets/exceljs.min-uOcUqG0Y.js        939.21 kB │ gzip: 271.12 kB │ map: 2,087.49 kB
+dist/assets/index-KcGGn_2s.js            1,035.09 kB │ gzip: 312.69 kB │ map: 4,689.18 kB
+
+(!) Some chunks are larger than 800 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.

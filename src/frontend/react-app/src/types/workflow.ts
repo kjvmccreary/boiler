@@ -18,7 +18,7 @@ export interface PagedResultDto<T> {
 }
 
 // =====================================
-// ENUMS
+// ENUMS / STRING UNIONS
 // =====================================
 
 export enum InstanceStatus {
@@ -29,15 +29,26 @@ export enum InstanceStatus {
   Suspended = 'Suspended'
 }
 
-export enum TaskStatus {
-  Created = 'Created',
-  Assigned = 'Assigned',
-  Claimed = 'Claimed',
-  InProgress = 'InProgress',
-  Completed = 'Completed',
-  Cancelled = 'Cancelled',
-  Failed = 'Failed'
-}
+// Converted from enum → string union for simpler literal usage
+export type TaskStatus =
+  | 'Created'
+  | 'Assigned'
+  | 'Claimed'
+  | 'InProgress'
+  | 'Completed'
+  | 'Cancelled'
+  | 'Failed';
+
+// Central canonical list (runtime array) for validation / normalization
+export const TASK_STATUSES: TaskStatus[] = [
+  'Created',
+  'Assigned',
+  'Claimed',
+  'InProgress',
+  'Completed',
+  'Cancelled',
+  'Failed'
+];
 
 // =====================================
 // DEFINITIONS
@@ -181,12 +192,13 @@ export interface WorkflowTaskDto {
 export interface TaskSummaryDto {
   id: number;
   taskName: string;
-  status: TaskStatus | string;
+  status: TaskStatus | string; // backend might send raw string; normalized client-side
   workflowDefinitionName: string;
   workflowInstanceId: number;
   dueDate?: string;
   createdAt: string;
   nodeId?: string;
+  nodeType?: string;
 }
 
 export interface CompleteTaskRequestDto {
@@ -242,7 +254,7 @@ export interface InstanceRuntimeSnapshotDto {
 }
 
 // =====================================
-// ROLE USAGE (re-added for RoleWorkflowUsageDialog)
+// ROLE USAGE
 // =====================================
 
 export interface WorkflowNodeUsageDto {
@@ -273,7 +285,7 @@ export interface CheckRoleUsageRequestDto {
 }
 
 // =====================================
-// ADMIN / ANALYTICS (subset)
+// ADMIN / ANALYTICS
 // =====================================
 
 export interface WorkflowStatsDto {
@@ -320,7 +332,7 @@ export interface BulkOperationResultDto {
 }
 
 // =====================================
-// BUILDER (editor) TYPES (subset)
+// BUILDER (subset)
 // =====================================
 
 export interface EditorWorkflowNode {
