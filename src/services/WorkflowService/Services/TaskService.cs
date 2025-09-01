@@ -22,7 +22,6 @@ public class TaskService : ITaskService
     private readonly IEventPublisher _eventPublisher;
     private readonly ILogger<TaskService> _logger;
     private readonly IUserContext _userContext;
-    private readonly ITaskNotificationDispatcher _notificationDispatcher;
 
     public TaskService(
         WorkflowDbContext context,
@@ -31,8 +30,7 @@ public class TaskService : ITaskService
         IWorkflowRuntime workflowRuntime,
         IEventPublisher eventPublisher,
         ILogger<TaskService> logger,
-        IUserContext userContext,
-        ITaskNotificationDispatcher notificationDispatcher)
+        IUserContext userContext)
     {
         _context = context;
         _mapper = mapper;
@@ -41,7 +39,6 @@ public class TaskService : ITaskService
         _eventPublisher = eventPublisher;
         _logger = logger;
         _userContext = userContext;
-        _notificationDispatcher = notificationDispatcher;
     }
 
     public async Task<ApiResponseDto<PagedResultDto<TaskSummaryDto>>> GetMyTasksAsync(GetTasksRequestDto request, CancellationToken cancellationToken = default)
@@ -52,11 +49,10 @@ public class TaskService : ITaskService
             if (!tenantId.HasValue)
                 return ApiResponseDto<PagedResultDto<TaskSummaryDto>>.ErrorResult("Tenant context required");
 
-            var currentUserId = GetCurrentUserId();
+            var currentUserId = _userContext.UserId;
             if (!currentUserId.HasValue)
                 return ApiResponseDto<PagedResultDto<TaskSummaryDto>>.ErrorResult("User context required");
 
-            // Capture roles in a simple List<string> so EF can translate roles.Contains(column)
             var roles = (_userContext.Roles ?? Array.Empty<string>()).ToList();
             bool hasRoles = roles.Count > 0;
 
@@ -138,7 +134,7 @@ public class TaskService : ITaskService
             if (!tenantId.HasValue)
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Tenant context required");
 
-            var currentUserId = GetCurrentUserId();
+            var currentUserId = _userContext.UserId;
             if (!currentUserId.HasValue)
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("User context required");
 
@@ -170,13 +166,10 @@ public class TaskService : ITaskService
             task.ClaimedAt = DateTime.UtcNow;
             task.UpdatedAt = DateTime.UtcNow;
 
-            await _context.SaveChangesAsync(cancellationToken);
             await _eventPublisher.PublishTaskAssignedAsync(task, currentUserId.Value, cancellationToken);
-            await _notificationDispatcher.NotifyUserAsync(tenantId.Value, currentUserId.Value, cancellationToken);
 
             var dto = _mapper.Map<WorkflowTaskDto>(task);
             _logger.LogInformation("User {UserId} claimed task {TaskId}", currentUserId.Value, taskId);
-
             return ApiResponseDto<WorkflowTaskDto>.SuccessResult(dto, "Task claimed successfully");
         }
         catch (Exception ex)
@@ -190,34 +183,18 @@ public class TaskService : ITaskService
     {
         try
         {
-            var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
-            if (!tenantId.HasValue)
-                return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Tenant context required");
-
-            var currentUserId = GetCurrentUserId();
+            var currentUserId = _userContext.UserId;
             if (!currentUserId.HasValue)
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("User context required");
 
+            await _workflowRuntime.CompleteTaskAsync(taskId, request.CompletionData ?? "{}", currentUserId.Value, cancellationToken, autoCommit: false);
+
             var task = await _context.WorkflowTasks
                 .Include(t => t.WorkflowInstance)
-                .FirstOrDefaultAsync(t => t.Id == taskId &&
-                                          t.WorkflowInstance.TenantId == tenantId.Value, cancellationToken);
+                .FirstOrDefaultAsync(t => t.Id == taskId, cancellationToken);
 
             if (task == null)
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task not found");
-
-            if (task.NodeType != "human")
-                return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Non-human tasks cannot be completed manually");
-
-            if (task.Status != WorkflowTaskStatus.Claimed && task.Status != WorkflowTaskStatus.InProgress)
-                return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task cannot be completed in its current state");
-
-            if (task.AssignedToUserId != currentUserId.Value)
-                return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task is not assigned to you");
-
-            await _workflowRuntime.CompleteTaskAsync(taskId, request.CompletionData ?? "{}", currentUserId.Value, cancellationToken);
-            await _context.Entry(task).ReloadAsync(cancellationToken);
-            await _notificationDispatcher.NotifyUserAsync(tenantId.Value, currentUserId.Value, cancellationToken);
 
             var dto = _mapper.Map<WorkflowTaskDto>(task);
             _logger.LogInformation("User {UserId} completed task {TaskId}", currentUserId.Value, taskId);
@@ -238,7 +215,7 @@ public class TaskService : ITaskService
             if (!tenantId.HasValue)
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Tenant context required");
 
-            var currentUserId = GetCurrentUserId();
+            var currentUserId = _userContext.UserId;
             if (!currentUserId.HasValue)
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("User context required");
 
@@ -260,9 +237,6 @@ public class TaskService : ITaskService
             task.AssignedToUserId = null;
             task.ClaimedAt = null;
             task.UpdatedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync(cancellationToken);
-            await _notificationDispatcher.NotifyUserAsync(tenantId.Value, currentUserId.Value, cancellationToken);
 
             var dto = _mapper.Map<WorkflowTaskDto>(task);
             _logger.LogInformation("User {UserId} released task {TaskId}", currentUserId.Value, taskId);
@@ -301,17 +275,8 @@ public class TaskService : ITaskService
             task.ClaimedAt = null;
             task.UpdatedAt = DateTime.UtcNow;
 
-            await _context.SaveChangesAsync(cancellationToken);
-
             if (request.AssignToUserId.HasValue)
-            {
                 await _eventPublisher.PublishTaskAssignedAsync(task, request.AssignToUserId.Value, cancellationToken);
-                await _notificationDispatcher.NotifyUserAsync(tenantId.Value, request.AssignToUserId.Value, cancellationToken);
-            }
-            else
-            {
-                await _notificationDispatcher.NotifyTenantAsync(tenantId.Value, cancellationToken);
-            }
 
             var dto = _mapper.Map<WorkflowTaskDto>(task);
             _logger.LogInformation("Task {TaskId} reassigned: {Reason}", taskId, request.Reason);
@@ -321,6 +286,91 @@ public class TaskService : ITaskService
         {
             _logger.LogError(ex, "Error reassigning task {TaskId}", taskId);
             return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Failed to reassign task");
+        }
+    }
+
+    public async Task<ApiResponseDto<WorkflowTaskDto>> AssignTaskAsync(int taskId, AssignTaskRequestDto request, int performedByUserId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!tenantId.HasValue)
+                return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Tenant context required");
+
+            var task = await _context.WorkflowTasks
+                .Include(t => t.WorkflowInstance)
+                .FirstOrDefaultAsync(t => t.Id == taskId && t.WorkflowInstance.TenantId == tenantId.Value, cancellationToken);
+
+            if (task == null)
+                return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task not found");
+            if (task.Status is WorkflowTaskStatus.Completed or WorkflowTaskStatus.Cancelled)
+                return ApiResponseDto<WorkflowTaskDto>.ErrorResult($"Cannot assign task in {task.Status} status");
+
+            task.AssignedToUserId = request.AssignedToUserId;
+            task.AssignedToRole = request.AssignedToRole;
+            task.Status = WorkflowTaskStatus.Assigned;
+            task.UpdatedAt = DateTime.UtcNow;
+
+            _context.WorkflowEvents.Add(new WorkflowEvent
+            {
+                WorkflowInstanceId = task.WorkflowInstanceId,
+                TenantId = task.TenantId,
+                Type = "Task",
+                Name = "Assigned",
+                Data = $"{{\"taskId\":{task.Id},\"assignedBy\":{performedByUserId},\"assignedToUserId\":{(request.AssignedToUserId?.ToString() ?? "null")},\"assignedToRole\":\"{request.AssignedToRole ?? ""}\"}}",
+                OccurredAt = DateTime.UtcNow,
+                UserId = performedByUserId
+            });
+
+            var dto = _mapper.Map<WorkflowTaskDto>(task);
+            return ApiResponseDto<WorkflowTaskDto>.SuccessResult(dto, "Task assigned successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error assigning task {TaskId}", taskId);
+            return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Failed to assign task");
+        }
+    }
+
+    public async Task<ApiResponseDto<WorkflowTaskDto>> CancelTaskAsync(int taskId, int performedByUserId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!tenantId.HasValue)
+                return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Tenant context required");
+
+            var task = await _context.WorkflowTasks
+                .Include(t => t.WorkflowInstance)
+                .FirstOrDefaultAsync(t => t.Id == taskId && t.WorkflowInstance.TenantId == tenantId.Value, cancellationToken);
+
+            if (task == null)
+                return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task not found");
+            if (task.Status is WorkflowTaskStatus.Completed or WorkflowTaskStatus.Cancelled)
+                return ApiResponseDto<WorkflowTaskDto>.ErrorResult($"Cannot cancel task in {task.Status} status");
+
+            task.Status = WorkflowTaskStatus.Cancelled;
+            task.CompletedAt = DateTime.UtcNow;
+            task.UpdatedAt = DateTime.UtcNow;
+
+            _context.WorkflowEvents.Add(new WorkflowEvent
+            {
+                WorkflowInstanceId = task.WorkflowInstanceId,
+                TenantId = task.TenantId,
+                Type = "Task",
+                Name = "Cancelled",
+                Data = $"{{\"taskId\":{task.Id},\"cancelledBy\":{performedByUserId}}}",
+                OccurredAt = DateTime.UtcNow,
+                UserId = performedByUserId
+            });
+
+            var dto = _mapper.Map<WorkflowTaskDto>(task);
+            return ApiResponseDto<WorkflowTaskDto>.SuccessResult(dto, "Task cancelled successfully");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error cancelling task {TaskId}", taskId);
+            return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Failed to cancel task");
         }
     }
 
@@ -438,44 +488,26 @@ public class TaskService : ITaskService
 
     private int? GetCurrentUserId() => _userContext.UserId;
 
-    // IMPLEMENTATION of interface method
     public async Task<ApiResponseDto<List<TaskSummaryDto>>> GetMyTasksListAsync(
         DTOs.Workflow.Enums.TaskStatus? status,
         bool includeRoleTasks,
         bool includeUnassigned,
         CancellationToken cancellationToken = default)
     {
-        // Build a request with a sufficiently large page size (tune if needed)
         var request = new GetTasksRequestDto
         {
             Status = status,
             Page = 1,
-            PageSize = 500 // adjust or make configurable
+            PageSize = 500
         };
 
         var paged = await GetMyTasksAsync(request, cancellationToken);
         if (!paged.Success || paged.Data == null)
             return ApiResponseDto<List<TaskSummaryDto>>.ErrorResult(paged.Message, paged.Errors);
 
+        // FIX: removed erroneous .Data chaining (paged.Data.Data.Items -> paged.Data.Items)
         var items = paged.Data.Items.AsEnumerable();
-
-        // Apply includeRoleTasks/includeUnassigned flags AFTER base filtering
-        if (!includeRoleTasks)
-        {
-            items = items.Where(t => t.Status == WorkflowTaskStatus.Created || t.Status == WorkflowTaskStatus.Assigned || t.Status == WorkflowTaskStatus.Claimed
-                                     ? true
-                                     : true); // (role-based tasks already filtered in base query by NodeType/user/role logic;
-                                              // leave as placeholder in case future expansion marks role-only tasks separately)
-        }
-
-        if (!includeUnassigned)
-        {
-            items = items.Where(t => !(t.Status == WorkflowTaskStatus.Created && t.TaskName != null)); 
-            // NOTE: Adjust this if you later add an explicit AssignedTo... field to TaskSummaryDto.
-        }
-
         var list = items.ToList();
-
         return ApiResponseDto<List<TaskSummaryDto>>.SuccessResult(list, $"Retrieved {list.Count} tasks");
     }
 
@@ -487,26 +519,25 @@ public class TaskService : ITaskService
             if (!tenantId.HasValue)
                 return ApiResponseDto<TaskCountsDto>.ErrorResult("Tenant context required");
 
-            var userId = GetCurrentUserId();
+            var userId = _userContext.UserId;
             if (!userId.HasValue)
                 return ApiResponseDto<TaskCountsDto>.ErrorResult("User context required");
 
             var roles = (_userContext.Roles ?? Array.Empty<string>()).ToArray();
             var nowUtc = DateTime.UtcNow.Date;
 
-            // Base query: human tasks in tenant
-            var q = _context.WorkflowTasks
-                .Where(t => t.WorkflowInstance.TenantId == tenantId.Value && t.NodeType == "human");
-
-            // Materialize minimal columns
-            var rows = await q.Select(t => new
-            {
-                t.Status,
-                t.AssignedToUserId,
-                t.AssignedToRole,
-                t.DueDate,
-                t.CompletedAt
-            }).ToListAsync(cancellationToken);
+            var rows = await _context.WorkflowTasks
+                .Where(t => t.WorkflowInstance.TenantId == tenantId.Value && t.NodeType == "human")
+                .Select(t => new
+                {
+                    t.Status,
+                    t.AssignedToUserId,
+                    t.AssignedToRole,
+                    t.DueDate,
+                    t.CompletedAt,
+                    t.TenantId
+                })
+                .ToListAsync(cancellationToken);
 
             var counts = new TaskCountsDto
             {
@@ -526,19 +557,15 @@ public class TaskService : ITaskService
                     t.Status == WorkflowTaskStatus.Assigned),
 
                 Claimed = rows.Count(t => t.AssignedToUserId == userId.Value && t.Status == WorkflowTaskStatus.Claimed),
-
                 InProgress = rows.Count(t => t.AssignedToUserId == userId.Value && t.Status == WorkflowTaskStatus.InProgress),
-
                 CompletedToday = rows.Count(t =>
                     t.CompletedAt.HasValue &&
                     t.CompletedAt.Value >= nowUtc && t.CompletedAt.Value < nowUtc.AddDays(1)),
-
                 Overdue = rows.Count(t =>
                     t.DueDate.HasValue &&
                     t.DueDate.Value < DateTime.UtcNow &&
                     t.Status != WorkflowTaskStatus.Completed &&
                     t.Status != WorkflowTaskStatus.Cancelled),
-
                 Failed = rows.Count(t => t.Status == WorkflowTaskStatus.Failed)
             };
 

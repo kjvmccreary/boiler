@@ -147,6 +147,9 @@ builder.Services.AddHealthChecks()
 builder.Services.AddSignalR();
 builder.Services.AddScoped<ITaskNotificationDispatcher, TaskNotificationDispatcher>();
 
+// After other service registrations
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline

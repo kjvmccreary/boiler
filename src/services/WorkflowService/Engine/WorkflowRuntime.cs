@@ -10,12 +10,10 @@ using Contracts.Services;
 namespace WorkflowService.Engine;
 
 /// <summary>
-/// Unified workflow runtime:
-/// - Human / Automatic / Timer / Gateway execution
-/// - Timer tasks + background worker compatibility
-/// - Conditional gateways (labels optional; inference supported)
-/// - Rich event + outbox emission
-/// - Structured logging for deep diagnostics
+/// Workflow runtime with reduced database chatter:
+/// - Aggregates changes and commits once per public API call
+/// - Executes nodes recursively without per-node SaveChanges
+/// - Emits rich events (still tracked, flushed in batch)
 /// </summary>
 public class WorkflowRuntime : IWorkflowRuntime
 {
@@ -25,8 +23,11 @@ public class WorkflowRuntime : IWorkflowRuntime
     private readonly ITenantProvider _tenantProvider;
     private readonly IConditionEvaluator _conditionEvaluator;
 
-    // Cache to avoid repeated tenant lookups per instance during a run
+    // Cache to avoid repeated tenant lookups per instance
     private readonly Dictionary<int, int> _instanceTenantCache = new();
+
+    // Tracks whether tracked entities / events changed and need committing
+    private bool _dirty;
 
     public WorkflowRuntime(
         WorkflowDbContext context,
@@ -48,7 +49,8 @@ public class WorkflowRuntime : IWorkflowRuntime
         int definitionId,
         string initialContext,
         int? startedByUserId = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool autoCommit = true)
     {
         var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
         if (!tenantId.HasValue)
@@ -61,9 +63,8 @@ public class WorkflowRuntime : IWorkflowRuntime
             throw new InvalidOperationException($"Published workflow definition {definitionId} not found");
 
         var workflowDef = BuilderDefinitionAdapter.Parse(definition.JSONDefinition);
-        var startNode = workflowDef.Nodes.FirstOrDefault(n => n.IsStart());
-        if (startNode == null)
-            throw new InvalidOperationException("Workflow definition must contain a Start node");
+        var startNode = workflowDef.Nodes.FirstOrDefault(n => n.IsStart())
+                        ?? throw new InvalidOperationException("Workflow definition must contain a Start node");
 
         var instance = new WorkflowInstance
         {
@@ -78,7 +79,9 @@ public class WorkflowRuntime : IWorkflowRuntime
         };
 
         _context.WorkflowInstances.Add(instance);
+        // Need Id for subsequent events
         await _context.SaveChangesAsync(cancellationToken);
+        _dirty = false;
 
         _instanceTenantCache[instance.Id] = tenantId.Value;
 
@@ -89,17 +92,17 @@ public class WorkflowRuntime : IWorkflowRuntime
             $"{{\"startNodeId\":\"{startNode.Id}\"}}", startedByUserId);
 
         await ContinueWorkflowAsync(instance.Id, cancellationToken);
+        if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
+
         return instance;
     }
 
-    public async Task ContinueWorkflowAsync(int instanceId, CancellationToken cancellationToken = default)
+    public async Task ContinueWorkflowAsync(int instanceId, CancellationToken cancellationToken = default, bool autoCommit = true)
     {
         var instance = await _context.WorkflowInstances
             .Include(i => i.WorkflowDefinition)
-            .FirstOrDefaultAsync(i => i.Id == instanceId, cancellationToken);
-
-        if (instance == null)
-            throw new InvalidOperationException($"Workflow instance {instanceId} not found");
+            .FirstOrDefaultAsync(i => i.Id == instanceId, cancellationToken)
+            ?? throw new InvalidOperationException($"Workflow instance {instanceId} not found");
 
         if (!_instanceTenantCache.ContainsKey(instance.Id))
             _instanceTenantCache[instance.Id] = instance.TenantId;
@@ -129,6 +132,8 @@ public class WorkflowRuntime : IWorkflowRuntime
 
             await ExecuteNodeAsync(node, instance, workflowDef, cancellationToken);
         }
+
+        if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
     }
 
     public async Task SignalWorkflowAsync(
@@ -136,13 +141,12 @@ public class WorkflowRuntime : IWorkflowRuntime
         string signalName,
         string signalData,
         int? userId = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool autoCommit = true)
     {
         var instance = await _context.WorkflowInstances
-            .FirstOrDefaultAsync(i => i.Id == instanceId, cancellationToken);
-
-        if (instance == null)
-            throw new InvalidOperationException($"Workflow instance {instanceId} not found");
+            .FirstOrDefaultAsync(i => i.Id == instanceId, cancellationToken)
+            ?? throw new InvalidOperationException($"Workflow instance {instanceId} not found");
 
         if (!_instanceTenantCache.ContainsKey(instance.Id))
             _instanceTenantCache[instance.Id] = instance.TenantId;
@@ -151,21 +155,21 @@ public class WorkflowRuntime : IWorkflowRuntime
         _logger.LogInformation("WF_SIGNAL Instance={InstanceId} Signal={Signal}", instanceId, signalName);
 
         await ContinueWorkflowAsync(instance.Id, cancellationToken);
+        if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
     }
 
     public async Task CompleteTaskAsync(
         int taskId,
         string completionData,
         int completedByUserId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool autoCommit = true)
     {
         var task = await _context.WorkflowTasks
             .Include(t => t.WorkflowInstance)
                 .ThenInclude(i => i.WorkflowDefinition)
-            .FirstOrDefaultAsync(t => t.Id == taskId, cancellationToken);
-
-        if (task == null)
-            throw new InvalidOperationException($"Workflow task {taskId} not found");
+            .FirstOrDefaultAsync(t => t.Id == taskId, cancellationToken)
+            ?? throw new InvalidOperationException($"Workflow task {taskId} not found");
 
         var instance = task.WorkflowInstance;
         if (!_instanceTenantCache.ContainsKey(instance.Id))
@@ -176,7 +180,7 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         var workflowDef = BuilderDefinitionAdapter.Parse(instance.WorkflowDefinition.JSONDefinition);
         var node = workflowDef.Nodes.FirstOrDefault(n => n.Id == task.NodeId)
-                   ?? throw new InvalidOperationException($"Node {task.NodeId} not found in definition for task {task.Id}");
+                   ?? throw new InvalidOperationException($"Node {task.NodeId} not found in definition");
 
         var isTimer = node.IsTimer();
 
@@ -193,6 +197,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         task.Status = DTOs.Workflow.Enums.TaskStatus.Completed;
         task.CompletedAt = DateTime.UtcNow;
         task.CompletionData = completionData;
+        MarkDirty();
         UpdateWorkflowContext(instance, task.NodeId, completionData);
 
         await CreateEventAsync(instance.Id, "Task", isTimer ? "TimerCompleted" : "Completed",
@@ -204,7 +209,6 @@ public class WorkflowRuntime : IWorkflowRuntime
                 system = isTimer && completedByUserId == 0
             }), completedByUserId == 0 ? null : completedByUserId);
 
-        // Advancement after wait-state (e.g., human task)
         var currentNodes = JsonSerializer.Deserialize<List<string>>(instance.CurrentNodeIds) ?? new List<string>();
         var removed = currentNodes.Remove(task.NodeId);
 
@@ -227,6 +231,7 @@ public class WorkflowRuntime : IWorkflowRuntime
             instance.Status = InstanceStatus.Completed;
             instance.CompletedAt = DateTime.UtcNow;
             instance.CurrentNodeIds = JsonSerializer.Serialize(Array.Empty<string>());
+            MarkDirty();
             await CreateEventAsync(instance.Id, "Instance", "Completed",
                 "{\"reason\":\"end-of-path\"}", completedByUserId);
             _logger.LogInformation("WF_ADVANCE_COMPLETE Instance={InstanceId} Node={NodeId} EndOfPath RemovedNode={Removed}",
@@ -239,21 +244,23 @@ public class WorkflowRuntime : IWorkflowRuntime
                     currentNodes.Add(n);
 
             instance.CurrentNodeIds = JsonSerializer.Serialize(currentNodes);
+            MarkDirty();
             _logger.LogInformation("WF_ADVANCE Instance={InstanceId} FromNode={NodeId} Next=[{Next}] Removed={Removed}",
                 instance.Id, node.Id, string.Join(",", nextNodeIds), removed);
         }
 
-        await _context.SaveChangesAsync(cancellationToken);
-
         if (instance.Status == InstanceStatus.Running)
             await ContinueWorkflowAsync(instance.Id, cancellationToken);
+
+        if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
     }
 
     public async Task CancelWorkflowAsync(
         int instanceId,
         string reason,
         int? cancelledByUserId = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool autoCommit = true)
     {
         var instance = await _context.WorkflowInstances
             .FirstOrDefaultAsync(i => i.Id == instanceId, cancellationToken)
@@ -264,6 +271,7 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         instance.Status = InstanceStatus.Cancelled;
         instance.CompletedAt = DateTime.UtcNow;
+        MarkDirty();
 
         var activeTasks = await _context.WorkflowTasks
             .Where(t => t.WorkflowInstanceId == instanceId &&
@@ -277,19 +285,21 @@ public class WorkflowRuntime : IWorkflowRuntime
         {
             t.Status = DTOs.Workflow.Enums.TaskStatus.Cancelled;
             t.CompletedAt = DateTime.UtcNow;
+            MarkDirty();
         }
 
         await CreateEventAsync(instanceId, "Instance", "Cancelled",
             $"{{\"reason\":\"{reason}\"}}", cancelledByUserId);
-
-        await _context.SaveChangesAsync(cancellationToken);
         _logger.LogWarning("WF_CANCEL Instance={InstanceId} Reason={Reason}", instanceId, reason);
+
+        if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
     }
 
     public async Task RetryWorkflowAsync(
         int instanceId,
         string? resetToNodeId = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool autoCommit = true)
     {
         var instance = await _context.WorkflowInstances
             .Include(i => i.WorkflowDefinition)
@@ -308,13 +318,15 @@ public class WorkflowRuntime : IWorkflowRuntime
         if (!string.IsNullOrWhiteSpace(resetToNodeId))
             instance.CurrentNodeIds = JsonSerializer.Serialize(new[] { resetToNodeId });
 
+        MarkDirty();
+
         await CreateEventAsync(instanceId, "Instance", "Retried",
             JsonSerializer.Serialize(new { resetToNodeId = resetToNodeId ?? "current" }), null);
 
-        await _context.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("WF_RETRY Instance={InstanceId} ResetTo={ResetNode}", instanceId, resetToNodeId);
 
         await ContinueWorkflowAsync(instance.Id, cancellationToken);
+        if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
     }
 
     #endregion
@@ -346,11 +358,15 @@ public class WorkflowRuntime : IWorkflowRuntime
             }
 
             if (!string.IsNullOrEmpty(result.UpdatedContext))
+            {
                 instance.Context = result.UpdatedContext;
+                MarkDirty();
+            }
 
             if (result.CreatedTask != null)
             {
                 _context.WorkflowTasks.Add(result.CreatedTask);
+                MarkDirty();
                 await CreateEventAsync(instance.Id, "Node", "NodeActivated",
                     JsonSerializer.Serialize(new
                     {
@@ -377,8 +393,6 @@ public class WorkflowRuntime : IWorkflowRuntime
                 _logger.LogInformation("WF_NODE_WAIT Instance={InstanceId} Node={NodeId} Type={Type}",
                     instance.Id, node.Id, node.Type);
             }
-
-            await _context.SaveChangesAsync(cancellationToken);
 
             await CreateEventAsync(instance.Id, "Node", "Executed",
                 JsonSerializer.Serialize(new
@@ -412,7 +426,15 @@ public class WorkflowRuntime : IWorkflowRuntime
         if (!edges.Any()) return new List<string>();
 
         if (!currentNode.IsGateway())
-            return RecordAndReturn(workflowDef, edges.Select(e => e.Target).ToList(), currentNode, instance, "LinearAdvance");
+        {
+            // Filter out null/empty targets before returning
+            var linearTargets = edges
+                .Select(e => e.Target)
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Select(t => t!)
+                .ToList();
+            return RecordAndReturn(workflowDef, linearTargets, currentNode, instance, "LinearAdvance");
+        }
 
         var selected = SelectGatewayTargets(currentNode, instance, edges, "inline-exec");
         return RecordAndReturn(workflowDef, selected, currentNode, instance, "GatewayAdvance");
@@ -426,7 +448,13 @@ public class WorkflowRuntime : IWorkflowRuntime
         var edges = workflowDef.Edges.Where(e => e.Source == currentNode.Id).ToList();
         if (!edges.Any()) return new List<string>();
         if (!currentNode.IsGateway())
-            return edges.Select(e => e.Target).ToList();
+        {
+            return edges
+                .Select(e => e.Target)
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Select(t => t!)
+                .ToList();
+        }
 
         return SelectGatewayTargets(currentNode, instance, edges, "advance-after-task");
     }
@@ -539,42 +567,23 @@ public class WorkflowRuntime : IWorkflowRuntime
         return selectedIds;
     }
 
-    private static string? SafeString(object? v) =>
-        v switch
-        {
-            null => null,
-            string s => string.IsNullOrWhiteSpace(s) ? null : s,
-            JsonElement je when je.ValueKind == JsonValueKind.String => je.GetString(),
-            _ => v.ToString()
-        };
+    private static string? FindEdgeId(string from, string to, WorkflowDefinitionJson def)
+        => def.Edges.FirstOrDefault(e => e.Source == from && e.Target == to)?.Id;
 
     #endregion
 
     #region Advancement / Events / Context
 
-    private List<string> RecordAndReturn(IEnumerable<string?> targets, WorkflowNode currentNode, WorkflowInstance instance, string mode)
-    {
-        // Filter out null / empty (avoids nullable warnings)
-        var clean = targets
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .Cast<string>()
-            .ToList();
-
-        foreach (var t in clean)
-        {
-            CreateEventAsync(instance.Id, "Edge", "EdgeTraversed",
-                JsonSerializer.Serialize(new { from = currentNode.Id, to = t, mode }), null)
-                .GetAwaiter().GetResult();
-        }
-        return clean;
-    }
-
-    // New overload including workflowDef so we can find original edge id
-    private List<string> RecordAndReturn(WorkflowDefinitionJson workflowDef, IEnumerable<string?> targets, WorkflowNode currentNode, WorkflowInstance instance, string mode)
+    private List<string> RecordAndReturn(
+        WorkflowDefinitionJson workflowDef,
+        IEnumerable<string?> targets,
+        WorkflowNode currentNode,
+        WorkflowInstance instance,
+        string mode)
     {
         var clean = targets
             .Where(t => !string.IsNullOrWhiteSpace(t))
-            .Cast<string>()
+            .Select(t => t!)
             .ToList();
 
         foreach (var t in clean)
@@ -592,8 +601,29 @@ public class WorkflowRuntime : IWorkflowRuntime
         return clean;
     }
 
-    private static string? FindEdgeId(string from, string to, WorkflowDefinitionJson def)
-        => def.Edges.FirstOrDefault(e => e.Source == from && e.Target == to)?.Id;
+    private List<string> RecordAndReturn(
+        IEnumerable<string?> targets,
+        WorkflowNode currentNode,
+        WorkflowInstance instance,
+        string mode)
+    {
+        var clean = targets
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .Select(t => t!)
+            .ToList();
+
+        foreach (var t in clean)
+        {
+            CreateEventAsync(instance.Id, "Edge", "EdgeTraversed",
+                JsonSerializer.Serialize(new
+                {
+                    from = currentNode.Id,
+                    to = t,
+                    mode
+                }), null).GetAwaiter().GetResult();
+        }
+        return clean;
+    }
 
     private void AdvanceToNextNodes(
         WorkflowInstance instance,
@@ -605,6 +635,7 @@ public class WorkflowRuntime : IWorkflowRuntime
             instance.Status = InstanceStatus.Completed;
             instance.CompletedAt = DateTime.UtcNow;
             instance.CurrentNodeIds = JsonSerializer.Serialize(Array.Empty<string>());
+            MarkDirty();
             CreateEventAsync(instance.Id, "Instance", "Completed",
                 "{\"reason\":\"no-next-nodes\"}", null).GetAwaiter().GetResult();
             _logger.LogInformation("WF_INSTANCE_COMPLETE Instance={InstanceId}", instance.Id);
@@ -612,6 +643,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         }
 
         instance.CurrentNodeIds = JsonSerializer.Serialize(nextNodeIds.ToArray());
+        MarkDirty();
 
         var endNodes = nextNodeIds.Where(id =>
             workflowDef.Nodes.Any(n => n.Id == id && n.IsEnd())).ToList();
@@ -620,6 +652,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         {
             instance.Status = InstanceStatus.Completed;
             instance.CompletedAt = DateTime.UtcNow;
+            MarkDirty();
             CreateEventAsync(instance.Id, "Instance", "Completed",
                 JsonSerializer.Serialize(new { endNodes }), null).GetAwaiter().GetResult();
             _logger.LogInformation("WF_INSTANCE_COMPLETE_END Instance={InstanceId} EndNodes=[{Ends}]",
@@ -635,11 +668,12 @@ public class WorkflowRuntime : IWorkflowRuntime
         instance.Status = InstanceStatus.Failed;
         instance.ErrorMessage = errorMessage;
         instance.CompletedAt = DateTime.UtcNow;
+        MarkDirty();
 
         await CreateEventAsync(instance.Id, "Node", "Failed",
             $"{{\"nodeId\":\"{node.Id}\",\"error\":\"{errorMessage}\"}}", null);
 
-        await _context.SaveChangesAsync();
+        await SaveIfDirtyAsync(); // commit failure immediately
         _logger.LogError("WF_INSTANCE_FAILED Instance={InstanceId} Node={NodeId} Error={Error}",
             instance.Id, node.Id, errorMessage);
     }
@@ -658,6 +692,7 @@ public class WorkflowRuntime : IWorkflowRuntime
 
             context[$"task_{nodeId}"] = completion;
             instance.Context = JsonSerializer.Serialize(context);
+            MarkDirty();
         }
         catch (Exception ex)
         {
@@ -665,14 +700,13 @@ public class WorkflowRuntime : IWorkflowRuntime
         }
     }
 
-    private Task CreateEventAsync(
+    private async Task CreateEventAsync(
         int instanceId,
         string type,
         string name,
         string data,
         int? userId)
     {
-        // Resolve tenant (cached earlier)
         int tenantId;
         if (!_instanceTenantCache.TryGetValue(instanceId, out tenantId))
         {
@@ -685,7 +719,7 @@ public class WorkflowRuntime : IWorkflowRuntime
                 _instanceTenantCache[instanceId] = tenantId;
         }
 
-        var workflowEvent = new WorkflowEvent
+        _context.WorkflowEvents.Add(new WorkflowEvent
         {
             WorkflowInstanceId = instanceId,
             TenantId = tenantId,
@@ -694,20 +728,19 @@ public class WorkflowRuntime : IWorkflowRuntime
             Data = data,
             OccurredAt = DateTime.UtcNow,
             UserId = userId
-        };
-        _context.WorkflowEvents.Add(workflowEvent);
+        });
 
-        var outboxMessage = new OutboxMessage
+        _context.OutboxMessages.Add(new OutboxMessage
         {
             EventType = $"workflow.{type}.{name}".ToLowerInvariant(),
             EventData = data,
             IsProcessed = false,
             RetryCount = 0,
             TenantId = tenantId
-        };
-        _context.OutboxMessages.Add(outboxMessage);
+        });
 
-        return Task.CompletedTask;
+        MarkDirty();
+        await Task.CompletedTask;
     }
 
     private static object TryParseOrRaw(string json)
@@ -721,6 +754,19 @@ public class WorkflowRuntime : IWorkflowRuntime
         {
             return json;
         }
+    }
+
+    #endregion
+
+    #region Persistence Helpers
+
+    private void MarkDirty() => _dirty = true;
+
+    private async Task SaveIfDirtyAsync(CancellationToken ct = default)
+    {
+        if (!_dirty) return;
+        await _context.SaveChangesAsync(ct);
+        _dirty = false;
     }
 
     #endregion

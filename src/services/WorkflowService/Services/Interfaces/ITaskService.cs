@@ -1,5 +1,6 @@
 using DTOs.Common;
 using DTOs.Workflow;
+using DTOs.Workflow.Enums;
 
 namespace WorkflowService.Services.Interfaces;
 
@@ -56,4 +57,8 @@ public interface ITaskService
     /// Get task counts for current user
     /// </summary>
     Task<ApiResponseDto<TaskCountsDto>> GetMyTaskCountsAsync(CancellationToken cancellationToken = default);
+
+    // NEW administrative mutations (no SaveChanges inside; caller commits):
+    Task<ApiResponseDto<WorkflowTaskDto>> AssignTaskAsync(int taskId, AssignTaskRequestDto request, int performedByUserId, CancellationToken cancellationToken = default);
+    Task<ApiResponseDto<WorkflowTaskDto>> CancelTaskAsync(int taskId, int performedByUserId, CancellationToken cancellationToken = default);
 }
