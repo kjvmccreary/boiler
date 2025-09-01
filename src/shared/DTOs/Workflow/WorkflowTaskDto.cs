@@ -9,7 +9,7 @@ public class WorkflowTaskDto
     public string NodeId { get; set; } = string.Empty;
     public string TaskName { get; set; } = string.Empty;
     public DTOs.Workflow.Enums.TaskStatus Status { get; set; }
-    public string NodeType { get; set; } = "human"; // NEW
+    public string NodeType { get; set; } = "human";
     public int? AssignedToUserId { get; set; }
     public string? AssignedToRole { get; set; }
     public DateTime? DueDate { get; set; }

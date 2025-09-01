@@ -33,6 +33,7 @@ public class TasksController : ControllerBase
         NodeId = t.NodeId,
         TaskName = t.TaskName,
         Status = t.Status,
+        NodeType = t.NodeType, // <-- ADDED
         AssignedToUserId = t.AssignedToUserId,
         AssignedToRole = t.AssignedToRole,
         DueDate = t.DueDate,
@@ -149,6 +150,7 @@ public class TasksController : ControllerBase
                 .Include(t => t.WorkflowInstance)
                     .ThenInclude(i => i.WorkflowDefinition)
                 .Where(t => t.WorkflowInstance.TenantId == tenantId.Value)
+                .Where(t => t.NodeType == "human") // <-- FILTER OUT TIMER / OTHER
                 .Where(t =>
                     t.AssignedToUserId == currentUserId
                     || (includeRoleTasks && t.AssignedToRole != null && userRoles.Contains(t.AssignedToRole))
@@ -170,14 +172,15 @@ public class TasksController : ControllerBase
                     WorkflowInstanceId = t.WorkflowInstanceId,
                     DueDate = t.DueDate,
                     CreatedAt = t.CreatedAt,
-                    NodeId = t.NodeId
+                    NodeId = t.NodeId,
+                    NodeType = t.NodeType // <-- ADD TO SUMMARY
                 })
                 .ToListAsync();
 
             _logger.LogInformation("WF_API_MY_TASKS Count={Count}", tasks.Count);
 
             return Ok(ApiResponseDto<List<TaskSummaryDto>>.SuccessResult(
-                tasks, $"Retrieved {tasks.Count} tasks (you / roles / claimable)"));
+                tasks, $"Retrieved {tasks.Count} tasks"));
         }
         catch (Exception ex)
         {
@@ -236,6 +239,9 @@ public class TasksController : ControllerBase
             if (task == null)
                 return NotFound(ApiResponseDto<WorkflowTaskDto>.ErrorResult("Workflow task not found"));
 
+            if (task.NodeType != "human") // <-- BLOCK NON-HUMAN
+                return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult("Non-human tasks cannot be claimed"));
+
             if (task.Status != WorkflowTaskStatus.Created && task.Status != WorkflowTaskStatus.Assigned)
                 return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult($"Cannot claim task in {task.Status} status"));
 
@@ -247,22 +253,12 @@ public class TasksController : ControllerBase
             task.ClaimedAt = DateTime.UtcNow;
             task.UpdatedAt = DateTime.UtcNow;
 
-            _context.WorkflowEvents.Add(new WorkflowEvent
-            {
-                WorkflowInstanceId = task.WorkflowInstanceId,
-                Type = "Task",
-                Name = "Claimed",
-                Data = $"{{\"taskId\": {task.Id}, \"claimedBy\": {currentUserId}, \"notes\": \"{request.ClaimNotes ?? ""}\"}}",
-                OccurredAt = DateTime.UtcNow,
-                UserId = currentUserId
-            });
-
             await _context.SaveChangesAsync();
 
             _logger.LogInformation("WF_API_TASK_CLAIM Task={TaskId} Instance={InstanceId} User={UserId}",
                 task.Id, task.WorkflowInstanceId, currentUserId);
 
-            return Ok(ApiResponseDto<WorkflowTaskDto>.SuccessResult(MapTask(task), "Task claimed successfully"));
+            return Ok(ApiResponseDto<WorkflowTaskDto>.SuccessResult(MapTaskWithNodeType(task), "Task claimed successfully"));
         }
         catch (Exception ex)
         {
@@ -290,6 +286,9 @@ public class TasksController : ControllerBase
             if (task == null)
                 return NotFound(ApiResponseDto<WorkflowTaskDto>.ErrorResult("Workflow task not found"));
 
+            if (task.NodeType != "human") // <-- BLOCK NON-HUMAN
+                return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult("Non-human tasks cannot be completed manually"));
+
             if (task.Status != WorkflowTaskStatus.Claimed && task.Status != WorkflowTaskStatus.InProgress)
                 return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult($"Cannot complete task in {task.Status} status"));
 
@@ -297,13 +296,12 @@ public class TasksController : ControllerBase
                 return BadRequest(ApiResponseDto<WorkflowTaskDto>.ErrorResult("You can only complete tasks assigned to you"));
 
             await _runtime.CompleteTaskAsync(task.Id, request.CompletionData ?? "{}", currentUserId, CancellationToken.None);
-
             await _context.Entry(task).ReloadAsync();
 
             _logger.LogInformation("WF_API_TASK_COMPLETE Task={TaskId} Instance={InstanceId} User={UserId}",
                 task.Id, task.WorkflowInstanceId, currentUserId);
 
-            return Ok(ApiResponseDto<WorkflowTaskDto>.SuccessResult(MapTask(task), "Task completed successfully"));
+            return Ok(ApiResponseDto<WorkflowTaskDto>.SuccessResult(MapTaskWithNodeType(task), "Task completed successfully"));
         }
         catch (Exception ex)
         {
@@ -409,6 +407,26 @@ public class TasksController : ControllerBase
         NodeId = t.NodeId,
         TaskName = t.TaskName,
         Status = t.Status,
+        AssignedToUserId = t.AssignedToUserId,
+        AssignedToRole = t.AssignedToRole,
+        DueDate = t.DueDate,
+        Data = t.Data,
+        ClaimedAt = t.ClaimedAt,
+        CompletedAt = t.CompletedAt,
+        CompletionData = t.CompletionData,
+        ErrorMessage = t.ErrorMessage,
+        CreatedAt = t.CreatedAt,
+        UpdatedAt = t.UpdatedAt
+    };
+
+    private static WorkflowTaskDto MapTaskWithNodeType(WorkflowTask t) => new()
+    {
+        Id = t.Id,
+        WorkflowInstanceId = t.WorkflowInstanceId,
+        NodeId = t.NodeId,
+        TaskName = t.TaskName,
+        Status = t.Status,
+        NodeType = t.NodeType, // <-- ENSURE NodeType
         AssignedToUserId = t.AssignedToUserId,
         AssignedToRole = t.AssignedToRole,
         DueDate = t.DueDate,

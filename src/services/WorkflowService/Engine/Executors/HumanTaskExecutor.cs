@@ -62,6 +62,7 @@ public class HumanTaskExecutor : INodeExecutor
                 NodeId = node.Id,
                 TaskName = taskName,
                 Status = WorkflowTaskStatus.Created,
+                NodeType = "human", // <-- ADD THIS
                 Data = JsonSerializer.Serialize(new
                 {
                     FormSchema = GetFormSchema(node),

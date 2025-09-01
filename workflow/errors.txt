@@ -1,12 +1,31 @@
 PS C:\Users\mccre\dev\boiler\src\services\WorkflowService> dotnet ef database update --context WorkflowDbContext
 Build started...
 Build succeeded.
-[09:05:56 ERR] Failed executing DbCommand (7ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+[09:52:12 ERR] Failed executing DbCommand (11ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
 
-                ALTER TABLE "WorkflowTasks"
-                ADD CONSTRAINT "CK_WorkflowTask_TenantId"
-                CHECK ("TenantId" = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''),'0')::int); {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command"}
-Npgsql.PostgresException (0x80004005): 23514: check constraint "CK_WorkflowTask_TenantId" of relation "WorkflowTasks" is violated by some row
+                CREATE OR REPLACE FUNCTION enforce_tenant()
+                RETURNS trigger
+                LANGUAGE plpgsql
+                AS $$
+                DECLARE
+                    g_tenant TEXT;
+                BEGIN
+                    g_tenant := current_setting('app.tenant_id', true);
+                    IF g_tenant IS NULL OR trim(g_tenant) = '' THEN
+                        RAISE EXCEPTION 'Tenant GUC app.tenant_id not set for table %'
+                            USING ERRCODE = '23514';
+                    END IF;
+
+                    IF NEW."TenantId" <> g_tenant::int THEN
+                        RAISE EXCEPTION 'Tenant mismatch (row=% application=%) on table %',
+                            NEW."TenantId", g_tenant, TG_TABLE_NAME
+                            USING ERRCODE = '23514';
+                    END IF;
+
+                    RETURN NEW;
+                END;
+                $$; {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command"}
+Npgsql.PostgresException (0x80004005): 42601: too few parameters specified for RAISE
    at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
    at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
    at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
@@ -35,12 +54,10 @@ Npgsql.PostgresException (0x80004005): 23514: check constraint "CK_WorkflowTask_
    at Microsoft.EntityFrameworkCore.Design.OperationExecutor.OperationBase.Execute(Action action)
   Exception data:
     Severity: ERROR
-    SqlState: 23514
-    MessageText: check constraint "CK_WorkflowTask_TenantId" of relation "WorkflowTasks" is violated by some row
-    SchemaName: public
-    TableName: WorkflowTasks
-    ConstraintName: CK_WorkflowTask_TenantId
-    File: tablecmds.c
-    Line: 6066
-    Routine: ATRewriteTable
-23514: check constraint "CK_WorkflowTask_TenantId" of relation "WorkflowTasks" is violated by some row
+    SqlState: 42601
+    MessageText: too few parameters specified for RAISE
+    Where: compilation of PL/pgSQL function "enforce_tenant" near line 7
+    File: pl_gram.y
+    Line: 4087
+    Routine: check_raise_parameters
+42601: too few parameters specified for RAISE

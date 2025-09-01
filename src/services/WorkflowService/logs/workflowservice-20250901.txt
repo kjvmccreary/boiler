@@ -13,3 +13,27 @@
                 ALTER TABLE "WorkflowTasks" 
                 ADD CONSTRAINT "CK_WorkflowTask_TenantId" 
                 CHECK ("TenantId" = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''),'0')::int); {"EventId":{"Id":20102,"Name":"Microsoft.EntityFrameworkCore.Database.Command.CommandError"},"SourceContext":"Microsoft.EntityFrameworkCore.Database.Command"}
+[2025-09-01 09:52:12.091 -05:00 ERR] Failed executing DbCommand (11ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+
+                CREATE OR REPLACE FUNCTION enforce_tenant()
+                RETURNS trigger
+                LANGUAGE plpgsql
+                AS $$
+                DECLARE
+                    g_tenant TEXT;
+                BEGIN
+                    g_tenant := current_setting('app.tenant_id', true);
+                    IF g_tenant IS NULL OR trim(g_tenant) = '' THEN
+                        RAISE EXCEPTION 'Tenant GUC app.tenant_id not set for table %'
+                            USING ERRCODE = '23514';
+                    END IF;
+
+                    IF NEW."TenantId" <> g_tenant::int THEN
+                        RAISE EXCEPTION 'Tenant mismatch (row=% application=%) on table %',
+                            NEW."TenantId", g_tenant, TG_TABLE_NAME
+                            USING ERRCODE = '23514';
+                    END IF;
+
+                    RETURN NEW;
+                END;
+                $$; {"EventId":{"Id":20102,"Name":"Microsoft.EntityFrameworkCore.Database.Command.CommandError"},"SourceContext":"Microsoft.EntityFrameworkCore.Database.Command"}

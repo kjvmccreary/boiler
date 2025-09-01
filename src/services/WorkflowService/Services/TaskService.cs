@@ -56,9 +56,9 @@ public class TaskService : ITaskService
             var query = _context.WorkflowTasks
                 .Include(t => t.WorkflowInstance).ThenInclude(i => i.WorkflowDefinition)
                 .Where(t => t.WorkflowInstance.TenantId == tenantId.Value)
-                .Where(t => t.NodeType != "timer") // NEW filter
-                .Where(t => t.AssignedToUserId == currentUserId.Value ||
-                           (t.AssignedToRole != null && UserHasRole(t.AssignedToRole)));
+                .Where(t => t.NodeType == "human") // NEW filter
+                .Where(t => t.AssignedToUserId == currentUserId.Value
+                    || (t.AssignedToRole != null && UserHasRole(t.AssignedToRole)));
 
             var result = await ApplyTaskFiltersAndPagination(query, request, cancellationToken);
             return result;

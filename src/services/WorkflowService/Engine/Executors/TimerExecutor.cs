@@ -32,11 +32,12 @@ public class TimerExecutor : INodeExecutor
 
             var task = new WorkflowTask
             {
+                TenantId = instance.TenantId,          // add if missing
                 WorkflowInstanceId = instance.Id,
                 NodeId = node.Id,
                 TaskName = node.GetProperty<string>("label") ?? "Timer",
                 Status = DTOs.Workflow.Enums.TaskStatus.Created,
-                NodeType = "timer", // NEW
+                NodeType = "timer",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 DueDate = dueDate

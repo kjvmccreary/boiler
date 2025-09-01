@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -14,6 +14,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Tooltip,
 } from '@mui/material';
 import {
   DataGridPremium,
@@ -31,6 +32,7 @@ import {
   Person as AssignedIcon,
   Refresh as RefreshIcon,
   AccountTree as WorkflowIcon,
+  FilterAltOff as FilterOffIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { workflowService } from '@/services/workflow.service';
@@ -61,7 +63,7 @@ export function MyTasksPage() {
       setLoading(true);
       const response = await workflowService.getMyTasks(statusFilter || undefined);
       setTasks(response);
-    } catch (error) {
+    } catch {
       toast.error('Failed to load your tasks');
     } finally {
       setLoading(false);
@@ -72,12 +74,10 @@ export function MyTasksPage() {
     setStatusFilter(event.target.value);
   };
 
-  // ✅ FIX: Correct route base to include /app
   const handleViewTask = (id: GridRowId) => {
     navigate(`/app/workflow/tasks/${id}`);
   };
 
-  // ✅ FIX: Correct route base to include /app
   const handleViewInstance = (task: TaskSummaryDto) => {
     navigate(`/app/workflow/instances/${task.workflowInstanceId}`);
   };
@@ -89,7 +89,7 @@ export function MyTasksPage() {
       });
       toast.success('Task claimed successfully');
       loadMyTasks();
-    } catch (error) {
+    } catch {
       toast.error('Failed to claim task');
     }
   };
@@ -103,7 +103,6 @@ export function MyTasksPage() {
 
   const handleCompleteConfirm = async () => {
     if (!taskToComplete) return;
-
     try {
       await workflowService.completeTask(taskToComplete.id, {
         completionData,
@@ -111,7 +110,7 @@ export function MyTasksPage() {
       });
       toast.success('Task completed successfully');
       loadMyTasks();
-    } catch (error) {
+    } catch {
       toast.error('Failed to complete task');
     } finally {
       setCompleteDialogOpen(false);
@@ -147,6 +146,14 @@ export function MyTasksPage() {
     return new Date(dueDate) < new Date();
   };
 
+  // Client-side safety filter: only show human tasks
+  const filteredTasks = useMemo(
+    () => tasks.filter(t => (t as any).nodeType === 'human'),
+    [tasks]
+  );
+
+  const nonHumanCount = tasks.length - filteredTasks.length;
+
   const columns: GridColDef[] = [
     {
       field: 'taskName',
@@ -154,7 +161,7 @@ export function MyTasksPage() {
       flex: 1,
       minWidth: 200,
       renderCell: (params) => {
-        const task = params.row as TaskSummaryDto;
+        const task = params.row as TaskSummaryDto & { nodeType?: string };
         const overdue = isOverdue(task.dueDate);
         return (
           <Box>
@@ -164,6 +171,15 @@ export function MyTasksPage() {
             <Typography variant="caption" color="text.secondary">
               ID: {task.id}
             </Typography>
+            {task['nodeType'] && task['nodeType'] !== 'human' && (
+              <Chip
+                size="small"
+                label={task['nodeType']}
+                color="secondary"
+                variant="outlined"
+                sx={{ ml: 1, mt: 0.5, height: 18, fontSize: '0.6rem' }}
+              />
+            )}
             {overdue && (
               <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
                 <TimerIcon color="error" fontSize="small" sx={{ mr: 0.5 }} />
@@ -233,7 +249,8 @@ export function MyTasksPage() {
       headerName: 'Actions',
       width: 120,
       getActions: (params: GridRowParams) => {
-        const task = params.row as TaskSummaryDto;
+        const task = params.row as TaskSummaryDto & { nodeType?: string };
+        const isHuman = !task.nodeType || task.nodeType === 'human';
         const actions = [
           <GridActionsCellItem
             icon={<ViewIcon />}
@@ -248,18 +265,18 @@ export function MyTasksPage() {
           />
         ];
 
-        if (task.status === 'Created' || task.status === 'Assigned') {
-            actions.push(
-              <GridActionsCellItem
-                icon={<ClaimIcon />}
-                label="Claim Task"
-                onClick={() => handleClaimTask(task)}
-                showInMenu
-              />
-            );
+        if (isHuman && (task.status === 'Created' || task.status === 'Assigned')) {
+          actions.push(
+            <GridActionsCellItem
+              icon={<ClaimIcon />}
+              label="Claim Task"
+              onClick={() => handleClaimTask(task)}
+              showInMenu
+            />
+          );
         }
 
-        if (task.status === 'Claimed' || task.status === 'InProgress') {
+        if (isHuman && (task.status === 'Claimed' || task.status === 'InProgress')) {
           actions.push(
             <GridActionsCellItem
               icon={<CompleteIcon />}
@@ -275,7 +292,7 @@ export function MyTasksPage() {
     },
   ];
 
-  const overdueTasks = tasks.filter(task => isOverdue(task.dueDate));
+  const overdueTasks = filteredTasks.filter(task => isOverdue(task.dueDate));
 
   if (!currentTenant) {
     return (
@@ -313,7 +330,19 @@ export function MyTasksPage() {
             </Select>
           </FormControl>
 
-            <Button
+          {nonHumanCount > 0 && (
+            <Tooltip title={`${nonHumanCount} non-human task(s) hidden`}>
+              <Chip
+                size="small"
+                color="secondary"
+                variant="outlined"
+                icon={<FilterOffIcon fontSize="small" />}
+                label={`${nonHumanCount} hidden`}
+              />
+            </Tooltip>
+          )}
+
+          <Button
             variant="outlined"
             startIcon={<RefreshIcon />}
             onClick={loadMyTasks}
@@ -332,7 +361,7 @@ export function MyTasksPage() {
 
       <Box sx={{ flex: 1, minHeight: 0 }}>
         <DataGridPremium
-          rows={tasks}
+          rows={filteredTasks}
           columns={columns}
           loading={loading}
           pagination
