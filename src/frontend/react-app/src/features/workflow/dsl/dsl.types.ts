@@ -13,13 +13,8 @@ export interface DslNodeBase {
 }
 
 // Specific node types
-export interface StartNode extends DslNodeBase {
-  type: 'start';
-}
-
-export interface EndNode extends DslNodeBase {
-  type: 'end';
-}
+export interface StartNode extends DslNodeBase { type: 'start'; }
+export interface EndNode extends DslNodeBase { type: 'end'; }
 
 export interface HumanTaskNode extends DslNodeBase {
   type: 'humanTask';
@@ -43,12 +38,24 @@ export interface GatewayNode extends DslNodeBase {
 
 export interface TimerNode extends DslNodeBase {
   type: 'timer';
+  // Legacy relative delay in minutes (can now be fractional)
   delayMinutes?: number;
+  // NEW precise relative delay in seconds (takes precedence over delayMinutes if provided)
+  delaySeconds?: number;
+  // Absolute override
   untilIso?: string;
+  // Optional historical alias some earlier versions used
+  dueDate?: string;
 }
 
 // Union type for all nodes
-export type DslNode = StartNode | EndNode | HumanTaskNode | AutomaticNode | GatewayNode | TimerNode;
+export type DslNode =
+  | StartNode
+  | EndNode
+  | HumanTaskNode
+  | AutomaticNode
+  | GatewayNode
+  | TimerNode;
 
 // Edge definition
 export interface DslEdge {
@@ -56,7 +63,7 @@ export interface DslEdge {
   from: NodeId;
   to: NodeId;
   label?: string;
-  fromHandle?: string; // OPTIONAL: branch indicator ('true' | 'false')
+  fromHandle?: string;
 }
 
 // Complete workflow definition
@@ -74,7 +81,6 @@ export interface ValidationResult {
   warnings: string[];
 }
 
-// Node palette item for drag-and-drop
 export interface NodePaletteItem {
   type: NodeType;
   label: string;

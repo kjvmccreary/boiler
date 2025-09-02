@@ -23,14 +23,13 @@ import {
 import {
   Close as CloseIcon,
   Add as AddIcon,
-  Remove as RemoveIcon,
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import type { DslNode } from '../dsl/dsl.types';
 import { ConditionBuilder } from './components/ConditionBuilder';
-import { roleService } from '@/services/role.service'; // ✅ ADD: Import role service
-import { useTenant } from '@/contexts/TenantContext'; // ✅ ADD: Import tenant context
-import type { RoleDto } from '@/types'; // ✅ ADD: Import RoleDto type
+import { roleService } from '@/services/role.service';
+import { useTenant } from '@/contexts/TenantContext';
+import type { RoleDto } from '@/types';
 
 interface PropertyPanelProps {
   open: boolean;
@@ -55,13 +54,10 @@ export function PropertyPanel({
 }: PropertyPanelProps) {
   const [localNode, setLocalNode] = useState<DslNode | null>(null);
 
-  useEffect(() => {
-    setLocalNode(selectedNode);
-  }, [selectedNode]);
+  useEffect(() => { setLocalNode(selectedNode); }, [selectedNode]);
 
   const handleNodeChange = (field: string, value: any) => {
     if (!localNode) return;
-
     const updatedNode = { ...localNode, [field]: value };
     setLocalNode(updatedNode);
     onNodeUpdate(updatedNode);
@@ -69,7 +65,6 @@ export function PropertyPanel({
 
   const renderNodeProperties = () => {
     if (!localNode) return null;
-
     switch (localNode.type) {
       case 'start':
       case 'end':
@@ -84,19 +79,14 @@ export function PropertyPanel({
             />
           </Box>
         );
-
       case 'humanTask':
         return <HumanTaskProperties node={localNode as any} onChange={handleNodeChange} />;
-
       case 'automatic':
         return <AutomaticProperties node={localNode as any} onChange={handleNodeChange} />;
-
       case 'gateway':
         return <GatewayProperties node={localNode as any} onChange={handleNodeChange} />;
-
       case 'timer':
         return <TimerProperties node={localNode as any} onChange={handleNodeChange} />;
-
       default:
         return null;
     }
@@ -121,7 +111,6 @@ export function PropertyPanel({
         </IconButton>
       </Box>
 
-      {/* Workflow Properties */}
       <Accordion defaultExpanded={!selectedNode}>
         <AccordionSummary expandIcon={<ExpandMoreIcon />}>
           <Typography variant="subtitle1">Workflow Settings</Typography>
@@ -147,7 +136,6 @@ export function PropertyPanel({
 
       <Divider sx={{ my: 2 }} />
 
-      {/* Node Properties */}
       {selectedNode ? (
         <Box>
           <Typography variant="subtitle1" gutterBottom>
@@ -164,91 +152,50 @@ export function PropertyPanel({
   );
 }
 
-// ✅ UPDATED: HumanTaskProperties with tenant-aware role loading
+/* ---------------- Human Task (unchanged except context) ---------------- */
 function HumanTaskProperties({ node, onChange }: { node: any; onChange: (field: string, value: any) => void }) {
   const [newRole, setNewRole] = useState('');
-  const [tenantRoles, setTenantRoles] = useState<RoleDto[]>([]); // ✅ ADD: State for tenant roles
-  const [loadingRoles, setLoadingRoles] = useState(false); // ✅ ADD: Loading state
-  const [rolesError, setRolesError] = useState<string | null>(null); // ✅ ADD: Error state
-  
-  const { currentTenant } = useTenant(); // ✅ ADD: Get current tenant
+  const [tenantRoles, setTenantRoles] = useState<RoleDto[]>([]);
+  const [loadingRoles, setLoadingRoles] = useState(false);
+  const [rolesError, setRolesError] = useState<string | null>(null);
+  const { currentTenant } = useTenant();
 
-  // ✅ ADD: Load tenant roles when component mounts or tenant changes
   useEffect(() => {
-    const loadTenantRoles = async () => {
-      if (!currentTenant) {
-        setTenantRoles([]);
-        return;
-      }
-
+    const loadRoles = async () => {
+      if (!currentTenant) { setTenantRoles([]); return; }
       try {
         setLoadingRoles(true);
-        setRolesError(null);
-        
-        console.log('🔄 PropertyPanel: Loading roles for tenant:', currentTenant.name);
-        
-        const response = await roleService.getRoles({ page: 1, pageSize: 100 });
-        
-        // ✅ NEW: Filter to only show roles with workflow permissions
-        const workflowCapableRoles = response.roles.filter(role => {
-          // System roles like SuperAdmin can do everything
-          if (role.isSystemRole && ['SuperAdmin', 'SystemAdmin'].includes(role.name)) {
-            return false; // Don't show these for assignment
-          }
-          
-          // Check if role has any workflow-related permissions
-          const hasWorkflowPermissions = role.permissions?.some(permission => {
-            // ✅ FIX: Handle Permission object properly
-            const permissionName = typeof permission === 'string' ? permission : permission.name;
-            return permissionName.startsWith('workflow.') || 
-                   permissionName === 'workflow.read' || 
-                   permissionName === 'workflow.write' || 
-                   permissionName === 'workflow.admin';
-          });
-          
-          return hasWorkflowPermissions;
-        });
-        
-        setTenantRoles(workflowCapableRoles);
-        console.log('✅ PropertyPanel: Loaded', workflowCapableRoles.length, 'workflow-capable roles for tenant:', currentTenant.name);
-        
-        // ✅ NEW: Show helpful message if no workflow roles found
-        if (workflowCapableRoles.length === 0 && response.roles.length > 0) {
-          setRolesError(`No roles with workflow permissions found. Consider assigning workflow permissions to existing roles.`);
-        }
-        
-      } catch (error) {
-        console.error('❌ PropertyPanel: Failed to load tenant roles:', error);
+        const resp = await roleService.getRoles({ page: 1, pageSize: 100 });
+        const workflowRoles = resp.roles.filter(r =>
+          r.permissions?.some(p => {
+            const name = typeof p === 'string' ? p : p.name;
+            return name.startsWith('workflow.');
+          })
+        );
+        setTenantRoles(workflowRoles);
+        if (workflowRoles.length === 0 && resp.roles.length > 0)
+          setRolesError('No roles have workflow.* permissions yet.');
+      } catch {
         setRolesError('Failed to load roles');
-        setTenantRoles([]);
       } finally {
         setLoadingRoles(false);
       }
     };
-
-    loadTenantRoles();
-  }, [currentTenant]); // ✅ ADD: Re-load when tenant changes
+    loadRoles();
+  }, [currentTenant]);
 
   const addRole = () => {
     if (newRole.trim() && !node.assigneeRoles?.includes(newRole.trim())) {
-      const updatedRoles = [...(node.assigneeRoles || []), newRole.trim()];
-      onChange('assigneeRoles', updatedRoles);
+      onChange('assigneeRoles', [...(node.assigneeRoles || []), newRole.trim()]);
       setNewRole('');
     }
   };
-
-  const removeRole = (roleToRemove: string) => {
-    const updatedRoles = (node.assigneeRoles || []).filter((role: string) => role !== roleToRemove);
-    onChange('assigneeRoles', updatedRoles);
+  const toggleTenantRole = (name: string) => {
+    if (node.assigneeRoles?.includes(name)) return;
+    onChange('assigneeRoles', [...(node.assigneeRoles || []), name]);
   };
-
-  // ✅ ADD: Quick add role from tenant roles
-  const addTenantRole = (roleName: string) => {
-    if (!node.assigneeRoles?.includes(roleName)) {
-      const updatedRoles = [...(node.assigneeRoles || []), roleName];
-      onChange('assigneeRoles', updatedRoles);
-    }
-  };
+  const removeRole = (r: string) =>
+    onChange('assigneeRoles', (node.assigneeRoles || []).filter((x: string) => x !== r));
 
   return (
     <Box>
@@ -259,200 +206,182 @@ function HumanTaskProperties({ node, onChange }: { node: any; onChange: (field: 
         onChange={(e) => onChange('label', e.target.value)}
         sx={{ mb: 2 }}
       />
-
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle2" gutterBottom>
-          Who can work on this task?
-        </Typography>
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-          Only users with these roles will see this task in their "My Tasks" list. Leave empty to allow any user.
-        </Typography>
-        
-        {/* ✅ UPDATED: Show tenant-specific roles */}
-        {currentTenant && (
-          <Box sx={{ mb: 1 }}>
-            <Typography variant="caption" sx={{ mr: 1 }}>
-              {currentTenant.name} roles:
-            </Typography>
-            
-            {loadingRoles ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                <CircularProgress size={16} />
-                <Typography variant="caption" color="text.secondary">
-                  Loading roles...
-                </Typography>
-              </Box>
-            ) : rolesError ? (
-              <Alert severity="warning" sx={{ mt: 0.5, mb: 1 }}>
-                <Typography variant="caption">
-                  {rolesError}. You can still enter role names manually.
-                </Typography>
-              </Alert>
-            ) : tenantRoles.length === 0 ? (
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                No roles found in {currentTenant.name}. Create roles first or enter custom role names.
-              </Typography>
-            ) : (
-              <Box sx={{ mt: 0.5 }}>
-                {tenantRoles.map(role => (
-                  <Chip
-                    key={role.id}
-                    label={`${role.name}${role.isSystemRole ? ' (System)' : ''}`}
-                    size="small"
-                    variant={node.assigneeRoles?.includes(role.name) ? "filled" : "outlined"}
-                    color={node.assigneeRoles?.includes(role.name) ? "primary" : "default"}
-                    onClick={() => addTenantRole(role.name)}
-                    sx={{ 
-                      mr: 0.5, 
-                      mb: 0.5, 
-                      cursor: 'pointer',
-                      opacity: node.assigneeRoles?.includes(role.name) ? 0.7 : 1 
-                    }}
-                  />
-                ))}
-              </Box>
-            )}
-          </Box>
-        )}
-
-        <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
-          <TextField
-            size="small"
-            placeholder="Enter custom role name"
-            value={newRole}
-            onChange={(e) => setNewRole(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && addRole()}
-          />
-          <Button variant="outlined" size="small" onClick={addRole} disabled={!newRole.trim()}>
-            <AddIcon fontSize="small" />
-          </Button>
-        </Box>
-
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
-          {(node.assigneeRoles || []).map((role: string) => (
+      <Typography variant="subtitle2" gutterBottom>Assignable Roles</Typography>
+      {loadingRoles && <Typography variant="caption">Loading roles…</Typography>}
+      {rolesError && <Alert severity="warning" sx={{ mb: 1 }}>{rolesError}</Alert>}
+      {!loadingRoles && !rolesError && tenantRoles.length > 0 && (
+        <Box sx={{ mb: 1 }}>
+          {tenantRoles.map(r => (
             <Chip
-              key={role}
-              label={role}
+              key={r.id}
+              label={r.name}
               size="small"
-              color="primary"
-              onDelete={() => removeRole(role)}
+              onClick={() => toggleTenantRole(r.name)}
+              sx={{ mr: .5, mb: .5, cursor: 'pointer' }}
+              color={node.assigneeRoles?.includes(r.name) ? 'primary' : 'default'}
             />
           ))}
         </Box>
-
-        {(node.assigneeRoles || []).length === 0 ? (
-          <Alert severity="info" sx={{ mt: 1 }}>
-            <Typography variant="caption">
-              💡 No roles specified - this task will be available to <strong>all users</strong> in {currentTenant?.name || 'the current tenant'}
-            </Typography>
-          </Alert>
-        ) : (
-          <Alert severity="success" sx={{ mt: 1 }}>
-            <Typography variant="caption">
-              ✅ Only users with roles: <strong>{node.assigneeRoles.join(', ')}</strong> can work on this task in {currentTenant?.name || 'the current tenant'}
-            </Typography>
-          </Alert>
-        )}
+      )}
+      <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+        <TextField
+          size="small"
+            placeholder="Add role"
+            value={newRole}
+            onChange={(e) => setNewRole(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && addRole()}
+        />
+        <Button variant="outlined" size="small" onClick={addRole} disabled={!newRole.trim()}>
+          <AddIcon fontSize="small" />
+        </Button>
       </Box>
-
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: .5 }}>
+        {(node.assigneeRoles || []).map((role: string) => (
+          <Chip key={role} label={role} size="small" onDelete={() => removeRole(role)} color="primary" />
+        ))}
+      </Box>
       <TextField
         fullWidth
         label="Due in Minutes"
         type="number"
-        value={node.dueInMinutes || ''}
+        value={node.dueInMinutes ?? ''}
         onChange={(e) => onChange('dueInMinutes', e.target.value ? parseInt(e.target.value) : undefined)}
-        helperText="Leave empty for no deadline"
-        sx={{ mb: 2 }}
+        helperText="Optional deadline"
+        sx={{ mt: 2 }}
       />
     </Box>
   );
 }
 
-function AutomaticProperties({ node, onChange }: { node: any; onChange: (field: string, value: any) => void }) {
+/* ---------------- Automatic ---------------- */
+function AutomaticProperties({ node, onChange }: { node: any; onChange: (f: string, v: any) => void }) {
   return (
     <Box>
       <TextField
         fullWidth
-        label="Task Label"
+        label="Label"
         value={node.label || ''}
         onChange={(e) => onChange('label', e.target.value)}
         sx={{ mb: 2 }}
       />
-
       <FormControl fullWidth sx={{ mb: 2 }}>
-        <InputLabel>Action Type</InputLabel>
+        <InputLabel>Action</InputLabel>
         <Select
           value={node.action?.kind || 'noop'}
-          onChange={(e) => onChange('action', { ...node.action, kind: e.target.value })}
+          label="Action"
+          onChange={(e) => onChange('action', { ...(node.action || {}), kind: e.target.value })}
         >
           <MenuItem value="noop">No Operation</MenuItem>
-          <MenuItem value="webhook">Webhook Call</MenuItem>
+          <MenuItem value="webhook">Webhook</MenuItem>
         </Select>
       </FormControl>
-
       {node.action?.kind === 'webhook' && (
         <TextField
           fullWidth
           label="Webhook URL"
           value={node.action?.config?.url || ''}
-          onChange={(e) => onChange('action', {
-            ...node.action,
-            config: { ...node.action?.config, url: e.target.value }
-          })}
-          placeholder="https://api.example.com/webhook"
-          sx={{ mb: 2 }}
+          onChange={(e) =>
+            onChange('action', {
+              ...(node.action || {}),
+              config: { ...(node.action?.config || {}), url: e.target.value }
+            })
+          }
         />
       )}
     </Box>
   );
 }
 
-function GatewayProperties({ node, onChange }: { node: any; onChange: (field: string, value: any) => void }) {
+/* ---------------- Gateway ---------------- */
+function GatewayProperties({ node, onChange }: { node: any; onChange: (f: string, v: any) => void }) {
   return (
     <Box>
       <TextField
         fullWidth
-        label="Gateway Label"
+        label="Label"
         value={node.label || ''}
         onChange={(e) => onChange('label', e.target.value)}
         sx={{ mb: 2 }}
       />
-
-      <Typography variant="subtitle2" gutterBottom>
-        Decision Logic
-      </Typography>
-      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 2 }}>
-        Define when this gateway should take the "True" path vs the "False" path
-      </Typography>
-      
+      <Typography variant="subtitle2" gutterBottom>JsonLogic Condition</Typography>
       <ConditionBuilder
-        value={node.condition || '{"==": [{"var": "approved"}, true]}'}
-        onChange={(condition) => onChange('condition', condition)}
+        value={node.condition || '{"==":[{"var":"approved"},true]}'}
+        onChange={(v) => onChange('condition', v)}
       />
     </Box>
   );
 }
 
-function TimerProperties({ node, onChange }: { node: any; onChange: (field: string, value: any) => void }) {
+/* ---------------- Timer (UPDATED) ---------------- */
+function TimerProperties({ node, onChange }: { node: any; onChange: (f: string, v: any) => void }) {
+  // Determine initial mode
+  const initialMode: 'seconds' | 'minutes' =
+    node.delaySeconds != null ? 'seconds' : 'minutes';
+  const [mode, setMode] = useState<'seconds' | 'minutes'>(initialMode);
   const [timerType, setTimerType] = useState<'delay' | 'until'>(
     node.untilIso ? 'until' : 'delay'
   );
 
-  const handleTimerTypeChange = (type: 'delay' | 'until') => {
-    setTimerType(type);
-    if (type === 'delay') {
-      onChange('untilIso', undefined);
-      if (!node.delayMinutes) onChange('delayMinutes', 5);
-    } else {
+  const effectiveLabel =
+    node.untilIso
+      ? 'untilIso overrides delaySeconds/delayMinutes'
+      : node.delaySeconds != null
+        ? `fires in ${node.delaySeconds}s`
+        : node.delayMinutes != null
+          ? `fires in ${node.delayMinutes}m`
+          : 'default 1 minute (backend)';
+
+  const switchTimerType = (v: 'delay' | 'until') => {
+    setTimerType(v);
+    if (v === 'until') {
+      onChange('delaySeconds', undefined);
       onChange('delayMinutes', undefined);
+    } else {
+      onChange('untilIso', undefined);
+      if (node.delaySeconds == null && node.delayMinutes == null) {
+        onChange('delayMinutes', 1);
+      }
     }
+  };
+
+  const switchMode = (m: 'seconds' | 'minutes') => {
+    if (timerType === 'until') return;
+    if (m === mode) return;
+    if (m === 'seconds' && node.delayMinutes != null) {
+      const seconds = Number(node.delayMinutes) * 60;
+      onChange('delaySeconds', Number(seconds.toFixed(3)));
+      onChange('delayMinutes', undefined);
+    } else if (m === 'minutes' && node.delaySeconds != null) {
+      const minutes = Number(node.delaySeconds) / 60;
+      onChange('delayMinutes', Number(minutes.toFixed(4)));
+      onChange('delaySeconds', undefined);
+    }
+    setMode(m);
+  };
+
+  const updateSeconds = (val: string) => {
+    const n = Number(val);
+    if (isNaN(n) || n < 0) {
+      onChange('delaySeconds', undefined);
+      return;
+    }
+    onChange('delaySeconds', n);
+  };
+
+  const updateMinutes = (val: string) => {
+    const n = Number(val);
+    if (isNaN(n) || n < 0) {
+      onChange('delayMinutes', undefined);
+      return;
+    }
+    onChange('delayMinutes', n);
   };
 
   return (
     <Box>
       <TextField
         fullWidth
-        label="Timer Label"
+        label="Label"
         value={node.label || ''}
         onChange={(e) => onChange('label', e.target.value)}
         sx={{ mb: 2 }}
@@ -462,32 +391,82 @@ function TimerProperties({ node, onChange }: { node: any; onChange: (field: stri
         <InputLabel>Timer Type</InputLabel>
         <Select
           value={timerType}
-          onChange={(e) => handleTimerTypeChange(e.target.value as 'delay' | 'until')}
+          label="Timer Type"
+          onChange={(e) => switchTimerType(e.target.value as any)}
         >
-          <MenuItem value="delay">Delay (Minutes)</MenuItem>
-          <MenuItem value="until">Until Date/Time</MenuItem>
+          <MenuItem value="delay">Relative Delay</MenuItem>
+          <MenuItem value="until">Absolute (untilIso)</MenuItem>
         </Select>
       </FormControl>
 
-      {timerType === 'delay' ? (
+      {timerType === 'delay' && (
+        <>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Delay Mode</InputLabel>
+            <Select
+              value={mode}
+              label="Delay Mode"
+              onChange={(e) => switchMode(e.target.value as any)}
+            >
+              <MenuItem value="seconds">Seconds</MenuItem>
+              <MenuItem value="minutes">Minutes</MenuItem>
+            </Select>
+          </FormControl>
+
+          {mode === 'seconds' && (
+            <TextField
+              fullWidth
+              label="Delay Seconds (>=0, float)"
+              type="number"
+              inputProps={{ step: 0.1, min: 0 }}
+              value={node.delaySeconds ?? ''}
+              onChange={(e) => updateSeconds(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+          )}
+
+            {mode === 'minutes' && (
+            <TextField
+              fullWidth
+              label="Delay Minutes (>=0, float)"
+              type="number"
+              inputProps={{ step: 0.01, min: 0 }}
+              value={node.delayMinutes ?? ''}
+              onChange={(e) => updateMinutes(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+          )}
+        </>
+      )}
+
+      {timerType === 'until' && (
         <TextField
           fullWidth
-          label="Delay in Minutes"
-          type="number"
-          value={node.delayMinutes || 5}
-          onChange={(e) => onChange('delayMinutes', parseInt(e.target.value) || 5)}
-          sx={{ mb: 2 }}
-        />
-      ) : (
-        <TextField
-          fullWidth
-          label="Until Date/Time"
           type="datetime-local"
-          value={node.untilIso || ''}
-          onChange={(e) => onChange('untilIso', e.target.value)}
+          label="Until (local)"
+          value={node.untilIso ? toLocalInput(node.untilIso) : ''}
+          onChange={(e) => {
+            if (!e.target.value) {
+              onChange('untilIso', undefined);
+              return;
+            }
+            const iso = new Date(e.target.value).toISOString();
+            onChange('untilIso', iso);
+          }}
+          helperText="Stored as UTC ISO"
           sx={{ mb: 2 }}
         />
       )}
+
+      <Alert severity="info" sx={{ mt: 1 }}>
+        Priority: untilIso &gt; delaySeconds &gt; delayMinutes. {effectiveLabel}.
+      </Alert>
     </Box>
   );
+}
+
+function toLocalInput(iso: string) {
+  const d = new Date(iso);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }

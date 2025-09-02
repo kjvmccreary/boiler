@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Npgsql;
 using WorkflowService.Engine.Interfaces;
 using WorkflowService.Persistence;
 using Contracts.Services;
@@ -14,14 +15,20 @@ using InstanceStatusEnum = DTOs.Workflow.Enums.InstanceStatus;
 namespace WorkflowService.Background;
 
 /// <summary>
-/// Simplified, resilient timer worker:
-/// - Discovers due timer tasks ignoring filters
-/// - Groups by tenant
-/// - For each tenant: opens connection, SESSION scope SET app.tenant_id
-/// - Sets ITenantProvider (best effort)
-/// - Calls runtime.CompleteTaskAsync directly (system user 0)
-/// - Saves after each tenant batch
-/// No pre-status flip; no ExecuteUpdateAsync; avoids tenant trigger failures.
+/// Concurrency-safe timer worker.
+/// Strategy:
+///   1. Enumerate tenants that have due timer tasks (Created / Assigned, DueDate &lt;= now, Instance Running).
+///   2. For each tenant:
+///        - Open (or reuse) the connection, <c>SET app.tenant_id = 'TENANT'</c> (session scope).
+///        - Atomic acquisition: <c>UPDATE .. SET Status = InProgress WHERE Id IN (SELECT ... FOR UPDATE SKIP LOCKED LIMIT @batch) RETURNING ...</c>
+///          (Prevents double-processing across multiple service instances.)
+///        - Complete each acquired timer task via <c>runtime.CompleteTaskAsync(autoCommit:false)</c>.
+///        - Single <c>SaveChanges</c>.
+///   3. If no tasks acquired for any tenant, sleep until next interval.
+/// Notes:
+///   - Uses existing <c>InProgress</c> status to mark a timer as claimed (can introduce a dedicated TimerProcessing later).
+///   - Safe for horizontal scaling: <c>SKIP LOCKED</c> naturally partitions work.
+///   - Keeps per-tenant GUC to satisfy tenant enforcement triggers.
 /// </summary>
 public class TimerWorker : BackgroundService
 {
@@ -42,31 +49,32 @@ public class TimerWorker : BackgroundService
                       ?? configuration.GetValue<int?>("WorkflowSettings:TimerWorkerIntervalSeconds")
                       ?? 30;
 
-        _interval = TimeSpan.FromSeconds(Math.Max(5, seconds));
+        _interval = TimeSpan.FromSeconds(Math.Clamp(seconds, 5, 300));
         _batchSize = Math.Clamp(configuration.GetValue<int?>("WorkflowSettings:Timer:BatchSize") ?? 100, 5, 500);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("TIMER_WORKER_START Interval={Interval}s BatchSize={BatchSize}",
+        _logger.LogInformation("TIMER_WORKER_START Interval={IntervalSeconds}s BatchSize={BatchSize}",
             _interval.TotalSeconds, _batchSize);
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var started = DateTime.UtcNow;
+            var cycleStart = DateTime.UtcNow;
             try
             {
-                await ProcessAsync(stoppingToken);
+                await ProcessCycleAsync(stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "TIMER_WORKER_UNHANDLED");
+                _logger.LogError(ex, "TIMER_WORKER_LOOP_ERROR");
             }
 
-            var elapsed = DateTime.UtcNow - started;
+            var elapsed = DateTime.UtcNow - cycleStart;
             var delay = _interval - elapsed;
-            if (delay < TimeSpan.FromSeconds(1)) delay = TimeSpan.FromSeconds(1);
+            if (delay < TimeSpan.FromSeconds(1))
+                delay = TimeSpan.FromSeconds(1);
 
             try { await Task.Delay(delay, stoppingToken); } catch { }
         }
@@ -74,7 +82,7 @@ public class TimerWorker : BackgroundService
         _logger.LogInformation("TIMER_WORKER_STOP");
     }
 
-    private async Task ProcessAsync(CancellationToken ct)
+    private async Task ProcessCycleAsync(CancellationToken ct)
     {
         using var scope = _serviceProvider.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<WorkflowDbContext>();
@@ -83,85 +91,173 @@ public class TimerWorker : BackgroundService
 
         var now = DateTime.UtcNow;
 
-        // Discover due timers
-        var due = await db.WorkflowTasks
+        // Tenants with due timers
+        var tenantIds = await db.WorkflowTasks
             .IgnoreQueryFilters()
             .Where(t =>
                 t.NodeType == "timer" &&
                 t.DueDate.HasValue &&
                 t.DueDate <= now &&
-                (t.Status == WorkflowTaskStatus.Created ||
-                 t.Status == WorkflowTaskStatus.Assigned ||
-                 t.Status == WorkflowTaskStatus.InProgress) &&
+                (t.Status == WorkflowTaskStatus.Created || t.Status == WorkflowTaskStatus.Assigned) &&
                 t.WorkflowInstance.Status == InstanceStatusEnum.Running)
-            .OrderBy(t => t.DueDate)
-            .Select(t => new
-            {
-                t.Id,
-                t.TenantId,
-                t.WorkflowInstanceId,
-                t.Status,
-                t.DueDate
-            })
-            .Take(_batchSize)
+            .Select(t => t.TenantId)
+            .Distinct()
+            .OrderBy(t => t)
             .ToListAsync(ct);
 
-        if (due.Count == 0)
+        if (tenantIds.Count == 0)
         {
             _logger.LogDebug("TIMER_WORKER_NO_DUE");
             return;
         }
 
-        _logger.LogInformation("TIMER_WORKER_CANDIDATES Count={Count}", due.Count);
-        int processed = 0;
+        int totalAcquired = 0;
+        int totalCompleted = 0;
+        var maxLagSeconds = 0.0;
 
-        foreach (var tenantGroup in due.GroupBy(x => x.TenantId))
+        foreach (var tenantId in tenantIds)
         {
             if (ct.IsCancellationRequested) break;
-            var tenantId = tenantGroup.Key;
-
-            await EnsureTenantSessionAsync(db, tenantId, ct);
-            try { await tenantProvider.SetCurrentTenantAsync(tenantId); } catch { }
-
-            foreach (var taskInfo in tenantGroup)
-            {
-                if (ct.IsCancellationRequested) break;
-                try
-                {
-                    _logger.LogInformation(
-                        "TIMER_WORKER_FIRE TaskId={TaskId} Instance={InstanceId} Tenant={TenantId} Due={Due} PrevStatus={Status}",
-                        taskInfo.Id, taskInfo.WorkflowInstanceId, tenantId, taskInfo.DueDate, taskInfo.Status);
-
-                    await runtime.CompleteTaskAsync(taskInfo.Id, "{}", 0, ct, autoCommit: false);
-                    processed++;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "TIMER_WORKER_COMPLETE_ERROR TaskId={TaskId} Tenant={TenantId}", taskInfo.Id, tenantId);
-                }
-            }
 
             try
             {
-                await db.SaveChangesAsync(ct);
+                await EnsureTenantSessionAsync(db, tenantId, ct);
+                try { await tenantProvider.SetCurrentTenantAsync(tenantId); } catch { }
+
+                var acquired = await AcquireDueTimersForTenantAsync(db, tenantId, ct);
+                if (acquired.Count == 0) continue;
+
+                totalAcquired += acquired.Count;
+
+                foreach (var row in acquired)
+                {
+                    if (row.DueDate.HasValue)
+                    {
+                        var lag = (DateTime.UtcNow - row.DueDate.Value).TotalSeconds;
+                        if (lag > maxLagSeconds) maxLagSeconds = lag;
+                    }
+                    if (ct.IsCancellationRequested) break;
+
+                    try
+                    {
+                        _logger.LogInformation(
+                            "TIMER_WORKER_FIRE TaskId={TaskId} Instance={InstanceId} Tenant={TenantId} Due={Due}",
+                            row.Id, row.WorkflowInstanceId, tenantId, row.DueDate);
+
+                        await runtime.CompleteTaskAsync(row.Id, "{}", 0, ct, autoCommit: false);
+                        totalCompleted++;
+                    }
+                    catch (Exception exTask)
+                    {
+                        _logger.LogError(exTask, "TIMER_WORKER_TASK_COMPLETE_ERROR TaskId={TaskId} Tenant={TenantId}", row.Id, tenantId);
+                    }
+                }
+
+                // Commit batched changes
+                try
+                {
+                    await db.SaveChangesAsync(ct);
+                }
+                catch (Exception exSave)
+                {
+                    _logger.LogError(exSave, "TIMER_WORKER_SAVE_ERROR Tenant={TenantId}", tenantId);
+                }
             }
-            catch (Exception ex)
+            catch (Exception exTenant)
             {
-                _logger.LogError(ex, "TIMER_WORKER_SAVE_TENANT_ERROR Tenant={TenantId}", tenantId);
+                _logger.LogError(exTenant, "TIMER_WORKER_TENANT_ERROR Tenant={TenantId}", tenantId);
             }
         }
 
-        _logger.LogInformation("TIMER_WORKER_DONE Processed={Processed} TotalCandidates={Total}", processed, due.Count);
+        _logger.LogInformation(
+            "TIMER_WORKER_DONE Tenants={TenantCount} Acquired={Acquired} Completed={Completed} MaxLagSec={MaxLag:F1}",
+            tenantIds.Count, totalAcquired, totalCompleted, maxLagSeconds);
     }
 
+    private sealed record AcquiredTimer(int Id, int WorkflowInstanceId, int TenantId, DateTime? DueDate);
+
+    /// <summary>
+    /// Atomically acquires (claims) due timer tasks for a single tenant using SKIP LOCKED
+    /// and marks them InProgress (reusing existing status).
+    /// </summary>
+    private async Task<List<AcquiredTimer>> AcquireDueTimersForTenantAsync(WorkflowDbContext db, int tenantId, CancellationToken ct)
+    {
+        var results = new List<AcquiredTimer>();
+        var conn = (NpgsqlConnection)db.Database.GetDbConnection();
+        if (conn.State != ConnectionState.Open)
+            await conn.OpenAsync(ct);
+
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = @"
+WITH cte AS (
+    SELECT t.""Id""
+    FROM ""WorkflowTasks"" t
+    JOIN ""WorkflowInstances"" i ON i.""Id"" = t.""WorkflowInstanceId""
+    WHERE t.""NodeType"" = 'timer'
+      AND t.""Status"" IN (@createdStatus, @assignedStatus)
+      AND t.""DueDate"" <= now()
+      AND t.""TenantId"" = @tenantId
+      AND i.""Status"" = @runningInstance
+    ORDER BY t.""DueDate""
+    FOR UPDATE SKIP LOCKED
+    LIMIT @batch
+)
+UPDATE ""WorkflowTasks"" wt
+SET ""Status"" = @inProgressStatus,
+    ""UpdatedAt"" = now()
+FROM cte
+WHERE wt.""Id"" = cte.""Id""
+RETURNING wt.""Id"", wt.""WorkflowInstanceId"", wt.""TenantId"", wt.""DueDate"";";
+
+        cmd.Parameters.Add(new NpgsqlParameter("createdStatus", NpgsqlTypes.NpgsqlDbType.Integer) { Value = (int)WorkflowTaskStatus.Created });
+        cmd.Parameters.Add(new NpgsqlParameter("assignedStatus", NpgsqlTypes.NpgsqlDbType.Integer) { Value = (int)WorkflowTaskStatus.Assigned });
+        cmd.Parameters.Add(new NpgsqlParameter("inProgressStatus", NpgsqlTypes.NpgsqlDbType.Integer) { Value = (int)WorkflowTaskStatus.InProgress });
+        cmd.Parameters.Add(new NpgsqlParameter("runningInstance", NpgsqlTypes.NpgsqlDbType.Integer) { Value = (int)InstanceStatusEnum.Running });
+        cmd.Parameters.Add(new NpgsqlParameter("tenantId", NpgsqlTypes.NpgsqlDbType.Integer) { Value = tenantId });
+        cmd.Parameters.Add(new NpgsqlParameter("batch", NpgsqlTypes.NpgsqlDbType.Integer) { Value = _batchSize });
+
+        try
+        {
+            using var reader = await cmd.ExecuteReaderAsync(ct);
+            while (await reader.ReadAsync(ct))
+            {
+                results.Add(new AcquiredTimer(
+                    reader.GetInt32(0),
+                    reader.GetInt32(1),
+                    reader.GetInt32(2),
+                    reader.IsDBNull(3) ? null : reader.GetDateTime(3)
+                ));
+            }
+
+            if (results.Count > 0)
+            {
+                _logger.LogInformation("TIMER_WORKER_ACQUIRE Tenant={TenantId} Count={Count}", tenantId, results.Count);
+            }
+        }
+        catch (PostgresException pex)
+        {
+            _logger.LogError(pex, "TIMER_WORKER_ACQUIRE_PG_FAIL Tenant={TenantId}", tenantId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "TIMER_WORKER_ACQUIRE_FAIL Tenant={TenantId}", tenantId);
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Ensures connection open and sets tenant GUC (parameterized to satisfy EF1002).
+    /// </summary>
     private static async Task EnsureTenantSessionAsync(WorkflowDbContext db, int tenantId, CancellationToken ct)
     {
         var conn = db.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open)
             await conn.OpenAsync(ct);
 
-        // SESSION scope
-        await db.Database.ExecuteSqlRawAsync(
-            $"SET app.tenant_id = '{tenantId}';", cancellationToken: ct);
+        // Parameterized (interpolated) – safe from injection; session scope (third arg false)
+        await db.Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT set_config('app.tenant_id', {tenantId.ToString()}, false);",
+            ct);
     }
 }

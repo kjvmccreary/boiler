@@ -5,72 +5,106 @@ using WorkflowService.Engine.Interfaces;
 
 namespace WorkflowService.Engine.Executors;
 
-/// <summary>
-/// Executor for timer nodes (schedules a waiting task).
-/// </summary>
 public class TimerExecutor : INodeExecutor
 {
     private readonly ILogger<TimerExecutor> _logger;
 
-    public string NodeType => NodeTypes.Timer;
+    // Interface-required node type identifier
+    public string NodeType => "timer";
 
     public TimerExecutor(ILogger<TimerExecutor> logger)
     {
         _logger = logger;
     }
 
-    public bool CanExecute(WorkflowNode node) => node.IsTimer();
+    public bool CanExecute(WorkflowNode node) =>
+        node.Type.Equals("timer", StringComparison.OrdinalIgnoreCase);
 
-    public async Task<NodeExecutionResult> ExecuteAsync(WorkflowNode node, WorkflowInstance instance, string context, CancellationToken cancellationToken = default)
+    public async Task<NodeExecutionResult> ExecuteAsync(
+        WorkflowNode node,
+        WorkflowInstance instance,
+        string currentContext,
+        CancellationToken cancellationToken = default)
     {
         try
         {
-            var dueDate = CalculateDueDate(node);
-
-            _logger.LogInformation("WF_TIMER_SCHEDULE Instance={InstanceId} Node={NodeId} DueUtc={DueUtc}",
-                instance.Id, node.Id, dueDate);
+            var due = CalculateDueDate(node);
 
             var task = new WorkflowTask
             {
-                TenantId = instance.TenantId,          // add if missing
+                TenantId = instance.TenantId,
                 WorkflowInstanceId = instance.Id,
                 NodeId = node.Id,
+                NodeType = "timer",
                 TaskName = node.GetProperty<string>("label") ?? "Timer",
                 Status = DTOs.Workflow.Enums.TaskStatus.Created,
-                NodeType = "timer",
+                DueDate = due,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
-                DueDate = dueDate
+                Data = "{}"
             };
+
+            _logger.LogInformation(
+                "WF_TIMER_SCHEDULE Instance={InstanceId} Node={NodeId} DueUtc={DueUtc}",
+                instance.Id, node.Id, due);
 
             return new NodeExecutionResult
             {
                 IsSuccess = true,
-                ShouldWait = true,
+                ShouldWait = true,      // Timer pauses progression until worker completes it
                 CreatedTask = task,
-                UpdatedContext = context
+                NextNodeIds = new List<string>(),
+                UpdatedContext = currentContext
             };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "WF_TIMER_ERROR Instance={InstanceId} Node={NodeId}", instance.Id, node.Id);
+            _logger.LogError(ex,
+                "WF_TIMER_SCHEDULE_FAIL Instance={InstanceId} Node={NodeId}",
+                instance.Id, node.Id);
+
             return new NodeExecutionResult
             {
                 IsSuccess = false,
-                ErrorMessage = ex.Message
+                ShouldWait = false,
+                ErrorMessage = ex.Message,
+                NextNodeIds = new List<string>()
             };
         }
     }
 
     private DateTime CalculateDueDate(WorkflowNode node)
     {
-        // Priority: untilIso > delayMinutes > default 1 minute
+        // Priority: absolute untilIso/dueDate > delaySeconds > delayMinutes/durationMinutes > legacy int fallback
         var untilIso = GetString(node, "untilIso") ?? GetString(node, "dueDate");
-        if (!string.IsNullOrWhiteSpace(untilIso) && DateTime.TryParse(untilIso, out var until))
-            return until.ToUniversalTime();
+        if (!string.IsNullOrWhiteSpace(untilIso) &&
+            DateTime.TryParse(untilIso, out var parsed))
+            return parsed.ToUniversalTime();
 
-        var delayMinutes = GetInt(node, "delayMinutes") ?? GetInt(node, "durationMinutes") ?? 1;
-        return DateTime.UtcNow.AddMinutes(delayMinutes);
+        if (TryGetDouble(node, "delaySeconds", out var delaySecondsRaw))
+        {
+            var seconds = CoerceRange(delaySecondsRaw, 0, 7 * 24 * 3600);
+            return DateTime.UtcNow.AddSeconds(seconds);
+        }
+
+        if (TryGetDouble(node, "delayMinutes", out var delayMinutes) ||
+            TryGetDouble(node, "durationMinutes", out delayMinutes))
+        {
+            var minutes = CoerceRange(delayMinutes, 0, 7 * 24 * 60);
+            return DateTime.UtcNow.AddSeconds(minutes * 60);
+        }
+
+        var legacy = GetInt(node, "delayMinutes") ?? GetInt(node, "durationMinutes") ?? 1;
+        if (legacy < 0) legacy = 0;
+        return DateTime.UtcNow.AddMinutes(legacy);
+    }
+
+    private static double CoerceRange(double value, double min, double max)
+    {
+        if (double.IsNaN(value) || double.IsInfinity(value)) return min;
+        if (value < min) return min;
+        if (value > max) return max;
+        return value;
     }
 
     private static string? GetString(WorkflowNode node, string key)
@@ -86,13 +120,52 @@ public class TimerExecutor : INodeExecutor
 
     private static int? GetInt(WorkflowNode node, string key)
     {
-        if (node.Properties.TryGetValue(key, out var v))
+        if (!node.Properties.TryGetValue(key, out var v)) return null;
+
+        if (v is JsonElement el)
         {
-            if (v is JsonElement el && el.ValueKind == JsonValueKind.Number && el.TryGetInt32(out var n))
+            if (el.ValueKind == JsonValueKind.Number && el.TryGetInt32(out var n))
                 return n;
-            if (int.TryParse(v?.ToString(), out var parsed))
-                return parsed;
+            if (el.ValueKind == JsonValueKind.String &&
+                int.TryParse(el.GetString(), out var ns))
+                return ns;
         }
+        else if (int.TryParse(v?.ToString(), out var parsed))
+            return parsed;
+
         return null;
+    }
+
+    private static bool TryGetDouble(WorkflowNode node, string key, out double value)
+    {
+        value = 0;
+        if (!node.Properties.TryGetValue(key, out var raw)) return false;
+
+        if (raw is JsonElement el)
+        {
+            switch (el.ValueKind)
+            {
+                case JsonValueKind.Number:
+                    if (el.TryGetDouble(out var n))
+                    {
+                        value = n;
+                        return true;
+                    }
+                    break;
+                case JsonValueKind.String:
+                    if (double.TryParse(el.GetString(), out var ns))
+                    {
+                        value = ns;
+                        return true;
+                    }
+                    break;
+            }
+        }
+        else if (double.TryParse(raw?.ToString(), out var parsed))
+        {
+            value = parsed;
+            return true;
+        }
+        return false;
     }
 }

@@ -83,6 +83,7 @@ public static class BuilderDefinitionAdapter
                 CopyIfSet(node.Properties, "condition", n.Condition);
                 CopyIfSet(node.Properties, "delayMinutes", n.DelayMinutes);
                 CopyIfSet(node.Properties, "untilIso", n.UntilIso);
+                CopyIfSet(node.Properties, "delaySeconds", n.DelaySeconds); // <<< NEW
 
                 // Copy any remaining ad-hoc fields (extension data)
                 if (n.Extra != null)
@@ -149,10 +150,10 @@ public static class BuilderDefinitionAdapter
         [JsonPropertyName("formSchema")] public object? FormSchema { get; set; }
         [JsonPropertyName("action")] public object? Action { get; set; }
         [JsonPropertyName("condition")] public string? Condition { get; set; }
-        [JsonPropertyName("delayMinutes")] public int? DelayMinutes { get; set; }
+        [JsonPropertyName("delayMinutes")] public double? DelayMinutes { get; set; }
         [JsonPropertyName("untilIso")] public string? UntilIso { get; set; }
-
-        [JsonExtensionData] public Dictionary<string, object?>? Extra { get; set; }
+        [JsonPropertyName("delaySeconds")] public double? DelaySeconds { get; set; } // <<< NEW
+        [JsonExtensionData] public Dictionary<string, object>? Extra { get; set; }
     }
 
     private sealed class BuilderEdge

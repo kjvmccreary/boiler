@@ -7,6 +7,7 @@ using WorkflowService.Persistence;
 using DTOs.Workflow.Enums;
 using Contracts.Services;
 using WorkflowService.Services.Interfaces;
+using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
 
 namespace WorkflowService.Engine;
 
@@ -134,6 +135,27 @@ public class WorkflowRuntime : IWorkflowRuntime
                 continue;
             }
 
+            // HUMANTASK SKIP: if a human node already has an open task, skip re-execution
+            if (node.IsHumanTask())
+            {
+                // Replace all ambiguous usages of 'TaskStatus' with the fully qualified 'DTOs.Workflow.Enums.TaskStatus'
+
+                var hasOpen = await _context.WorkflowTasks
+                    .Where(t => t.WorkflowInstanceId == instance.Id
+                                && t.NodeId == node.Id
+                                && (t.Status == DTOs.Workflow.Enums.TaskStatus.Created
+                                    || t.Status == DTOs.Workflow.Enums.TaskStatus.Assigned
+                                    || t.Status == DTOs.Workflow.Enums.TaskStatus.Claimed
+                                    || t.Status == DTOs.Workflow.Enums.TaskStatus.InProgress))
+                    .AnyAsync(cancellationToken);
+
+                if (hasOpen)
+                {
+                    _logger.LogTrace("WF_SKIP_WAITING_HUMAN Instance={InstanceId} Node={NodeId}", instance.Id, node.Id);
+                    continue;
+                }
+            }
+
             await ExecuteNodeAsync(node, instance, workflowDef, cancellationToken);
         }
 
@@ -169,13 +191,11 @@ public class WorkflowRuntime : IWorkflowRuntime
         CancellationToken cancellationToken = default,
         bool autoCommit = true)
     {
-        // Primary lookup (respects tenant filter)
         var task = await _context.WorkflowTasks
             .Include(t => t.WorkflowInstance)
                 .ThenInclude(i => i.WorkflowDefinition)
             .FirstOrDefaultAsync(t => t.Id == taskId, cancellationToken);
 
-        // Fallback: if system timer completion (completedByUserId == 0) and not found, bypass filter
         if (task == null && completedByUserId == 0)
         {
             task = await _context.WorkflowTasks
@@ -187,7 +207,6 @@ public class WorkflowRuntime : IWorkflowRuntime
             if (task == null)
                 throw new InvalidOperationException($"Workflow task {taskId} not found (even ignoring filters)");
 
-            // Set tenant cache to allow subsequent events
             if (!_instanceTenantCache.ContainsKey(task.WorkflowInstance.Id))
                 _instanceTenantCache[task.WorkflowInstance.Id] = task.WorkflowInstance.TenantId;
         }
@@ -197,8 +216,37 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         var instance = task.WorkflowInstance;
 
+        // --- NEW: Idempotent handling if instance already completed/cancelled (prevents user-facing error) ---
         if (instance.Status != InstanceStatus.Running)
+        {
+            // If the instance finished and this task is still open, cancel it cleanly and return
+            if ((instance.Status == InstanceStatus.Completed || instance.Status == InstanceStatus.Cancelled) &&
+                (task.Status == WorkflowTaskStatus.Created ||
+                 task.Status == WorkflowTaskStatus.Assigned ||
+                 task.Status == WorkflowTaskStatus.Claimed ||
+                 task.Status == WorkflowTaskStatus.InProgress))
+            {
+                task.Status = WorkflowTaskStatus.Cancelled;
+                task.CompletedAt = DateTime.UtcNow;
+                MarkDirty();
+                await CreateEventAsync(instance.Id, "Task", "Cancelled",
+                    JsonSerializer.Serialize(new
+                    {
+                        taskId = task.Id,
+                        nodeId = task.NodeId,
+                        reason = $"instance-{instance.Status.ToString().ToLowerInvariant()}-post-complete"
+                    }),
+                    completedByUserId == 0 ? null : completedByUserId);
+
+                if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
+                _logger.LogDebug("WF_LATE_TASK_CANCELLATION Instance={InstanceId} TaskId={TaskId} Status={InstanceStatus}",
+                    instance.Id, task.Id, instance.Status);
+                return;
+            }
+
             throw new InvalidOperationException($"Cannot complete task; instance {instance.Id} not running");
+        }
+        // --- END NEW ---
 
         if (!_instanceTenantCache.ContainsKey(instance.Id))
             _instanceTenantCache[instance.Id] = instance.TenantId;
@@ -210,17 +258,17 @@ public class WorkflowRuntime : IWorkflowRuntime
         var isTimer = node.IsTimer();
 
         if (!isTimer &&
-            task.Status != DTOs.Workflow.Enums.TaskStatus.Claimed &&
-            task.Status != DTOs.Workflow.Enums.TaskStatus.InProgress)
+            task.Status != WorkflowTaskStatus.Claimed &&
+            task.Status != WorkflowTaskStatus.InProgress)
             throw new InvalidOperationException($"Task {taskId} not in completable state: {task.Status}");
 
         if (isTimer &&
-            task.Status != DTOs.Workflow.Enums.TaskStatus.Created &&
-            task.Status != DTOs.Workflow.Enums.TaskStatus.Assigned &&
-            task.Status != DTOs.Workflow.Enums.TaskStatus.InProgress)
+            task.Status != WorkflowTaskStatus.Created &&
+            task.Status != WorkflowTaskStatus.Assigned &&
+            task.Status != WorkflowTaskStatus.InProgress)
             throw new InvalidOperationException($"Timer task {taskId} unexpected status {task.Status}");
 
-        task.Status = DTOs.Workflow.Enums.TaskStatus.Completed;
+        task.Status = WorkflowTaskStatus.Completed;
         task.CompletedAt = DateTime.UtcNow;
         task.CompletionData = completionData;
         MarkDirty();
@@ -254,6 +302,7 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         if (!nextNodeIds.Any())
         {
+            await CancelOpenTasksAsync(instance, "instance-completed", CancellationToken.None);
             instance.Status = InstanceStatus.Completed;
             instance.CompletedAt = DateTime.UtcNow;
             instance.CurrentNodeIds = JsonSerializer.Serialize(Array.Empty<string>());
@@ -309,20 +358,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         instance.CompletedAt = DateTime.UtcNow;
         MarkDirty();
 
-        var activeTasks = await _context.WorkflowTasks
-            .Where(t => t.WorkflowInstanceId == instanceId &&
-                        (t.Status == DTOs.Workflow.Enums.TaskStatus.Created ||
-                         t.Status == DTOs.Workflow.Enums.TaskStatus.Assigned ||
-                         t.Status == DTOs.Workflow.Enums.TaskStatus.Claimed ||
-                         t.Status == DTOs.Workflow.Enums.TaskStatus.InProgress))
-            .ToListAsync(cancellationToken);
-
-        foreach (var t in activeTasks)
-        {
-            t.Status = DTOs.Workflow.Enums.TaskStatus.Cancelled;
-            t.CompletedAt = DateTime.UtcNow;
-            MarkDirty();
-        }
+        await CancelOpenTasksAsync(instance, reason, cancellationToken);
 
         await CreateEventAsync(instanceId, "Instance", "Cancelled",
             $"{{\"reason\":\"{reason}\"}}", cancelledByUserId);
@@ -476,7 +512,6 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         if (!currentNode.IsGateway())
         {
-            // Filter out null/empty targets before returning
             var linearTargets = edges
                 .Select(e => e.Target)
                 .Where(t => !string.IsNullOrWhiteSpace(t))
@@ -487,6 +522,66 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         var selected = SelectGatewayTargets(currentNode, instance, edges, "inline-exec");
         return RecordAndReturn(workflowDef, selected, currentNode, instance, "GatewayAdvance");
+    }
+
+    /// <summary>
+    /// Records EdgeTraversed events for each target (including edgeId) and returns a cleaned list of targets.
+    /// </summary>
+    private List<string> RecordAndReturn(
+        WorkflowDefinitionJson workflowDef,
+        IEnumerable<string?> targets,
+        WorkflowNode currentNode,
+        WorkflowInstance instance,
+        string mode)
+    {
+        var clean = targets
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .Select(t => t!.Trim())
+            .ToList();
+
+        foreach (var t in clean)
+        {
+            var edgeId = FindEdgeId(currentNode.Id, t, workflowDef);
+            // Synchronous fire-and-forget (keeps method non-async)
+            CreateEventAsync(instance.Id, "Edge", "EdgeTraversed",
+                JsonSerializer.Serialize(new
+                {
+                    edgeId,
+                    from = currentNode.Id,
+                    to = t,
+                    mode
+                }), null).GetAwaiter().GetResult();
+        }
+
+        return clean;
+    }
+
+    /// <summary>
+    /// Simplified variant (no edgeId resolution) kept for parity; currently unused but retained for future calls.
+    /// </summary>
+    private List<string> RecordAndReturn(
+        IEnumerable<string?> targets,
+        WorkflowNode currentNode,
+        WorkflowInstance instance,
+        string mode)
+    {
+        var clean = targets
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .Select(t => t!.Trim())
+            .ToList();
+
+        foreach (var t in clean)
+        {
+            CreateEventAsync(instance.Id, "Edge", "EdgeTraversed",
+                JsonSerializer.Serialize(new
+                {
+                    from = currentNode.Id,
+                    to = t,
+                    mode
+                }), null).GetAwaiter().GetResult();
+        }
+
+        return clean;
     }
 
     private List<string> GetOutgoingTargetsForAdvance(
@@ -623,57 +718,6 @@ public class WorkflowRuntime : IWorkflowRuntime
 
     #region Advancement / Events / Context
 
-    private List<string> RecordAndReturn(
-        WorkflowDefinitionJson workflowDef,
-        IEnumerable<string?> targets,
-        WorkflowNode currentNode,
-        WorkflowInstance instance,
-        string mode)
-    {
-        var clean = targets
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .Select(t => t!)
-            .ToList();
-
-        foreach (var t in clean)
-        {
-            var edgeId = FindEdgeId(currentNode.Id, t, workflowDef);
-            CreateEventAsync(instance.Id, "Edge", "EdgeTraversed",
-                JsonSerializer.Serialize(new
-                {
-                    edgeId,
-                    from = currentNode.Id,
-                    to = t,
-                    mode
-                }), null).GetAwaiter().GetResult();
-        }
-        return clean;
-    }
-
-    private List<string> RecordAndReturn(
-        IEnumerable<string?> targets,
-        WorkflowNode currentNode,
-        WorkflowInstance instance,
-        string mode)
-    {
-        var clean = targets
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .Select(t => t!)
-            .ToList();
-
-        foreach (var t in clean)
-        {
-            CreateEventAsync(instance.Id, "Edge", "EdgeTraversed",
-                JsonSerializer.Serialize(new
-                {
-                    from = currentNode.Id,
-                    to = t,
-                    mode
-                }), null).GetAwaiter().GetResult();
-        }
-        return clean;
-    }
-
     private void AdvanceToNextNodes(
         WorkflowInstance instance,
         WorkflowDefinitionJson workflowDef,
@@ -681,12 +725,15 @@ public class WorkflowRuntime : IWorkflowRuntime
     {
         if (!nextNodeIds.Any())
         {
+            // Cancel other open tasks BEFORE marking complete so consumers see consistent final state
+            CancelOpenTasksAsync(instance, "instance-completed", default).GetAwaiter().GetResult();
+
             instance.Status = InstanceStatus.Completed;
             instance.CompletedAt = DateTime.UtcNow;
             instance.CurrentNodeIds = JsonSerializer.Serialize(Array.Empty<string>());
             MarkDirty();
             CreateEventAsync(instance.Id, "Instance", "Completed",
-                "{\"reason\":\"no-next-nodes\"}", null).GetAwaiter().GetResult();
+                "{\"reason\":\"end-of-path\"}", null).GetAwaiter().GetResult();
             _logger.LogInformation("WF_INSTANCE_COMPLETE Instance={InstanceId}", instance.Id);
             return;
         }
@@ -699,6 +746,8 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         if (endNodes.Any())
         {
+            // --- NEW: cancel sibling open tasks when an End is reached alongside other active branches ---
+            CancelOpenTasksAsync(instance, "instance-completed", default).GetAwaiter().GetResult();
             instance.Status = InstanceStatus.Completed;
             instance.CompletedAt = DateTime.UtcNow;
             MarkDirty();
@@ -819,4 +868,42 @@ public class WorkflowRuntime : IWorkflowRuntime
     }
 
     #endregion
+
+    #region Helpers
+
+    private async Task CancelOpenTasksAsync(WorkflowInstance instance, string reason, CancellationToken ct = default)
+    {
+        var openTasks = await _context.WorkflowTasks
+            .Where(t => t.WorkflowInstanceId == instance.Id &&
+                        (t.Status == DTOs.Workflow.Enums.TaskStatus.Created ||
+                         t.Status == DTOs.Workflow.Enums.TaskStatus.Assigned ||
+                         t.Status == DTOs.Workflow.Enums.TaskStatus.Claimed ||
+                         t.Status == DTOs.Workflow.Enums.TaskStatus.InProgress))
+            .ToListAsync(ct);
+
+        if (openTasks.Count == 0) return;
+
+        foreach (var t in openTasks)
+        {
+            t.Status = DTOs.Workflow.Enums.TaskStatus.Cancelled;
+            t.CompletedAt = DateTime.UtcNow;
+            MarkDirty();
+
+            // Emit per-task cancellation event (lightweight)
+            await CreateEventAsync(instance.Id, "Task", "Cancelled",
+                JsonSerializer.Serialize(new
+                {
+                    taskId = t.Id,
+                    nodeId = t.NodeId,
+                    reason = reason
+                }),
+                null);
+        }
+
+        _logger.LogInformation("WF_CANCEL_OPEN_TASKS Instance={InstanceId} Count={Count} Reason={Reason}",
+            instance.Id, openTasks.Count, reason);
+    }
+
+    #endregion
 }
+

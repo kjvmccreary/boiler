@@ -1,202 +1,233 @@
-PS C:\Users\mccre\dev\boiler> docker logs --tail 200 boiler-workflow
-[22:57:51 INF] TIMER_WORKER_CANDIDATES Count=1 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:57:51 DBG] TIMER_WORKER_GUC_SET Tenant=1 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:57:51 ERR] Failed executing DbCommand (2ms) [Parameters=[@__taskId_0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
-UPDATE "WorkflowTasks" AS w
-SET "UpdatedAt" = now(),
-    "Status" = 4
-WHERE w."Id" = @__taskId_0 AND w."Status" IN (1, 2) {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command"}
-[22:57:51 WRN] TIMER_WORKER_ACQUIRE_GUC_RETRY TaskId=47 Reason=TenantGUCMissing {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:57:51 ERR] Failed executing DbCommand (1ms) [Parameters=[@__taskId_0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
-UPDATE "WorkflowTasks" AS w
-SET "UpdatedAt" = now(),
-    "Status" = 4
-WHERE w."Id" = @__taskId_0 AND w."Status" IN (1, 2) {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command"}
-[22:57:51 ERR] TIMER_WORKER_ACQUIRE_RETRY_FAILED TaskId=47 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-Npgsql.PostgresException (0x80004005): 23514: Tenant GUC app.tenant_id not set for table WorkflowTasks
-   at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
-   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
-   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
---- End of stack trace from previous location ---
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
-   at WorkflowService.Background.TimerWorker.TryAcquireAsync(WorkflowDbContext db, Int32 taskId, CancellationToken ct) in /src/src/services/WorkflowService/Background/TimerWorker.cs:line 222
-  Exception data:
-    Severity: ERROR
-    SqlState: 23514
-    MessageText: Tenant GUC app.tenant_id not set for table WorkflowTasks
-    Where: PL/pgSQL function enforce_tenant() line 7 at RAISE
-    File: pl_exec.c
-    Line: 3905
-    Routine: exec_stmt_raise
-[22:57:51 DBG] TIMER_WORKER_ACQUIRE_FAIL TaskId=47 Tenant=1 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:57:51 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
-[22:57:51 INF] TIMER_WORKER_DONE Processed=0 TotalCandidates=1 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:57:51 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[22:57:55 INF] HTTP GET /health responded 200 in 10.3585 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:57:56 INF] HTTP GET /api/workflow/tasks/mine/summary responded 200 in 13.5709 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:57:59 INF] HTTP GET /api/workflow/instances responded 200 in 103.3266 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:58:03 WRN] WF_CANCEL Instance=32 Reason=Manual termination {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "b0b6c4b8-0717-4b23-9f96-4568e097a0d4", "ActionName": "WorkflowService.Controllers.InstancesController.TerminateInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROO:00000001", "RequestPath": "/api/workflow/instances/32", "ConnectionId": "0HNF9LB3IKROO"}
-[22:58:03 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "b0b6c4b8-0717-4b23-9f96-4568e097a0d4", "ActionName": "WorkflowService.Controllers.InstancesController.TerminateInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROO:00000001", "RequestPath": "/api/workflow/instances/32", "ConnectionId": "0HNF9LB3IKROO"}
-[22:58:03 INF] Terminated workflow instance 32: Manual termination {"SourceContext": "WorkflowService.Services.InstanceService", "ActionId": "b0b6c4b8-0717-4b23-9f96-4568e097a0d4", "ActionName": "WorkflowService.Controllers.InstancesController.TerminateInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROO:00000001", "RequestPath": "/api/workflow/instances/32", "ConnectionId": "0HNF9LB3IKROO"}
-[22:58:03 INF] Terminated workflow instance 32 by user 6 {"SourceContext": "WorkflowService.Controllers.InstancesController", "ActionId": "b0b6c4b8-0717-4b23-9f96-4568e097a0d4", "ActionName": "WorkflowService.Controllers.InstancesController.TerminateInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROO:00000001", "RequestPath": "/api/workflow/instances/32", "ConnectionId": "0HNF9LB3IKROO"}
-[22:58:03 INF] HTTP DELETE /api/workflow/instances/32 responded 200 in 146.2889 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:58:04 INF] HTTP GET /api/workflow/instances responded 200 in 11.0481 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:58:05 INF] HTTP GET /api/workflow/definitions responded 200 in 38.1863 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:58:06 INF] OUTBOX_BATCH Size=1 {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[22:58:06 INF] OUTBOX_DISPATCH EventType=workflow.instance.cancelled Id=292 Tenant=1 Retry=0 PayloadSize=32 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
-[22:58:06 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
-[22:58:13 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] WF_START Instance=33 Def=42 Version=1 StartNode=start-1756736640842 {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] WF_CONTINUE Instance=33 Nodes=[start-1756736640842] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] WF_NODE_EXEC_START Instance=33 Node=start-1756736640842 Type=start {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] Executing start node start-1756736640842 for instance 33 {"SourceContext": "WorkflowService.Engine.Executors.StartEndExecutor", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] WF_NODE_ADVANCE Instance=33 Node=start-1756736640842 Next=[automatic-1756736657659] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] WF_CONTINUE Instance=33 Nodes=[automatic-1756736657659] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] WF_NODE_EXEC_START Instance=33 Node=automatic-1756736657659 Type=automatic {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] Executing automatic node automatic-1756736657659 for instance 33 {"SourceContext": "WorkflowService.Engine.Executors.AutomaticExecutor", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] Automatic node automatic-1756736657659 action type: noop {"SourceContext": "WorkflowService.Engine.Executors.AutomaticExecutor", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] Executing no-op action for node automatic-1756736657659 {"SourceContext": "WorkflowService.Engine.Executors.AutomaticExecutor", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] WF_NODE_ADVANCE Instance=33 Node=automatic-1756736657659 Next=[timer-1756736669457] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] WF_CONTINUE Instance=33 Nodes=[timer-1756736669457] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] WF_NODE_EXEC_START Instance=33 Node=timer-1756736669457 Type=timer {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] WF_TIMER_SCHEDULE Instance=33 Node=timer-1756736669457 DueUtc=09/01/2025 22:59:13 {"SourceContext": "WorkflowService.Engine.Executors.TimerExecutor", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] WF_NODE_WAIT Instance=33 Node=timer-1756736669457 Type=timer {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] Published instance started event 33 {"SourceContext": "WorkflowService.Services.EventPublisher", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] Started workflow instance 33 from definition 42 for tenant 1 {"SourceContext": "WorkflowService.Services.InstanceService", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] Started workflow instance 33 from definition 42 by user 6 {"SourceContext": "WorkflowService.Controllers.InstancesController", "ActionId": "1c07de4e-da94-4dd1-ba29-dbfbc472cecd", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNF9LB3IKROR:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNF9LB3IKROR"}
-[22:58:13 INF] HTTP POST /api/workflow/instances responded 201 in 128.0863 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:58:14 INF] HTTP GET /api/workflow/instances/33/runtime-snapshot responded 200 in 71.6128 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:58:21 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:58:21 INF] OUTBOX_BATCH Size=8 {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[22:58:21 INF] OUTBOX_DISPATCH EventType=workflow.instance.started Id=293 Tenant=1 Retry=0 PayloadSize=38 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
-[22:58:21 INF] OUTBOX_DISPATCH EventType=workflow.edge.edgetraversed Id=294 Tenant=1 Retry=0 PayloadSize=164 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
-[22:58:21 INF] OUTBOX_DISPATCH EventType=workflow.node.executed Id=295 Tenant=1 Retry=0 PayloadSize=97 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
-[22:58:21 INF] OUTBOX_DISPATCH EventType=workflow.edge.edgetraversed Id=296 Tenant=1 Retry=0 PayloadSize=164 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
-[22:58:21 INF] OUTBOX_DISPATCH EventType=workflow.node.executed Id=297 Tenant=1 Retry=0 PayloadSize=105 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
-[22:58:21 INF] OUTBOX_DISPATCH EventType=workflow.node.nodeactivated Id=298 Tenant=1 Retry=0 PayloadSize=97 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
-[22:58:21 INF] OUTBOX_DISPATCH EventType=workflow.node.executed Id=299 Tenant=1 Retry=0 PayloadSize=95 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
-[22:58:21 INF] OUTBOX_DISPATCH EventType=workflow.instance.started Id=300 Tenant=1 Retry=0 PayloadSize=105 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
-[22:58:21 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
-[22:58:25 INF] HTTP GET /health responded 200 in 7.7410 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:58:36 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[22:58:45 INF] HTTP GET /api/workflow/definitions responded 200 in 12.0263 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:58:46 INF] HTTP GET /api/workflow/instances responded 200 in 9.2066 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:58:48 INF] HTTP GET /api/workflow/instances/33/runtime-snapshot responded 200 in 10.9298 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:58:51 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:58:51 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[22:58:55 INF] HTTP GET /health responded 200 in 13.1305 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:59:00 INF] WF_API_MY_TASKS Count=30 {"SourceContext": "WorkflowService.Controllers.TasksController", "ActionId": "6e592544-265a-46ac-a5d1-414937f2a84f", "ActionName": "WorkflowService.Controllers.TasksController.GetMyTasks (WorkflowService)", "RequestId": "0HNF9LB3IKRP2:00000001", "RequestPath": "/api/workflow/tasks/mine", "ConnectionId": "0HNF9LB3IKRP2"}
-[22:59:00 INF] HTTP GET /api/workflow/tasks/mine responded 200 in 66.5361 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:59:03 INF] HTTP GET /api/workflow/definitions responded 200 in 8.7420 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:59:05 INF] HTTP GET /api/workflow/instances responded 200 in 7.4640 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:59:06 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[22:59:10 INF] HTTP GET /api/workflow/instances/33/runtime-snapshot responded 200 in 24.3781 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:59:20 INF] HTTP GET /api/workflow/tasks/mine/summary responded 200 in 7.3813 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:59:20 INF] HTTP GET /api/workflow/instances/33/runtime-snapshot responded 200 in 8.8201 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:59:21 INF] TIMER_WORKER_CANDIDATES Count=1 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:59:21 DBG] TIMER_WORKER_GUC_SET Tenant=1 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:59:21 ERR] Failed executing DbCommand (1ms) [Parameters=[@__taskId_0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
-UPDATE "WorkflowTasks" AS w
-SET "UpdatedAt" = now(),
-    "Status" = 4
-WHERE w."Id" = @__taskId_0 AND w."Status" IN (1, 2) {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command"}
-[22:59:21 WRN] TIMER_WORKER_ACQUIRE_GUC_RETRY TaskId=48 Reason=TenantGUCMissing {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:59:21 ERR] Failed executing DbCommand (1ms) [Parameters=[@__taskId_0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
-UPDATE "WorkflowTasks" AS w
-SET "UpdatedAt" = now(),
-    "Status" = 4
-WHERE w."Id" = @__taskId_0 AND w."Status" IN (1, 2) {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command"}
-[22:59:21 ERR] TIMER_WORKER_ACQUIRE_RETRY_FAILED TaskId=48 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-Npgsql.PostgresException (0x80004005): 23514: Tenant GUC app.tenant_id not set for table WorkflowTasks
-   at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
-   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
-   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
---- End of stack trace from previous location ---
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
-   at WorkflowService.Background.TimerWorker.TryAcquireAsync(WorkflowDbContext db, Int32 taskId, CancellationToken ct) in /src/src/services/WorkflowService/Background/TimerWorker.cs:line 222
-  Exception data:
-    Severity: ERROR
-    SqlState: 23514
-    MessageText: Tenant GUC app.tenant_id not set for table WorkflowTasks
-    Where: PL/pgSQL function enforce_tenant() line 7 at RAISE
-    File: pl_exec.c
-    Line: 3905
-    Routine: exec_stmt_raise
-[22:59:21 DBG] TIMER_WORKER_ACQUIRE_FAIL TaskId=48 Tenant=1 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:59:21 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
-[22:59:21 INF] TIMER_WORKER_DONE Processed=0 TotalCandidates=1 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:59:21 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[22:59:24 INF] WF_API_MY_TASKS Count=30 {"SourceContext": "WorkflowService.Controllers.TasksController", "ActionId": "6e592544-265a-46ac-a5d1-414937f2a84f", "ActionName": "WorkflowService.Controllers.TasksController.GetMyTasks (WorkflowService)", "RequestId": "0HNF9LB3IKRP8:00000001", "RequestPath": "/api/workflow/tasks/mine", "ConnectionId": "0HNF9LB3IKRP8"}
-[22:59:24 INF] HTTP GET /api/workflow/tasks/mine responded 200 in 6.8184 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:59:25 INF] HTTP GET /health responded 200 in 6.9912 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:59:34 INF] HTTP GET /api/workflow/instances responded 200 in 9.2376 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:59:36 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[22:59:38 INF] HTTP GET /api/workflow/instances/33/runtime-snapshot responded 200 in 8.5984 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[22:59:51 INF] TIMER_WORKER_CANDIDATES Count=1 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:59:51 DBG] TIMER_WORKER_GUC_SET Tenant=1 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:59:51 ERR] Failed executing DbCommand (1ms) [Parameters=[@__taskId_0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
-UPDATE "WorkflowTasks" AS w
-SET "UpdatedAt" = now(),
-    "Status" = 4
-WHERE w."Id" = @__taskId_0 AND w."Status" IN (1, 2) {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command"}
-[22:59:51 WRN] TIMER_WORKER_ACQUIRE_GUC_RETRY TaskId=48 Reason=TenantGUCMissing {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:59:51 ERR] Failed executing DbCommand (1ms) [Parameters=[@__taskId_0='?' (DbType = Int32)], CommandType='Text', CommandTimeout='30']
-UPDATE "WorkflowTasks" AS w
-SET "UpdatedAt" = now(),
-    "Status" = 4
-WHERE w."Id" = @__taskId_0 AND w."Status" IN (1, 2) {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command"}
-[22:59:51 ERR] TIMER_WORKER_ACQUIRE_RETRY_FAILED TaskId=48 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-Npgsql.PostgresException (0x80004005): 23514: Tenant GUC app.tenant_id not set for table WorkflowTasks
-   at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
-   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
-   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
---- End of stack trace from previous location ---
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
-   at WorkflowService.Background.TimerWorker.TryAcquireAsync(WorkflowDbContext db, Int32 taskId, CancellationToken ct) in /src/src/services/WorkflowService/Background/TimerWorker.cs:line 222
-  Exception data:
-    Severity: ERROR
-    SqlState: 23514
-    MessageText: Tenant GUC app.tenant_id not set for table WorkflowTasks
-    Where: PL/pgSQL function enforce_tenant() line 7 at RAISE
-    File: pl_exec.c
-    Line: 3905
-    Routine: exec_stmt_raise
-[22:59:51 DBG] TIMER_WORKER_ACQUIRE_FAIL TaskId=48 Tenant=1 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:59:51 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
-[22:59:51 INF] TIMER_WORKER_DONE Processed=0 TotalCandidates=1 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[22:59:51 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[22:59:55 INF] HTTP GET /health responded 200 in 8.8251 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+PS C:\Users\mccre\dev\boiler> docker logs --tail 500 boiler-workflow
+[15:21:29 INF] Starting WorkflowService {}
+=== WorkflowService Starting ===
+[15:21:30 WRN] Entity 'Role' has a global query filter defined and is the required end of a relationship with the entity 'RolePermission'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information. {"EventId": {"Id": 10622, "Name": "Microsoft.EntityFrameworkCore.Model.Validation.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
+[15:21:30 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId": {"Id": 10400, "Name": "Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
+✅ Main database migrations applied
+✅ Workflow database migrations applied
+[15:21:30 WRN] Storing keys in a directory '/app/.aspnet/DataProtection-Keys' that may not be persisted outside of the container. Protected data will be unavailable when container is destroyed. For more information go to https://aka.ms/aspnet/dataprotectionwarning {"EventId": {"Id": 60, "Name": "UsingEphemeralFileSystemLocationInContainer"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.Repositories.FileSystemXmlRepository"}
+[15:21:30 WRN] No XML encryptor configured. Key {e5dc47ce-4704-48fb-bacd-1e2dcb9788c3} may be persisted to storage in unencrypted form. {"EventId": {"Id": 35, "Name": "NoXMLEncryptorConfiguredKeyMayBePersistedToStorageInUnencryptedForm"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"}
+[15:21:30 INF] TIMER_WORKER_START Interval=30s BatchSize=100 {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:21:30 INF] OUTBOX_WORKER_START Interval=15s BatchSize=50 MaxRetries=5 {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:21:30 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:21:30 WRN] Overriding HTTP_PORTS '8080' and HTTPS_PORTS ''. Binding to values defined by URLS instead 'https://+:7003;http://+:5003'. {"EventId": {"Id": 15}, "SourceContext": "Microsoft.AspNetCore.Hosting.Diagnostics"}
+[15:21:30 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+Now listening on: https://[::]:7003
+[15:21:30 INF] Now listening on: https://[::]:7003 {}
+Now listening on: http://[::]:5003
+[15:21:30 INF] Now listening on: http://[::]:5003 {}
+🌊 WorkflowService started (runtime, timer automation, graph validation, outbox idempotency).
+[15:21:30 INF] WorkflowService startup complete (TimerWorker + GraphValidation + Outbox Idempotency). {}
+[15:21:34 INF] HTTP GET /health responded 200 in 55.0935 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:21:45 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:22:00 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:22:00 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:22:04 INF] HTTP GET /health responded 200 in 13.1191 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:22:15 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:22:30 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:22:30 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:22:34 INF] HTTP GET /health responded 200 in 11.0616 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:22:45 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:23:00 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:23:00 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:23:04 INF] HTTP GET /health responded 200 in 8.8426 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:23:09 INF] HTTP GET /api/workflow/tasks/mine/summary responded 200 in 206.2306 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:23:14 INF] WF_API_MY_TASKS Count=39 {"SourceContext": "WorkflowService.Controllers.TasksController", "ActionId": "8713f52a-7aed-4d2b-9bb0-13bebfa57aa1", "ActionName": "WorkflowService.Controllers.TasksController.GetMyTasks (WorkflowService)", "RequestId": "0HNFA6HJFIDOB:00000001", "RequestPath": "/api/workflow/tasks/mine", "ConnectionId": "0HNFA6HJFIDOB"}
+[15:23:14 INF] HTTP GET /api/workflow/tasks/mine responded 200 in 93.6021 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:23:15 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:23:17 INF] HTTP GET /api/workflow/instances responded 200 in 87.4337 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:23:29 WRN] WF_CANCEL Instance=37 Reason=Manual termination {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "e60d44dc-e252-4d35-89bd-ce4a7d36cebb", "ActionName": "WorkflowService.Controllers.InstancesController.TerminateInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOD:00000001", "RequestPath": "/api/workflow/instances/37", "ConnectionId": "0HNFA6HJFIDOD"}
+[15:23:29 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "e60d44dc-e252-4d35-89bd-ce4a7d36cebb", "ActionName": "WorkflowService.Controllers.InstancesController.TerminateInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOD:00000001", "RequestPath": "/api/workflow/instances/37", "ConnectionId": "0HNFA6HJFIDOD"}
+[15:23:29 INF] Terminated workflow instance 37: Manual termination {"SourceContext": "WorkflowService.Services.InstanceService", "ActionId": "e60d44dc-e252-4d35-89bd-ce4a7d36cebb", "ActionName": "WorkflowService.Controllers.InstancesController.TerminateInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOD:00000001", "RequestPath": "/api/workflow/instances/37", "ConnectionId": "0HNFA6HJFIDOD"}
+[15:23:29 INF] Terminated workflow instance 37 by user 6 {"SourceContext": "WorkflowService.Controllers.InstancesController", "ActionId": "e60d44dc-e252-4d35-89bd-ce4a7d36cebb", "ActionName": "WorkflowService.Controllers.InstancesController.TerminateInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOD:00000001", "RequestPath": "/api/workflow/instances/37", "ConnectionId": "0HNFA6HJFIDOD"}
+[15:23:29 INF] HTTP DELETE /api/workflow/instances/37 responded 200 in 208.1377 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:23:29 INF] HTTP GET /api/workflow/instances responded 200 in 13.4974 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:23:30 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:23:30 INF] OUTBOX_BATCH Size=1 {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:23:30 INF] OUTBOX_DISPATCH EventType=workflow.instance.cancelled Id=403 Tenant=1 Retry=0 PayloadSize=32 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:23:30 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
+[15:23:32 INF] HTTP GET /api/workflow/instances/36/runtime-snapshot responded 200 in 62.0616 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:23:35 INF] HTTP GET /health responded 200 in 7.5619 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:23:35 INF] HTTP GET /api/workflow/instances responded 200 in 9.8129 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:23:35 INF] HTTP GET /api/workflow/definitions responded 200 in 27.7511 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:23:40 INF] HTTP GET /api/workflow/tasks/mine/summary responded 200 in 10.7478 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:23:45 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:23:52 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] WF_START Instance=38 Def=44 Version=1 StartNode=start-1756821305563 {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] WF_CONTINUE Instance=38 Nodes=[start-1756821305563] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] WF_NODE_EXEC_START Instance=38 Node=start-1756821305563 Type=start {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] Executing start node start-1756821305563 for instance 38 {"SourceContext": "WorkflowService.Engine.Executors.StartEndExecutor", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] WF_NODE_ADVANCE Instance=38 Node=start-1756821305563 Next=[automatic-1756821310688] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] WF_CONTINUE Instance=38 Nodes=[automatic-1756821310688] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] WF_NODE_EXEC_START Instance=38 Node=automatic-1756821310688 Type=automatic {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] Executing automatic node automatic-1756821310688 for instance 38 {"SourceContext": "WorkflowService.Engine.Executors.AutomaticExecutor", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] Automatic node automatic-1756821310688 action type: noop {"SourceContext": "WorkflowService.Engine.Executors.AutomaticExecutor", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] Executing no-op action for node automatic-1756821310688 {"SourceContext": "WorkflowService.Engine.Executors.AutomaticExecutor", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] WF_NODE_ADVANCE Instance=38 Node=automatic-1756821310688 Next=[timer-1756821330145] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] WF_CONTINUE Instance=38 Nodes=[timer-1756821330145] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] WF_NODE_EXEC_START Instance=38 Node=timer-1756821330145 Type=timer {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] WF_TIMER_SCHEDULE Instance=38 Node=timer-1756821330145 DueUtc=09/02/2025 15:24:02 {"SourceContext": "WorkflowService.Engine.Executors.TimerExecutor", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] WF_NODE_WAIT Instance=38 Node=timer-1756821330145 Type=timer {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] Published instance started event 38 {"SourceContext": "WorkflowService.Services.EventPublisher", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] Started workflow instance 38 from definition 44 for tenant 1 {"SourceContext": "WorkflowService.Services.InstanceService", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] Started workflow instance 38 from definition 44 by user 6 {"SourceContext": "WorkflowService.Controllers.InstancesController", "ActionId": "a0adf1a1-55ce-4331-955c-cef24a30bf3b", "ActionName": "WorkflowService.Controllers.InstancesController.StartInstance (WorkflowService)", "RequestId": "0HNFA6HJFIDOK:00000001", "RequestPath": "/api/workflow/instances", "ConnectionId": "0HNFA6HJFIDOK"}
+[15:23:52 INF] HTTP POST /api/workflow/instances responded 201 in 185.7447 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:23:52 INF] HTTP GET /api/workflow/instances/38/runtime-snapshot responded 200 in 22.8215 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:24:00 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:24:00 INF] OUTBOX_BATCH Size=8 {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:24:00 INF] OUTBOX_DISPATCH EventType=workflow.instance.started Id=404 Tenant=1 Retry=0 PayloadSize=38 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:24:00 INF] OUTBOX_DISPATCH EventType=workflow.edge.edgetraversed Id=405 Tenant=1 Retry=0 PayloadSize=164 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:24:00 INF] OUTBOX_DISPATCH EventType=workflow.node.executed Id=406 Tenant=1 Retry=0 PayloadSize=97 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:24:00 INF] OUTBOX_DISPATCH EventType=workflow.edge.edgetraversed Id=407 Tenant=1 Retry=0 PayloadSize=164 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:24:00 INF] OUTBOX_DISPATCH EventType=workflow.node.executed Id=408 Tenant=1 Retry=0 PayloadSize=105 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:24:00 INF] OUTBOX_DISPATCH EventType=workflow.node.nodeactivated Id=409 Tenant=1 Retry=0 PayloadSize=87 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:24:00 INF] OUTBOX_DISPATCH EventType=workflow.node.executed Id=410 Tenant=1 Retry=0 PayloadSize=95 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:24:00 INF] OUTBOX_DISPATCH EventType=workflow.instance.started Id=411 Tenant=1 Retry=0 PayloadSize=106 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:24:00 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
+[15:24:05 INF] HTTP GET /health responded 200 in 7.5384 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:24:15 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:24:29 INF] WF_API_MY_TASKS Count=39 {"SourceContext": "WorkflowService.Controllers.TasksController", "ActionId": "8713f52a-7aed-4d2b-9bb0-13bebfa57aa1", "ActionName": "WorkflowService.Controllers.TasksController.GetMyTasks (WorkflowService)", "RequestId": "0HNFA6HJFIDON:00000001", "RequestPath": "/api/workflow/tasks/mine", "ConnectionId": "0HNFA6HJFIDON"}
+[15:24:29 INF] HTTP GET /api/workflow/tasks/mine responded 200 in 8.5519 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:24:30 INF] TIMER_WORKER_ACQUIRE Tenant=1 Count=1 {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:24:30 INF] TIMER_WORKER_FIRE TaskId=66 Instance=38 Tenant=1 Due=09/02/2025 15:24:02 {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:24:30 INF] WF_ADVANCE Instance=38 FromNode=timer-1756821330145 Next=[timer-1756821337003] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime"}
+[15:24:30 INF] WF_CONTINUE Instance=38 Nodes=[timer-1756821337003] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime"}
+[15:24:30 INF] WF_NODE_EXEC_START Instance=38 Node=timer-1756821337003 Type=timer {"SourceContext": "WorkflowService.Engine.WorkflowRuntime"}
+[15:24:30 INF] WF_TIMER_SCHEDULE Instance=38 Node=timer-1756821337003 DueUtc=09/02/2025 15:24:40 {"SourceContext": "WorkflowService.Engine.Executors.TimerExecutor"}
+[15:24:30 INF] WF_NODE_WAIT Instance=38 Node=timer-1756821337003 Type=timer {"SourceContext": "WorkflowService.Engine.WorkflowRuntime"}
+[15:24:30 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
+[15:24:30 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
+[15:24:30 INF] TIMER_WORKER_DONE Tenants=1 Acquired=1 Completed=1 MaxLagSec=28.1 {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:24:30 INF] OUTBOX_BATCH Size=4 {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:24:30 INF] OUTBOX_DISPATCH EventType=workflow.task.timercompleted Id=412 Tenant=1 Retry=0 PayloadSize=85 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:24:30 INF] OUTBOX_DISPATCH EventType=workflow.edge.edgetraversed Id=413 Tenant=1 Retry=0 PayloadSize=164 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:24:30 INF] OUTBOX_DISPATCH EventType=workflow.node.nodeactivated Id=414 Tenant=1 Retry=0 PayloadSize=87 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:24:30 INF] OUTBOX_DISPATCH EventType=workflow.node.executed Id=415 Tenant=1 Retry=0 PayloadSize=95 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:24:30 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
+[15:24:35 INF] HTTP GET /health responded 200 in 6.8777 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:24:37 INF] HTTP GET /api/workflow/instances responded 200 in 8.1130 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:24:40 INF] HTTP GET /api/workflow/instances/38/runtime-snapshot responded 200 in 10.5746 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:24:45 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:24:55 INF] WF_API_MY_TASKS Count=39 {"SourceContext": "WorkflowService.Controllers.TasksController", "ActionId": "8713f52a-7aed-4d2b-9bb0-13bebfa57aa1", "ActionName": "WorkflowService.Controllers.TasksController.GetMyTasks (WorkflowService)", "RequestId": "0HNFA6HJFIDOR:00000001", "RequestPath": "/api/workflow/tasks/mine", "ConnectionId": "0HNFA6HJFIDOR"}
+[15:24:55 INF] HTTP GET /api/workflow/tasks/mine responded 200 in 7.7106 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:25:00 INF] TIMER_WORKER_ACQUIRE Tenant=1 Count=1 {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:25:00 INF] TIMER_WORKER_FIRE TaskId=67 Instance=38 Tenant=1 Due=09/02/2025 15:24:40 {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:25:00 INF] WF_ADVANCE Instance=38 FromNode=timer-1756821337003 Next=[humanTask-1756821341483,timer-1756821359204] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime"}
+[15:25:00 INF] WF_CONTINUE Instance=38 Nodes=[humanTask-1756821341483,timer-1756821359204] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime"}
+[15:25:00 INF] WF_NODE_EXEC_START Instance=38 Node=humanTask-1756821341483 Type=humanTask {"SourceContext": "WorkflowService.Engine.WorkflowRuntime"}
+[15:25:00 INF] Creating human task: TaskName='After 2nd timer', AssignedRole='Admin', AssignedUserId='', DueInMinutes=1 {"SourceContext": "WorkflowService.Engine.Executors.HumanTaskExecutor"}
+[15:25:00 INF] Validated role 'Admin' exists in tenant 1 {"SourceContext": "WorkflowService.Engine.Executors.HumanTaskExecutor"}
+[15:25:00 INF] Task assigned to role 'Admin' {"SourceContext": "WorkflowService.Engine.Executors.HumanTaskExecutor"}
+[15:25:00 INF] Successfully created human task 'After 2nd timer' for workflow instance 38 (Tenant 1) {"SourceContext": "WorkflowService.Engine.Executors.HumanTaskExecutor"}
+[15:25:00 DBG] TASK_NOTIFY Tenant=1 {"SourceContext": "WorkflowService.Services.TaskNotificationDispatcher"}
+[15:25:00 DBG] TASK_NOTIFY Tenant=1 {"SourceContext": "WorkflowService.Services.TaskNotificationDispatcher"}
+[15:25:00 INF] WF_NODE_WAIT Instance=38 Node=humanTask-1756821341483 Type=humanTask {"SourceContext": "WorkflowService.Engine.WorkflowRuntime"}
+[15:25:00 INF] WF_NODE_EXEC_START Instance=38 Node=timer-1756821359204 Type=timer {"SourceContext": "WorkflowService.Engine.WorkflowRuntime"}
+[15:25:00 INF] WF_TIMER_SCHEDULE Instance=38 Node=timer-1756821359204 DueUtc=09/02/2025 15:25:06 {"SourceContext": "WorkflowService.Engine.Executors.TimerExecutor"}
+[15:25:00 INF] WF_NODE_WAIT Instance=38 Node=timer-1756821359204 Type=timer {"SourceContext": "WorkflowService.Engine.WorkflowRuntime"}
+[15:25:00 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
+[15:25:00 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
+[15:25:00 INF] TIMER_WORKER_DONE Tenants=1 Acquired=1 Completed=1 MaxLagSec=20.0 {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:25:00 INF] OUTBOX_BATCH Size=7 {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:25:00 INF] OUTBOX_DISPATCH EventType=workflow.task.timercompleted Id=416 Tenant=1 Retry=0 PayloadSize=85 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:25:00 INF] OUTBOX_DISPATCH EventType=workflow.edge.edgetraversed Id=417 Tenant=1 Retry=0 PayloadSize=172 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:25:00 INF] OUTBOX_DISPATCH EventType=workflow.edge.edgetraversed Id=418 Tenant=1 Retry=0 PayloadSize=164 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:25:00 INF] OUTBOX_DISPATCH EventType=workflow.node.nodeactivated Id=419 Tenant=1 Retry=0 PayloadSize=103 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:25:00 INF] OUTBOX_DISPATCH EventType=workflow.node.executed Id=420 Tenant=1 Retry=0 PayloadSize=103 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:25:00 INF] OUTBOX_DISPATCH EventType=workflow.node.nodeactivated Id=421 Tenant=1 Retry=0 PayloadSize=87 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:25:00 INF] OUTBOX_DISPATCH EventType=workflow.node.executed Id=422 Tenant=1 Retry=0 PayloadSize=95 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:25:00 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
+[15:25:05 INF] HTTP GET /health responded 200 in 21.8102 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:25:07 INF] HTTP GET /api/workflow/instances responded 200 in 15.4358 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:25:09 INF] HTTP GET /api/workflow/tasks/mine/summary responded 200 in 16.0638 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:25:09 INF] HTTP GET /api/workflow/instances/38/runtime-snapshot responded 200 in 11.8322 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:25:15 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:25:18 INF] WF_API_MY_TASKS Count=40 {"SourceContext": "WorkflowService.Controllers.TasksController", "ActionId": "8713f52a-7aed-4d2b-9bb0-13bebfa57aa1", "ActionName": "WorkflowService.Controllers.TasksController.GetMyTasks (WorkflowService)", "RequestId": "0HNFA6HJFIDP0:00000001", "RequestPath": "/api/workflow/tasks/mine", "ConnectionId": "0HNFA6HJFIDP0"}
+[15:25:18 INF] HTTP GET /api/workflow/tasks/mine responded 200 in 8.5109 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:25:30 INF] TIMER_WORKER_ACQUIRE Tenant=1 Count=1 {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:25:30 INF] TIMER_WORKER_FIRE TaskId=69 Instance=38 Tenant=1 Due=09/02/2025 15:25:06 {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:25:30 INF] WF_ADVANCE Instance=38 FromNode=timer-1756821359204 Next=[humanTask-1756821363938] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime"}
+[15:25:30 INF] WF_CONTINUE Instance=38 Nodes=[humanTask-1756821341483,humanTask-1756821363938] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime"}
+[15:25:30 INF] WF_NODE_EXEC_START Instance=38 Node=humanTask-1756821363938 Type=humanTask {"SourceContext": "WorkflowService.Engine.WorkflowRuntime"}
+[15:25:30 INF] Creating human task: TaskName='After 3rd timer', AssignedRole='Admin', AssignedUserId='', DueInMinutes=1 {"SourceContext": "WorkflowService.Engine.Executors.HumanTaskExecutor"}
+[15:25:30 INF] Validated role 'Admin' exists in tenant 1 {"SourceContext": "WorkflowService.Engine.Executors.HumanTaskExecutor"}
+[15:25:30 INF] Task assigned to role 'Admin' {"SourceContext": "WorkflowService.Engine.Executors.HumanTaskExecutor"}
+[15:25:30 INF] Successfully created human task 'After 3rd timer' for workflow instance 38 (Tenant 1) {"SourceContext": "WorkflowService.Engine.Executors.HumanTaskExecutor"}
+[15:25:30 DBG] TASK_NOTIFY Tenant=1 {"SourceContext": "WorkflowService.Services.TaskNotificationDispatcher"}
+[15:25:30 DBG] TASK_NOTIFY Tenant=1 {"SourceContext": "WorkflowService.Services.TaskNotificationDispatcher"}
+[15:25:30 INF] WF_NODE_WAIT Instance=38 Node=humanTask-1756821363938 Type=humanTask {"SourceContext": "WorkflowService.Engine.WorkflowRuntime"}
+[15:25:30 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
+[15:25:30 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
+[15:25:30 INF] TIMER_WORKER_DONE Tenants=1 Acquired=1 Completed=1 MaxLagSec=23.9 {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:25:30 INF] OUTBOX_BATCH Size=4 {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:25:30 INF] OUTBOX_DISPATCH EventType=workflow.task.timercompleted Id=423 Tenant=1 Retry=0 PayloadSize=85 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:25:30 INF] OUTBOX_DISPATCH EventType=workflow.edge.edgetraversed Id=424 Tenant=1 Retry=0 PayloadSize=172 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:25:30 INF] OUTBOX_DISPATCH EventType=workflow.node.nodeactivated Id=425 Tenant=1 Retry=0 PayloadSize=103 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:25:30 INF] OUTBOX_DISPATCH EventType=workflow.node.executed Id=426 Tenant=1 Retry=0 PayloadSize=103 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:25:30 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
+[15:25:31 INF] HTTP GET /api/workflow/tasks/mine/summary responded 200 in 5.8453 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:25:32 INF] WF_API_MY_TASKS Count=41 {"SourceContext": "WorkflowService.Controllers.TasksController", "ActionId": "8713f52a-7aed-4d2b-9bb0-13bebfa57aa1", "ActionName": "WorkflowService.Controllers.TasksController.GetMyTasks (WorkflowService)", "RequestId": "0HNFA6HJFIDP2:00000001", "RequestPath": "/api/workflow/tasks/mine", "ConnectionId": "0HNFA6HJFIDP2"}
+[15:25:32 INF] HTTP GET /api/workflow/tasks/mine responded 200 in 10.1353 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:25:35 INF] HTTP GET /health responded 200 in 7.9374 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:25:42 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "86b958b7-7554-412e-8952-7ebc071e27a3", "ActionName": "WorkflowService.Controllers.TasksController.ClaimTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP4:00000001", "RequestPath": "/api/workflow/tasks/68/claim", "ConnectionId": "0HNFA6HJFIDP4"}
+[15:25:42 INF] Published task assigned 68 {"SourceContext": "WorkflowService.Services.EventPublisher", "ActionId": "86b958b7-7554-412e-8952-7ebc071e27a3", "ActionName": "WorkflowService.Controllers.TasksController.ClaimTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP4:00000001", "RequestPath": "/api/workflow/tasks/68/claim", "ConnectionId": "0HNFA6HJFIDP4"}
+[15:25:42 DBG] TASK_NOTIFY User=6 Tenant=1 {"SourceContext": "WorkflowService.Services.TaskNotificationDispatcher", "ActionId": "86b958b7-7554-412e-8952-7ebc071e27a3", "ActionName": "WorkflowService.Controllers.TasksController.ClaimTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP4:00000001", "RequestPath": "/api/workflow/tasks/68/claim", "ConnectionId": "0HNFA6HJFIDP4"}
+[15:25:42 DBG] TASK_NOTIFY Tenant=1 {"SourceContext": "WorkflowService.Services.TaskNotificationDispatcher", "ActionId": "86b958b7-7554-412e-8952-7ebc071e27a3", "ActionName": "WorkflowService.Controllers.TasksController.ClaimTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP4:00000001", "RequestPath": "/api/workflow/tasks/68/claim", "ConnectionId": "0HNFA6HJFIDP4"}
+[15:25:42 INF] User 6 claimed task 68 {"SourceContext": "WorkflowService.Services.TaskService", "ActionId": "86b958b7-7554-412e-8952-7ebc071e27a3", "ActionName": "WorkflowService.Controllers.TasksController.ClaimTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP4:00000001", "RequestPath": "/api/workflow/tasks/68/claim", "ConnectionId": "0HNFA6HJFIDP4"}
+[15:25:42 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "86b958b7-7554-412e-8952-7ebc071e27a3", "ActionName": "WorkflowService.Controllers.TasksController.ClaimTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP4:00000001", "RequestPath": "/api/workflow/tasks/68/claim", "ConnectionId": "0HNFA6HJFIDP4"}
+[15:25:42 INF] HTTP POST /api/workflow/tasks/68/claim responded 200 in 41.7387 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:25:42 INF] WF_API_MY_TASKS Count=41 {"SourceContext": "WorkflowService.Controllers.TasksController", "ActionId": "8713f52a-7aed-4d2b-9bb0-13bebfa57aa1", "ActionName": "WorkflowService.Controllers.TasksController.GetMyTasks (WorkflowService)", "RequestId": "0HNFA6HJFIDP5:00000001", "RequestPath": "/api/workflow/tasks/mine", "ConnectionId": "0HNFA6HJFIDP5"}
+[15:25:42 INF] HTTP GET /api/workflow/tasks/mine responded 200 in 7.0223 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:25:45 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "86b958b7-7554-412e-8952-7ebc071e27a3", "ActionName": "WorkflowService.Controllers.TasksController.ClaimTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP6:00000001", "RequestPath": "/api/workflow/tasks/70/claim", "ConnectionId": "0HNFA6HJFIDP6"}
+[15:25:45 INF] Published task assigned 70 {"SourceContext": "WorkflowService.Services.EventPublisher", "ActionId": "86b958b7-7554-412e-8952-7ebc071e27a3", "ActionName": "WorkflowService.Controllers.TasksController.ClaimTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP6:00000001", "RequestPath": "/api/workflow/tasks/70/claim", "ConnectionId": "0HNFA6HJFIDP6"}
+[15:25:45 DBG] TASK_NOTIFY User=6 Tenant=1 {"SourceContext": "WorkflowService.Services.TaskNotificationDispatcher", "ActionId": "86b958b7-7554-412e-8952-7ebc071e27a3", "ActionName": "WorkflowService.Controllers.TasksController.ClaimTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP6:00000001", "RequestPath": "/api/workflow/tasks/70/claim", "ConnectionId": "0HNFA6HJFIDP6"}
+[15:25:45 DBG] TASK_NOTIFY Tenant=1 {"SourceContext": "WorkflowService.Services.TaskNotificationDispatcher", "ActionId": "86b958b7-7554-412e-8952-7ebc071e27a3", "ActionName": "WorkflowService.Controllers.TasksController.ClaimTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP6:00000001", "RequestPath": "/api/workflow/tasks/70/claim", "ConnectionId": "0HNFA6HJFIDP6"}
+[15:25:45 INF] User 6 claimed task 70 {"SourceContext": "WorkflowService.Services.TaskService", "ActionId": "86b958b7-7554-412e-8952-7ebc071e27a3", "ActionName": "WorkflowService.Controllers.TasksController.ClaimTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP6:00000001", "RequestPath": "/api/workflow/tasks/70/claim", "ConnectionId": "0HNFA6HJFIDP6"}
+[15:25:45 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "86b958b7-7554-412e-8952-7ebc071e27a3", "ActionName": "WorkflowService.Controllers.TasksController.ClaimTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP6:00000001", "RequestPath": "/api/workflow/tasks/70/claim", "ConnectionId": "0HNFA6HJFIDP6"}
+[15:25:45 INF] HTTP POST /api/workflow/tasks/70/claim responded 200 in 19.8575 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:25:45 INF] WF_API_MY_TASKS Count=41 {"SourceContext": "WorkflowService.Controllers.TasksController", "ActionId": "8713f52a-7aed-4d2b-9bb0-13bebfa57aa1", "ActionName": "WorkflowService.Controllers.TasksController.GetMyTasks (WorkflowService)", "RequestId": "0HNFA6HJFIDP7:00000001", "RequestPath": "/api/workflow/tasks/mine", "ConnectionId": "0HNFA6HJFIDP7"}
+[15:25:45 INF] HTTP GET /api/workflow/tasks/mine responded 200 in 7.9624 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:25:45 INF] OUTBOX_BATCH Size=2 {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:25:45 INF] OUTBOX_DISPATCH EventType=workflow.task.assigned Id=427 Tenant=1 Retry=0 PayloadSize=109 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:25:45 INF] OUTBOX_DISPATCH EventType=workflow.task.assigned Id=428 Tenant=1 Retry=0 PayloadSize=109 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:25:45 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
+[15:25:49 INF] WF_ADVANCE Instance=38 FromNode=humanTask-1756821341483 Next=[end-1756821348079] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP8:00000001", "RequestPath": "/api/workflow/tasks/68/complete", "ConnectionId": "0HNFA6HJFIDP8"}
+[15:25:49 INF] WF_CONTINUE Instance=38 Nodes=[humanTask-1756821363938,end-1756821348079] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP8:00000001", "RequestPath": "/api/workflow/tasks/68/complete", "ConnectionId": "0HNFA6HJFIDP8"}
+[15:25:49 INF] WF_NODE_EXEC_START Instance=38 Node=end-1756821348079 Type=end {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP8:00000001", "RequestPath": "/api/workflow/tasks/68/complete", "ConnectionId": "0HNFA6HJFIDP8"}
+[15:25:49 INF] Executing end node end-1756821348079 for instance 38 {"SourceContext": "WorkflowService.Engine.Executors.StartEndExecutor", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP8:00000001", "RequestPath": "/api/workflow/tasks/68/complete", "ConnectionId": "0HNFA6HJFIDP8"}
+[15:25:49 INF] WF_NODE_ADVANCE Instance=38 Node=end-1756821348079 Next=[] {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP8:00000001", "RequestPath": "/api/workflow/tasks/68/complete", "ConnectionId": "0HNFA6HJFIDP8"}
+[15:25:49 INF] WF_INSTANCE_COMPLETE Instance=38 {"SourceContext": "WorkflowService.Engine.WorkflowRuntime", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP8:00000001", "RequestPath": "/api/workflow/tasks/68/complete", "ConnectionId": "0HNFA6HJFIDP8"}
+[15:25:49 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP8:00000001", "RequestPath": "/api/workflow/tasks/68/complete", "ConnectionId": "0HNFA6HJFIDP8"}
+[15:25:49 DBG] TASK_NOTIFY User=6 Tenant=1 {"SourceContext": "WorkflowService.Services.TaskNotificationDispatcher", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP8:00000001", "RequestPath": "/api/workflow/tasks/68/complete", "ConnectionId": "0HNFA6HJFIDP8"}
+[15:25:49 DBG] TASK_NOTIFY Tenant=1 {"SourceContext": "WorkflowService.Services.TaskNotificationDispatcher", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP8:00000001", "RequestPath": "/api/workflow/tasks/68/complete", "ConnectionId": "0HNFA6HJFIDP8"}
+[15:25:49 DBG] TASK_NOTIFY Tenant=1 {"SourceContext": "WorkflowService.Services.TaskNotificationDispatcher", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP8:00000001", "RequestPath": "/api/workflow/tasks/68/complete", "ConnectionId": "0HNFA6HJFIDP8"}
+[15:25:49 DBG] TASK_NOTIFY User=6 Tenant=1 {"SourceContext": "WorkflowService.Services.TaskNotificationDispatcher", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP8:00000001", "RequestPath": "/api/workflow/tasks/68/complete", "ConnectionId": "0HNFA6HJFIDP8"}
+[15:25:49 DBG] TASK_NOTIFY Tenant=1 {"SourceContext": "WorkflowService.Services.TaskNotificationDispatcher", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP8:00000001", "RequestPath": "/api/workflow/tasks/68/complete", "ConnectionId": "0HNFA6HJFIDP8"}
+[15:25:49 DBG] TASK_NOTIFY Tenant=1 {"SourceContext": "WorkflowService.Services.TaskNotificationDispatcher", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP8:00000001", "RequestPath": "/api/workflow/tasks/68/complete", "ConnectionId": "0HNFA6HJFIDP8"}
+[15:25:49 INF] User 6 completed task 68 {"SourceContext": "WorkflowService.Services.TaskService", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP8:00000001", "RequestPath": "/api/workflow/tasks/68/complete", "ConnectionId": "0HNFA6HJFIDP8"}
+[15:25:49 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDP8:00000001", "RequestPath": "/api/workflow/tasks/68/complete", "ConnectionId": "0HNFA6HJFIDP8"}
+[15:25:49 INF] HTTP POST /api/workflow/tasks/68/complete responded 200 in 46.6510 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:25:49 INF] WF_API_MY_TASKS Count=41 {"SourceContext": "WorkflowService.Controllers.TasksController", "ActionId": "8713f52a-7aed-4d2b-9bb0-13bebfa57aa1", "ActionName": "WorkflowService.Controllers.TasksController.GetMyTasks (WorkflowService)", "RequestId": "0HNFA6HJFIDP9:00000001", "RequestPath": "/api/workflow/tasks/mine", "ConnectionId": "0HNFA6HJFIDP9"}
+[15:25:49 INF] HTTP GET /api/workflow/tasks/mine responded 200 in 8.1209 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:25:53 ERR] Error completing task 70 {"SourceContext": "WorkflowService.Services.TaskService", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDPA:00000001", "RequestPath": "/api/workflow/tasks/70/complete", "ConnectionId": "0HNFA6HJFIDPA"}
+System.InvalidOperationException: Cannot complete task; instance 38 not running
+   at WorkflowService.Engine.WorkflowRuntime.CompleteTaskAsync(Int32 taskId, String completionData, Int32 completedByUserId, CancellationToken cancellationToken, Boolean autoCommit) in /src/src/services/WorkflowService/Engine/WorkflowRuntime.cs:line 223
+   at WorkflowService.Services.TaskService.CompleteTaskAsync(Int32 taskId, CompleteTaskRequestDto request, CancellationToken cancellationToken) in /src/src/services/WorkflowService/Services/TaskService.cs:line 195
+[15:25:53 INF] HTTP POST /api/workflow/tasks/70/complete responded 400 in 23.8599 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:26:00 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[15:26:00 INF] OUTBOX_BATCH Size=4 {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[15:26:00 INF] OUTBOX_DISPATCH EventType=workflow.task.completed Id=429 Tenant=1 Retry=0 PayloadSize=106 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:26:00 INF] OUTBOX_DISPATCH EventType=workflow.edge.edgetraversed Id=430 Tenant=1 Retry=0 PayloadSize=168 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:26:00 INF] OUTBOX_DISPATCH EventType=workflow.instance.completed Id=431 Tenant=1 Retry=0 PayloadSize=27 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:26:00 INF] OUTBOX_DISPATCH EventType=workflow.node.executed Id=432 Tenant=1 Retry=0 PayloadSize=93 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[15:26:00 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
+[15:26:00 ERR] Error completing task 70 {"SourceContext": "WorkflowService.Services.TaskService", "ActionId": "c68b51ec-c0b0-40bd-ae69-b35cf099a83b", "ActionName": "WorkflowService.Controllers.TasksController.CompleteTask (WorkflowService)", "RequestId": "0HNFA6HJFIDPB:00000001", "RequestPath": "/api/workflow/tasks/70/complete", "ConnectionId": "0HNFA6HJFIDPB"}
+System.InvalidOperationException: Cannot complete task; instance 38 not running
+   at WorkflowService.Engine.WorkflowRuntime.CompleteTaskAsync(Int32 taskId, String completionData, Int32 completedByUserId, CancellationToken cancellationToken, Boolean autoCommit) in /src/src/services/WorkflowService/Engine/WorkflowRuntime.cs:line 223
+   at WorkflowService.Services.TaskService.CompleteTaskAsync(Int32 taskId, CompleteTaskRequestDto request, CancellationToken cancellationToken) in /src/src/services/WorkflowService/Services/TaskService.cs:line 195
+[15:26:00 INF] HTTP POST /api/workflow/tasks/70/complete responded 400 in 8.3655 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[15:26:05 INF] HTTP GET /health responded 200 in 8.9121 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
 PS C:\Users\mccre\dev\boiler>
