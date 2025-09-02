@@ -17,6 +17,8 @@ public class EventPublisher : IEventPublisher
         _logger = logger;
     }
 
+    private static Guid NewKey() => Guid.NewGuid();
+
     public async Task PublishInstanceStartedAsync(WorkflowInstance instance, CancellationToken cancellationToken = default)
     {
         AddWorkflowEvent(instance.Id, instance.TenantId, "Instance", "Started", new
@@ -37,7 +39,7 @@ public class EventPublisher : IEventPublisher
         }, instance.TenantId);
 
         await _context.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Published instance started event for workflow instance {InstanceId}", instance.Id);
+        _logger.LogInformation("Published instance started event {InstanceId}", instance.Id);
     }
 
     public async Task PublishInstanceCompletedAsync(WorkflowInstance instance, CancellationToken cancellationToken = default)
@@ -65,7 +67,7 @@ public class EventPublisher : IEventPublisher
         }, instance.TenantId);
 
         await _context.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Published instance completed event for workflow instance {InstanceId}", instance.Id);
+        _logger.LogInformation("Published instance completed event {InstanceId}", instance.Id);
     }
 
     public async Task PublishInstanceFailedAsync(WorkflowInstance instance, string errorMessage, CancellationToken cancellationToken = default)
@@ -91,8 +93,7 @@ public class EventPublisher : IEventPublisher
         }, instance.TenantId);
 
         await _context.SaveChangesAsync(cancellationToken);
-        _logger.LogWarning("Published instance failed event for workflow instance {InstanceId}: {ErrorMessage}",
-            instance.Id, errorMessage);
+        _logger.LogWarning("Published instance failed event {InstanceId}: {ErrorMessage}", instance.Id, errorMessage);
     }
 
     public async Task PublishTaskCreatedAsync(WorkflowTask task, CancellationToken cancellationToken = default)
@@ -122,7 +123,7 @@ public class EventPublisher : IEventPublisher
         }, tenantId);
 
         await _context.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Published task created event for task {TaskId}", task.Id);
+        _logger.LogInformation("Published task created {TaskId}", task.Id);
     }
 
     public async Task PublishTaskCompletedAsync(WorkflowTask task, int completedByUserId, CancellationToken cancellationToken = default)
@@ -154,8 +155,7 @@ public class EventPublisher : IEventPublisher
         }, tenantId);
 
         await _context.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Published task completed event for task {TaskId} by user {UserId}",
-            task.Id, completedByUserId);
+        _logger.LogInformation("Published task completed {TaskId}", task.Id);
     }
 
     public async Task PublishTaskAssignedAsync(WorkflowTask task, int assignedToUserId, CancellationToken cancellationToken = default)
@@ -182,8 +182,7 @@ public class EventPublisher : IEventPublisher
         }, tenantId);
 
         await _context.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Published task assigned event for task {TaskId} to user {UserId}",
-            task.Id, assignedToUserId);
+        _logger.LogInformation("Published task assigned {TaskId}", task.Id);
     }
 
     public async Task PublishDefinitionPublishedAsync(WorkflowDefinition definition, CancellationToken cancellationToken = default)
@@ -199,20 +198,16 @@ public class EventPublisher : IEventPublisher
         }, definition.TenantId);
 
         await _context.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Published definition published event for workflow definition {DefinitionId} version {Version}",
-            definition.Id, definition.Version);
+        _logger.LogInformation("Published definition published {DefinitionId}", definition.Id);
     }
 
     public async Task PublishCustomEventAsync(string eventType, string eventName, object eventData, int tenantId, int? userId = null, CancellationToken cancellationToken = default)
     {
         var normalized = $"workflow.{eventType.ToLowerInvariant()}.{eventName.ToLowerInvariant()}";
-
         AddWorkflowEvent(0, tenantId, eventType, eventName, eventData, userId);
         AddOutboxMessage(normalized, eventData, tenantId);
-
         await _context.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Published custom event {EventType}.{EventName} for tenant {TenantId}",
-            eventType, eventName, tenantId);
+        _logger.LogInformation("Published custom event {Event}", normalized);
     }
 
     public async Task ProcessOutboxMessagesAsync(CancellationToken cancellationToken = default)
@@ -225,52 +220,40 @@ public class EventPublisher : IEventPublisher
                 .Take(100)
                 .ToListAsync(cancellationToken);
 
-            _logger.LogInformation("Processing {MessageCount} outbox messages", messages.Count);
+            if (messages.Count == 0) return;
 
             foreach (var message in messages)
             {
                 try
                 {
-                    _logger.LogDebug("Processing outbox message {MessageId}: {EventType}",
-                        message.Id, message.EventType);
-
+                    // Here we would dispatch externally; MVP just marks processed
                     message.IsProcessed = true;
                     message.ProcessedAt = DateTime.UtcNow;
                     message.UpdatedAt = DateTime.UtcNow;
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Failed to process outbox message {MessageId}", message.Id);
-
                     message.RetryCount++;
                     message.LastError = ex.Message;
                     message.UpdatedAt = DateTime.UtcNow;
-
                     if (message.RetryCount >= 5)
                     {
                         message.IsProcessed = true;
                         message.ProcessedAt = DateTime.UtcNow;
-                        _logger.LogError("Outbox message {MessageId} failed after {RetryCount} retries",
-                            message.Id, message.RetryCount);
                     }
                 }
             }
-
-            if (messages.Count > 0)
-            {
-                await _context.SaveChangesAsync(cancellationToken);
-                _logger.LogInformation("Completed processing {MessageCount} outbox messages", messages.Count);
-            }
+            await _context.SaveChangesAsync(cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing outbox messages");
+            _logger.LogError(ex, "Outbox processing failed");
         }
     }
 
     private void AddWorkflowEvent(int workflowInstanceId, int tenantId, string eventType, string eventName, object eventData, int? userId)
     {
-        var workflowEvent = new WorkflowEvent
+        _context.WorkflowEvents.Add(new WorkflowEvent
         {
             WorkflowInstanceId = workflowInstanceId,
             TenantId = tenantId,
@@ -281,40 +264,34 @@ public class EventPublisher : IEventPublisher
             UserId = userId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
-        };
-        _context.WorkflowEvents.Add(workflowEvent);
+        });
     }
 
     private void AddOutboxMessage(string eventType, object eventData, int tenantId)
     {
-        var json = JsonSerializer.Serialize(eventData);
-        var msg = new OutboxMessage
+        _context.OutboxMessages.Add(new OutboxMessage
         {
             EventType = eventType,
-            EventData = json,
+            EventData = JsonSerializer.Serialize(eventData),
             IsProcessed = false,
             TenantId = tenantId,
             RetryCount = 0,
+            IdempotencyKey = Guid.NewGuid(), // NEW
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
-        };
-        _context.OutboxMessages.Add(msg);
+        });
     }
 
     private int GetTenantIdFromTask(WorkflowTask task)
     {
         try
         {
-            var instance = _context.WorkflowInstances
+            return _context.WorkflowInstances
                 .AsNoTracking()
                 .Where(i => i.Id == task.WorkflowInstanceId)
-                .Select(i => new { i.TenantId })
+                .Select(i => i.TenantId)
                 .FirstOrDefault();
-            return instance?.TenantId ?? 0;
         }
-        catch
-        {
-            return 0;
-        }
+        catch { return 0; }
     }
 }

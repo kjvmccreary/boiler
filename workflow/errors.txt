@@ -1,22 +1,49 @@
-PS C:\Users\mccre\dev\boiler\src\frontend\react-app> npm run build
+PS C:\Users\mccre\dev\boiler\src\services\WorkflowService> dotnet ef database update --context WorkflowDbContext
+Build started...
+Build succeeded.
+[16:01:32 ERR] Failed executing DbCommand (5ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+CREATE UNIQUE INDEX "IX_OutboxMessages_TenantId_IdempotencyKey" ON "OutboxMessages" ("TenantId", "IdempotencyKey"); {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command"}
+Npgsql.PostgresException (0x80004005): 23505: could not create unique index "IX_OutboxMessages_TenantId_IdempotencyKey"
 
-> microservices-frontend@0.0.0 build
-> tsc -b && vite build
+DETAIL: Key ("TenantId", "IdempotencyKey")=(1, 00000000-0000-0000-0000-000000000000) is duplicated.
+   at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlDataReader.NextResult()
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteNonQuery()
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQuery(RelationalCommandParameterObject parameterObject)
+   at Microsoft.EntityFrameworkCore.Migrations.MigrationCommand.ExecuteNonQuery(IRelationalConnection connection, IReadOnlyDictionary`2 parameterValues)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.Execute(IReadOnlyList`1 migrationCommands, IRelationalConnection connection, MigrationExecutionState executionState, Boolean beginTransaction, Boolean commitTransaction, Nullable`1 isolationLevel)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.<>c.<ExecuteNonQuery>b__3_1(DbContext _, ValueTuple`6 s)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQuery(IReadOnlyList`1 migrationCommands, IRelationalConnection connection, MigrationExecutionState executionState, Boolean commitTransaction, Nullable`1 isolationLevel)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.MigrateImplementation(DbContext context, String targetMigration, MigrationExecutionState state, Boolean useTransaction)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.<>c.<Migrate>b__20_1(DbContext c, ValueTuple`4 s)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass28_0`2.<Execute>b__0(DbContext context, TState state)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementation[TState,TResult](Func`3 operation, Func`3 verifySucceeded, TState state)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(String targetMigration)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal.NpgsqlMigrator.Migrate(String targetMigration)
+   at Microsoft.EntityFrameworkCore.Design.Internal.MigrationsOperations.UpdateDatabase(String targetMigration, String connectionString, String contextType)
+   at Microsoft.EntityFrameworkCore.Design.OperationExecutor.UpdateDatabaseImpl(String targetMigration, String connectionString, String contextType)
+   at Microsoft.EntityFrameworkCore.Design.OperationExecutor.UpdateDatabase.<>c__DisplayClass0_0.<.ctor>b__0()
+   at Microsoft.EntityFrameworkCore.Design.OperationExecutor.OperationBase.Execute(Action action)
+  Exception data:
+    Severity: ERROR
+    SqlState: 23505
+    MessageText: could not create unique index "IX_OutboxMessages_TenantId_IdempotencyKey"
+    Detail: Key ("TenantId", "IdempotencyKey")=(1, 00000000-0000-0000-0000-000000000000) is duplicated.
+    SchemaName: public
+    TableName: OutboxMessages
+    ConstraintName: IX_OutboxMessages_TenantId_IdempotencyKey
+    File: tuplesort.c
+    Line: 4423
+    Routine: comparetup_index_btree
+23505: could not create unique index "IX_OutboxMessages_TenantId_IdempotencyKey"
 
-src/features/workflow/tasks/MyTasksPage.tsx:144:92 - error TS2304: Cannot find name 'CheckCircle'.
-
-144       case 'Completed': return <Chip label="Completed" color="success" size="small" icon={<CheckCircle />} />;
-                                                                                               ~~~~~~~~~~~
-
-src/features/workflow/tasks/MyTasksPage.tsx:184:18 - error TS2304: Cannot find name 'ScheduleIcon'.
-
-184                 <ScheduleIcon color="error" fontSize="small" sx={{ mr: 0.5 }} />
-                     ~~~~~~~~~~~~
-
-src/features/workflow/tasks/MyTasksPage.tsx:262:22 - error TS2304: Cannot find name 'CheckCircle'.
-
-262               icon={<CheckCircle />}
-                         ~~~~~~~~~~~
-
-
-Found 3 errors.
+DETAIL: Key ("TenantId", "IdempotencyKey")=(1, 00000000-0000-0000-0000-000000000000) is duplicated.
+PS C:\Users\mccre\dev\boiler\src\services\WorkflowService>

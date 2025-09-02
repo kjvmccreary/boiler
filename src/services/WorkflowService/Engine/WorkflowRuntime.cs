@@ -6,6 +6,7 @@ using WorkflowService.Engine.Interfaces;
 using WorkflowService.Persistence;
 using DTOs.Workflow.Enums;
 using Contracts.Services;
+using WorkflowService.Services.Interfaces;
 
 namespace WorkflowService.Engine;
 
@@ -22,6 +23,7 @@ public class WorkflowRuntime : IWorkflowRuntime
     private readonly ILogger<WorkflowRuntime> _logger;
     private readonly ITenantProvider _tenantProvider;
     private readonly IConditionEvaluator _conditionEvaluator;
+    private readonly ITaskNotificationDispatcher _taskNotifier;
 
     // Cache to avoid repeated tenant lookups per instance
     private readonly Dictionary<int, int> _instanceTenantCache = new();
@@ -34,12 +36,14 @@ public class WorkflowRuntime : IWorkflowRuntime
         IEnumerable<INodeExecutor> executors,
         ITenantProvider tenantProvider,
         IConditionEvaluator conditionEvaluator,
+        ITaskNotificationDispatcher taskNotifier,
         ILogger<WorkflowRuntime> logger)
     {
         _context = context;
         _executors = executors;
         _tenantProvider = tenantProvider;
         _conditionEvaluator = conditionEvaluator;
+        _taskNotifier = taskNotifier;
         _logger = logger;
     }
 
@@ -165,18 +169,39 @@ public class WorkflowRuntime : IWorkflowRuntime
         CancellationToken cancellationToken = default,
         bool autoCommit = true)
     {
+        // Primary lookup (respects tenant filter)
         var task = await _context.WorkflowTasks
             .Include(t => t.WorkflowInstance)
                 .ThenInclude(i => i.WorkflowDefinition)
-            .FirstOrDefaultAsync(t => t.Id == taskId, cancellationToken)
-            ?? throw new InvalidOperationException($"Workflow task {taskId} not found");
+            .FirstOrDefaultAsync(t => t.Id == taskId, cancellationToken);
+
+        // Fallback: if system timer completion (completedByUserId == 0) and not found, bypass filter
+        if (task == null && completedByUserId == 0)
+        {
+            task = await _context.WorkflowTasks
+                .IgnoreQueryFilters()
+                .Include(t => t.WorkflowInstance)
+                    .ThenInclude(i => i.WorkflowDefinition)
+                .FirstOrDefaultAsync(t => t.Id == taskId, cancellationToken);
+
+            if (task == null)
+                throw new InvalidOperationException($"Workflow task {taskId} not found (even ignoring filters)");
+
+            // Set tenant cache to allow subsequent events
+            if (!_instanceTenantCache.ContainsKey(task.WorkflowInstance.Id))
+                _instanceTenantCache[task.WorkflowInstance.Id] = task.WorkflowInstance.TenantId;
+        }
+
+        if (task == null)
+            throw new InvalidOperationException($"Workflow task {taskId} not found");
 
         var instance = task.WorkflowInstance;
-        if (!_instanceTenantCache.ContainsKey(instance.Id))
-            _instanceTenantCache[instance.Id] = instance.TenantId;
 
         if (instance.Status != InstanceStatus.Running)
             throw new InvalidOperationException($"Cannot complete task; instance {instance.Id} not running");
+
+        if (!_instanceTenantCache.ContainsKey(instance.Id))
+            _instanceTenantCache[instance.Id] = instance.TenantId;
 
         var workflowDef = BuilderDefinitionAdapter.Parse(instance.WorkflowDefinition.JSONDefinition);
         var node = workflowDef.Nodes.FirstOrDefault(n => n.Id == task.NodeId)
@@ -191,7 +216,8 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         if (isTimer &&
             task.Status != DTOs.Workflow.Enums.TaskStatus.Created &&
-            task.Status != DTOs.Workflow.Enums.TaskStatus.Assigned)
+            task.Status != DTOs.Workflow.Enums.TaskStatus.Assigned &&
+            task.Status != DTOs.Workflow.Enums.TaskStatus.InProgress)
             throw new InvalidOperationException($"Timer task {taskId} unexpected status {task.Status}");
 
         task.Status = DTOs.Workflow.Enums.TaskStatus.Completed;
@@ -210,7 +236,7 @@ public class WorkflowRuntime : IWorkflowRuntime
             }), completedByUserId == 0 ? null : completedByUserId);
 
         var currentNodes = JsonSerializer.Deserialize<List<string>>(instance.CurrentNodeIds) ?? new List<string>();
-        var removed = currentNodes.Remove(task.NodeId);
+        currentNodes.Remove(task.NodeId);
 
         var nextNodeIds = GetOutgoingTargetsForAdvance(workflowDef, node, instance);
 
@@ -233,26 +259,36 @@ public class WorkflowRuntime : IWorkflowRuntime
             instance.CurrentNodeIds = JsonSerializer.Serialize(Array.Empty<string>());
             MarkDirty();
             await CreateEventAsync(instance.Id, "Instance", "Completed",
-                "{\"reason\":\"end-of-path\"}", completedByUserId);
-            _logger.LogInformation("WF_ADVANCE_COMPLETE Instance={InstanceId} Node={NodeId} EndOfPath RemovedNode={Removed}",
-                instance.Id, node.Id, removed);
+                "{\"reason\":\"end-of-path\"}", completedByUserId == 0 ? null : completedByUserId);
+            _logger.LogInformation("WF_ADVANCE_COMPLETE Instance={InstanceId} Node={NodeId}", instance.Id, node.Id);
         }
         else
         {
             foreach (var n in nextNodeIds)
-                if (!currentNodes.Contains(n))
-                    currentNodes.Add(n);
-
+                if (!currentNodes.Contains(n)) currentNodes.Add(n);
             instance.CurrentNodeIds = JsonSerializer.Serialize(currentNodes);
             MarkDirty();
-            _logger.LogInformation("WF_ADVANCE Instance={InstanceId} FromNode={NodeId} Next=[{Next}] Removed={Removed}",
-                instance.Id, node.Id, string.Join(",", nextNodeIds), removed);
+            _logger.LogInformation("WF_ADVANCE Instance={InstanceId} FromNode={NodeId} Next=[{Next}]",
+                instance.Id, node.Id, string.Join(",", nextNodeIds));
         }
 
         if (instance.Status == InstanceStatus.Running)
             await ContinueWorkflowAsync(instance.Id, cancellationToken);
 
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
+
+        // Notify affected parties if human task completed
+        if (!isTimer)
+        {
+            try
+            {
+                var tenantId = instance.TenantId;
+                if (task.AssignedToUserId.HasValue)
+                    await _taskNotifier.NotifyUserAsync(tenantId, task.AssignedToUserId.Value, cancellationToken);
+                await _taskNotifier.NotifyTenantAsync(tenantId, cancellationToken);
+            }
+            catch { /* swallow notification errors */ }
+        }
     }
 
     public async Task CancelWorkflowAsync(
@@ -375,6 +411,19 @@ public class WorkflowRuntime : IWorkflowRuntime
                         taskId = 0,
                         label = node.Properties.GetValueOrDefault("label") ?? node.Id
                     }), null);
+
+                // Notify on creation of human tasks
+                if (result.CreatedTask.NodeType == "human")
+                {
+                    try
+                    {
+                        var tenantId = instance.TenantId;
+                        if (result.CreatedTask.AssignedToUserId.HasValue)
+                            await _taskNotifier.NotifyUserAsync(tenantId, result.CreatedTask.AssignedToUserId.Value, cancellationToken);
+                        await _taskNotifier.NotifyTenantAsync(tenantId, cancellationToken);
+                    }
+                    catch { }
+                }
             }
 
             if (!result.ShouldWait)

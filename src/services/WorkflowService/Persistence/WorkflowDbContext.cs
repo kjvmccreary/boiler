@@ -25,7 +25,6 @@ public class WorkflowDbContext : DbContext
         _logger = logger;
     }
 
-    // Workflow entities
     public DbSet<WorkflowDefinition> WorkflowDefinitions { get; set; }
     public DbSet<WorkflowInstance> WorkflowInstances { get; set; }
     public DbSet<WorkflowTask> WorkflowTasks { get; set; }
@@ -53,23 +52,17 @@ public class WorkflowDbContext : DbContext
                                    .Any(a => a.FullName?.Contains("xunit") == true ||
                                             a.FullName?.Contains("Microsoft.VisualStudio.TestPlatform") == true);
 
-        if (isTestEnvironment)
-        {
-            return;
-        }
+        if (isTestEnvironment) return;
 
         modelBuilder.Entity<WorkflowDefinition>().HasQueryFilter(wd =>
             EF.Property<int>(wd, "TenantId") == GetCurrentTenantIdFromProvider());
-
         modelBuilder.Entity<WorkflowInstance>().HasQueryFilter(wi =>
             EF.Property<int>(wi, "TenantId") == GetCurrentTenantIdFromProvider());
-
         modelBuilder.Entity<WorkflowTask>().HasQueryFilter(wt =>
             EF.Property<int>(wt, "TenantId") == GetCurrentTenantIdFromProvider());
-
         modelBuilder.Entity<WorkflowEvent>().HasQueryFilter(we =>
             EF.Property<int>(we, "TenantId") == GetCurrentTenantIdFromProvider());
-        // NOTE: OutboxMessages intentionally NOT filtered (cross-tenant ops / diagnostics possible)
+        // OutboxMessages intentionally not tenant filtered (diagnostics / cross-scope ops)
     }
 
     private int? GetCurrentTenantIdFromProvider()
@@ -78,34 +71,22 @@ public class WorkflowDbContext : DbContext
         {
             var context = _httpContextAccessor.HttpContext;
             if (context?.Items.TryGetValue("TenantId", out var tenantIdObj) == true)
-            {
                 return tenantIdObj as int?;
-            }
-
             var task = _tenantProvider.GetCurrentTenantIdAsync();
-            if (task.IsCompleted)
-            {
-                return task.Result;
-            }
-
+            if (task.IsCompleted) return task.Result;
             return null;
         }
-        catch
-        {
-            return null;
-        }
+        catch { return null; }
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("🔍 WorkflowDbContext: Starting SaveChangesAsync");
-
+        _logger.LogInformation("🔍 WorkflowDbContext: SaveChangesAsync starting");
         var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
-        _logger.LogInformation("🏢 WorkflowDbContext: Tenant ID resolved as: {TenantId}", tenantId);
 
         if (!tenantId.HasValue)
         {
-            _logger.LogWarning("❌ WorkflowDbContext: No tenant ID available - DB constraint will likely fail");
+            _logger.LogWarning("No tenant ID – proceeding (may fail on constraints).");
             UpdateTimestamps();
             return await base.SaveChangesAsync(cancellationToken);
         }
@@ -114,9 +95,7 @@ public class WorkflowDbContext : DbContext
         return await strategy.ExecuteAsync(async () =>
         {
             if (Database.GetDbConnection().State != ConnectionState.Open)
-            {
                 await Database.GetDbConnection().OpenAsync(cancellationToken);
-            }
 
             await using var tx = await Database.BeginTransactionAsync(cancellationToken);
 
@@ -124,13 +103,10 @@ public class WorkflowDbContext : DbContext
                 "SELECT set_config('app.tenant_id', {0}, true)",
                 tenantId.Value.ToString());
 
-            _logger.LogDebug("✅ WorkflowDbContext: Transaction-local tenant set to {TenantId}", tenantId.Value);
-
             SetTenantIdForNewEntities(tenantId.Value);
             UpdateTimestamps();
 
             var result = await base.SaveChangesAsync(cancellationToken);
-
             await tx.CommitAsync(cancellationToken);
             return result;
         });
@@ -138,104 +114,53 @@ public class WorkflowDbContext : DbContext
 
     private void SetTenantIdForNewEntities(int tenantId)
     {
-        var entitiesUpdated = 0;
-
         foreach (var entry in ChangeTracker.Entries())
         {
             if (entry.State != EntityState.Added) continue;
-
             switch (entry.Entity)
             {
                 case WorkflowDefinition wd when wd.TenantId == 0:
                     wd.TenantId = tenantId;
-                    entitiesUpdated++;
-                    foreach (var property in entry.Properties)
-                    {
-                        var value = property.CurrentValue;
-                        var propertyName = property.Metadata.Name;
-                        var clrType = property.Metadata.ClrType;
-
-                        if (clrType == typeof(string) && value is string s && s == "" &&
-                            (propertyName == "Tags" || propertyName == "PublishNotes" ||
-                             propertyName == "VersionNotes" || propertyName == "Description"))
-                        {
-                            property.CurrentValue = null;
-                        }
-                    }
-                    _logger.LogInformation("🔧 Null enforcement applied to WorkflowDefinition: {Name}", wd.Name);
                     break;
-
                 case WorkflowInstance wi when wi.TenantId == 0:
-                    wi.TenantId = tenantId; entitiesUpdated++;
-                    break;
-
+                    wi.TenantId = tenantId; break;
                 case WorkflowTask wt when wt.TenantId == 0:
-                    wt.TenantId = tenantId; entitiesUpdated++;
-                    break;
-
+                    wt.TenantId = tenantId; break;
                 case WorkflowEvent we when we.TenantId == 0:
-                    we.TenantId = tenantId; entitiesUpdated++;
-                    break;
-
+                    we.TenantId = tenantId; break;
                 case OutboxMessage om when om.TenantId == 0:
-                    // New addition: ensure OutboxMessages inherit tenant automatically
-                    om.TenantId = tenantId; entitiesUpdated++;
-                    break;
+                    om.TenantId = tenantId; break;
             }
         }
-
-        _logger.LogInformation("✅ WorkflowDbContext: Updated TenantId for {Count} entities", entitiesUpdated);
     }
 
     private void UpdateTimestamps()
     {
         var now = DateTime.UtcNow;
-
         foreach (var entry in ChangeTracker.Entries<BaseEntity>())
         {
-            switch (entry.State)
+            if (entry.State == EntityState.Added)
             {
-                case EntityState.Added:
-                    entry.Entity.CreatedAt = now;
-                    entry.Entity.UpdatedAt = now;
-                    break;
-
-                case EntityState.Modified:
-                    entry.Entity.UpdatedAt = now;
-                    break;
+                entry.Entity.CreatedAt = now;
+                entry.Entity.UpdatedAt = now;
+            }
+            else if (entry.State == EntityState.Modified)
+            {
+                entry.Entity.UpdatedAt = now;
             }
         }
     }
-
-    #region Entity Configurations
 
     private void ConfigureWorkflowDefinition(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<WorkflowDefinition>(entity =>
         {
             entity.HasKey(e => e.Id);
-
             entity.HasIndex(e => new { e.TenantId, e.Name, e.Version }).IsUnique();
             entity.HasIndex(e => new { e.TenantId, e.IsPublished });
-
-            entity.Property(e => e.TenantId).IsRequired();
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
-            entity.Property(e => e.Version).IsRequired();
             entity.Property(e => e.JSONDefinition).IsRequired().HasColumnType("jsonb");
-            entity.Property(e => e.IsPublished).IsRequired();
-            entity.Property(e => e.Description).HasMaxLength(1000);
-            entity.Property(e => e.CreatedAt).IsRequired();
-            entity.Property(e => e.UpdatedAt).IsRequired();
-
             entity.ToTable(t => t.HasCheckConstraint("CK_WorkflowDefinition_TenantId",
                 "\"TenantId\" = current_setting('app.tenant_id')::int"));
-
-            entity.Property(e => e.Tags).IsRequired(false).HasMaxLength(500);
-            entity.Property(e => e.PublishNotes).IsRequired(false).HasMaxLength(1000);
-            entity.Property(e => e.VersionNotes).IsRequired(false).HasMaxLength(1000);
-            entity.Property(e => e.PublishedByUserId).IsRequired(false);
-            entity.Property(e => e.PublishedAt).IsRequired(false);
-            entity.Property(e => e.ParentDefinitionId).IsRequired(false);
         });
     }
 
@@ -244,27 +169,10 @@ public class WorkflowDbContext : DbContext
         modelBuilder.Entity<WorkflowInstance>(entity =>
         {
             entity.HasKey(e => e.Id);
-
             entity.HasIndex(e => new { e.TenantId, e.Status });
             entity.HasIndex(e => new { e.TenantId, e.WorkflowDefinitionId });
-            entity.HasIndex(e => new { e.TenantId, e.StartedAt });
-
-            entity.Property(e => e.TenantId).IsRequired();
-            entity.Property(e => e.WorkflowDefinitionId).IsRequired();
-            entity.Property(e => e.DefinitionVersion).IsRequired();
-            entity.Property(e => e.Status).IsRequired();
-            entity.Property(e => e.CurrentNodeIds).IsRequired().HasColumnType("jsonb");
-            entity.Property(e => e.Context).IsRequired().HasColumnType("jsonb");
-            entity.Property(e => e.StartedAt).IsRequired();
-            entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
-            entity.Property(e => e.CreatedAt).IsRequired();
-            entity.Property(e => e.UpdatedAt).IsRequired();
-
-            entity.HasOne(e => e.WorkflowDefinition)
-                  .WithMany(wd => wd.Instances)
-                  .HasForeignKey(e => e.WorkflowDefinitionId)
-                  .OnDelete(DeleteBehavior.Restrict);
-
+            entity.Property(e => e.CurrentNodeIds).HasColumnType("jsonb");
+            entity.Property(e => e.Context).HasColumnType("jsonb");
             entity.ToTable(t => t.HasCheckConstraint("CK_WorkflowInstance_TenantId",
                 "\"TenantId\" = current_setting('app.tenant_id')::int"));
         });
@@ -275,30 +183,9 @@ public class WorkflowDbContext : DbContext
         modelBuilder.Entity<WorkflowTask>(entity =>
         {
             entity.HasKey(e => e.Id);
-
             entity.HasIndex(e => new { e.TenantId, e.Status });
-            entity.HasIndex(e => new { e.TenantId, e.AssignedToUserId });
             entity.HasIndex(e => new { e.TenantId, e.DueDate });
-            entity.HasIndex(e => new { e.WorkflowInstanceId, e.Status });
-            entity.HasIndex(e => new { e.AssignedToRole, e.Status });
-
-            entity.Property(e => e.TenantId).IsRequired();
-            entity.Property(e => e.WorkflowInstanceId).IsRequired();
-            entity.Property(e => e.NodeId).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.TaskName).IsRequired().HasMaxLength(255);
-            entity.Property(e => e.Status).IsRequired();
-            entity.Property(e => e.AssignedToRole).HasMaxLength(100);
-            entity.Property(e => e.Data).IsRequired().HasColumnType("jsonb");
-            entity.Property(e => e.CompletionData).HasMaxLength(1000);
-            entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
-            entity.Property(e => e.CreatedAt).IsRequired();
-            entity.Property(e => e.UpdatedAt).IsRequired();
-
-            entity.HasOne(e => e.WorkflowInstance)
-                  .WithMany(wi => wi.Tasks)
-                  .HasForeignKey(e => e.WorkflowInstanceId)
-                  .OnDelete(DeleteBehavior.Cascade);
-
+            entity.Property(e => e.Data).HasColumnType("jsonb");
             entity.ToTable(t => t.HasCheckConstraint("CK_WorkflowTask_TenantId",
                 "\"TenantId\" = current_setting('app.tenant_id')::int"));
         });
@@ -309,25 +196,8 @@ public class WorkflowDbContext : DbContext
         modelBuilder.Entity<WorkflowEvent>(entity =>
         {
             entity.HasKey(e => e.Id);
-
             entity.HasIndex(e => new { e.TenantId, e.Type, e.OccurredAt });
-            entity.HasIndex(e => new { e.TenantId, e.UserId });
-            entity.HasIndex(e => new { e.WorkflowInstanceId, e.OccurredAt });
-
-            entity.Property(e => e.TenantId).IsRequired();
-            entity.Property(e => e.WorkflowInstanceId).IsRequired();
-            entity.Property(e => e.Type).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
-            entity.Property(e => e.Data).IsRequired().HasColumnType("jsonb");
-            entity.Property(e => e.OccurredAt).IsRequired();
-            entity.Property(e => e.CreatedAt).IsRequired();
-            entity.Property(e => e.UpdatedAt).IsRequired();
-
-            entity.HasOne(e => e.WorkflowInstance)
-                  .WithMany(wi => wi.Events)
-                  .HasForeignKey(e => e.WorkflowInstanceId)
-                  .OnDelete(DeleteBehavior.Cascade);
-
+            entity.Property(e => e.Data).HasColumnType("jsonb");
             entity.ToTable(t => t.HasCheckConstraint("CK_WorkflowEvent_TenantId",
                 "\"TenantId\" = current_setting('app.tenant_id')::int"));
         });
@@ -338,20 +208,11 @@ public class WorkflowDbContext : DbContext
         modelBuilder.Entity<OutboxMessage>(entity =>
         {
             entity.HasKey(e => e.Id);
-
             entity.HasIndex(e => new { e.IsProcessed, e.CreatedAt });
             entity.HasIndex(e => new { e.EventType, e.IsProcessed });
             entity.HasIndex(e => e.NextRetryAt);
-
-            entity.Property(e => e.EventType).IsRequired().HasMaxLength(255);
-            entity.Property(e => e.EventData).IsRequired().HasColumnType("jsonb");
-            entity.Property(e => e.IsProcessed).IsRequired();
-            entity.Property(e => e.RetryCount).IsRequired();
-            entity.Property(e => e.ErrorMessage).HasMaxLength(1000);
-            entity.Property(e => e.CreatedAt).IsRequired();
-            entity.Property(e => e.UpdatedAt).IsRequired();
+            entity.HasIndex(e => new { e.TenantId, e.IdempotencyKey }).IsUnique();
+            entity.Property(e => e.EventData).HasColumnType("jsonb");
         });
     }
-
-    #endregion
 }

@@ -17,22 +17,23 @@ using WorkflowService.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Serilog for .NET 9
+// Serilog configuration
 builder.Host.UseSerilog((hostingContext, loggerConfiguration) =>
 {
     loggerConfiguration.ReadFrom.Configuration(hostingContext.Configuration);
 });
 
-// Add services to the container
+// Controllers & JSON
 builder.Services
     .AddControllers()
     .AddJsonOptions(o =>
     {
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     });
+
 builder.Services.AddEndpointsApiExplorer();
 
-// Configure Swagger with JWT authentication support
+// Swagger + JWT
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
@@ -42,10 +43,9 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Workflow Engine Service with JSON-based definitions and execution"
     });
 
-    // JWT Authentication configuration for Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below.",
+        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' + space + token.",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
@@ -63,96 +63,89 @@ builder.Services.AddSwaggerGen(c =>
                     Id = "Bearer"
                 }
             },
-            new string[] {}
+            Array.Empty<string>()
         }
     });
 });
 
-// Add common services (JWT, configuration, etc.)
+// Common platform services
 builder.Services.AddCommonServices(builder.Configuration);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddDynamicAuthorization();
+builder.Services.AddDatabase(builder.Configuration); // Main shared ApplicationDbContext
 
-// Add the main ApplicationDbContext (required by common services)
-builder.Services.AddDatabase(builder.Configuration);
-
-// Add WorkflowService database context
+// Workflow DB
 builder.Services.AddDbContext<WorkflowDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    options.UseNpgsql(connectionString, npgsqlOptions =>
-    {
-        npgsqlOptions.EnableRetryOnFailure();
-    });
+    options.UseNpgsql(connectionString, npgsqlOptions => npgsqlOptions.EnableRetryOnFailure());
 });
 
-// ✅ STEP 1: Add Workflow Engine Services (COMPLETED)
+// Engine + Condition evaluation
 builder.Services.AddScoped<IConditionEvaluator, JsonLogicConditionEvaluator>();
 builder.Services.AddScoped<IWorkflowRuntime, WorkflowRuntime>();
 
-// Add Node Executors
+// Executors
 builder.Services.AddScoped<INodeExecutor, StartEndExecutor>();
 builder.Services.AddScoped<INodeExecutor, HumanTaskExecutor>();
 builder.Services.AddScoped<INodeExecutor, AutomaticExecutor>();
 builder.Services.AddScoped<INodeExecutor, GatewayEvaluator>();
 builder.Services.AddScoped<INodeExecutor, TimerExecutor>();
 
-// Add Background Services
+// Background workers
 builder.Services.AddHostedService<TimerWorker>();
 builder.Services.AddHostedService<OutboxWorker>();
 
+// HTTP Context / User
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContext, UserContext>();
 
-// Outbox dispatcher (logging-only MVP)
+// Outbox dispatcher stub (logging-only MVP)
 builder.Services.AddScoped<IOutboxDispatcher, LoggingOutboxDispatcher>();
 
-// 🚀 STEP 2: Add Workflow Business Services (NEW)
+// Business services
 builder.Services.AddScoped<IDefinitionService, DefinitionService>();
 builder.Services.AddScoped<IInstanceService, InstanceService>();
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IEventPublisher, EventPublisher>();
 builder.Services.AddScoped<IRoleWorkflowUsageService, RoleWorkflowUsageService>();
-builder.Services.AddScoped<IWorkflowExecutionService, WorkflowExecutionService>();
+builder.Services.AddScoped<IWorkflowExecutionService, WorkflowExecutionService>(); // Legacy traversal (kept until fully removed)
 
-// TODO: Add Workflow Security when created (STEP 3)
+// NEW: Graph validation service (strict publish-time validation)
+builder.Services.AddScoped<IGraphValidationService, GraphValidationService>();
+
+// Authorization policies
 builder.Services.AddWorkflowPolicies();
 
-// Add AutoMapper (basic setup for now)
+// AutoMapper / Validation
 builder.Services.AddAutoMapper(typeof(Program));
-
-// Add FluentValidation
 builder.Services.AddFluentValidation();
 
-// Add CORS
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
-    {
-        policy.AllowAnyOrigin()
-              .AllowAnyMethod()
-              .AllowAnyHeader();
-    });
+        policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });
 
-// Add Health Checks with both database contexts
+// Health Checks
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<ApplicationDbContext>("main-database")
     .AddDbContextCheck<WorkflowDbContext>("workflow-database")
-    .AddCheck("workflow-service", () => 
+    .AddCheck("workflow-service", () =>
         Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy("Workflow service operational"));
 
-// Add SignalR services
+// SignalR
 builder.Services.AddSignalR();
 builder.Services.AddScoped<ITaskNotificationDispatcher, TaskNotificationDispatcher>();
 
-// After other service registrations
+// UoW (if leveraged by controllers/services)
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
+// Pipeline
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -165,65 +158,53 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseSerilogRequestLogging();
-
-// Add validation middleware
 app.UseMiddleware<ValidationMiddleware>();
-
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
-
 app.UseAuthentication();
-
-// ✅ FIX: Use proper tenant resolution middleware (same as UserService)
 app.UseTenantResolution();
-
 app.UseAuthorization();
 
 app.MapControllers();
-
-// Map SignalR hubs
 app.MapHub<TaskNotificationsHub>("/api/workflow/hubs/tasks");
 
-// Add health check endpoints
 app.MapHealthChecks("/health");
 app.MapHealthChecks("/health/ready");
 app.MapHealthChecks("/health/live");
 
-// Add startup logging
+// Startup log
 app.Lifetime.ApplicationStarted.Register(() =>
 {
     var addresses = app.Services.GetRequiredService<Microsoft.AspNetCore.Hosting.Server.IServer>()
         .Features.Get<Microsoft.AspNetCore.Hosting.Server.Features.IServerAddressesFeature>()?.Addresses;
-    
+
     foreach (var address in addresses ?? Enumerable.Empty<string>())
     {
         Console.WriteLine($"Now listening on: {address}");
         Log.Information("Now listening on: {Address}", address);
     }
-    
-    Console.WriteLine("🌊 WorkflowService started with workflow engine and service layer enabled");
-    Log.Information("WorkflowService started - workflow engine, service layer, and background workers operational");
+
+    Console.WriteLine("🌊 WorkflowService started (runtime, timer automation, graph validation, outbox idempotency).");
+    Log.Information("WorkflowService startup complete (TimerWorker + GraphValidation + Outbox Idempotency).");
 });
 
+// Migrations + Run
 try
 {
-    Log.Information("Starting WorkflowService with Engine and Service Layer");
-    Console.WriteLine("=== WorkflowService Starting with Engine and Service Layer ===");
-    
-    // Run database migrations
+    Log.Information("Starting WorkflowService");
+    Console.WriteLine("=== WorkflowService Starting ===");
+
     using (var scope = app.Services.CreateScope())
     {
-        // Migrate main ApplicationDbContext first
         var mainContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         await mainContext.Database.MigrateAsync();
         Console.WriteLine("✅ Main database migrations applied");
-        
-        // Migrate WorkflowDbContext
+
         var workflowContext = scope.ServiceProvider.GetRequiredService<WorkflowDbContext>();
         await workflowContext.Database.MigrateAsync();
         Console.WriteLine("✅ Workflow database migrations applied");
     }
-    
+
     app.Run();
 }
 catch (Exception ex)
@@ -236,5 +217,4 @@ finally
     Log.CloseAndFlush();
 }
 
-// Make Program class accessible for testing
 public partial class Program { }

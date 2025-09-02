@@ -8,7 +8,6 @@ using WorkflowService.Engine.Interfaces;
 using WorkflowService.Persistence;
 using WorkflowService.Services.Interfaces;
 using Contracts.Services;
-using System.Linq;
 using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
 
 namespace WorkflowService.Services;
@@ -22,6 +21,7 @@ public class TaskService : ITaskService
     private readonly IEventPublisher _eventPublisher;
     private readonly ILogger<TaskService> _logger;
     private readonly IUserContext _userContext;
+    private readonly ITaskNotificationDispatcher _taskNotifier;
 
     public TaskService(
         WorkflowDbContext context,
@@ -30,7 +30,8 @@ public class TaskService : ITaskService
         IWorkflowRuntime workflowRuntime,
         IEventPublisher eventPublisher,
         ILogger<TaskService> logger,
-        IUserContext userContext)
+        IUserContext userContext,
+        ITaskNotificationDispatcher taskNotifier)
     {
         _context = context;
         _mapper = mapper;
@@ -39,6 +40,7 @@ public class TaskService : ITaskService
         _eventPublisher = eventPublisher;
         _logger = logger;
         _userContext = userContext;
+        _taskNotifier = taskNotifier;
     }
 
     public async Task<ApiResponseDto<PagedResultDto<TaskSummaryDto>>> GetMyTasksAsync(GetTasksRequestDto request, CancellationToken cancellationToken = default)
@@ -168,6 +170,9 @@ public class TaskService : ITaskService
 
             await _eventPublisher.PublishTaskAssignedAsync(task, currentUserId.Value, cancellationToken);
 
+            // Notify user (their counts changed)
+            await SafeNotifyUser(tenantId.Value, currentUserId.Value, cancellationToken);
+
             var dto = _mapper.Map<WorkflowTaskDto>(task);
             _logger.LogInformation("User {UserId} claimed task {TaskId}", currentUserId.Value, taskId);
             return ApiResponseDto<WorkflowTaskDto>.SuccessResult(dto, "Task claimed successfully");
@@ -195,6 +200,10 @@ public class TaskService : ITaskService
 
             if (task == null)
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task not found");
+
+            // Notify user + tenant (completion affects counts & available tasks downstream)
+            await SafeNotifyUser(task.TenantId, currentUserId.Value, cancellationToken);
+            await SafeNotifyTenant(task.TenantId, cancellationToken);
 
             var dto = _mapper.Map<WorkflowTaskDto>(task);
             _logger.LogInformation("User {UserId} completed task {TaskId}", currentUserId.Value, taskId);
@@ -239,6 +248,11 @@ public class TaskService : ITaskService
             task.UpdatedAt = DateTime.UtcNow;
 
             var dto = _mapper.Map<WorkflowTaskDto>(task);
+
+            // User loses a claimed task; others may now see it as available.
+            await SafeNotifyUser(tenantId.Value, currentUserId.Value, cancellationToken);
+            await SafeNotifyTenant(tenantId.Value, cancellationToken);
+
             _logger.LogInformation("User {UserId} released task {TaskId}", currentUserId.Value, taskId);
             return ApiResponseDto<WorkflowTaskDto>.SuccessResult(dto, "Task released successfully");
         }
@@ -268,6 +282,8 @@ public class TaskService : ITaskService
             if (task.Status == WorkflowTaskStatus.Completed || task.Status == WorkflowTaskStatus.Cancelled)
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Cannot reassign completed or cancelled task");
 
+            var previousUser = task.AssignedToUserId;
+
             task.AssignedToUserId = request.AssignToUserId;
             task.AssignedToRole = request.AssignToRole;
             task.Status = request.AssignToUserId.HasValue || !string.IsNullOrEmpty(request.AssignToRole)
@@ -277,6 +293,13 @@ public class TaskService : ITaskService
 
             if (request.AssignToUserId.HasValue)
                 await _eventPublisher.PublishTaskAssignedAsync(task, request.AssignToUserId.Value, cancellationToken);
+
+            // Notify new assignee if user; notify old user (count drop); always tenant
+            if (previousUser.HasValue)
+                await SafeNotifyUser(tenantId.Value, previousUser.Value, cancellationToken);
+            if (request.AssignToUserId.HasValue)
+                await SafeNotifyUser(tenantId.Value, request.AssignToUserId.Value, cancellationToken);
+            await SafeNotifyTenant(tenantId.Value, cancellationToken);
 
             var dto = _mapper.Map<WorkflowTaskDto>(task);
             _logger.LogInformation("Task {TaskId} reassigned: {Reason}", taskId, request.Reason);
@@ -306,6 +329,8 @@ public class TaskService : ITaskService
             if (task.Status is WorkflowTaskStatus.Completed or WorkflowTaskStatus.Cancelled)
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult($"Cannot assign task in {task.Status} status");
 
+            var previousUser = task.AssignedToUserId;
+
             task.AssignedToUserId = request.AssignedToUserId;
             task.AssignedToRole = request.AssignedToRole;
             task.Status = WorkflowTaskStatus.Assigned;
@@ -321,6 +346,12 @@ public class TaskService : ITaskService
                 OccurredAt = DateTime.UtcNow,
                 UserId = performedByUserId
             });
+
+            if (previousUser.HasValue && previousUser.Value != request.AssignedToUserId)
+                await SafeNotifyUser(tenantId.Value, previousUser.Value, cancellationToken);
+            if (request.AssignedToUserId.HasValue)
+                await SafeNotifyUser(tenantId.Value, request.AssignedToUserId.Value, cancellationToken);
+            await SafeNotifyTenant(tenantId.Value, cancellationToken);
 
             var dto = _mapper.Map<WorkflowTaskDto>(task);
             return ApiResponseDto<WorkflowTaskDto>.SuccessResult(dto, "Task assigned successfully");
@@ -349,6 +380,8 @@ public class TaskService : ITaskService
             if (task.Status is WorkflowTaskStatus.Completed or WorkflowTaskStatus.Cancelled)
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult($"Cannot cancel task in {task.Status} status");
 
+            var previousUser = task.AssignedToUserId;
+
             task.Status = WorkflowTaskStatus.Cancelled;
             task.CompletedAt = DateTime.UtcNow;
             task.UpdatedAt = DateTime.UtcNow;
@@ -363,6 +396,10 @@ public class TaskService : ITaskService
                 OccurredAt = DateTime.UtcNow,
                 UserId = performedByUserId
             });
+
+            if (previousUser.HasValue)
+                await SafeNotifyUser(tenantId.Value, previousUser.Value, cancellationToken);
+            await SafeNotifyTenant(tenantId.Value, cancellationToken);
 
             var dto = _mapper.Map<WorkflowTaskDto>(task);
             return ApiResponseDto<WorkflowTaskDto>.SuccessResult(dto, "Task cancelled successfully");
@@ -486,7 +523,15 @@ public class TaskService : ITaskService
         return ApiResponseDto<PagedResultDto<TaskSummaryDto>>.SuccessResult(pagedResult);
     }
 
-    private int? GetCurrentUserId() => _userContext.UserId;
+    // Notification helpers – swallow errors to avoid impacting main path
+    private async Task SafeNotifyUser(int tenantId, int userId, CancellationToken ct)
+    {
+        try { await _taskNotifier.NotifyUserAsync(tenantId, userId, ct); } catch { }
+    }
+    private async Task SafeNotifyTenant(int tenantId, CancellationToken ct)
+    {
+        try { await _taskNotifier.NotifyTenantAsync(tenantId, ct); } catch { }
+    }
 
     public async Task<ApiResponseDto<List<TaskSummaryDto>>> GetMyTasksListAsync(
         DTOs.Workflow.Enums.TaskStatus? status,
@@ -505,7 +550,6 @@ public class TaskService : ITaskService
         if (!paged.Success || paged.Data == null)
             return ApiResponseDto<List<TaskSummaryDto>>.ErrorResult(paged.Message, paged.Errors);
 
-        // FIX: removed erroneous .Data chaining (paged.Data.Data.Items -> paged.Data.Items)
         var items = paged.Data.Items.AsEnumerable();
         var list = items.ToList();
         return ApiResponseDto<List<TaskSummaryDto>>.SuccessResult(list, $"Retrieved {list.Count} tasks");

@@ -37,3 +37,6 @@
                     RETURN NEW;
                 END;
                 $$; {"EventId":{"Id":20102,"Name":"Microsoft.EntityFrameworkCore.Database.Command.CommandError"},"SourceContext":"Microsoft.EntityFrameworkCore.Database.Command"}
+[2025-09-01 16:00:51.756 -05:00 ERR] An error occurred using the connection to database 'boiler_dev' on server 'tcp://localhost:5432'. {"EventId":{"Id":20004,"Name":"Microsoft.EntityFrameworkCore.Database.Connection.ConnectionError"},"SourceContext":"Microsoft.EntityFrameworkCore.Database.Connection"}
+[2025-09-01 16:01:32.669 -05:00 ERR] Failed executing DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX "IX_OutboxMessages_TenantId_IdempotencyKey" ON "OutboxMessages" ("TenantId", "IdempotencyKey"); {"EventId":{"Id":20102,"Name":"Microsoft.EntityFrameworkCore.Database.Command.CommandError"},"SourceContext":"Microsoft.EntityFrameworkCore.Database.Command"}

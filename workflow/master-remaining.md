@@ -126,7 +126,7 @@ Integrate sequentially to reduce merge complexity.
 ***
 ## TL;DR
 
-Core workflow (definitions, instances, human & automatic tasks, conditional gateways, real-time task notifications, consolidated persistence) is solid.
+Core workflow< (definitions, instances, human & automatic tasks, conditional gateways, real-time task notifications, consolidated persistence) is solid.
 Major remaining MVP blockers per the original specification are: timer automation, stronger definition validation, and minimal outbox dispatch.
 
 Add tests and RBAC/immutability hardening next to stabilize before expanding feature breadth.
