@@ -4,36 +4,35 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 using WorkflowService.Controllers;
-using WorkflowService.Persistence;
 using DTOs.Common;
 using DTOs.Workflow;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
-using WorkflowService.Engine.Interfaces; // CHANGED: runtime instead of execution
-using Contracts.Services;
+using WorkflowService.Services.Interfaces;
+using Common.Data;
 
 namespace WorkflowService.Tests.Controllers;
 
 public class TasksControllerTests : TestBase
 {
     private readonly Mock<ILogger<TasksController>> _mockLogger;
-    private readonly Mock<IWorkflowRuntime> _mockRuntime;
-    private readonly Mock<ITenantProvider> _mockTenantProvider;
+    private readonly Mock<ITaskService> _mockTaskService;
+    private readonly Mock<IUnitOfWork> _mockUnitOfWork;
     private readonly TasksController _controller;
 
     public TasksControllerTests()
     {
         _mockLogger = CreateMockLogger<TasksController>();
-        _mockRuntime = new Mock<IWorkflowRuntime>();
-        _mockTenantProvider = new Mock<ITenantProvider>();
-        _mockTenantProvider.Setup(t => t.GetCurrentTenantIdAsync()).ReturnsAsync(1);
+        _mockTaskService = new Mock<ITaskService>();
+        _mockUnitOfWork = new Mock<IUnitOfWork>();
 
+        // ✅ FIXED: Use correct constructor parameters
         _controller = new TasksController(
             DbContext,
             _mockLogger.Object,
-            _mockRuntime.Object,
-            _mockTenantProvider.Object);
+            _mockTaskService.Object,
+            _mockUnitOfWork.Object);
 
         SetupControllerContext();
     }
@@ -44,11 +43,8 @@ public class TasksControllerTests : TestBase
         // Arrange
         await SeedTestTasksAsync();
 
-        // Act - Use actual controller method signature
+        // ✅ FIXED: Use correct method signature
         var result = await _controller.GetTasks(
-            mine: true,
-            mineIncludeRoles: false,
-            mineIncludeUnassigned: false,
             status: WorkflowTaskStatus.Created,
             page: 1,
             pageSize: 10);
@@ -65,13 +61,13 @@ public class TasksControllerTests : TestBase
     {
         // Arrange
         var task = await CreateTestTaskAsync(WorkflowTaskStatus.Created);
-        var request = new ClaimTaskRequestDto
-        {
-            ClaimNotes = "Taking this task"
-        };
+        
+        _mockTaskService.Setup(s => s.ClaimTaskAsync(task.Id, It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(ApiResponseDto<WorkflowTaskDto>.SuccessResult(
+                           new WorkflowTaskDto { Id = task.Id, Status = WorkflowTaskStatus.Claimed }));
 
-        // Act - Use correct method signature
-        var result = await _controller.ClaimTask(task.Id, request);
+        // ✅ FIXED: Use correct method signature (no request parameter)
+        var result = await _controller.ClaimTask(task.Id);
 
         // Assert
         result.Should().NotBeNull();
@@ -81,7 +77,7 @@ public class TasksControllerTests : TestBase
     }
 
     [Fact]
-    public async Task CompleteTask_ValidRequest_ShouldInvokeRuntime()
+    public async Task CompleteTask_ValidRequest_ShouldInvokeTaskService()
     {
         // Arrange
         var task = await CreateTestTaskAsync(WorkflowTaskStatus.Claimed, assignedUserId: 1);
@@ -91,6 +87,10 @@ public class TasksControllerTests : TestBase
             CompletionNotes = "Task completed successfully"
         };
 
+        _mockTaskService.Setup(s => s.CompleteTaskAsync(task.Id, request, It.IsAny<CancellationToken>()))
+                       .ReturnsAsync(ApiResponseDto<WorkflowTaskDto>.SuccessResult(
+                           new WorkflowTaskDto { Id = task.Id, Status = WorkflowTaskStatus.Completed }));
+
         // Act
         var result = await _controller.CompleteTask(task.Id, request);
 
@@ -99,7 +99,9 @@ public class TasksControllerTests : TestBase
         var actionResult = result.Result as OkObjectResult;
         actionResult.Should().NotBeNull();
         actionResult!.StatusCode.Should().Be(200);
-        _mockRuntime.Verify(r => r.CompleteTaskAsync(task.Id, It.IsAny<string>(), 1, It.IsAny<CancellationToken>()), Times.Once);
+        
+        // ✅ FIXED: Verify correct service method call
+        _mockTaskService.Verify(s => s.CompleteTaskAsync(task.Id, request, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private async Task SeedTestTasksAsync()

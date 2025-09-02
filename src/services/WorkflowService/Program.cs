@@ -101,7 +101,7 @@ builder.Services.AddHostedService<OutboxWorker>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContext, UserContext>();
 
-// Outbox dispatcher stub (logging-only MVP)
+// Outbox dispatcher (enhanced version handles both logging and webhook modes)
 builder.Services.AddScoped<IOutboxDispatcher, LoggingOutboxDispatcher>();
 
 // Business services

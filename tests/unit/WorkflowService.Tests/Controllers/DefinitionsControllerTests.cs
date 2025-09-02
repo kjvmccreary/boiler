@@ -10,8 +10,10 @@ using Moq;
 using WorkflowService.Controllers;
 using WorkflowService.Services.Interfaces;
 using WorkflowService.Persistence;
-using Common.Constants; // Needed for Permissions
+using Common.Constants;
 using Xunit;
+using WorkflowService.Services.Validation;
+using WorkflowService.Engine;
 
 namespace WorkflowService.Tests.Controllers;
 
@@ -19,18 +21,21 @@ public class DefinitionsControllerTests : TestBase
 {
     private readonly Mock<IDefinitionService> _mockDefinitionService;
     private readonly Mock<ILogger<DefinitionsController>> _mockLogger;
+    private readonly Mock<IWorkflowGraphValidator> _mockGraphValidator;
     private readonly DefinitionsController _controller;
 
     public DefinitionsControllerTests()
     {
         _mockDefinitionService = new Mock<IDefinitionService>();
         _mockLogger = CreateMockLogger<DefinitionsController>();
+        _mockGraphValidator = new Mock<IWorkflowGraphValidator>();
 
         _controller = new DefinitionsController(
             _mockDefinitionService.Object,
             MockTenantProvider.Object,
             DbContext,
-            _mockLogger.Object);
+            _mockLogger.Object,
+            _mockGraphValidator.Object);
 
         OverrideControllerHttpContextWithPermissionClaims(_controller);
     }
@@ -39,7 +44,6 @@ public class DefinitionsControllerTests : TestBase
 
     private void OverrideControllerHttpContextWithPermissionClaims(ControllerBase controller)
     {
-        // Fully-qualify System.Security.Claims.ClaimTypes to avoid ambiguity with Common.Constants.ClaimTypes
         var claims = new List<Claim>
         {
             new Claim(System.Security.Claims.ClaimTypes.NameIdentifier, "1"),
@@ -236,6 +240,19 @@ public class DefinitionsControllerTests : TestBase
             UpdatedAt = DateTime.UtcNow
         };
 
+        // ✅ FIXED: Create ValidationResult properly - IsValid is computed from Errors.Count
+        _mockGraphValidator
+            .Setup(v => v.ValidateForPublish(It.IsAny<WorkflowService.Domain.Dsl.WorkflowDefinitionJson>()))
+            .Returns(new WorkflowService.Domain.Dsl.ValidationResult 
+            { 
+                Errors = new List<string>(), // Empty = valid
+                Warnings = new List<string>() 
+            });
+
+        _mockDefinitionService
+            .Setup(s => s.GetByIdAsync(5, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto));
+
         _mockDefinitionService
             .Setup(s => s.PublishAsync(5, It.IsAny<PublishDefinitionRequestDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto));
@@ -247,11 +264,43 @@ public class DefinitionsControllerTests : TestBase
     [Fact]
     public async Task Publish_Failure_ShouldReturnBadRequest()
     {
+        // Existing definition returned first
+        var existingDto = new WorkflowDefinitionDto
+        {
+            Id = 6,
+            Name = "Def6",
+            Version = 1,
+            JSONDefinition = """
+            {
+              "nodes":[{"id":"start","type":"Start"},{"id":"end","type":"End"}],
+              "edges":[{"id":"e","source":"start","target":"end"}]
+            }
+            """,
+            IsPublished = false,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _mockDefinitionService
+            .Setup(s => s.GetByIdAsync(6, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(existingDto));
+
+        // Validation passes so PublishAsync is reached
+        _mockGraphValidator
+            .Setup(v => v.ValidateForPublish(It.IsAny<WorkflowService.Domain.Dsl.WorkflowDefinitionJson>()))
+            .Returns(new WorkflowService.Domain.Dsl.ValidationResult
+            {
+                Errors = new List<string>(),
+                Warnings = new List<string>()
+            });
+
+        // Publishing fails
         _mockDefinitionService
             .Setup(s => s.PublishAsync(6, It.IsAny<PublishDefinitionRequestDto>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Invalid"));
 
         var result = await _controller.Publish(6, new PublishDefinitionRequestDto(), default);
+
         result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 

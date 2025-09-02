@@ -6,22 +6,29 @@ using WorkflowService.Domain.Dsl;
 using Microsoft.Extensions.Logging;
 using Moq;
 using DTOs.Workflow.Enums;
-using Contracts.Services; // ✅ ADD: Import for IRoleService
+using Contracts.Services;
+using WorkflowService.Services.Interfaces;
 
 namespace WorkflowService.Tests.Engine.Executors;
 
 public class HumanTaskExecutorTests : TestBase
 {
     private readonly HumanTaskExecutor _executor;
-    private readonly Mock<IRoleService> _mockRoleService; // ✅ ADD: Mock role service
+    private readonly Mock<IRoleService> _mockRoleService;
+    private readonly Mock<ITaskNotificationDispatcher> _mockNotificationDispatcher;
 
     public HumanTaskExecutorTests()
     {
         var mockLogger = CreateMockLogger<HumanTaskExecutor>();
-        _mockRoleService = new Mock<IRoleService>(); // ✅ ADD: Initialize mock
-        
-        // ✅ FIXED: Pass both logger and role service to constructor
-        _executor = new HumanTaskExecutor(mockLogger.Object, _mockRoleService.Object);
+        _mockRoleService = new Mock<IRoleService>();
+        _mockNotificationDispatcher = new Mock<ITaskNotificationDispatcher>();
+
+        // ✅ FIXED: Include all required constructor parameters
+        _executor = new HumanTaskExecutor(
+            mockLogger.Object,
+            _mockRoleService.Object,
+            _mockNotificationDispatcher.Object,
+            DbContext);
     }
 
     [Fact]
@@ -88,9 +95,11 @@ public class HumanTaskExecutorTests : TestBase
 
         var context = "{}";
 
-        // ✅ ADD: Setup mock role service behavior
+        // Setup mock behaviors
         _mockRoleService.Setup(x => x.IsRoleNameAvailableAsync("approvers", null, It.IsAny<CancellationToken>()))
-                       .ReturnsAsync(false); // Role exists (not available means it exists)
+                       .ReturnsAsync(false); // Role exists
+        _mockNotificationDispatcher.Setup(x => x.NotifyTenantAsync(1, It.IsAny<CancellationToken>()))
+                                  .Returns(Task.CompletedTask);
 
         // Act
         var result = await _executor.ExecuteAsync(node, instance, context);
@@ -132,6 +141,10 @@ public class HumanTaskExecutorTests : TestBase
 
         var context = "{}";
 
+        // Setup mock
+        _mockNotificationDispatcher.Setup(x => x.NotifyTenantAsync(1, It.IsAny<CancellationToken>()))
+                                  .Returns(Task.CompletedTask);
+
         // Act
         var result = await _executor.ExecuteAsync(node, instance, context);
 
@@ -143,7 +156,6 @@ public class HumanTaskExecutorTests : TestBase
         result.CreatedTask.Status.Should().Be(DTOs.Workflow.Enums.TaskStatus.Assigned);
     }
 
-    // ✅ ADD: Test for role validation behavior
     [Fact]
     public async Task ExecuteAsync_WithNonExistentRole_ShouldStillCreateTask()
     {
@@ -171,9 +183,11 @@ public class HumanTaskExecutorTests : TestBase
 
         var context = "{}";
 
-        // ✅ ADD: Setup mock role service to indicate role doesn't exist
+        // Setup mocks
         _mockRoleService.Setup(x => x.IsRoleNameAvailableAsync("nonexistent_role", null, It.IsAny<CancellationToken>()))
-                       .ReturnsAsync(true); // Role doesn't exist (available means it doesn't exist)
+                       .ReturnsAsync(true); // Role doesn't exist
+        _mockNotificationDispatcher.Setup(x => x.NotifyTenantAsync(1, It.IsAny<CancellationToken>()))
+                                  .Returns(Task.CompletedTask);
 
         // Act
         var result = await _executor.ExecuteAsync(node, instance, context);
@@ -183,9 +197,9 @@ public class HumanTaskExecutorTests : TestBase
         result.IsSuccess.Should().BeTrue();
         result.CreatedTask.Should().NotBeNull();
         result.CreatedTask!.AssignedToRole.Should().Be("nonexistent_role");
-        
-        // ✅ Verify that role validation was called
-        _mockRoleService.Verify(x => x.IsRoleNameAvailableAsync("nonexistent_role", null, It.IsAny<CancellationToken>()), 
+
+        // Verify role validation was called
+        _mockRoleService.Verify(x => x.IsRoleNameAvailableAsync("nonexistent_role", null, It.IsAny<CancellationToken>()),
                                Times.Once);
     }
 }

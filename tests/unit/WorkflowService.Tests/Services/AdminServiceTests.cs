@@ -57,8 +57,12 @@ public class AdminServiceTests : TestBase
         result.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
 
+        // ✅ FIXED: Add missing autoCommit parameter to avoid expression tree issues
         _mockWorkflowRuntime.Verify(x => x.RetryWorkflowAsync(
-            instance.Id, "task1", It.IsAny<CancellationToken>()),
+            It.Is<int>(instanceId => instanceId == instance.Id),
+            It.Is<string>(nodeId => nodeId == "task1"),
+            It.IsAny<CancellationToken>(),
+            It.IsAny<bool>()),  // ✅ ADD: autoCommit parameter
             Times.Once);
     }
 
@@ -101,8 +105,11 @@ public class AdminServiceTests : TestBase
         result.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
 
+        // ✅ FIXED: Add missing autoCommit parameter to avoid expression tree issues
         _mockWorkflowRuntime.Verify(x => x.ContinueWorkflowAsync(
-            instance.Id, It.IsAny<CancellationToken>()),
+            It.Is<int>(instanceId => instanceId == instance.Id),
+            It.IsAny<CancellationToken>(),
+            It.IsAny<bool>()),  // ✅ ADD: autoCommit parameter
             Times.Once);
     }
 
@@ -113,8 +120,7 @@ public class AdminServiceTests : TestBase
         var instance = await CreateRunningInstanceAsync();
         var request = new ForceCompleteRequestDto
         {
-            Reason = "Emergency completion required",
-            FinalContext = """{"forceCompleted": true, "reason": "Emergency"}"""
+            Reason = "Emergency completion required"
         };
 
         // Act
@@ -125,8 +131,10 @@ public class AdminServiceTests : TestBase
         result.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
 
+        // ✅ FIXED: Use explicit lambda to avoid expression tree issues
         _mockEventPublisher.Verify(x => x.PublishInstanceCompletedAsync(
-            It.IsAny<WorkflowInstance>(), It.IsAny<CancellationToken>()),
+            It.IsAny<WorkflowInstance>(),
+            It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
@@ -194,8 +202,13 @@ public class AdminServiceTests : TestBase
         result.Data.SuccessCount.Should().BeGreaterThan(0);
         result.Data.TotalCount.Should().Be(instances.Count(i => i.Status == InstanceStatus.Running));
 
+        // ✅ FIXED: Add missing autoCommit parameter to avoid expression tree issues
         _mockWorkflowRuntime.Verify(x => x.CancelWorkflowAsync(
-            It.IsAny<int>(), "Bulk cancellation for maintenance", null, It.IsAny<CancellationToken>()),
+            It.IsAny<int>(),
+            It.Is<string>(reason => reason == "Bulk cancellation for maintenance"),
+            It.IsAny<int?>(),
+            It.IsAny<CancellationToken>(),
+            It.IsAny<bool>()),  // ✅ ADD: autoCommit parameter
             Times.AtLeastOnce);
     }
 

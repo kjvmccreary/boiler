@@ -1,83 +1,48 @@
-PS C:\Users\mccre\dev\boiler> docker logs --tail 200 boiler-workflow
-[16:48:39 INF] Starting WorkflowService {}
-=== WorkflowService Starting ===
-[16:48:39 WRN] Entity 'Role' has a global query filter defined and is the required end of a relationship with the entity 'RolePermission'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information. {"EventId": {"Id": 10622, "Name": "Microsoft.EntityFrameworkCore.Model.Validation.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
-[16:48:39 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId": {"Id": 10400, "Name": "Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
-✅ Main database migrations applied
-✅ Workflow database migrations applied
-[16:48:40 WRN] Storing keys in a directory '/app/.aspnet/DataProtection-Keys' that may not be persisted outside of the container. Protected data will be unavailable when container is destroyed. For more information go to https://aka.ms/aspnet/dataprotectionwarning {"EventId": {"Id": 60, "Name": "UsingEphemeralFileSystemLocationInContainer"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.Repositories.FileSystemXmlRepository"}
-[16:48:40 WRN] No XML encryptor configured. Key {3b0cd7cc-2d69-4542-abe3-1625bcadba9e} may be persisted to storage in unencrypted form. {"EventId": {"Id": 35, "Name": "NoXMLEncryptorConfiguredKeyMayBePersistedToStorageInUnencryptedForm"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"}
-[16:48:40 INF] TIMER_WORKER_START Interval=30s BatchSize=100 {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:48:40 INF] OUTBOX_WORKER_START Interval=15s BatchSize=50 MaxRetries=5 {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:48:40 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:48:40 WRN] Overriding HTTP_PORTS '8080' and HTTPS_PORTS ''. Binding to values defined by URLS instead 'https://+:7003;http://+:5003'. {"EventId": {"Id": 15}, "SourceContext": "Microsoft.AspNetCore.Hosting.Diagnostics"}
-[16:48:40 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-Now listening on: https://[::]:7003
-[16:48:40 INF] Now listening on: https://[::]:7003 {}
-Now listening on: http://[::]:5003
-[16:48:40 INF] Now listening on: http://[::]:5003 {}
-🌊 WorkflowService started (runtime, timer automation, graph validation, outbox idempotency).
-[16:48:40 INF] WorkflowService startup complete (TimerWorker + GraphValidation + Outbox Idempotency). {}
-[16:48:44 INF] HTTP GET /health responded 200 in 54.4739 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:48:55 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:49:10 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:49:10 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:49:14 INF] HTTP GET /health responded 200 in 11.7222 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:49:25 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:49:40 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:49:40 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:49:44 INF] HTTP GET /health responded 200 in 9.1762 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:49:55 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:50:04 INF] HTTP GET /api/workflow/tasks/mine/summary responded 200 in 163.7303 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:50:07 INF] HTTP GET /api/workflow/definitions responded 200 in 76.1705 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:50:10 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:50:10 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:50:12 INF] HTTP POST /api/workflow/definitions/45/publish responded 400 in 48.1642 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:50:14 INF] HTTP GET /health responded 200 in 9.2560 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:50:16 INF] HTTP GET /api/workflow/definitions/45 responded 200 in 13.6828 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:50:17 INF] HTTP POST /api/workflow/definitions/validate responded 400 in 16.2491 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:50:23 INF] HTTP POST /api/workflow/definitions/validate responded 400 in 6.5066 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:50:25 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:50:33 INF] HTTP POST /api/workflow/definitions/validate responded 400 in 5.6122 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:50:40 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:50:40 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:50:44 INF] HTTP POST /api/workflow/definitions/validate responded 400 in 7.9065 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:50:44 INF] HTTP GET /health responded 200 in 12.5726 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:50:55 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:50:56 INF] HTTP POST /api/workflow/definitions/validate responded 200 in 11.6578 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:51:01 INF] HTTP POST /api/workflow/definitions/validate responded 200 in 44.4458 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:51:04 INF] HTTP POST /api/workflow/definitions/45/publish responded 400 in 8.2355 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:51:09 INF] HTTP POST /api/workflow/definitions/45/publish responded 400 in 6.9538 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:51:10 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:51:10 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:51:15 INF] HTTP GET /health responded 200 in 7.6255 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:51:25 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:51:40 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:51:40 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:51:45 INF] HTTP GET /health responded 200 in 7.3208 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:51:55 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:52:04 INF] HTTP GET /api/workflow/tasks/mine/summary responded 200 in 7.6234 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:52:10 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:52:10 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:52:13 INF] HTTP POST /api/workflow/definitions/validate responded 200 in 4.7227 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:52:15 INF] HTTP GET /health responded 200 in 7.1978 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:52:16 INF] HTTP POST /api/workflow/definitions/45/publish responded 400 in 7.3683 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:52:23 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "ed3e05c1-0041-43ab-bd86-e86ebb1a1813", "ActionName": "WorkflowService.Controllers.DefinitionsController.UpdateDraft (WorkflowService)", "RequestId": "0HNFA82A4I9TK:00000001", "RequestPath": "/api/workflow/definitions/45", "ConnectionId": "0HNFA82A4I9TK"}
-[16:52:23 INF] HTTP PUT /api/workflow/definitions/45 responded 200 in 82.7869 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:52:25 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:52:27 INF] HTTP POST /api/workflow/definitions/validate responded 200 in 3.5681 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:52:30 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "4d35e4b7-76fd-412c-95ae-cad0c9e67e1c", "ActionName": "WorkflowService.Controllers.DefinitionsController.Publish (WorkflowService)", "RequestId": "0HNFA82A4I9TM:00000001", "RequestPath": "/api/workflow/definitions/45/publish", "ConnectionId": "0HNFA82A4I9TM"}
-[16:52:30 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "4d35e4b7-76fd-412c-95ae-cad0c9e67e1c", "ActionName": "WorkflowService.Controllers.DefinitionsController.Publish (WorkflowService)", "RequestId": "0HNFA82A4I9TM:00000001", "RequestPath": "/api/workflow/definitions/45/publish", "ConnectionId": "0HNFA82A4I9TM"}
-[16:52:30 INF] Published definition published 45 {"SourceContext": "WorkflowService.Services.EventPublisher", "ActionId": "4d35e4b7-76fd-412c-95ae-cad0c9e67e1c", "ActionName": "WorkflowService.Controllers.DefinitionsController.Publish (WorkflowService)", "RequestId": "0HNFA82A4I9TM:00000001", "RequestPath": "/api/workflow/definitions/45/publish", "ConnectionId": "0HNFA82A4I9TM"}
-[16:52:30 INF] HTTP POST /api/workflow/definitions/45/publish responded 200 in 57.4481 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:52:30 INF] HTTP GET /api/workflow/definitions/45 responded 200 in 5.2572 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:52:40 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:52:40 INF] OUTBOX_BATCH Size=1 {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:52:40 INF] OUTBOX_DISPATCH EventType=workflow.definition.published Id=464 Tenant=1 Retry=0 PayloadSize=137 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
-[16:52:40 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
-[16:52:45 INF] HTTP GET /health responded 200 in 7.8672 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[16:52:55 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:53:10 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
-[16:53:10 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
-[16:53:15 INF] HTTP GET /health responded 200 in 8.6299 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-PS C:\Users\mccre\dev\boiler>
+Building Test Projects
+Starting test discovery for requested test run
+========== Starting test discovery ==========
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
+[xUnit.net 00:00:00.04]   Discovering: WorkflowService.Tests
+[xUnit.net 00:00:00.07]   Discovered:  WorkflowService.Tests
+========== Test discovery finished: 92 Tests found in 661.9 ms ==========
+========== Starting test run ==========
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
+[xUnit.net 00:00:00.04]   Starting:    WorkflowService.Tests
+[xUnit.net 00:00:00.65]     WorkflowService.Tests.Engine.WorkflowRuntimeAdvancedTests.CompleteTask_LateCancellation_ShouldCancelWhenInstanceAlreadyCompleted [FAIL]
+[xUnit.net 00:00:00.65]       Expected task not to be <null> because human task should exist to test late cancellation.
+[xUnit.net 00:00:00.65]       Stack Trace:
+[xUnit.net 00:00:00.65]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+[xUnit.net 00:00:00.65]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+[xUnit.net 00:00:00.65]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+[xUnit.net 00:00:00.65]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.65]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.65]            at FluentAssertions.Execution.AssertionScope.FailWith(String message)
+[xUnit.net 00:00:00.65]            at FluentAssertions.Primitives.ReferenceTypeAssertions`2.NotBeNull(String because, Object[] becauseArgs)
+[xUnit.net 00:00:00.65]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WorkflowRuntimeAdvancedTests.cs(297,0): at WorkflowService.Tests.Engine.WorkflowRuntimeAdvancedTests.CompleteTask_LateCancellation_ShouldCancelWhenInstanceAlreadyCompleted()
+[xUnit.net 00:00:00.65]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.70]     WorkflowService.Tests.Engine.WorkflowRuntimeAdvancedTests.CompleteTimerTask_ShouldAllowCreatedStatus [FAIL]
+[xUnit.net 00:00:00.70]       Expected timerTask not to be <null> because timer task should have been created.
+[xUnit.net 00:00:00.70]       Stack Trace:
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(String message)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Primitives.ReferenceTypeAssertions`2.NotBeNull(String because, Object[] becauseArgs)
+[xUnit.net 00:00:00.70]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WorkflowRuntimeAdvancedTests.cs(264,0): at WorkflowService.Tests.Engine.WorkflowRuntimeAdvancedTests.CompleteTimerTask_ShouldAllowCreatedStatus()
+[xUnit.net 00:00:00.70]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.70]     WorkflowService.Tests.Engine.WorkflowRuntimeAdvancedTests.CancelWorkflow_ShouldCancelOpenHumanTasks [FAIL]
+[xUnit.net 00:00:00.70]       Expected open not to be <null> because a human task should be created after entering human node.
+[xUnit.net 00:00:00.70]       Stack Trace:
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(String message)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Primitives.ReferenceTypeAssertions`2.NotBeNull(String because, Object[] becauseArgs)
+[xUnit.net 00:00:00.70]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WorkflowRuntimeAdvancedTests.cs(233,0): at WorkflowService.Tests.Engine.WorkflowRuntimeAdvancedTests.CancelWorkflow_ShouldCancelOpenHumanTasks()
+[xUnit.net 00:00:00.70]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.70]   Finished:    WorkflowService.Tests
+========== Test run finished: 5 Tests (2 Passed, 3 Failed, 0 Skipped) run in 717 ms ==========

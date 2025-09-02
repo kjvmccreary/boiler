@@ -14,22 +14,6 @@ using InstanceStatusEnum = DTOs.Workflow.Enums.InstanceStatus;
 
 namespace WorkflowService.Background;
 
-/// <summary>
-/// Concurrency-safe timer worker.
-/// Strategy:
-///   1. Enumerate tenants that have due timer tasks (Created / Assigned, DueDate &lt;= now, Instance Running).
-///   2. For each tenant:
-///        - Open (or reuse) the connection, <c>SET app.tenant_id = 'TENANT'</c> (session scope).
-///        - Atomic acquisition: <c>UPDATE .. SET Status = InProgress WHERE Id IN (SELECT ... FOR UPDATE SKIP LOCKED LIMIT @batch) RETURNING ...</c>
-///          (Prevents double-processing across multiple service instances.)
-///        - Complete each acquired timer task via <c>runtime.CompleteTaskAsync(autoCommit:false)</c>.
-///        - Single <c>SaveChanges</c>.
-///   3. If no tasks acquired for any tenant, sleep until next interval.
-/// Notes:
-///   - Uses existing <c>InProgress</c> status to mark a timer as claimed (can introduce a dedicated TimerProcessing later).
-///   - Safe for horizontal scaling: <c>SKIP LOCKED</c> naturally partitions work.
-///   - Keeps per-tenant GUC to satisfy tenant enforcement triggers.
-/// </summary>
 public class TimerWorker : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
@@ -91,7 +75,6 @@ public class TimerWorker : BackgroundService
 
         var now = DateTime.UtcNow;
 
-        // Tenants with due timers
         var tenantIds = await db.WorkflowTasks
             .IgnoreQueryFilters()
             .Where(t =>
@@ -153,7 +136,6 @@ public class TimerWorker : BackgroundService
                     }
                 }
 
-                // Commit batched changes
                 try
                 {
                     await db.SaveChangesAsync(ct);
@@ -176,12 +158,48 @@ public class TimerWorker : BackgroundService
 
     private sealed record AcquiredTimer(int Id, int WorkflowInstanceId, int TenantId, DateTime? DueDate);
 
-    /// <summary>
-    /// Atomically acquires (claims) due timer tasks for a single tenant using SKIP LOCKED
-    /// and marks them InProgress (reusing existing status).
-    /// </summary>
+    // ---- NEW (minimal) EF fallback for non-relational providers (tests / in-memory) ----
+    private async Task<List<AcquiredTimer>> AcquireDueTimersForTenantEfAsync(
+        WorkflowDbContext db,
+        int tenantId,
+        CancellationToken ct)
+    {
+        var now = DateTime.UtcNow;
+
+        var due = await db.WorkflowTasks
+            .Where(t => t.TenantId == tenantId
+                        && t.NodeType == "timer"
+                        && t.DueDate.HasValue
+                        && t.DueDate <= now
+                        && (t.Status == WorkflowTaskStatus.Created || t.Status == WorkflowTaskStatus.Assigned)
+                        && t.WorkflowInstance.Status == InstanceStatusEnum.Running)
+            .OrderBy(t => t.DueDate)
+            .Take(_batchSize)
+            .ToListAsync(ct);
+
+        if (!due.Any()) return new();
+
+        foreach (var t in due)
+        {
+            t.Status = WorkflowTaskStatus.InProgress;
+            t.UpdatedAt = DateTime.UtcNow;
+        }
+
+        return due
+            .Select(t => new AcquiredTimer(t.Id, t.WorkflowInstanceId, t.TenantId, t.DueDate))
+            .ToList();
+    }
+    // -------------------------------------------------------------------------------
+
     private async Task<List<AcquiredTimer>> AcquireDueTimersForTenantAsync(WorkflowDbContext db, int tenantId, CancellationToken ct)
     {
+        // Use raw SKIP LOCKED only for relational + Npgsql; otherwise fallback
+        if (!db.Database.IsRelational() ||
+            (db.Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) != true))
+        {
+            return await AcquireDueTimersForTenantEfAsync(db, tenantId, ct);
+        }
+
         var results = new List<AcquiredTimer>();
         var conn = (NpgsqlConnection)db.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open)
@@ -246,16 +264,17 @@ RETURNING wt.""Id"", wt.""WorkflowInstanceId"", wt.""TenantId"", wt.""DueDate"";
         return results;
     }
 
-    /// <summary>
-    /// Ensures connection open and sets tenant GUC (parameterized to satisfy EF1002).
-    /// </summary>
     private static async Task EnsureTenantSessionAsync(WorkflowDbContext db, int tenantId, CancellationToken ct)
     {
+        // Skip for non-relational or non-Npgsql providers (avoids errors in unit tests / InMemory)
+        if (!db.Database.IsRelational() ||
+            (db.Database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) != true))
+            return;
+
         var conn = db.Database.GetDbConnection();
         if (conn.State != ConnectionState.Open)
             await conn.OpenAsync(ct);
 
-        // Parameterized (interpolated) – safe from injection; session scope (third arg false)
         await db.Database.ExecuteSqlInterpolatedAsync(
             $"SELECT set_config('app.tenant_id', {tenantId.ToString()}, false);",
             ct);
