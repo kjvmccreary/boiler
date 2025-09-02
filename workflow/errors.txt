@@ -1,49 +1,83 @@
-PS C:\Users\mccre\dev\boiler\src\services\WorkflowService> dotnet ef database update --context WorkflowDbContext
-Build started...
-Build succeeded.
-[16:01:32 ERR] Failed executing DbCommand (5ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
-CREATE UNIQUE INDEX "IX_OutboxMessages_TenantId_IdempotencyKey" ON "OutboxMessages" ("TenantId", "IdempotencyKey"); {"EventId": {"Id": 20102, "Name": "Microsoft.EntityFrameworkCore.Database.Command.CommandError"}, "SourceContext": "Microsoft.EntityFrameworkCore.Database.Command"}
-Npgsql.PostgresException (0x80004005): 23505: could not create unique index "IX_OutboxMessages_TenantId_IdempotencyKey"
-
-DETAIL: Key ("TenantId", "IdempotencyKey")=(1, 00000000-0000-0000-0000-000000000000) is duplicated.
-   at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
-   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
-   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlDataReader.NextResult()
-   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
-   at Npgsql.NpgsqlCommand.ExecuteNonQuery()
-   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQuery(RelationalCommandParameterObject parameterObject)
-   at Microsoft.EntityFrameworkCore.Migrations.MigrationCommand.ExecuteNonQuery(IRelationalConnection connection, IReadOnlyDictionary`2 parameterValues)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.Execute(IReadOnlyList`1 migrationCommands, IRelationalConnection connection, MigrationExecutionState executionState, Boolean beginTransaction, Boolean commitTransaction, Nullable`1 isolationLevel)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.<>c.<ExecuteNonQuery>b__3_1(DbContext _, ValueTuple`6 s)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQuery(IReadOnlyList`1 migrationCommands, IRelationalConnection connection, MigrationExecutionState executionState, Boolean commitTransaction, Nullable`1 isolationLevel)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.MigrateImplementation(DbContext context, String targetMigration, MigrationExecutionState state, Boolean useTransaction)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.<>c.<Migrate>b__20_1(DbContext c, ValueTuple`4 s)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass28_0`2.<Execute>b__0(DbContext context, TState state)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementation[TState,TResult](Func`3 operation, Func`3 verifySucceeded, TState state)
-   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.Execute[TState,TResult](TState state, Func`3 operation, Func`3 verifySucceeded)
-   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(String targetMigration)
-   at Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal.NpgsqlMigrator.Migrate(String targetMigration)
-   at Microsoft.EntityFrameworkCore.Design.Internal.MigrationsOperations.UpdateDatabase(String targetMigration, String connectionString, String contextType)
-   at Microsoft.EntityFrameworkCore.Design.OperationExecutor.UpdateDatabaseImpl(String targetMigration, String connectionString, String contextType)
-   at Microsoft.EntityFrameworkCore.Design.OperationExecutor.UpdateDatabase.<>c__DisplayClass0_0.<.ctor>b__0()
-   at Microsoft.EntityFrameworkCore.Design.OperationExecutor.OperationBase.Execute(Action action)
-  Exception data:
-    Severity: ERROR
-    SqlState: 23505
-    MessageText: could not create unique index "IX_OutboxMessages_TenantId_IdempotencyKey"
-    Detail: Key ("TenantId", "IdempotencyKey")=(1, 00000000-0000-0000-0000-000000000000) is duplicated.
-    SchemaName: public
-    TableName: OutboxMessages
-    ConstraintName: IX_OutboxMessages_TenantId_IdempotencyKey
-    File: tuplesort.c
-    Line: 4423
-    Routine: comparetup_index_btree
-23505: could not create unique index "IX_OutboxMessages_TenantId_IdempotencyKey"
-
-DETAIL: Key ("TenantId", "IdempotencyKey")=(1, 00000000-0000-0000-0000-000000000000) is duplicated.
-PS C:\Users\mccre\dev\boiler\src\services\WorkflowService>
+PS C:\Users\mccre\dev\boiler> docker logs --tail 200 boiler-workflow
+[16:48:39 INF] Starting WorkflowService {}
+=== WorkflowService Starting ===
+[16:48:39 WRN] Entity 'Role' has a global query filter defined and is the required end of a relationship with the entity 'RolePermission'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information. {"EventId": {"Id": 10622, "Name": "Microsoft.EntityFrameworkCore.Model.Validation.PossibleIncorrectRequiredNavigationWithQueryFilterInteractionWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
+[16:48:39 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId": {"Id": 10400, "Name": "Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
+✅ Main database migrations applied
+✅ Workflow database migrations applied
+[16:48:40 WRN] Storing keys in a directory '/app/.aspnet/DataProtection-Keys' that may not be persisted outside of the container. Protected data will be unavailable when container is destroyed. For more information go to https://aka.ms/aspnet/dataprotectionwarning {"EventId": {"Id": 60, "Name": "UsingEphemeralFileSystemLocationInContainer"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.Repositories.FileSystemXmlRepository"}
+[16:48:40 WRN] No XML encryptor configured. Key {3b0cd7cc-2d69-4542-abe3-1625bcadba9e} may be persisted to storage in unencrypted form. {"EventId": {"Id": 35, "Name": "NoXMLEncryptorConfiguredKeyMayBePersistedToStorageInUnencryptedForm"}, "SourceContext": "Microsoft.AspNetCore.DataProtection.KeyManagement.XmlKeyManager"}
+[16:48:40 INF] TIMER_WORKER_START Interval=30s BatchSize=100 {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[16:48:40 INF] OUTBOX_WORKER_START Interval=15s BatchSize=50 MaxRetries=5 {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:48:40 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[16:48:40 WRN] Overriding HTTP_PORTS '8080' and HTTPS_PORTS ''. Binding to values defined by URLS instead 'https://+:7003;http://+:5003'. {"EventId": {"Id": 15}, "SourceContext": "Microsoft.AspNetCore.Hosting.Diagnostics"}
+[16:48:40 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+Now listening on: https://[::]:7003
+[16:48:40 INF] Now listening on: https://[::]:7003 {}
+Now listening on: http://[::]:5003
+[16:48:40 INF] Now listening on: http://[::]:5003 {}
+🌊 WorkflowService started (runtime, timer automation, graph validation, outbox idempotency).
+[16:48:40 INF] WorkflowService startup complete (TimerWorker + GraphValidation + Outbox Idempotency). {}
+[16:48:44 INF] HTTP GET /health responded 200 in 54.4739 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:48:55 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:49:10 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[16:49:10 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:49:14 INF] HTTP GET /health responded 200 in 11.7222 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:49:25 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:49:40 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[16:49:40 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:49:44 INF] HTTP GET /health responded 200 in 9.1762 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:49:55 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:50:04 INF] HTTP GET /api/workflow/tasks/mine/summary responded 200 in 163.7303 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:50:07 INF] HTTP GET /api/workflow/definitions responded 200 in 76.1705 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:50:10 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[16:50:10 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:50:12 INF] HTTP POST /api/workflow/definitions/45/publish responded 400 in 48.1642 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:50:14 INF] HTTP GET /health responded 200 in 9.2560 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:50:16 INF] HTTP GET /api/workflow/definitions/45 responded 200 in 13.6828 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:50:17 INF] HTTP POST /api/workflow/definitions/validate responded 400 in 16.2491 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:50:23 INF] HTTP POST /api/workflow/definitions/validate responded 400 in 6.5066 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:50:25 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:50:33 INF] HTTP POST /api/workflow/definitions/validate responded 400 in 5.6122 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:50:40 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[16:50:40 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:50:44 INF] HTTP POST /api/workflow/definitions/validate responded 400 in 7.9065 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:50:44 INF] HTTP GET /health responded 200 in 12.5726 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:50:55 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:50:56 INF] HTTP POST /api/workflow/definitions/validate responded 200 in 11.6578 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:51:01 INF] HTTP POST /api/workflow/definitions/validate responded 200 in 44.4458 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:51:04 INF] HTTP POST /api/workflow/definitions/45/publish responded 400 in 8.2355 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:51:09 INF] HTTP POST /api/workflow/definitions/45/publish responded 400 in 6.9538 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:51:10 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[16:51:10 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:51:15 INF] HTTP GET /health responded 200 in 7.6255 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:51:25 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:51:40 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[16:51:40 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:51:45 INF] HTTP GET /health responded 200 in 7.3208 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:51:55 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:52:04 INF] HTTP GET /api/workflow/tasks/mine/summary responded 200 in 7.6234 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:52:10 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[16:52:10 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:52:13 INF] HTTP POST /api/workflow/definitions/validate responded 200 in 4.7227 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:52:15 INF] HTTP GET /health responded 200 in 7.1978 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:52:16 INF] HTTP POST /api/workflow/definitions/45/publish responded 400 in 7.3683 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:52:23 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "ed3e05c1-0041-43ab-bd86-e86ebb1a1813", "ActionName": "WorkflowService.Controllers.DefinitionsController.UpdateDraft (WorkflowService)", "RequestId": "0HNFA82A4I9TK:00000001", "RequestPath": "/api/workflow/definitions/45", "ConnectionId": "0HNFA82A4I9TK"}
+[16:52:23 INF] HTTP PUT /api/workflow/definitions/45 responded 200 in 82.7869 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:52:25 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:52:27 INF] HTTP POST /api/workflow/definitions/validate responded 200 in 3.5681 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:52:30 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "4d35e4b7-76fd-412c-95ae-cad0c9e67e1c", "ActionName": "WorkflowService.Controllers.DefinitionsController.Publish (WorkflowService)", "RequestId": "0HNFA82A4I9TM:00000001", "RequestPath": "/api/workflow/definitions/45/publish", "ConnectionId": "0HNFA82A4I9TM"}
+[16:52:30 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext", "ActionId": "4d35e4b7-76fd-412c-95ae-cad0c9e67e1c", "ActionName": "WorkflowService.Controllers.DefinitionsController.Publish (WorkflowService)", "RequestId": "0HNFA82A4I9TM:00000001", "RequestPath": "/api/workflow/definitions/45/publish", "ConnectionId": "0HNFA82A4I9TM"}
+[16:52:30 INF] Published definition published 45 {"SourceContext": "WorkflowService.Services.EventPublisher", "ActionId": "4d35e4b7-76fd-412c-95ae-cad0c9e67e1c", "ActionName": "WorkflowService.Controllers.DefinitionsController.Publish (WorkflowService)", "RequestId": "0HNFA82A4I9TM:00000001", "RequestPath": "/api/workflow/definitions/45/publish", "ConnectionId": "0HNFA82A4I9TM"}
+[16:52:30 INF] HTTP POST /api/workflow/definitions/45/publish responded 200 in 57.4481 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:52:30 INF] HTTP GET /api/workflow/definitions/45 responded 200 in 5.2572 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:52:40 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[16:52:40 INF] OUTBOX_BATCH Size=1 {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:52:40 INF] OUTBOX_DISPATCH EventType=workflow.definition.published Id=464 Tenant=1 Retry=0 PayloadSize=137 {"SourceContext": "WorkflowService.Services.LoggingOutboxDispatcher"}
+[16:52:40 INF] 🔍 WorkflowDbContext: SaveChangesAsync starting {"SourceContext": "WorkflowService.Persistence.WorkflowDbContext"}
+[16:52:45 INF] HTTP GET /health responded 200 in 7.8672 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[16:52:55 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:53:10 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[16:53:10 DBG] OUTBOX_EMPTY {"SourceContext": "WorkflowService.Background.OutboxWorker"}
+[16:53:15 INF] HTTP GET /health responded 200 in 8.6299 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+PS C:\Users\mccre\dev\boiler>

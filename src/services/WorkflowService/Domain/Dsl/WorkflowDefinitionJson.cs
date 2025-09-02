@@ -115,6 +115,125 @@ public class WorkflowDefinitionJson
         return result;
     }
 
+    public ValidationResult ValidateForPublish()
+    {
+        var baseResult = Validate(); // reuse existing structural checks (start presence, edge refs, gateway hints)
+        var result = new ValidationResult
+        {
+            Errors = new List<string>(baseResult.Errors),
+            Warnings = new List<string>(baseResult.Warnings)
+        };
+
+        // 1. Exactly one Start
+        var starts = Nodes.Where(n => n.Type.Equals("start", StringComparison.OrdinalIgnoreCase)).ToList();
+        if (starts.Count == 0)
+            result.Errors.Add("Exactly one Start node is required (found 0).");
+        else if (starts.Count > 1)
+            result.Errors.Add($"Exactly one Start node is required (found {starts.Count}).");
+
+        // 2. At least one End already partially enforced, but ensure we list count
+        var ends = Nodes.Where(n => n.Type.Equals("end", StringComparison.OrdinalIgnoreCase)).ToList();
+        if (ends.Count == 0)
+            result.Errors.Add("At least one End node is required (found 0).");
+
+        // Short circuit if no start
+        if (starts.Count == 1)
+        {
+            var startId = starts[0].Id;
+            var reachable = GetReachableNodes(startId);
+
+            // 3. Unreachable nodes (make them Errors for publish)
+            var unreachable = Nodes.Where(n => !reachable.Contains(n.Id)).Select(n => n.Id).ToList();
+            if (unreachable.Count > 0)
+                result.Errors.Add($"Unreachable node(s) from Start: {string.Join(", ", unreachable)}");
+
+            // 4. Unreachable Ends (already included above, but call out)
+            var unreachableEnds = ends.Where(e => !reachable.Contains(e.Id)).Select(e => e.Id).ToList();
+            if (unreachableEnds.Count > 0)
+                result.Errors.Add($"End node(s) unreachable from Start: {string.Join(", ", unreachableEnds)}");
+
+            // 5/6. Isolated islands (connected components not containing Start)
+            var islandComponents = GetUndirectedComponents();
+            foreach (var comp in islandComponents)
+            {
+                if (!comp.Contains(startId))
+                    result.Errors.Add($"Isolated component (no path to Start) contains: {string.Join(", ", comp)}");
+            }
+        }
+
+        // 7. Duplicate IDs
+        var duplicates = Nodes
+            .GroupBy(n => n.Id, StringComparer.OrdinalIgnoreCase)
+            .Where(g => g.Count() > 1)
+            .Select(g => $"{g.Key} (x{g.Count()})")
+            .ToList();
+        if (duplicates.Count > 0)
+            result.Errors.Add($"Duplicate node id(s): {string.Join(", ", duplicates)}");
+
+        return result;
+    }
+
+    public ValidationResult ValidateForDraft()
+    {
+        // Start from the existing relaxed Validate (which already produces warnings for reachability)
+        var baseResult = Validate();
+
+        // Clone so we can manipulate
+        var draftResult = new ValidationResult
+        {
+            Errors = new List<string>(baseResult.Errors),
+            Warnings = new List<string>(baseResult.Warnings)
+        };
+
+        // If "An End node is required." exists, downgrade to warning
+        const string endError = "An End node is required.";
+        if (draftResult.Errors.Remove(endError))
+            draftResult.Warnings.Add("End node missing (required before publish).");
+
+        // If you later add a single‑start enforcement to Validate(), you can similarly downgrade “multiple starts”
+        // Leave missing Start as a hard error: drafts still need a start to be meaningful
+        // Leave unknown edge endpoints & duplicate IDs as hard errors (they indicate corruption or ID collisions)
+
+        return draftResult;
+    }
+
+    // Helper: build undirected connected components
+    private List<HashSet<string>> GetUndirectedComponents()
+    {
+        var adj = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var n in Nodes)
+            adj[n.Id] = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var e in Edges)
+        {
+            if (!adj.ContainsKey(e.EffectiveSource) || !adj.ContainsKey(e.EffectiveTarget))
+                continue;
+            adj[e.EffectiveSource].Add(e.EffectiveTarget);
+            adj[e.EffectiveTarget].Add(e.EffectiveSource);
+        }
+
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var comps = new List<HashSet<string>>();
+
+        foreach (var id in adj.Keys)
+        {
+            if (visited.Contains(id)) continue;
+            var stack = new Stack<string>();
+            var comp = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            stack.Push(id);
+            while (stack.Count > 0)
+            {
+                var cur = stack.Pop();
+                if (!visited.Add(cur)) continue;
+                comp.Add(cur);
+                foreach (var nxt in adj[cur])
+                    if (!visited.Contains(nxt)) stack.Push(nxt);
+            }
+            comps.Add(comp);
+        }
+        return comps;
+    }
+
     private HashSet<string> GetReachableNodes(string startNodeId)
     {
         var visited = new HashSet<string>();

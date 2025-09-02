@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -10,11 +10,13 @@ import {
   DialogActions,
   TextField,
   IconButton,
-  Tooltip
+  Tooltip,
+  Alert,
+  CircularProgress,
+  Badge
 } from '@mui/material';
 import {
   Save as SaveIcon,
-  Publish as PublishIcon,
   ArrowBack as ArrowBackIcon,
   Settings as SettingsIcon
 } from '@mui/icons-material';
@@ -37,6 +39,7 @@ import type { DslDefinition, DslNode } from '../dsl/dsl.types';
 import type { WorkflowDefinitionDto } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
+import { useWorkflowValidation } from '../hooks/useWorkflowValidation';
 
 // --- Helpers to enforce gateway branch metadata ---
 function extractBranch(edge: Edge): 'true' | 'false' | undefined {
@@ -75,6 +78,8 @@ function applyGatewayBranchMetadata(dsl: DslDefinition, flowEdges: Edge[]): DslD
         trueSeen = true;
       } else if (e.label === 'false') {
         if (falseSeen) continue;
+        falseSeen = falseSeen ? true : false;
+        if (falseSeen) continue;
         falseSeen = true;
       }
       filtered.push(e);
@@ -103,7 +108,14 @@ export function BuilderPage() {
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [publishNotes, setPublishNotes] = useState('');
 
+  const { loading: validating, result: validation, validateJson, clear } = useWorkflowValidation();
+  const [showValidation, setShowValidation] = useState(false);
+
   const isNewWorkflow = id === 'new';
+
+  // Dirty tracking
+  const [dirty, setDirty] = useState(false);
+  const lastSavedJsonRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!isNewWorkflow && id) {
@@ -114,6 +126,7 @@ export function BuilderPage() {
     }
   }, [id, isNewWorkflow]);
 
+  // Load definition
   const loadDefinition = async () => {
     if (!id || isNewWorkflow) return;
     try {
@@ -124,14 +137,13 @@ export function BuilderPage() {
       setWorkflowDescription(definitionData.description || '');
 
       if (definitionData.jsonDefinition) {
+        lastSavedJsonRef.current = definitionData.jsonDefinition;
         const dsl: DslDefinition = JSON.parse(definitionData.jsonDefinition);
         const { nodes: flowNodes, edges: flowEdges } = deserializeFromDsl(dsl);
 
-        // Defer edges until after nodes mount so gateway handles exist
         setNodes(flowNodes);
         requestAnimationFrame(() => {
-          // Safety: ensure sourceHandle set if label indicates branch
-            const fixed = flowEdges.map(e => {
+          const fixed = flowEdges.map(e => {
             const lbl = typeof e.label === 'string' ? e.label.toLowerCase() : '';
             if ((lbl === 'true' || lbl === 'false') && !e.sourceHandle) {
               return {
@@ -144,7 +156,10 @@ export function BuilderPage() {
           });
           setEdges(fixed);
         });
+      } else {
+        lastSavedJsonRef.current = null;
       }
+      setDirty(false);
     } catch (err) {
       console.error('Failed to load definition:', err);
       toast.error('Failed to load workflow definition');
@@ -153,36 +168,42 @@ export function BuilderPage() {
     }
   };
 
-  // FIX: Narrow source/target before constructing Edge object
-  const onConnect = useCallback(
-    (params: Connection) => {
-      const { source, target, sourceHandle, targetHandle } = params;
-      if (!source || !target) return; // Narrow to string
+  const markDirty = () => setDirty(true);
 
-      const branch =
-        sourceHandle === 'true' || sourceHandle === 'false'
-          ? sourceHandle
-          : undefined;
+  const onNodesChangeWrapped = useCallback((changes: any) => {
+    markDirty();
+    onNodesChange(changes);
+  }, [onNodesChange]);
 
-      setEdges(eds =>
-        addEdge(
-          {
-            id: `e-${source}-${sourceHandle ?? 'h'}-${target}-${Date.now()}`,
-            source,
-            target,
-            sourceHandle: sourceHandle ?? undefined,
-            ...(targetHandle ? { targetHandle } : {}),
-            label: branch,
-            data: branch ? { fromHandle: branch } : undefined,
-            type: 'default'
-          } as Edge,
-          eds
-        )
-      );
-    },
-    [setEdges]
-  );
+  const onEdgesChangeWrapped = useCallback((changes: any) => {
+    markDirty();
+    onEdgesChange(changes);
+  }, [onEdgesChange]);
 
+  // Edge connect
+  const onConnect = useCallback((params: Connection) => {
+    const { source, target, sourceHandle, targetHandle } = params;
+    if (!source || !target) return;
+    const branch = (sourceHandle === 'true' || sourceHandle === 'false') ? sourceHandle : undefined;
+    setEdges(eds =>
+      addEdge(
+        {
+          id: `e-${source}-${sourceHandle ?? 'h'}-${target}-${Date.now()}`,
+          source,
+          target,
+          sourceHandle: sourceHandle ?? undefined,
+          ...(targetHandle ? { targetHandle } : {}),
+          label: branch,
+          data: branch ? { fromHandle: branch } : undefined,
+          type: 'default'
+        } as Edge,
+        eds
+      )
+    );
+    markDirty();
+  }, [setEdges]);
+
+  // Save draft
   const handleSave = async () => {
     try {
       setSaving(true);
@@ -195,7 +216,7 @@ export function BuilderPage() {
       dslDefinition = applyGatewayBranchMetadata(dslDefinition, edges);
       const jsonDefinitionString = JSON.stringify(dslDefinition);
 
-      if (isNewWorkflow) {
+      if (isNewWorkflow || !definition) {
         const response = await workflowService.createDraft({
           name: workflowName,
           description: workflowDescription,
@@ -213,6 +234,8 @@ export function BuilderPage() {
         setDefinition(response);
         toast.success('Workflow updated');
       }
+      lastSavedJsonRef.current = jsonDefinitionString;
+      setDirty(false);
     } catch (err) {
       console.error('Failed to save workflow:', err);
       toast.error('Failed to save workflow');
@@ -221,23 +244,82 @@ export function BuilderPage() {
     }
   };
 
-  const handlePublish = async () => {
-    if (!definition) {
-      toast.error('Please save the workflow first');
-      return;
-    }
-    const dslDefinition = applyGatewayBranchMetadata(
-      serializeToDsl(nodes, edges, workflowName.toLowerCase().replace(/\s+/g, '-')),
-      edges
+  // Ensure latest saved (auto-save for publish)
+  const ensureLatestSaved = async (): Promise<boolean> => {
+    const dsl = serializeToDsl(
+      nodes,
+      edges,
+      workflowName.toLowerCase().replace(/\s+/g, '-'),
+      definition?.version
     );
-    const validation = validateDefinition(dslDefinition);
-    if (!validation.isValid) {
-      toast.error(`Cannot publish: ${validation.errors.join(', ')}`);
+    const json = JSON.stringify(applyGatewayBranchMetadata(dsl, edges));
+    if (!definition) {
+      await handleSave();
+      return true;
+    }
+    if (dirty || lastSavedJsonRef.current !== json) {
+      try {
+        await workflowService.updateDefinition(definition.id, {
+          name: workflowName,
+          description: workflowDescription,
+          jsonDefinition: json
+        });
+        lastSavedJsonRef.current = json;
+        setDirty(false);
+        toast.success('Draft auto-saved before publish');
+      } catch {
+        toast.error('Auto-save failed; cannot publish');
+        return false;
+      }
+    }
+    return true;
+  };
+
+  // Validate (button)
+  const handleValidate = async () => {
+    const dsl = serializeToDsl(nodes, edges, workflowName.toLowerCase().replace(/\s+/g, '-'));
+    const jsonString = JSON.stringify(dsl);
+    const vr = await validateJson(jsonString);
+    setShowValidation(true);
+    if (!vr.success) {
+      toast.error(vr.errors[0] ?? 'Validation failed');
+    } else if (vr.warnings.length) {
+      toast.success('Validation passed with warnings');
+    } else {
+      toast.success('Validation passed');
+    }
+  };
+
+  // Publish (open dialog)
+  const handlePublish = async () => {
+    if (!definition && !isNewWorkflow) {
+      toast.error('Definition not loaded yet');
       return;
     }
+
+    const dsl = serializeToDsl(nodes, edges, workflowName.toLowerCase().replace(/\s+/g, '-'));
+    const jsonString = JSON.stringify(dsl);
+    const vr = await validateJson(jsonString);
+    setShowValidation(true);
+
+    if (!vr.success) {
+      toast.error('Fix validation errors before publishing');
+      return;
+    }
+
+    const savedOk = await ensureLatestSaved();
+    if (!savedOk) return;
+
+    const local = validateDefinition(applyGatewayBranchMetadata(dsl, edges));
+    if (!local.isValid) {
+      toast.error(`Cannot publish: ${local.errors.join(', ')}`);
+      return;
+    }
+
     setPublishDialogOpen(true);
   };
 
+  // Confirm publish (call API)
   const handlePublishConfirm = async () => {
     if (!definition) return;
     try {
@@ -248,9 +330,14 @@ export function BuilderPage() {
       setPublishDialogOpen(false);
       setPublishNotes('');
       loadDefinition();
-    } catch (err) {
-      console.error('Failed to publish workflow:', err);
-      toast.error('Failed to publish workflow');
+    } catch (err: any) {
+      const errs = (err as any).errors;
+      if (errs?.length) {
+        toast.error(`Publish failed: ${errs[0]}`);
+        setShowValidation(true);
+      } else {
+        toast.error('Failed to publish workflow');
+      }
     }
   };
 
@@ -270,6 +357,7 @@ export function BuilderPage() {
       setNodes(nds =>
         nds.map(n => (n.id === updated.id ? { ...n, data: updated } : n))
       );
+      markDirty();
     },
     [setNodes]
   );
@@ -316,7 +404,7 @@ export function BuilderPage() {
             size="small"
             placeholder="Workflow Name"
             value={workflowName}
-            onChange={e => setWorkflowName(e.target.value)}
+            onChange={e => { setWorkflowName(e.target.value); markDirty(); }}
             sx={{ width: 200 }}
           />
           <Button
@@ -327,15 +415,38 @@ export function BuilderPage() {
           >
             {saving ? 'Saving...' : 'Save'}
           </Button>
+          <Button
+            variant="outlined"
+            onClick={handleValidate}
+            disabled={validating}
+          >
+            {validating ? 'Validating…' : 'Validate'}
+          </Button>
+
           {definition && !definition.isPublished && (
-            <Button
-              variant="contained"
-              startIcon={<PublishIcon />}
-              onClick={handlePublish}
-              disabled={saving}
+            <Badge
+              color={validation?.errors.length ? 'error' : (validation?.warnings.length ? 'warning' : 'success')}
+              badgeContent={
+                validation
+                  ? validation.errors.length
+                    ? validation.errors.length
+                    : validation.warnings.length
+                      ? `W:${validation.warnings.length}`
+                      : '✓'
+                  : undefined
+              }
+              overlap="circular"
+              anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
             >
-              Publish
-            </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handlePublish}
+                disabled={validating || !definition?.id}
+              >
+                Publish
+              </Button>
+            </Badge>
           )}
           <Tooltip title="Properties">
             <IconButton
@@ -354,8 +465,8 @@ export function BuilderPage() {
           <BuilderCanvas
             nodes={nodes}
             edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
+            onNodesChange={onNodesChangeWrapped}
+            onEdgesChange={onEdgesChangeWrapped}
             onConnect={onConnect}
             onNodeClick={handleNodeClick}
             setNodes={setNodes}
@@ -369,8 +480,8 @@ export function BuilderPage() {
           onNodeUpdate={handleNodeUpdate}
           workflowName={workflowName}
           workflowDescription={workflowDescription}
-          onWorkflowNameChange={setWorkflowName}
-          onWorkflowDescriptionChange={setWorkflowDescription}
+          onWorkflowNameChange={(v) => { setWorkflowName(v); markDirty(); }}
+          onWorkflowDescriptionChange={(v) => { setWorkflowDescription(v); markDirty(); }}
         />
       </Box>
 
@@ -402,6 +513,35 @@ export function BuilderPage() {
             Publish
           </Button>
         </DialogActions>
+      </Dialog>
+
+      <Dialog open={showValidation} onClose={() => { setShowValidation(false); clear(); }} maxWidth="sm" fullWidth>
+        <DialogTitle>Graph Validation</DialogTitle>
+        <DialogContent>
+          {validating && <CircularProgress size={24} />}
+          {validation && (
+            <>
+              {!validation.success && (
+                <Alert severity="error" sx={{ mb: 2 }}>Fix errors before publishing.</Alert>
+              )}
+              {validation.errors.length > 0 && (
+                <div>
+                  <strong>Errors:</strong>
+                  <ul>{validation.errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
+                </div>
+              )}
+              {validation.warnings.length > 0 && (
+                <div style={{ marginTop: 8 }}>
+                  <strong>Warnings:</strong>
+                  <ul>{validation.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
+                </div>
+              )}
+              {validation.success && validation.errors.length === 0 && (
+                <Alert severity="success" sx={{ mt: 2 }}>Validation passed.</Alert>
+              )}
+            </>
+          )}
+        </DialogContent>
       </Dialog>
     </Box>
   );

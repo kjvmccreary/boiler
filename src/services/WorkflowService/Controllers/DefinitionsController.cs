@@ -8,6 +8,8 @@ using WorkflowService.Services.Interfaces;
 using WorkflowService.Persistence;
 using Contracts.Services;
 using WorkflowService.Domain.Dsl;
+using WorkflowService.Engine;                // BuilderDefinitionAdapter
+using WorkflowService.Services.Validation;   // IWorkflowGraphValidator
 using System.Security.Claims;
 
 namespace WorkflowService.Controllers;
@@ -20,17 +22,20 @@ public class DefinitionsController : ControllerBase
     private readonly ITenantProvider _tenantProvider;
     private readonly WorkflowDbContext _db;
     private readonly ILogger<DefinitionsController> _logger;
+    private readonly IWorkflowGraphValidator _graphValidator;
 
     public DefinitionsController(
         IDefinitionService definitionService,
         ITenantProvider tenantProvider,
         WorkflowDbContext db,
-        ILogger<DefinitionsController> logger)
+        ILogger<DefinitionsController> logger,
+        IWorkflowGraphValidator graphValidator)
     {
         _definitionService = definitionService;
         _tenantProvider = tenantProvider;
         _db = db;
         _logger = logger;
+        _graphValidator = graphValidator;
     }
 
     // LIST
@@ -67,7 +72,7 @@ public class DefinitionsController : ControllerBase
         return Ok(resp);
     }
 
-    // VALIDATE arbitrary JSON
+    // VALIDATE arbitrary JSON (client-provided)
     [HttpPost("validate")]
     [RequiresPermission(Permissions.Workflow.CreateDefinitions)]
     public async Task<ActionResult<ApiResponseDto<ValidationResultDto>>> Validate(
@@ -130,7 +135,7 @@ public class DefinitionsController : ControllerBase
         return Ok(resp);
     }
 
-    // REVALIDATE existing stored JSON (draft or published)
+    // REVALIDATE stored JSON (draft or published)
     [HttpPost("{id:int}/revalidate")]
     [RequiresPermission(Permissions.Workflow.ViewDefinitions)]
     public async Task<ActionResult<ApiResponseDto<ValidationResultDto>>> Revalidate(int id, CancellationToken ct)
@@ -147,7 +152,7 @@ public class DefinitionsController : ControllerBase
         return validate.Success ? Ok(validate) : BadRequest(validate);
     }
 
-    // PUBLISH
+    // PUBLISH (now validates BEFORE publishing)
     [HttpPost("{id:int}/publish")]
     [RequiresPermission(Permissions.Workflow.PublishDefinitions)]
     public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> Publish(
@@ -155,9 +160,30 @@ public class DefinitionsController : ControllerBase
         [FromBody] PublishDefinitionRequestDto request,
         CancellationToken ct)
     {
+        // Load current draft/published state first
+        var existing = await _definitionService.GetByIdAsync(id, null, ct);
+        if (!existing.Success || existing.Data == null)
+            return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(existing.Message ?? "Definition not found"));
+
+        // Graph validation (strict publish rules)
+        var dsl = BuilderDefinitionAdapter.Parse(existing.Data.JSONDefinition);
+        var validation = _graphValidator.ValidateForPublish(dsl);
+        if (!validation.IsValid)
+        {
+            return BadRequest(new
+            {
+                success = false,
+                message = "Validation failed",
+                errors = validation.Errors,
+                warnings = validation.Warnings
+            });
+        }
+
+        // Proceed with publish
         var resp = await _definitionService.PublishAsync(id, request, ct);
         if (!resp.Success)
             return BadRequest(resp);
+
         return Ok(resp);
     }
 
@@ -232,6 +258,23 @@ public class DefinitionsController : ControllerBase
         await _db.SaveChangesAsync(ct);
 
         return Ok(ApiResponseDto<object>.SuccessResult(new { terminated = running.Count }, "Running instances terminated"));
+    }
+
+    [HttpGet("{id}/validate")]
+    [RequiresPermission(Permissions.Workflow.ViewDefinitions)]
+    public async Task<IActionResult> ValidateDefinition(int id, CancellationToken ct)
+    {
+        var def = await _db.WorkflowDefinitions.FirstOrDefaultAsync(d => d.Id == id, ct);
+        if (def == null) return NotFound();
+
+        var dsl = BuilderDefinitionAdapter.Parse(def.JSONDefinition);
+        var vr = _graphValidator.ValidateForPublish(dsl);
+        return Ok(new
+        {
+            success = vr.IsValid,
+            errors = vr.Errors,
+            warnings = vr.Warnings
+        });
     }
 
     // Helpers

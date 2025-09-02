@@ -14,6 +14,7 @@ using WorkflowService.Services;
 using WorkflowService.Security;
 using System.Text.Json.Serialization;
 using WorkflowService.Hubs;
+using WorkflowService.Services.Validation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -114,6 +115,7 @@ builder.Services.AddScoped<IWorkflowExecutionService, WorkflowExecutionService>(
 
 // NEW: Graph validation service (strict publish-time validation)
 builder.Services.AddScoped<IGraphValidationService, GraphValidationService>();
+builder.Services.AddScoped<IWorkflowGraphValidator, WorkflowGraphValidator>();
 
 // Authorization policies
 builder.Services.AddWorkflowPolicies();

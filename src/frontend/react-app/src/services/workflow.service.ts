@@ -126,6 +126,12 @@ export interface WorkflowEventsFilters {
   pageSize?: number;
 }
 
+export interface GraphValidationResult {
+  success: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
 export class WorkflowService {
   // Definitions
   async getDefinitions(filters?: WorkflowDefinitionsFilters): Promise<WorkflowDefinitionDto[]> {
@@ -150,9 +156,102 @@ export class WorkflowService {
     return unwrap<WorkflowDefinitionDto>(resp.data);
   }
 
-  async publishDefinition(id: number, request: PublishDefinitionRequestDto) {
-    const resp = await apiClient.post(`/api/workflow/definitions/${id}/publish`, request);
-    return unwrap<WorkflowDefinitionDto>(resp.data);
+  /**
+   * Validate arbitrary JSON definition (draft not yet saved or locally edited).
+   */
+  async validateDefinitionJson(jsonDefinition: string): Promise<GraphValidationResult> {
+    try {
+      // MUST match C# property name exactly (no camelCase policy configured)
+      const resp = await apiClient.post('/api/workflow/definitions/validate', {
+        JSONDefinition: jsonDefinition
+      });
+      const d: any = resp.data;
+      const payload = d.data ?? d;
+      return {
+        success:
+          (payload.isValid ?? payload.success ?? true) &&
+          ((payload.errors?.length ?? 0) === 0),
+        errors: payload.errors ?? [],
+        warnings: payload.warnings ?? []
+      };
+    } catch (err: any) {
+      // Attempt to normalize error payload shapes
+      const d = err?.response?.data;
+      let errors: string[] = [];
+      let warnings: string[] = [];
+      if (Array.isArray(d?.errors)) {
+        // Could be array of strings or objects
+        if (typeof d.errors[0] === 'string') errors = d.errors;
+        else errors = d.errors.map((e: any) => e.message ?? e.Message ?? JSON.stringify(e));
+      } else if (Array.isArray(d?.data?.errors)) {
+        errors = d.data.errors;
+      } else if (d?.message) {
+        errors = [d.message];
+      } else {
+        errors = ['Validation failed (unknown server response).'];
+      }
+      if (Array.isArray(d?.warnings)) warnings = d.warnings;
+      return {
+        success: false,
+        errors,
+        warnings
+      };
+    }
+  }
+
+  async validateDefinitionById(id: number): Promise<GraphValidationResult> {
+    try {
+      const resp = await apiClient.get(`/api/workflow/definitions/${id}/validate`);
+      const d: any = resp.data;
+      return {
+        success: !!d.success && ((d.errors?.length ?? 0) === 0),
+        errors: d.errors ?? [],
+        warnings: d.warnings ?? []
+      };
+    } catch (err: any) {
+      const d = err?.response?.data;
+      return {
+        success: false,
+        errors: d?.errors ?? [d?.message ?? 'Validation request failed'],
+        warnings: d?.warnings ?? []
+      };
+    }
+  }
+
+  async publishDefinition(id: number, opts?: { publishNotes?: string; forcePublish?: boolean }) {
+    try {
+      const resp = await apiClient.post(`/api/workflow/definitions/${id}/publish`, {
+        publishNotes: opts?.publishNotes,
+        forcePublish: opts?.forcePublish ?? false
+      });
+      return unwrap<WorkflowDefinitionDto>(resp.data);
+    } catch (err: any) {
+      const d = err?.response?.data;
+      const errors: string[] =
+        d?.errors
+          ? (Array.isArray(d.errors) ? d.errors : [String(d.errors)])
+          : d?.message
+            ? [d.message]
+            : ['Publish failed'];
+      const e = new Error(errors.join('; '));
+      (e as any).errors = errors;
+      throw e;
+    }
+  }
+
+  /**
+   * Convenience helper: validate then publish.
+   * Returns { published?: WorkflowDefinitionDto, validation?: GraphValidationResult }
+   */
+  async validateThenPublish(id: number, opts?: { publishNotes?: string; forcePublish?: boolean }) {
+    const vr = await this.validateDefinitionById(id);
+    if (!vr.success) return { validation: vr, published: undefined };
+    try {
+      const published = await this.publishDefinition(id, opts);
+      return { validation: vr, published };
+    } catch (e: any) {
+      return { validation: vr, published: undefined, error: e };
+    }
   }
 
   async deleteDefinition(id: number) {
