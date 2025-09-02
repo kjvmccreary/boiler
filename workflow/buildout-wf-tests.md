@@ -97,10 +97,10 @@ Controllers (src/services/WorkflowService/Controllers)
 * Gateway enrichment helper (EnrichEdgesForGateway extension) not directly tested (indirect through DefinitionService and Graph validation). Consider a micro test if logic is non-trivial.
 ## Prioritized Recommended Additions (Highest ROI First)
 <s>### 1.	TaskService: ReleaseTaskAsync, ReassignTaskAsync, AssignTaskAsync, CancelTaskAsync, GetMyTaskCountsAsync (core operational features with branching logic).</s>
-### 2.	WorkflowRuntime: gateway branching & RetryWorkflowAsync (ensures engine correctness).
-### 3.	DefinitionsController: Unpublish, Archive, Publish with graph validation failure (improves API surface reliability).
-### 4.	TasksController & AdminController: basic happy-path + one failure per critical endpoint (smoke coverage).
-### 5.	DefinitionService: UpdateDraft + CreateNewVersionAsync (authoring workflow).
+<s>### 2.	WorkflowRuntime: gateway branching & RetryWorkflowAsync (ensures engine correctness).</s>
+<s>### 3.	DefinitionsController: Unpublish, Archive, Publish with graph validation failure (improves API surface reliability).</s>
+<s>### 4.	TasksController & AdminController: basic happy-path + one failure per critical endpoint (smoke coverage).</s>
+<s>### 5.	DefinitionService: UpdateDraft + CreateNewVersionAsync (authoring workflow).</s>
 ### 6.	TimerWorker: fallback path (non-relational) already tested; add batch size test if timers are critical.
 ### 7.	Graph validation: duplicate edge IDs & unreachable end nodes (expands rules regression safety).
 ## Low Priority / Optional

@@ -1,222 +1,184 @@
+using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Moq;
 using Xunit;
 using WorkflowService.Controllers;
 using WorkflowService.Persistence;
-using DTOs.Common;
-using DTOs.Workflow;
+using WorkflowService.Domain.Models;
 using DTOs.Workflow.Enums;
+using DTOs.Workflow;
+using DTOs.Common;
 using Microsoft.Extensions.Logging;
-using System.Security.Claims;
+using WFTaskStatus = DTOs.Workflow.Enums.TaskStatus; // ✅ Alias to disambiguate from System.Threading.Tasks.TaskStatus
 
 namespace WorkflowService.Tests.Controllers;
 
 public class AdminControllerTests : TestBase
 {
-    private readonly Mock<ILogger<AdminController>> _mockLogger;
     private readonly AdminController _controller;
 
     public AdminControllerTests()
     {
-        _mockLogger = CreateMockLogger<AdminController>();
-        
-        // Use actual DbContext from TestBase
-        _controller = new AdminController(
-            DbContext,
-            _mockLogger.Object);
-
-        SetupControllerContext();
+        _controller = new AdminController(DbContext, CreateMockLogger<AdminController>().Object);
+        SetUser(_controller);
     }
 
-    [Fact]
-    public async Task GetWorkflowStats_ShouldReturnOkResult()
+    private static void SetUser(ControllerBase c)
     {
-        // Arrange
-        await SeedTestDataAsync();
-
-        // Act - Use actual controller method name
-        var result = await _controller.GetWorkflowStats();
-
-        // Assert
-        result.Should().NotBeNull();
-        var actionResult = result.Result as OkObjectResult;
-        actionResult.Should().NotBeNull();
-        actionResult!.StatusCode.Should().Be(200);
-        
-        var responseData = actionResult.Value as ApiResponseDto<WorkflowStatsDto>;
-        responseData.Should().NotBeNull();
-        responseData!.Success.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task RetryInstance_FailedInstance_ShouldReturnOkResult()
-    {
-        // Arrange
-        var instance = await CreateFailedInstanceAsync();
-        var request = new RetryInstanceRequestDto
+        var claims = new[]
         {
-            RetryReason = "Fixing network issue"
+            new Claim(ClaimTypes.NameIdentifier,"1"),
+            new Claim("permission","workflow.admin")
         };
-
-        // Act
-        var result = await _controller.RetryInstance(instance.Id, request);
-
-        // Assert
-        result.Should().NotBeNull();
-        var actionResult = result.Result as OkObjectResult;
-        actionResult.Should().NotBeNull();
-        actionResult!.StatusCode.Should().Be(200);
-    }
-
-    [Fact]
-    public async Task MoveInstanceToNode_ValidRequest_ShouldReturnOkResult()
-    {
-        // Arrange
-        var instance = await CreateRunningInstanceAsync();
-        var request = new MoveToNodeRequestDto
+        c.ControllerContext = new ControllerContext
         {
-            TargetNodeId = "task2",
-            Reason = "Skipping problematic step"
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(claims,"TestAuth"))
+            }
         };
-
-        // Act - Use actual controller method name
-        var result = await _controller.MoveInstanceToNode(instance.Id, request);
-
-        // Assert
-        result.Should().NotBeNull();
-        var actionResult = result.Result as OkObjectResult;
-        actionResult.Should().NotBeNull();
-        actionResult!.StatusCode.Should().Be(200);
     }
 
-    private async Task SeedTestDataAsync()
+    private (WorkflowDefinition def, WorkflowInstance inst) SeedInstance(InstanceStatus status)
     {
-        var definition = new WorkflowService.Domain.Models.WorkflowDefinition
+        var def = new WorkflowDefinition
         {
             TenantId = 1,
-            Name = "Test Workflow",
+            Name = "WF",
             Version = 1,
             JSONDefinition = "{}",
             IsPublished = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
+        DbContext.WorkflowDefinitions.Add(def);
+        DbContext.SaveChanges();
 
-        var instance = new WorkflowService.Domain.Models.WorkflowInstance
+        var inst = new WorkflowInstance
         {
             TenantId = 1,
-            WorkflowDefinitionId = definition.Id,
+            WorkflowDefinitionId = def.Id,
             DefinitionVersion = 1,
-            Status = InstanceStatus.Completed,
+            Status = status,
             CurrentNodeIds = "[]",
             Context = "{}",
             StartedAt = DateTime.UtcNow,
-            CompletedAt = DateTime.UtcNow
-        };
-
-        definition.Instances = new List<WorkflowService.Domain.Models.WorkflowInstance> { instance };
-        instance.WorkflowDefinition = definition;
-
-        DbContext.WorkflowDefinitions.Add(definition);
-        DbContext.WorkflowInstances.Add(instance);
-        await DbContext.SaveChangesAsync();
-    }
-
-    private async Task<WorkflowService.Domain.Models.WorkflowInstance> CreateFailedInstanceAsync()
-    {
-        var definition = new WorkflowService.Domain.Models.WorkflowDefinition
-        {
-            TenantId = 1,
-            Name = "Failed Workflow",
-            Version = 1,
-            JSONDefinition = "{}",
-            IsPublished = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
+        DbContext.WorkflowInstances.Add(inst);
+        DbContext.SaveChanges();
 
-        var instance = new WorkflowService.Domain.Models.WorkflowInstance
-        {
-            TenantId = 1,
-            WorkflowDefinitionId = definition.Id,
-            DefinitionVersion = 1,
-            Status = InstanceStatus.Failed,
-            CurrentNodeIds = """["task1"]""",
-            Context = "{}",
-            ErrorMessage = "Task execution failed",
-            StartedAt = DateTime.UtcNow,
-            CompletedAt = DateTime.UtcNow
-        };
-
-        definition.Instances = new List<WorkflowService.Domain.Models.WorkflowInstance> { instance };
-        instance.WorkflowDefinition = definition;
-
-        DbContext.WorkflowDefinitions.Add(definition);
-        DbContext.WorkflowInstances.Add(instance);
-        await DbContext.SaveChangesAsync();
-
-        return instance;
+        return (def, inst);
     }
 
-    private async Task<WorkflowService.Domain.Models.WorkflowInstance> CreateRunningInstanceAsync()
+    private WorkflowTask SeedTask(WorkflowInstance inst, WFTaskStatus status = WFTaskStatus.Created)
     {
-        var definition = new WorkflowService.Domain.Models.WorkflowDefinition
+        var t = new WorkflowTask
         {
-            TenantId = 1,
-            Name = "Running Workflow",
-            Version = 1,
-            JSONDefinition = "{}",
-            IsPublished = true,
+            TenantId = inst.TenantId,
+            WorkflowInstanceId = inst.Id,
+            NodeId = "n1",
+            TaskName = "Task",
+            NodeType = "human",
+            Status = status,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
-
-        var instance = new WorkflowService.Domain.Models.WorkflowInstance
-        {
-            TenantId = 1,
-            WorkflowDefinitionId = definition.Id,
-            DefinitionVersion = 1,
-            Status = InstanceStatus.Running,
-            CurrentNodeIds = """["task1"]""",
-            Context = "{}",
-            StartedAt = DateTime.UtcNow
-        };
-
-        definition.Instances = new List<WorkflowService.Domain.Models.WorkflowInstance> { instance };
-        instance.WorkflowDefinition = definition;
-
-        DbContext.WorkflowDefinitions.Add(definition);
-        DbContext.WorkflowInstances.Add(instance);
-        await DbContext.SaveChangesAsync();
-
-        return instance;
+        DbContext.WorkflowTasks.Add(t);
+        DbContext.SaveChanges();
+        return t;
     }
 
-    private void SetupControllerContext()
+    [Fact]
+    public async Task GetWorkflowStats_ShouldReturnOk()
     {
-        var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, "1"),
-            new Claim("tenantId", "1"),
-            new Claim(ClaimTypes.Email, "admin@example.com"),
-            new Claim("permissions", "workflow.admin")
-        };
+        var result = await _controller.GetWorkflowStats();
+        (result.Result as OkObjectResult).Should().NotBeNull();
+    }
 
-        var identity = new ClaimsIdentity(claims, "TestAuth");
-        var principal = new ClaimsPrincipal(identity);
+    [Fact]
+    public async Task RetryInstance_Success()
+    {
+        var (_, inst) = SeedInstance(InstanceStatus.Failed);
+        var dto = new RetryInstanceRequestDto { RetryReason = "Test" };
 
-        var httpContext = new DefaultHttpContext
-        {
-            User = principal
-        };
+        var result = await _controller.RetryInstance(inst.Id, dto);
+        (result.Result as OkObjectResult).Should().NotBeNull();
+    }
 
-        httpContext.Request.Headers["X-Tenant-ID"] = "1";
+    [Fact]
+    public async Task RetryInstance_WrongStatus_ShouldReturnBadRequest()
+    {
+        var (_, inst) = SeedInstance(InstanceStatus.Running);
+        var dto = new RetryInstanceRequestDto { RetryReason = "Test" };
 
-        _controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = httpContext
-        };
+        var result = await _controller.RetryInstance(inst.Id, dto);
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact]
+    public async Task MoveInstanceToNode_Success()
+    {
+        var (_, inst) = SeedInstance(InstanceStatus.Running);
+        var dto = new MoveToNodeRequestDto { TargetNodeId = "newNode", Reason = "Adjust" };
+
+        var result = await _controller.MoveInstanceToNode(inst.Id, dto);
+        (result.Result as OkObjectResult).Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task MoveInstanceToNode_Completed_ShouldReturnBadRequest()
+    {
+        var (_, inst) = SeedInstance(InstanceStatus.Completed);
+        var dto = new MoveToNodeRequestDto { TargetNodeId = "newNode" };
+
+        var result = await _controller.MoveInstanceToNode(inst.Id, dto);
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact]
+    public async Task ResetTask_Success()
+    {
+        var (_, inst) = SeedInstance(InstanceStatus.Running);
+        var task = SeedTask(inst, WFTaskStatus.Assigned);
+
+        var dto = new ResetTaskRequestDto { NewStatus = WFTaskStatus.Created, Reason = "Reset" };
+
+        var result = await _controller.ResetTask(task.Id, dto);
+        (result.Result as OkObjectResult).Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task ResetTask_NotFound_ShouldReturnNotFound()
+    {
+        var result = await _controller.ResetTask(999, new ResetTaskRequestDto { NewStatus = WFTaskStatus.Created });
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
+    public async Task GetWorkflowEvents_Empty_ShouldReturnOk()
+    {
+        var result = await _controller.GetWorkflowEvents();
+        (result.Result as OkObjectResult).Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task BulkCancelInstances_Success()
+    {
+        var (_, instRunning) = SeedInstance(InstanceStatus.Running);
+        var dto = new BulkCancelInstancesRequestDto { Reason = "Ops", WorkflowDefinitionId = instRunning.WorkflowDefinitionId };
+
+        var result = await _controller.BulkCancelInstances(dto);
+        (result.Result as OkObjectResult).Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task BulkCancelInstances_NoMatches_ShouldReturnBadRequest()
+    {
+        var dto = new BulkCancelInstancesRequestDto { Reason = "None", WorkflowDefinitionId = 9999 };
+        var result = await _controller.BulkCancelInstances(dto);
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 }

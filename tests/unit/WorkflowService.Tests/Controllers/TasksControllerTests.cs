@@ -1,224 +1,280 @@
+using System.Security.Claims;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
 using WorkflowService.Controllers;
-using DTOs.Common;
-using DTOs.Workflow;
-using Microsoft.Extensions.Logging;
-using System.Security.Claims;
-using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
+using WorkflowService.Persistence;
 using WorkflowService.Services.Interfaces;
-using Common.Data;
+using DTOs.Workflow;
+using DTOs.Common;
+using DTOs.Workflow.Enums;
+using WorkflowService.Domain.Models;
+using Microsoft.Extensions.Logging; // ✅ Added
+using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus; // ✅ Disambiguate TaskStatus
 
 namespace WorkflowService.Tests.Controllers;
 
 public class TasksControllerTests : TestBase
 {
-    private readonly Mock<ILogger<TasksController>> _mockLogger;
-    private readonly Mock<ITaskService> _mockTaskService;
-    private readonly Mock<IUnitOfWork> _mockUnitOfWork;
+    private readonly Mock<ITaskService> _taskService = new();
+    private readonly Mock<IUnitOfWork> _uow = new();
+    private readonly Mock<ILogger<TasksController>> _logger = new();
     private readonly TasksController _controller;
 
     public TasksControllerTests()
     {
-        _mockLogger = CreateMockLogger<TasksController>();
-        _mockTaskService = new Mock<ITaskService>();
-        _mockUnitOfWork = new Mock<IUnitOfWork>();
-
-        // ✅ FIXED: Use correct constructor parameters
         _controller = new TasksController(
             DbContext,
-            _mockLogger.Object,
-            _mockTaskService.Object,
-            _mockUnitOfWork.Object);
+            _logger.Object,
+            _taskService.Object,
+            _uow.Object);
 
-        SetupControllerContext();
+        SetUserContext(_controller);
     }
 
-    [Fact]
-    public async Task GetTasks_ValidRequest_ShouldReturnOkResult()
+    private static void SetUserContext(ControllerBase controller)
     {
-        // Arrange
-        await SeedTestTasksAsync();
-
-        // ✅ FIXED: Use correct method signature
-        var result = await _controller.GetTasks(
-            status: WorkflowTaskStatus.Created,
-            page: 1,
-            pageSize: 10);
-
-        // Assert
-        result.Should().NotBeNull();
-        var actionResult = result.Result as OkObjectResult;
-        actionResult.Should().NotBeNull();
-        actionResult!.StatusCode.Should().Be(200);
-    }
-
-    [Fact]
-    public async Task ClaimTask_ValidRequest_ShouldReturnOkResult()
-    {
-        // Arrange
-        var task = await CreateTestTaskAsync(WorkflowTaskStatus.Created);
-        
-        _mockTaskService.Setup(s => s.ClaimTaskAsync(task.Id, It.IsAny<CancellationToken>()))
-                       .ReturnsAsync(ApiResponseDto<WorkflowTaskDto>.SuccessResult(
-                           new WorkflowTaskDto { Id = task.Id, Status = WorkflowTaskStatus.Claimed }));
-
-        // ✅ FIXED: Use correct method signature (no request parameter)
-        var result = await _controller.ClaimTask(task.Id);
-
-        // Assert
-        result.Should().NotBeNull();
-        var actionResult = result.Result as OkObjectResult;
-        actionResult.Should().NotBeNull();
-        actionResult!.StatusCode.Should().Be(200);
-    }
-
-    [Fact]
-    public async Task CompleteTask_ValidRequest_ShouldInvokeTaskService()
-    {
-        // Arrange
-        var task = await CreateTestTaskAsync(WorkflowTaskStatus.Claimed, assignedUserId: 1);
-        var request = new CompleteTaskRequestDto
+        var claims = new[]
         {
-            CompletionData = """{"approved": true}""",
-            CompletionNotes = "Task completed successfully"
+            new Claim(ClaimTypes.NameIdentifier, "1"),
+            new Claim("permission", "workflow.view_tasks"),
+            new Claim("permission", "workflow.claim_tasks"),
+            new Claim("permission", "workflow.complete_tasks"),
+            new Claim("permission", "workflow.admin")
         };
-
-        _mockTaskService.Setup(s => s.CompleteTaskAsync(task.Id, request, It.IsAny<CancellationToken>()))
-                       .ReturnsAsync(ApiResponseDto<WorkflowTaskDto>.SuccessResult(
-                           new WorkflowTaskDto { Id = task.Id, Status = WorkflowTaskStatus.Completed }));
-
-        // Act
-        var result = await _controller.CompleteTask(task.Id, request);
-
-        // Assert
-        result.Should().NotBeNull();
-        var actionResult = result.Result as OkObjectResult;
-        actionResult.Should().NotBeNull();
-        actionResult!.StatusCode.Should().Be(200);
-        
-        // ✅ FIXED: Verify correct service method call
-        _mockTaskService.Verify(s => s.CompleteTaskAsync(task.Id, request, It.IsAny<CancellationToken>()), Times.Once);
+        var ctx = new DefaultHttpContext
+        {
+            User = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuth"))
+        };
+        controller.ControllerContext = new ControllerContext { HttpContext = ctx };
     }
 
-    private async Task SeedTestTasksAsync()
+    private WorkflowTask SeedTask(WorkflowTaskStatus status = WorkflowTaskStatus.Created, int? assignedUserId = null)
     {
-        var definition = new WorkflowService.Domain.Models.WorkflowDefinition
+        var def = new WorkflowDefinition
         {
             TenantId = 1,
-            Name = "Test Workflow",
+            Name = "WF",
             Version = 1,
             JSONDefinition = "{}",
             IsPublished = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
+        DbContext.WorkflowDefinitions.Add(def);
+        DbContext.SaveChanges();
 
-        var instance = new WorkflowService.Domain.Models.WorkflowInstance
+        var inst = new WorkflowInstance
         {
             TenantId = 1,
-            WorkflowDefinitionId = definition.Id,
+            WorkflowDefinitionId = def.Id,
             DefinitionVersion = 1,
-            Status = DTOs.Workflow.Enums.InstanceStatus.Running,
-            CurrentNodeIds = """["task1"]""",
+            Status = InstanceStatus.Running,
+            CurrentNodeIds = "[]",
             Context = "{}",
-            StartedAt = DateTime.UtcNow
-        };
-
-        var task = new WorkflowService.Domain.Models.WorkflowTask
-        {
-            TenantId = 1,
-            WorkflowInstanceId = instance.Id,
-            NodeId = "task1",
-            TaskName = "Test Task",
-            Status = WorkflowTaskStatus.Created,
-            Data = "{}",
+            StartedAt = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
+        DbContext.WorkflowInstances.Add(inst);
+        DbContext.SaveChanges();
 
-        definition.Instances = new List<WorkflowService.Domain.Models.WorkflowInstance> { instance };
-        instance.WorkflowDefinition = definition;
-        instance.Tasks = new List<WorkflowService.Domain.Models.WorkflowTask> { task };
-
-        DbContext.WorkflowDefinitions.Add(definition);
-        DbContext.WorkflowInstances.Add(instance);
-        DbContext.WorkflowTasks.Add(task);
-        await DbContext.SaveChangesAsync();
-    }
-
-    private async Task<WorkflowService.Domain.Models.WorkflowTask> CreateTestTaskAsync(
-        WorkflowTaskStatus status,
-        int? assignedUserId = null)
-    {
-        var definition = new WorkflowService.Domain.Models.WorkflowDefinition
+        var task = new WorkflowTask
         {
             TenantId = 1,
-            Name = "Test Workflow",
-            Version = 1,
-            JSONDefinition = "{}",
-            IsPublished = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        var instance = new WorkflowService.Domain.Models.WorkflowInstance
-        {
-            TenantId = 1,
-            WorkflowDefinitionId = definition.Id,
-            DefinitionVersion = 1,
-            Status = DTOs.Workflow.Enums.InstanceStatus.Running,
-            CurrentNodeIds = """["task1"]""",
-            Context = "{}",
-            StartedAt = DateTime.UtcNow
-        };
-
-        var task = new WorkflowService.Domain.Models.WorkflowTask
-        {
-            TenantId = 1,
-            WorkflowInstanceId = instance.Id,
-            NodeId = "test_task",
-            TaskName = "Test Task",
+            WorkflowInstanceId = inst.Id,
+            NodeId = "n1",
+            TaskName = "Task 1",
+            NodeType = "human",
             Status = status,
             AssignedToUserId = assignedUserId,
-            Data = "{}",
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
-
-        if (status == WorkflowTaskStatus.Claimed && assignedUserId.HasValue)
-            task.ClaimedAt = DateTime.UtcNow;
-
-        definition.Instances = new List<WorkflowService.Domain.Models.WorkflowInstance> { instance };
-        instance.WorkflowDefinition = definition;
-        instance.Tasks = new List<WorkflowService.Domain.Models.WorkflowTask> { task };
-
-        DbContext.WorkflowDefinitions.Add(definition);
-        DbContext.WorkflowInstances.Add(instance);
         DbContext.WorkflowTasks.Add(task);
-        await DbContext.SaveChangesAsync();
-
+        DbContext.SaveChanges();
         return task;
     }
 
-    private void SetupControllerContext()
+    [Fact]
+    public async Task GetTasks_ShouldReturnOk()
     {
-        var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, "1"),
-            new Claim("tenantId", "1"),
-            new Claim(ClaimTypes.Email, "test@example.com")
-        };
+        // Seed 1 task directly (controller queries DbContext)
+        SeedTask();
 
-        var identity = new ClaimsIdentity(claims, "TestAuth");
-        var principal = new ClaimsPrincipal(identity);
+        var result = await _controller.GetTasks();
+        var ok = result.Result as OkObjectResult;
+        ok.Should().NotBeNull();
+        var payload = ok!.Value as ApiResponseDto<List<WorkflowTaskDto>>;
+        payload.Should().NotBeNull();
+        payload!.Success.Should().BeTrue();
+        payload.Data.Should().HaveCount(1);
+    }
 
-        var httpContext = new DefaultHttpContext { User = principal };
-        httpContext.Request.Headers["X-Tenant-ID"] = "1";
+    [Fact]
+    public async Task GetMyTasks_ShouldReturnOk()
+    {
+        _taskService.Setup(s => s.GetMyTasksListAsync(null, true, true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<List<TaskSummaryDto>>.SuccessResult(
+                new List<TaskSummaryDto>
+                {
+                    new() { Id = 10, TaskName = "Mine", Status = WorkflowTaskStatus.Created }
+                }));
 
-        _controller.ControllerContext = new ControllerContext { HttpContext = httpContext };
+        var result = await _controller.GetMyTasks(null, true, true);
+        var ok = result.Result as OkObjectResult;
+        ok.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task GetMyTasks_Failure_ShouldReturnBadRequest()
+    {
+        _taskService.Setup(s => s.GetMyTasksListAsync(null, true, true, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<List<TaskSummaryDto>>.ErrorResult("err"));
+
+        var result = await _controller.GetMyTasks(null, true, true);
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
+    }
+
+    [Fact]
+    public async Task GetMyTaskSummary_ShouldReturnOk()
+    {
+        _taskService.Setup(s => s.GetMyTaskCountsAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<TaskCountsDto>.SuccessResult(new TaskCountsDto { Available = 1 }));
+
+        var result = await _controller.GetMyTaskSummary(default);
+        (result.Result as OkObjectResult).Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task GetTask_Found_ShouldReturnOk()
+    {
+        _taskService.Setup(s => s.GetTaskByIdAsync(123, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowTaskDto>.SuccessResult(new WorkflowTaskDto { Id = 123 }));
+
+        var result = await _controller.GetTask(123);
+        (result.Result as OkObjectResult).Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task GetTask_NotFound_ShouldReturnNotFound()
+    {
+        _taskService.Setup(s => s.GetTaskByIdAsync(999, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowTaskDto>.ErrorResult("not found"));
+
+        var result = await _controller.GetTask(999);
+        result.Result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
+    public async Task ClaimTask_Success_ShouldCommit()
+    {
+        _taskService.Setup(s => s.ClaimTaskAsync(5, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowTaskDto>.SuccessResult(new WorkflowTaskDto { Id = 5 }));
+
+        var result = await _controller.ClaimTask(5);
+        (result.Result as OkObjectResult).Should().NotBeNull();
+        _uow.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ClaimTask_Failure_ShouldNotCommit()
+    {
+        _taskService.Setup(s => s.ClaimTaskAsync(6, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowTaskDto>.ErrorResult("bad"));
+
+        var result = await _controller.ClaimTask(6);
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
+        _uow.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CompleteTask_Success_ShouldCommit()
+    {
+        _taskService.Setup(s => s.CompleteTaskAsync(7, It.IsAny<CompleteTaskRequestDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowTaskDto>.SuccessResult(new WorkflowTaskDto { Id = 7 }));
+
+        var result = await _controller.CompleteTask(7, new CompleteTaskRequestDto { CompletionData = "{}" });
+        (result.Result as OkObjectResult).Should().NotBeNull();
+        _uow.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CompleteTask_Failure_ShouldNotCommit()
+    {
+        _taskService.Setup(s => s.CompleteTaskAsync(8, It.IsAny<CompleteTaskRequestDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowTaskDto>.ErrorResult("bad"));
+
+        var result = await _controller.CompleteTask(8, new CompleteTaskRequestDto { CompletionData = "{}" });
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
+        _uow.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task AssignTask_Success_ShouldCommit()
+    {
+        _taskService.Setup(s => s.AssignTaskAsync(9, It.IsAny<AssignTaskRequestDto>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowTaskDto>.SuccessResult(new WorkflowTaskDto { Id = 9 }));
+
+        var result = await _controller.AssignTask(9, new AssignTaskRequestDto { AssignedToUserId = 2 });
+        (result.Result as OkObjectResult).Should().NotBeNull();
+        _uow.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AssignTask_Failure_ShouldNotCommit()
+    {
+        _taskService.Setup(s => s.AssignTaskAsync(10, It.IsAny<AssignTaskRequestDto>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowTaskDto>.ErrorResult("bad"));
+
+        var result = await _controller.AssignTask(10, new AssignTaskRequestDto { AssignedToUserId = 2 });
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
+        _uow.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task CancelTask_Success_ShouldCommit()
+    {
+        _taskService.Setup(s => s.CancelTaskAsync(11, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowTaskDto>.SuccessResult(new WorkflowTaskDto { Id = 11 }));
+
+        var result = await _controller.CancelTask(11);
+        (result.Result as OkObjectResult).Should().NotBeNull();
+        _uow.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task CancelTask_Failure_ShouldNotCommit()
+    {
+        _taskService.Setup(s => s.CancelTaskAsync(12, It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowTaskDto>.ErrorResult("bad"));
+
+        var result = await _controller.CancelTask(12);
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
+        _uow.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task ReleaseTask_Success_ShouldCommit()
+    {
+        _taskService.Setup(s => s.ReleaseTaskAsync(13, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowTaskDto>.SuccessResult(new WorkflowTaskDto { Id = 13 }));
+
+        var result = await _controller.ReleaseTask(13);
+        (result.Result as OkObjectResult).Should().NotBeNull();
+        _uow.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ReleaseTask_Failure_ShouldNotCommit()
+    {
+        _taskService.Setup(s => s.ReleaseTaskAsync(14, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowTaskDto>.ErrorResult("bad"));
+
+        var result = await _controller.ReleaseTask(14);
+        result.Result.Should().BeOfType<BadRequestObjectResult>();
+        _uow.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 }

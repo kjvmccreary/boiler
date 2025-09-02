@@ -1,48 +1,31 @@
 Building Test Projects
-Starting test discovery for requested test run
-========== Starting test discovery ==========
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.04]   Discovering: WorkflowService.Tests
-[xUnit.net 00:00:00.07]   Discovered:  WorkflowService.Tests
-========== Test discovery finished: 92 Tests found in 661.9 ms ==========
 ========== Starting test run ==========
 [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.04]   Starting:    WorkflowService.Tests
-[xUnit.net 00:00:00.65]     WorkflowService.Tests.Engine.WorkflowRuntimeAdvancedTests.CompleteTask_LateCancellation_ShouldCancelWhenInstanceAlreadyCompleted [FAIL]
-[xUnit.net 00:00:00.65]       Expected task not to be <null> because human task should exist to test late cancellation.
+[xUnit.net 00:00:00.05]   Starting:    WorkflowService.Tests
+[BuilderDefinitionAdapter] Failed primary deserialize, falling back. 'i' is an invalid start of a property name. Expected a '"'. Path: $ | LineNumber: 0 | BytePositionInLine: 2.
+[xUnit.net 00:00:00.65]     WorkflowService.Tests.Services.DefinitionServiceExtendedTests.UpdateDraft_InvalidJson_ShouldReturnError [FAIL]
+[xUnit.net 00:00:00.65]       Expected resp.Success "Draft validation errors: A Start node is required." to contain "Invalid workflow JSON".
 [xUnit.net 00:00:00.65]       Stack Trace:
 [xUnit.net 00:00:00.65]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
 [xUnit.net 00:00:00.65]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
 [xUnit.net 00:00:00.65]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
 [xUnit.net 00:00:00.65]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
 [xUnit.net 00:00:00.65]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.65]            at FluentAssertions.Execution.AssertionScope.FailWith(String message)
-[xUnit.net 00:00:00.65]            at FluentAssertions.Primitives.ReferenceTypeAssertions`2.NotBeNull(String because, Object[] becauseArgs)
-[xUnit.net 00:00:00.65]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WorkflowRuntimeAdvancedTests.cs(297,0): at WorkflowService.Tests.Engine.WorkflowRuntimeAdvancedTests.CompleteTask_LateCancellation_ShouldCancelWhenInstanceAlreadyCompleted()
+[xUnit.net 00:00:00.65]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+[xUnit.net 00:00:00.65]            at FluentAssertions.Primitives.StringAssertions`1.Contain(String expected, String because, Object[] becauseArgs)
+[xUnit.net 00:00:00.65]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServiceExtendedTests.cs(125,0): at WorkflowService.Tests.Services.DefinitionServiceExtendedTests.UpdateDraft_InvalidJson_ShouldReturnError()
 [xUnit.net 00:00:00.65]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.70]     WorkflowService.Tests.Engine.WorkflowRuntimeAdvancedTests.CompleteTimerTask_ShouldAllowCreatedStatus [FAIL]
-[xUnit.net 00:00:00.70]       Expected timerTask not to be <null> because timer task should have been created.
-[xUnit.net 00:00:00.70]       Stack Trace:
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(String message)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Primitives.ReferenceTypeAssertions`2.NotBeNull(String because, Object[] becauseArgs)
-[xUnit.net 00:00:00.70]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WorkflowRuntimeAdvancedTests.cs(264,0): at WorkflowService.Tests.Engine.WorkflowRuntimeAdvancedTests.CompleteTimerTask_ShouldAllowCreatedStatus()
-[xUnit.net 00:00:00.70]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.70]     WorkflowService.Tests.Engine.WorkflowRuntimeAdvancedTests.CancelWorkflow_ShouldCancelOpenHumanTasks [FAIL]
-[xUnit.net 00:00:00.70]       Expected open not to be <null> because a human task should be created after entering human node.
-[xUnit.net 00:00:00.70]       Stack Trace:
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(String message)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Primitives.ReferenceTypeAssertions`2.NotBeNull(String because, Object[] becauseArgs)
-[xUnit.net 00:00:00.70]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WorkflowRuntimeAdvancedTests.cs(233,0): at WorkflowService.Tests.Engine.WorkflowRuntimeAdvancedTests.CancelWorkflow_ShouldCancelOpenHumanTasks()
-[xUnit.net 00:00:00.70]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.70]   Finished:    WorkflowService.Tests
-========== Test run finished: 5 Tests (2 Passed, 3 Failed, 0 Skipped) run in 717 ms ==========
+[xUnit.net 00:00:00.68]     WorkflowService.Tests.Services.DefinitionServiceExtendedTests.GetById_WithVersion_ShouldReturnSpecificVersion [FAIL]
+[xUnit.net 00:00:00.68]       Expected boolean to be True, but found False.
+[xUnit.net 00:00:00.68]       Stack Trace:
+[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+[xUnit.net 00:00:00.68]            at FluentAssertions.Primitives.BooleanAssertions`1.BeTrue(String because, Object[] becauseArgs)
+[xUnit.net 00:00:00.68]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServiceExtendedTests.cs(235,0): at WorkflowService.Tests.Services.DefinitionServiceExtendedTests.GetById_WithVersion_ShouldReturnSpecificVersion()
+[xUnit.net 00:00:00.68]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.69]   Finished:    WorkflowService.Tests
+========== Test run finished: 2 Tests (0 Passed, 2 Failed, 0 Skipped) run in 697 ms ==========

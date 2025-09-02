@@ -304,6 +304,65 @@ public class DefinitionsControllerTests : TestBase
         result.Result.Should().BeOfType<BadRequestObjectResult>();
     }
 
+    [Fact]
+    public async Task Publish_GraphValidationFails_ShouldReturnBadRequest()
+    {
+        // Arrange: existing (unpublished) definition returned by service
+        var dto = new WorkflowDefinitionDto
+        {
+            Id = 42,
+            Name = "DraftToPublish",
+            Version = 1,
+            JSONDefinition = """
+            {
+              "nodes":[{"id":"start","type":"Start"}],
+              "edges":[]
+            }
+            """,
+            IsPublished = false,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _mockDefinitionService
+            .Setup(s => s.GetByIdAsync(42, null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto));
+
+        // Force validation failure
+        _mockGraphValidator
+            .Setup(v => v.ValidateForPublish(It.IsAny<WorkflowService.Domain.Dsl.WorkflowDefinitionJson>()))
+            .Returns(new WorkflowService.Domain.Dsl.ValidationResult
+            {
+                Errors = new List<string> { "Exactly one Start node is required but found 0" },
+                Warnings = new List<string>()
+            });
+
+        // Act
+        var result = await _controller.Publish(42, new PublishDefinitionRequestDto(), default);
+
+        // Assert
+        var bad = result.Result as BadRequestObjectResult;
+        bad.Should().NotBeNull("validation failure should return BadRequest");
+
+        // The controller returns an anonymous object (NOT ApiResponseDto). Use reflection to inspect safely.
+        var val = bad!.Value;
+        val.Should().NotBeNull();
+
+        var props = val!.GetType().GetProperties()
+            .ToDictionary(p => p.Name, p => p.GetValue(val));
+
+        // Ensure expected shape/values (case-insensitive)
+        props.ContainsKey("success").Should().BeTrue();
+        ((bool)props["success"]!).Should().BeFalse();
+
+        props.ContainsKey("message").Should().BeTrue();
+        props["message"]!.ToString().Should().Be("Validation failed");
+
+        props.ContainsKey("errors").Should().BeTrue();
+        var errors = (IEnumerable<string>)props["errors"]!;
+        errors.Should().Contain(e => e.Contains("Start node", StringComparison.OrdinalIgnoreCase));
+    }
+
     #endregion
 
     #region New Version / Revalidate / Validate
