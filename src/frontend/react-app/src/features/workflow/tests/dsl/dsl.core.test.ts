@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { serializeToDsl, deserializeFromDsl } from '../dsl.serialize';
-import { validateDefinition, validateNode } from '../dsl.validate';
-import type { DslDefinition, DslNode, TimerNode, GatewayNode, HumanTaskNode } from '../dsl.types';
+import { serializeToDsl, deserializeFromDsl } from '@/features/workflow/dsl/dsl.serialize';
+import { validateDefinition, validateNode } from '@/features/workflow/dsl/dsl.validate';
+import type {
+  DslDefinition,
+  DslNode,
+  TimerNode,
+  GatewayNode,
+  HumanTaskNode
+} from '@/features/workflow/dsl/dsl.types';
 import type { Edge } from 'reactflow';
 
 // Helper to build React Flow style nodes
@@ -64,9 +70,32 @@ describe('DSL serialize/deserialize core', () => {
       version: 2,
       nodes: [
         { id: 'start', type: 'start', x: 0, y: 0, label: 'Start' },
-        { id: 't1', type: 'timer', x: 120, y: 0, label: 'Wait', delayMinutes: 5, delaySeconds: 30, untilIso: undefined },
-        { id: 'g1', type: 'gateway', x: 240, y: 0, label: 'Check', condition: '{ ">" : [ { "var": "value" }, 10 ] }' } as GatewayNode,
-        { id: 'h1', type: 'humanTask', x: 360, y: 0, label: 'Approve', assigneeRoles: ['manager'] } as HumanTaskNode,
+        {
+          id: 't1',
+          type: 'timer',
+          x: 120,
+          y: 0,
+          label: 'Wait',
+          delayMinutes: 5,
+          delaySeconds: 30,
+          untilIso: undefined
+        },
+        {
+          id: 'g1',
+          type: 'gateway',
+          x: 240,
+          y: 0,
+          label: 'Check',
+          condition: '{ ">" : [ { "var": "value" }, 10 ] }'
+        } as GatewayNode,
+        {
+          id: 'h1',
+          type: 'humanTask',
+          x: 360,
+          y: 0,
+          label: 'Approve',
+          assigneeRoles: ['manager']
+        } as HumanTaskNode,
         { id: 'end', type: 'end', x: 480, y: 0, label: 'Done' }
       ],
       edges: [
@@ -136,10 +165,7 @@ describe('DSL validateDefinition invalid fixtures', () => {
   it('flags multiple start nodes', () => {
     const def: DslDefinition = {
       key: 'multi-start',
-      nodes: [
-        ...baseNodes,
-        { id: 'start2', type: 'start', x: 10, y: 100 }
-      ],
+      nodes: [...baseNodes, { id: 'start2', type: 'start', x: 10, y: 100 }],
       edges: []
     };
     const res = validateDefinition(def);
@@ -159,10 +185,7 @@ describe('DSL validateDefinition invalid fixtures', () => {
   it('flags unreachable nodes', () => {
     const def: DslDefinition = {
       key: 'unreachable',
-      nodes: [
-        ...baseNodes,
-        { id: 'island', type: 'automatic', x: 400, y: 400 }
-      ],
+      nodes: [...baseNodes, { id: 'island', type: 'automatic', x: 400, y: 400 }],
       edges: [{ id: 'e1', from: 'start', to: 'end' }]
     };
     const res = validateDefinition(def);
@@ -196,10 +219,7 @@ describe('DSL validateDefinition invalid fixtures', () => {
   it('flags gateway without condition', () => {
     const def: DslDefinition = {
       key: 'gw-missing-cond',
-      nodes: [
-        ...baseNodes,
-        { id: 'gw1', type: 'gateway', x: 100, y: 50, label: 'Decision', condition: '' } as any
-      ],
+      nodes: [...baseNodes, { id: 'gw1', type: 'gateway', x: 100, y: 50, label: 'Decision', condition: '' } as any],
       edges: []
     };
     const res = validateDefinition(def);
