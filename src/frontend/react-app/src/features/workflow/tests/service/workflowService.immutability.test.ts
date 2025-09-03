@@ -1,28 +1,33 @@
 import { describe, it, expect } from 'vitest';
 import { workflowService } from '@/services/workflow.service';
-import { server } from '@/test/setup';
-import { http, HttpResponse } from 'msw';
+import approvalBasic from '@/test/fixtures/workflow/approval.basic.json';
 
-function api<T>(data: T, success = true, message?: string) {
-  return { success, data, message, errors: success ? [] : ['err'] };
-}
+/**
+ * Relies on MSW updateDefinitionHandler returning 409 once status=Published.
+ * If workflowService.updateDefinition does not exist yet, skip or adjust.
+ */
+describe('WorkflowService / Definition Immutability', () => {
+  it('blocks update after publish', async () => {
+    const draft = await workflowService.createDraft({
+      key: 'immutable_def',
+      name: 'Immutable Def',
+      description: 'Test immutability',
+      jsonDefinition: approvalBasic
+    } as any);
 
-describe.skip('WorkflowService definition immutability (SKIPPED - enable when update rules enforced)', () => {
-  it('prevents updating a published definition (placeholder)', async () => {
-    // TODO: When /api/workflow/definitions/:id (PUT) handler is available for published check
-    server.use(
-      http.get('/api/workflow/definitions/901', () =>
-        HttpResponse.json(api({
-          id: 901,
-            key: 'immutable_def',
-            version: 1,
-            status: 'Published',
-            json: { key: 'immutable_def', nodes: [], edges: [] },
-            createdAt: new Date().toISOString(),
-            publishedAt: new Date().toISOString()
-        }))
-      )
-    );
-    expect(true).toBe(true);
+    await workflowService.publishDefinition((draft as any).id);
+
+    let error: any;
+    try {
+      await workflowService.updateDefinition((draft as any).id, {
+        name: 'Changed Name',
+        description: 'Should fail',
+        jsonDefinition: approvalBasic
+      } as any);
+    } catch (e: any) {
+      error = e;
+    }
+    expect(error).toBeTruthy();
+    expect(String(error.message || error)).toMatch(/Published.*cannot|modified|Immutable/i);
   });
 });

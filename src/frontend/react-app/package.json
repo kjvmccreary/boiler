@@ -20,6 +20,8 @@
     "test:workflow:operations": "vitest run src/features/workflow/tests/operations --config vitest.config.js",
     "test:workflow:integration": "vitest run src/features/workflow/tests/integration-lite --config vitest.config.js",
     "test:workflow:builder": "vitest run src/features/workflow/tests/builder --config vitest.config.js",
+    "test:workflow:coverage": "vitest run --coverage src/features/workflow/tests",
+    "test:workflow:coverage:fast": "vitest run --coverage --config vitest.config.js src/features/workflow/tests/dsl src/features/workflow/tests/service src/features/workflow/tests/integration-lite src/features/workflow/tests/builder",
     "test:changed": "vitest --changed --config vitest.config.js",
     "test:ci": "vitest run --reporter=default --coverage --config vitest.config.js",
     "lint": "eslint .",

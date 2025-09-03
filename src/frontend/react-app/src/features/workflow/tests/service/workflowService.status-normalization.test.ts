@@ -17,7 +17,7 @@ describe('WorkflowService status + error normalization', () => {
           id: 123,
           definitionKey: 'k',
           definitionVersion: 1,
-          status: 2, // Completed numeric
+          status: 2, // Completed numeric (mapped)
           currentNodeIds: [],
           startedAt: new Date().toISOString()
         }))
@@ -66,6 +66,15 @@ describe('WorkflowService status + error normalization', () => {
       )
     );
     await expect(workflowService.publishDefinition(77)).rejects.toThrow(/A; B|A/);
+  });
+
+  it('publishDefinition handles single string error shape', async () => {
+    server.use(
+      http.post('/api/workflow/definitions/88/publish', () =>
+        HttpResponse.json({ success: false, errors: 'Invalid', message: 'Invalid' }, { status: 422 })
+      )
+    );
+    await expect(workflowService.publishDefinition(88)).rejects.toThrow(/Invalid/);
   });
 
   it('validateDefinitionJson returns success false on server 422 with errors', async () => {

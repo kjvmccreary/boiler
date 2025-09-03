@@ -31,37 +31,61 @@ interface MockTask {
   createdAt: string;
 }
 
-const workflowState = {
-  definitions: [] as MockDefinition[],
-  instances: [] as MockInstance[],
-  tasks: [] as MockTask[]
-};
+/* =========================================================
+   TENANT-PARTITIONED STATE
+   ========================================================= */
+const workflowState: Record<string, {
+  definitions: MockDefinition[];
+  instances: MockInstance[];
+  tasks: MockTask[];
+}> = {};
 
+function getTenantIdFromRequest(request: Request) {
+  const hdr = request.headers.get('X-Tenant-Id');
+  return hdr && hdr.trim() ? hdr.trim() : 'default';
+}
+
+function bucket(tenantId: string) {
+  if (!workflowState[tenantId]) {
+    workflowState[tenantId] = { definitions: [], instances: [], tasks: [] };
+  }
+  return workflowState[tenantId];
+}
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
 function genId(prefix: string) {
-  return `${prefix}-${Math.random().toString(36).slice(2,10)}`;
+  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 function nowIso() { return new Date().toISOString(); }
 function createApiResponse<T>(data: T, success = true, message?: string) {
   return { success, data, message, errors: success ? [] : ['Operation failed'] };
 }
-function nextVersionForKey(key: string) {
-  const existing = workflowState.definitions.filter(d => d.key === key);
+function nextVersionForKey(store: ReturnType<typeof bucket>, key: string) {
+  const existing = store.definitions.filter(d => d.key === key);
   if (existing.length === 0) return 1;
   return Math.max(...existing.map(d => d.version)) + 1;
 }
-
-// Scenario helper (optional query flag ?wfScenario=invalid|error)
 function scenario(request: Request) {
   const url = new URL(request.url);
   return url.searchParams.get('wfScenario');
 }
 
-// Create draft (tolerant to multiple body shapes)
+/* =========================================================
+   HANDLERS
+   ========================================================= */
+
+// Create draft
 const createDraftHandler = http.post('/api/workflow/definitions/draft', async ({ request }) => {
+  const tenantId = getTenantIdFromRequest(request);
+  const store = bucket(tenantId);
+
   const scen = scenario(request);
   if (scen === 'error') {
     return HttpResponse.json(createApiResponse(null, false, 'Draft creation failed'), { status: 500 });
   }
+
   const body = await request.json() as any;
   const key = body.key;
   const jsonRaw = body.json ?? body.jsonDefinition ?? body.JSONDefinition ?? body.JSONdefinition;
@@ -72,7 +96,6 @@ const createDraftHandler = http.post('/api/workflow/definitions/draft', async ({
     return HttpResponse.json(createApiResponse(null, false, 'Invalid payload'), { status: 400 });
   }
 
-  // Accept either already-parsed object OR raw DSL object
   const jsonObj = typeof jsonRaw === 'string'
     ? (() => { try { return JSON.parse(jsonRaw); } catch { return null; } })()
     : jsonRaw;
@@ -81,7 +104,7 @@ const createDraftHandler = http.post('/api/workflow/definitions/draft', async ({
     return HttpResponse.json(createApiResponse(null, false, 'Invalid payload'), { status: 400 });
   }
 
-  const version = nextVersionForKey(key);
+  const version = nextVersionForKey(store, key);
   const def: MockDefinition = {
     id: genId('def'),
     key,
@@ -92,14 +115,14 @@ const createDraftHandler = http.post('/api/workflow/definitions/draft', async ({
     name,
     description
   };
-  workflowState.definitions.push(def);
+  store.definitions.push(def);
   return HttpResponse.json(createApiResponse(def), { status: 201 });
 });
 
 // Validate by ID
-const validateByIdHandler = http.get('/api/workflow/definitions/:id/validate', ({ params }) => {
-  const id = params.id as string;
-  const def = workflowState.definitions.find(d => d.id === id);
+const validateByIdHandler = http.get('/api/workflow/definitions/:id/validate', ({ params, request }) => {
+  const store = bucket(getTenantIdFromRequest(request));
+  const def = store.definitions.find(d => d.id === params.id);
   if (!def) {
     return HttpResponse.json({ success: false, errors: ['Definition not found'], warnings: [] }, { status: 404 });
   }
@@ -111,7 +134,7 @@ const validateByIdHandler = http.get('/api/workflow/definitions/:id/validate', (
   }, { status: result.isValid ? 200 : 422 });
 });
 
-// Generic validate (ad-hoc JSON) endpoint
+// Generic validate
 const genericValidateHandler = http.post('/api/workflow/definitions/validate', async ({ request }) => {
   const body = await request.json() as any;
   let raw = body.json ?? body.jsonDefinition ?? body.JSONDefinition ?? body.JSONdefinition;
@@ -134,14 +157,13 @@ const genericValidateHandler = http.post('/api/workflow/definitions/validate', a
   }, { status: result.isValid ? 200 : 422 });
 });
 
-// Publish definition (simple promote)
-const publishHandler = http.post('/api/workflow/definitions/:id/publish', async ({ params }) => {
-  const id = params.id as string;
-  const def = workflowState.definitions.find(d => d.id === id);
+// Publish
+const publishHandler = http.post('/api/workflow/definitions/:id/publish', ({ params, request }) => {
+  const store = bucket(getTenantIdFromRequest(request));
+  const def = store.definitions.find(d => d.id === params.id);
   if (!def) {
     return HttpResponse.json(createApiResponse(null, false, 'Definition not found'), { status: 404 });
   }
-  // Validate before publish (simulate real behavior)
   const result = validateDefinition(def.json);
   if (!result.isValid) {
     return HttpResponse.json({
@@ -152,16 +174,21 @@ const publishHandler = http.post('/api/workflow/definitions/:id/publish', async 
   }
   def.status = 'Published';
   def.publishedAt = nowIso();
-  return HttpResponse.json(createApiResponse(def, true, 'Published'), { status: 200 });
+  return HttpResponse.json(createApiResponse(def, true, 'Published'));
 });
 
-// Start instance (auto-creates a single human task if a humanTask node exists)
+// Start instance
 const startInstanceHandler = http.post('/api/workflow/instances', async ({ request }) => {
+  const tenantId = getTenantIdFromRequest(request);
+  const store = bucket(tenantId);
+
   const body = await request.json() as any;
   const key = body.definitionKey;
-  const def = workflowState.definitions
+
+  const def = store.definitions
     .filter(d => d.key === key)
     .sort((a, b) => b.version - a.version)[0];
+
   if (!def || def.status !== 'Published') {
     return HttpResponse.json(createApiResponse(null, false, 'Definition not published'), { status: 400 });
   }
@@ -176,10 +203,10 @@ const startInstanceHandler = http.post('/api/workflow/instances', async ({ reque
     startedAt: nowIso(),
     context: {}
   };
-  workflowState.instances.push(inst);
+  store.instances.push(inst);
 
   if (human) {
-    workflowState.tasks.push({
+    store.tasks.push({
       id: genId('task'),
       instanceId: inst.id,
       nodeId: human.id,
@@ -193,14 +220,15 @@ const startInstanceHandler = http.post('/api/workflow/instances', async ({ reque
 });
 
 // List tasks
-const listTasksHandler = http.get('/api/workflow/tasks', () => {
-  // Return raw tasks
-  return HttpResponse.json(createApiResponse(workflowState.tasks));
+const listTasksHandler = http.get('/api/workflow/tasks', ({ request }) => {
+  const store = bucket(getTenantIdFromRequest(request));
+  return HttpResponse.json(createApiResponse(store.tasks));
 });
 
-// Task summary (basic counts)
-const taskSummaryHandler = http.get('/api/workflow/tasks/mine/summary', () => {
-  const tasks = workflowState.tasks;
+// Task summary
+const taskSummaryHandler = http.get('/api/workflow/tasks/mine/summary', ({ request }) => {
+  const store = bucket(getTenantIdFromRequest(request));
+  const tasks = store.tasks;
   const counts = {
     available: tasks.filter(t => t.status === 'Open').length,
     assignedToMe: 0,
@@ -215,30 +243,33 @@ const taskSummaryHandler = http.get('/api/workflow/tasks/mine/summary', () => {
   return HttpResponse.json(createApiResponse(counts));
 });
 
-// --- NEW: helper to find task by id
-function findTask(id: string) {
-  return workflowState.tasks.find(t => t.id === id);
+// Task find helper (tenant-aware)
+function findTask(store: ReturnType<typeof bucket>, id: string) {
+  return store.tasks.find(t => t.id === id);
 }
 
-// --- NEW: GET single instance (for optional assertions)
-const getInstanceHandler = http.get('/api/workflow/instances/:id', ({ params }) => {
-  const inst = workflowState.instances.find(i => i.id === (params.id as string));
+// Get instance
+const getInstanceHandler = http.get('/api/workflow/instances/:id', ({ params, request }) => {
+  const store = bucket(getTenantIdFromRequest(request));
+  const inst = store.instances.find(i => i.id === params.id);
   if (!inst) {
     return HttpResponse.json(createApiResponse(null, false, 'Instance not found'), { status: 404 });
   }
   return HttpResponse.json(createApiResponse(inst));
 });
 
-// --- NEW: GET single task
-const getTaskHandler = http.get('/api/workflow/tasks/:id', ({ params }) => {
-  const task = findTask(params.id as string);
+// Get task
+const getTaskHandler = http.get('/api/workflow/tasks/:id', ({ params, request }) => {
+  const store = bucket(getTenantIdFromRequest(request));
+  const task = findTask(store, params.id as string);
   if (!task) return HttpResponse.json(createApiResponse(null, false, 'Task not found'), { status: 404 });
   return HttpResponse.json(createApiResponse(task));
 });
 
-// --- NEW: CLAIM task
-const claimTaskHandler = http.post('/api/workflow/tasks/:id/claim', async ({ params }) => {
-  const task = findTask(params.id as string);
+// Claim task
+const claimTaskHandler = http.post('/api/workflow/tasks/:id/claim', ({ params, request }) => {
+  const store = bucket(getTenantIdFromRequest(request));
+  const task = findTask(store, params.id as string);
   if (!task) {
     return HttpResponse.json(createApiResponse(null, false, 'Task not found'), { status: 404 });
   }
@@ -249,9 +280,10 @@ const claimTaskHandler = http.post('/api/workflow/tasks/:id/claim', async ({ par
   return HttpResponse.json(createApiResponse(task));
 });
 
-// --- NEW: COMPLETE task
-const completeTaskHandler = http.post('/api/workflow/tasks/:id/complete', async ({ params }) => {
-  const task = findTask(params.id as string);
+// Complete task
+const completeTaskHandler = http.post('/api/workflow/tasks/:id/complete', ({ params, request }) => {
+  const store = bucket(getTenantIdFromRequest(request));
+  const task = findTask(store, params.id as string);
   if (!task) {
     return HttpResponse.json(createApiResponse(null, false, 'Task not found'), { status: 404 });
   }
@@ -260,10 +292,9 @@ const completeTaskHandler = http.post('/api/workflow/tasks/:id/complete', async 
   }
   task.status = 'Completed';
 
-  // Mark instance completed if all tasks completed (simple heuristic)
-  const inst = workflowState.instances.find(i => i.id === task.instanceId);
+  const inst = store.instances.find(i => i.id === task.instanceId);
   if (inst) {
-    const remaining = workflowState.tasks.filter(t => t.instanceId === inst.id && t.status !== 'Completed');
+    const remaining = store.tasks.filter(t => t.instanceId === inst.id && t.status !== 'Completed');
     if (remaining.length === 0) {
       inst.status = 'Completed';
       inst.currentNodeIds = [];
@@ -272,7 +303,7 @@ const completeTaskHandler = http.post('/api/workflow/tasks/:id/complete', async 
   return HttpResponse.json(createApiResponse(task));
 });
 
-// --- Tenant mock handlers (add before export arrays) ---
+// Tenants list (mock)
 const tenantsListHandler = http.get('/api/tenants', () =>
   HttpResponse.json({
     success: true,
@@ -282,6 +313,7 @@ const tenantsListHandler = http.get('/api/tenants', () =>
   })
 );
 
+// Current tenant (mock)
 const currentTenantHandler = http.get('/api/tenants/current', () =>
   HttpResponse.json({
     success: true,
@@ -289,11 +321,11 @@ const currentTenantHandler = http.get('/api/tenants/current', () =>
   })
 );
 
-// ADD just above the export const workflowHandlers = [...]
-const listDefinitionsHandler = http.get('/api/workflow/definitions', () => {
-  // Return just currently stored definitions (or empty array)
+// List definitions (tenant-scoped)
+const listDefinitionsHandler = http.get('/api/workflow/definitions', ({ request }) => {
+  const store = bucket(getTenantIdFromRequest(request));
   return HttpResponse.json(createApiResponse(
-    workflowState.definitions.map(d => ({
+    store.definitions.map(d => ({
       id: d.id,
       key: d.key,
       version: d.version,
@@ -306,7 +338,31 @@ const listDefinitionsHandler = http.get('/api/workflow/definitions', () => {
   ));
 });
 
-// Then include it in the export array:
+// Update draft (immutability guard)
+const updateDefinitionHandler = http.put('/api/workflow/definitions/:id', async ({ params, request }) => {
+  const store = bucket(getTenantIdFromRequest(request));
+  const def = store.definitions.find(d => d.id === params.id);
+  if (!def) {
+    return HttpResponse.json(createApiResponse(null, false, 'Definition not found'), { status: 404 });
+  }
+  if (def.status === 'Published') {
+    return HttpResponse.json(
+      { success: false, data: null, message: 'Published definitions cannot be modified', errors: ['Immutable'] },
+      { status: 409 }
+    );
+  }
+  const body = await request.json() as any;
+  if (body?.jsonDefinition) {
+    def.json = body.jsonDefinition;
+  }
+  def.name = body?.name ?? def.name;
+  def.description = body?.description ?? def.description;
+  return HttpResponse.json(createApiResponse(def, true, 'Updated'));
+});
+
+/* =========================================================
+   EXPORT
+   ========================================================= */
 export const workflowHandlers = [
   createDraftHandler,
   validateByIdHandler,
@@ -321,8 +377,8 @@ export const workflowHandlers = [
   completeTaskHandler,
   tenantsListHandler,
   currentTenantHandler,
-  listDefinitionsHandler   // <-- added
+  listDefinitionsHandler,
+  updateDefinitionHandler
 ];
 
-// Backwards compatibility
 export const handlers = [...workflowHandlers];

@@ -40,6 +40,14 @@ export class ApiClient {
           }
         }
 
+        // Inject tenant header in test mode (multi-tenant isolation tests)
+        if (import.meta.env.MODE === 'test') {
+          const testTenant = localStorage.getItem('test_tenant_id');
+          if (testTenant) {
+            config.headers['X-Tenant-Id'] = testTenant;
+          }
+        }
+
         const explicitToken = localStorage.getItem('auth_token')
         const effectiveToken =
           explicitToken ||
