@@ -1,4 +1,4 @@
-import type { DslDefinition, DslNode, ValidationResult } from './dsl.types'; // ✅ ADD: DslNode import
+import type { DslDefinition, DslNode, ValidationResult } from './dsl.types';
 
 /**
  * Validates a workflow definition according to MVP rules
@@ -21,13 +21,24 @@ export function validateDefinition(definition: DslDefinition): ValidationResult 
     errors.push('Workflow must have at least one End node');
   }
 
+  // Rule (NEW): Duplicate node IDs
+  const idCounts: Record<string, number> = {};
+  for (const n of definition.nodes) {
+    idCounts[n.id] = (idCounts[n.id] || 0) + 1;
+  }
+  const duplicates = Object.entries(idCounts)
+    .filter(([, count]) => count > 1)
+    .map(([id]) => id);
+  if (duplicates.length > 0) {
+    errors.push(`Duplicate node IDs: ${duplicates.join(', ')}`);
+  }
+
   // Rule 3: All nodes must be reachable from Start
   if (startNodes.length === 1) {
     const reachableNodes = findReachableNodes(definition, startNodes[0].id);
-    const unreachableNodes = definition.nodes.filter(n => 
+    const unreachableNodes = definition.nodes.filter(n =>
       n.type !== 'start' && !reachableNodes.has(n.id)
     );
-    
     if (unreachableNodes.length > 0) {
       errors.push(`Unreachable nodes: ${unreachableNodes.map(n => n.label || n.id).join(', ')}`);
     }
@@ -37,7 +48,6 @@ export function validateDefinition(definition: DslDefinition): ValidationResult 
   for (const edge of definition.edges) {
     const fromNode = definition.nodes.find(n => n.id === edge.from);
     const toNode = definition.nodes.find(n => n.id === edge.to);
-    
     if (!fromNode) {
       errors.push(`Edge ${edge.id} references non-existent source node: ${edge.from}`);
     }
@@ -79,14 +89,10 @@ export function validateDefinition(definition: DslDefinition): ValidationResult 
 function findReachableNodes(definition: DslDefinition, startNodeId: string): Set<string> {
   const reachable = new Set<string>();
   const toVisit = [startNodeId];
-  
   while (toVisit.length > 0) {
     const currentId = toVisit.pop()!;
     if (reachable.has(currentId)) continue;
-    
     reachable.add(currentId);
-    
-    // Find all edges from this node
     const outgoingEdges = definition.edges.filter(e => e.from === currentId);
     for (const edge of outgoingEdges) {
       if (!reachable.has(edge.to)) {
@@ -94,7 +100,6 @@ function findReachableNodes(definition: DslDefinition, startNodeId: string): Set
       }
     }
   }
-  
   return reachable;
 }
 
@@ -105,37 +110,30 @@ export function validateNode(node: DslNode): ValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Basic validation
-  if (!node.id) {
-    errors.push('Node must have an ID');
-  }
-  
-  if (!node.type) {
-    errors.push('Node must have a type');
-  }
+  if (!node.id) errors.push('Node must have an ID');
+  if (!node.type) errors.push('Node must have a type');
 
-  // Type-specific validation
   switch (node.type) {
-    case 'gateway':
+    case 'gateway': {
       const gatewayNode = node as any;
-      if (!gatewayNode.condition) {
-        errors.push('Gateway node must have a condition');
-      }
+      if (!gatewayNode.condition) errors.push('Gateway node must have a condition');
       break;
-      
-    case 'timer':
+    }
+    case 'timer': {
       const timerNode = node as any;
-      if (!timerNode.delayMinutes && !timerNode.untilIso) {
-        errors.push('Timer node must have either delayMinutes or untilIso');
+      // UPDATED: accept delaySeconds as a valid timing input
+      if (!timerNode.delayMinutes && !timerNode.delaySeconds && !timerNode.untilIso) {
+        errors.push('Timer node must have either delayMinutes, delaySeconds, or untilIso');
       }
       break;
-      
-    case 'humanTask':
+    }
+    case 'humanTask': {
       const humanTaskNode = node as any;
       if (!humanTaskNode.assigneeRoles || humanTaskNode.assigneeRoles.length === 0) {
         warnings.push('HumanTask should have assignee roles');
       }
       break;
+    }
   }
 
   return {
