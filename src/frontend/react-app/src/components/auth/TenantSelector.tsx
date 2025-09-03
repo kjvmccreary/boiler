@@ -24,8 +24,12 @@ interface TenantSelectorProps {
   onTenantSelected: (tenantId: string) => void;
 }
 
+/**
+ * Tenant selection screen.
+ * Recently adjusted to expose stable test hooks + clearer accessibility.
+ */
 export function TenantSelector({ onTenantSelected }: TenantSelectorProps) {
-  const { availableTenants, isLoading, error } = useTenant(); // 🔧 REVERT: Remove switchTenant
+  const { availableTenants, isLoading, error } = useTenant();
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
 
@@ -42,10 +46,10 @@ export function TenantSelector({ onTenantSelected }: TenantSelectorProps) {
 
   const handleContinue = async () => {
     if (!selectedTenantId) return;
-
     setIsSelecting(true);
     try {
-      // 🔧 REVERT: Just call the prop function - App.tsx will handle the switching logic
+      // Delegates actual switching to caller
+      // (App / context layer)
       console.log('🏢 TenantSelector: Tenant selected:', selectedTenantId);
       await onTenantSelected(selectedTenantId);
     } catch (err) {
@@ -57,14 +61,14 @@ export function TenantSelector({ onTenantSelected }: TenantSelectorProps) {
 
   if (isLoading) {
     return (
-      <Container component="main" maxWidth="sm">
-        <Box sx={{ 
-          marginTop: 8, 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: 'center' 
+      <Container component="main" maxWidth="sm" data-testid="tenant-selector-loading">
+        <Box sx={{
+          marginTop: 8,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
         }}>
-          <CircularProgress />
+          <CircularProgress role="progressbar" />
           <Typography variant="body2" sx={{ mt: 2 }}>
             Loading your organizations...
           </Typography>
@@ -74,7 +78,7 @@ export function TenantSelector({ onTenantSelected }: TenantSelectorProps) {
   }
 
   return (
-    <Container component="main" maxWidth="sm">
+    <Container component="main" maxWidth="sm" data-testid="tenant-selector-root">
       <Box sx={{
         marginTop: 8,
         display: 'flex',
@@ -83,71 +87,100 @@ export function TenantSelector({ onTenantSelected }: TenantSelectorProps) {
       }}>
         <Card sx={{ width: '100%', maxWidth: 500 }}>
           <CardContent sx={{ p: 4 }}>
-            <Typography component="h1" variant="h4" align="center" gutterBottom>
+            <Typography
+              component="h1"
+              variant="h4"
+              align="center"
+              gutterBottom
+              data-testid="tenant-selector-title"
+            >
               Select Organization
             </Typography>
-            
-            <Typography variant="body1" align="center" color="text.secondary" sx={{ mb: 3 }}>
-              {availableTenants.length === 1 
+
+            <Typography
+              variant="body1"
+              align="center"
+              color="text.secondary"
+              sx={{ mb: 3 }}
+              data-testid="tenant-selector-subtitle"
+            >
+              {availableTenants.length === 1
                 ? 'Connecting to your organization...'
-                : 'You have access to multiple organizations. Please select one to continue.'
-              }
+                : 'You have access to multiple organizations. Please select one to continue.'}
             </Typography>
 
             {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
+              <Alert severity="error" sx={{ mb: 2 }} data-testid="tenant-selector-error">
                 {error}
               </Alert>
             )}
 
             {availableTenants.length === 0 && !isLoading && (
-              <Alert severity="warning" sx={{ mb: 2 }}>
+              <Alert severity="warning" sx={{ mb: 2 }} data-testid="tenant-selector-empty">
                 You don't have access to any organizations. Please contact your administrator.
               </Alert>
             )}
 
-            <List sx={{ mb: 3 }}>
-              {availableTenants.map((tenant) => (
-                <ListItem key={tenant.id} disablePadding>
-                  <ListItemButton
-                    selected={selectedTenantId === tenant.id}
-                    onClick={() => handleTenantSelect(tenant)}
-                    sx={{
-                      borderRadius: 1,
-                      mb: 1,
-                      border: selectedTenantId === tenant.id ? 2 : 1,
-                      borderColor: selectedTenantId === tenant.id 
-                        ? 'primary.main' 
-                        : 'divider',
-                    }}
+            <List
+              sx={{ mb: 3 }}
+              data-testid="tenant-list"
+              aria-label="Available organizations"
+            >
+              {availableTenants.map((tenant) => {
+                const selected = selectedTenantId === tenant.id;
+                return (
+                  <ListItem
+                    key={tenant.id}
+                    disablePadding
+                    data-testid={`tenant-item-wrapper-${tenant.id}`}
                   >
-                    <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: 'primary.main' }}>
-                        {tenant.domain ? <Domain /> : <Business />}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {tenant.name}
-                          {tenant.subscriptionPlan && (
-                            <Chip 
-                              label={tenant.subscriptionPlan} 
-                              size="small" 
-                              variant="outlined"
-                              color={tenant.subscriptionPlan === 'Development' ? 'warning' : 'default'}
-                            />
-                          )}
-                        </Box>
-                      }
-                      secondary={tenant.domain || 'No domain configured'}
-                    />
-                    {selectedTenantId === tenant.id && (
-                      <CheckCircle color="primary" />
-                    )}
-                  </ListItemButton>
-                </ListItem>
-              ))}
+                    <ListItemButton
+                      component="button"
+                      role="button"
+                      aria-selected={selected ? 'true' : 'false'}
+                      data-testid={`tenant-item-${tenant.id}`}
+                      selected={selected}
+                      onClick={() => handleTenantSelect(tenant)}
+                      sx={{
+                        borderRadius: 1,
+                        mb: 1,
+                        border: selected ? 2 : 1,
+                        borderColor: selected ? 'primary.main' : 'divider',
+                        outline: 0,
+                        '&[aria-selected="true"]': {
+                          backgroundColor: 'action.hover'
+                        }
+                      }}
+                    >
+                      <ListItemAvatar>
+                        <Avatar sx={{ bgcolor: 'primary.main' }}>
+                          {tenant.domain ? <Domain /> : <Business />}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <span data-testid={`tenant-name-${tenant.id}`}>{tenant.name}</span>
+                            {tenant.subscriptionPlan && (
+                              <Chip
+                                label={tenant.subscriptionPlan}
+                                size="small"
+                                variant="outlined"
+                                data-testid={`tenant-plan-${tenant.id}`}
+                                color={tenant.subscriptionPlan === 'Development' ? 'warning' : 'default'}
+                              />
+                            )}
+                          </Box>
+                        }
+                        secondary={tenant.domain || 'No domain configured'}
+                      />
+                      {selected && (
+                        <CheckCircle color="primary" data-testid="tenant-selected-icon" />
+                      )}
+                    </ListItemButton>
+                  </ListItem>
+                );
+              })}
             </List>
 
             <Button
@@ -155,11 +188,16 @@ export function TenantSelector({ onTenantSelected }: TenantSelectorProps) {
               variant="contained"
               size="large"
               onClick={handleContinue}
+              data-testid="tenant-continue-button"
+              aria-label="Continue with selected organization"
               disabled={!selectedTenantId || isSelecting || availableTenants.length === 0}
               startIcon={isSelecting ? <CircularProgress size={20} /> : undefined}
             >
-              {isSelecting ? 'Switching Organization...' : 
-               availableTenants.length === 1 ? 'Continue' : 'Select Organization'}
+              {isSelecting
+                ? 'Switching Organization...'
+                : availableTenants.length === 1
+                  ? 'Continue'
+                  : 'Select Organization'}
             </Button>
           </CardContent>
         </Card>
@@ -167,3 +205,5 @@ export function TenantSelector({ onTenantSelected }: TenantSelectorProps) {
     </Container>
   );
 }
+
+export default TenantSelector;

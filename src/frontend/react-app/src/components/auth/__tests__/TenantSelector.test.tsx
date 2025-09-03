@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { TenantSelector } from '../TenantSelector.tsx'
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { TenantSelector } from '../TenantSelector.tsx';
 
-// Enhanced mock tenant data
+// Fixtures
 const mockSingleTenant = [
   {
     id: '1',
@@ -14,7 +14,7 @@ const mockSingleTenant = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }
-]
+];
 
 const mockMultipleTenants = [
   {
@@ -27,7 +27,7 @@ const mockMultipleTenants = [
     updatedAt: new Date().toISOString(),
   },
   {
-    id: '2', 
+    id: '2',
     name: 'Tenant Two',
     domain: 'tenant2.test',
     subscriptionPlan: 'Pro',
@@ -35,9 +35,8 @@ const mockMultipleTenants = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }
-]
+];
 
-// Create a mock context provider that accepts different states
 const createMockTenantContext = (overrides = {}) => ({
   currentTenant: null,
   availableTenants: mockMultipleTenants,
@@ -52,16 +51,14 @@ const createMockTenantContext = (overrides = {}) => ({
   clearRedirectFlag: vi.fn(),
   refreshUserTenants: vi.fn().mockResolvedValue([]),
   ...overrides
-})
+});
 
-// ✅ FIX: Create the mock function properly
-const mockUseTenant = vi.fn()
+const mockUseTenant = vi.fn();
 
-// ✅ FIX: Move the mock setup outside and use factory function
 vi.mock('@/contexts/TenantContext.tsx', () => ({
   useTenant: () => mockUseTenant(),
   TenantProvider: ({ children }: any) => children,
-}))
+}));
 
 vi.mock('@/contexts/AuthContext.tsx', () => ({
   useAuth: () => ({
@@ -69,175 +66,140 @@ vi.mock('@/contexts/AuthContext.tsx', () => ({
     isAuthenticated: true,
     refreshAuth: vi.fn(),
   }),
-}))
+}));
 
 describe('TenantSelector - Enhanced Tests', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
-    // Reset to default mock behavior
-    mockUseTenant.mockReturnValue(createMockTenantContext())
-  })
+    vi.clearAllMocks();
+    mockUseTenant.mockReturnValue(createMockTenantContext());
+  });
 
   describe('Multiple Tenants', () => {
-    it('should display available tenants', () => {
-      const mockOnTenantSelected = vi.fn()
-      
-      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />)
-      
-      expect(screen.getByText('Tenant One')).toBeInTheDocument()
-      expect(screen.getByText('Tenant Two')).toBeInTheDocument()
-      expect(screen.getByText('Select Organization')).toBeInTheDocument()
-    })
+    it('displays tenants and heading (no duplicate query issues)', () => {
+      const mockOnTenantSelected = vi.fn();
+      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />);
 
-    it('should call onTenantSelected when tenant is selected and continue clicked', async () => {
-      const user = userEvent.setup()
-      const mockOnTenantSelected = vi.fn()
-      
-      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />)
-      
-      // Select first tenant
-      await user.click(screen.getByText('Tenant One'))
-      
-      // Click continue button
-      const continueButton = screen.getByRole('button', { name: /select organization|continue/i })
-      await user.click(continueButton)
-      
-      expect(mockOnTenantSelected).toHaveBeenCalledWith('1')
-    })
+      expect(screen.getByTestId('tenant-selector-title')).toHaveTextContent('Select Organization');
+      expect(screen.getByTestId('tenant-name-1')).toHaveTextContent('Tenant One');
+      expect(screen.getByTestId('tenant-name-2')).toHaveTextContent('Tenant Two');
+      // Button also has same visible text; we do not use getByText to avoid collision.
+      expect(screen.getByTestId('tenant-continue-button')).toBeInTheDocument();
+    });
 
-    it('should show subscription plan badges', () => {
-      const mockOnTenantSelected = vi.fn()
-      
-      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />)
-      
-      expect(screen.getByText('Basic')).toBeInTheDocument()
-      expect(screen.getByText('Pro')).toBeInTheDocument()
-    })
-  })
+    it('calls onTenantSelected when tenant selected then continue clicked', async () => {
+      const user = userEvent.setup();
+      const mockOnTenantSelected = vi.fn();
+      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />);
+
+      await user.click(screen.getByTestId('tenant-item-1'));
+      await user.click(screen.getByTestId('tenant-continue-button'));
+
+      expect(mockOnTenantSelected).toHaveBeenCalledWith('1');
+    });
+
+    it('shows subscription plan badges', () => {
+      const mockOnTenantSelected = vi.fn();
+      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />);
+
+      expect(screen.getByTestId('tenant-plan-1')).toHaveTextContent('Basic');
+      expect(screen.getByTestId('tenant-plan-2')).toHaveTextContent('Pro');
+    });
+  });
 
   describe('Single Tenant Auto-Selection', () => {
-    it('should auto-select single tenant and show continue button', () => {
-      // ✅ FIX: Use the mockUseTenant function properly
+    it('auto-selects the single tenant and shows Continue button', () => {
       mockUseTenant.mockReturnValue(
         createMockTenantContext({
-          availableTenants: mockSingleTenant,
+          availableTenants: mockSingleTenant
         })
-      )
+      );
+      const mockOnTenantSelected = vi.fn();
+      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />);
 
-      const mockOnTenantSelected = vi.fn()
-      
-      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />)
-      
-      expect(screen.getByText('Continue')).toBeInTheDocument()
-      expect(screen.getByText('Single Tenant')).toBeInTheDocument()
-    })
+      expect(screen.getByTestId('tenant-name-1')).toHaveTextContent('Single Tenant');
+      expect(screen.getByTestId('tenant-continue-button')).toHaveTextContent('Continue');
+    });
 
-    it('should call onTenantSelected immediately for single tenant', async () => {
-      const user = userEvent.setup()
-      const mockOnTenantSelected = vi.fn()
-
+    it('invokes onTenantSelected after clicking continue', async () => {
+      const user = userEvent.setup();
       mockUseTenant.mockReturnValue(
         createMockTenantContext({
-          availableTenants: mockSingleTenant,
+          availableTenants: mockSingleTenant
         })
-      )
-      
-      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />)
-      
-      const continueButton = screen.getByRole('button', { name: /continue/i })
-      await user.click(continueButton)
-      
-      expect(mockOnTenantSelected).toHaveBeenCalledWith('1')
-    })
-  })
+      );
+      const mockOnTenantSelected = vi.fn();
+      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />);
+
+      await user.click(screen.getByTestId('tenant-continue-button'));
+      expect(mockOnTenantSelected).toHaveBeenCalledWith('1');
+    });
+  });
 
   describe('Loading and Error States', () => {
-    it('should show loading state', () => {
+    it('shows loading state', () => {
       mockUseTenant.mockReturnValue(
         createMockTenantContext({
           isLoading: true,
-          availableTenants: [],
+          availableTenants: []
         })
-      )
+      );
+      render(<TenantSelector onTenantSelected={vi.fn()} />);
+      expect(screen.getByTestId('tenant-selector-loading')).toBeInTheDocument();
+      expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    });
 
-      const mockOnTenantSelected = vi.fn()
-      
-      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />)
-      
-      expect(screen.getByRole('progressbar')).toBeInTheDocument()
-      expect(screen.getByText('Loading your organizations...')).toBeInTheDocument()
-    })
-
-    it('should show error state', () => {
+    it('shows error state', () => {
       mockUseTenant.mockReturnValue(
         createMockTenantContext({
           error: 'Failed to load tenants',
-          availableTenants: [],
+          availableTenants: []
         })
-      )
+      );
+      render(<TenantSelector onTenantSelected={vi.fn()} />);
+      expect(screen.getByTestId('tenant-selector-error')).toHaveTextContent('Failed to load tenants');
+    });
 
-      const mockOnTenantSelected = vi.fn()
-      
-      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />)
-      
-      expect(screen.getByText('Failed to load tenants')).toBeInTheDocument()
-    })
-
-    it('should show no tenants message', () => {
+    it('shows no tenants message', () => {
       mockUseTenant.mockReturnValue(
         createMockTenantContext({
           availableTenants: [],
-          isLoading: false,
+          isLoading: false
         })
-      )
+      ); 
+      render(<TenantSelector onTenantSelected={vi.fn()} />);
+      expect(screen.getByTestId('tenant-selector-empty')).toBeInTheDocument();
+    });
 
-      const mockOnTenantSelected = vi.fn()
-      
-      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />)
-      
-      expect(screen.getByText(/you don't have access to any organizations/i)).toBeInTheDocument()
-    })
-
-    it('should disable continue button when no tenant selected', () => {
-      const mockOnTenantSelected = vi.fn()
-      
-      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />)
-      
-      const continueButton = screen.getByRole('button')
-      expect(continueButton).toBeDisabled()
-    })
-  })
+    it('disables continue button when nothing selected', () => {
+      const mockOnTenantSelected = vi.fn();
+      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />);
+      const actionButton = screen.getByTestId('tenant-continue-button');
+      expect(actionButton).toBeDisabled();
+    });
+  });
 
   describe('Selection Interaction', () => {
-    it('should enable continue button after tenant selection', async () => {
-      const user = userEvent.setup()
-      const mockOnTenantSelected = vi.fn()
-      
-      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />)
-      
-      // Initially disabled
-      const continueButton = screen.getByRole('button')
-      expect(continueButton).toBeDisabled()
-      
-      // Select tenant
-      await user.click(screen.getByText('Tenant One'))
-      
-      // Should be enabled now
-      expect(continueButton).not.toBeDisabled()
-    })
+    it('enables continue button after selecting a tenant', async () => {
+      const user = userEvent.setup();
+      const mockOnTenantSelected = vi.fn();
+      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />);
 
-    it('should show visual selection feedback', async () => {
-      const user = userEvent.setup()
-      const mockOnTenantSelected = vi.fn()
-      
-      render(<TenantSelector onTenantSelected={mockOnTenantSelected} />)
-      
-      const tenantButton = screen.getByText('Tenant One').closest('button')
-      
-      await user.click(screen.getByText('Tenant One'))
-      
-      // Should show selected state (this depends on your actual implementation)
-      expect(tenantButton).toHaveAttribute('aria-selected', 'true')
-    })
-  })
-})
+      const actionButton = screen.getByTestId('tenant-continue-button');
+      expect(actionButton).toBeDisabled();
+
+      await user.click(screen.getByTestId('tenant-item-1'));
+      expect(actionButton).not.toBeDisabled();
+    });
+
+    it('shows visual selection feedback (aria-selected)', async () => {
+      const user = userEvent.setup();
+      render(<TenantSelector onTenantSelected={vi.fn()} />);
+
+      const item = screen.getByTestId('tenant-item-1');
+      expect(item).toHaveAttribute('aria-selected', 'false');
+
+      await user.click(item);
+      expect(item).toHaveAttribute('aria-selected', 'true');
+    });
+  });
+});

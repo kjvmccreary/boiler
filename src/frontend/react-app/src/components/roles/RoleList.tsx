@@ -1,38 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  TablePagination,
-  TextField,
-  InputAdornment,
-  IconButton,
-  Chip,
-  Box,
-  Typography,
-  CircularProgress,
-  Tooltip,
-  Popover,
-  List,
-  ListItem,
-  ListItemText,
-  Avatar,
-  Divider
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Paper, TablePagination, TextField, InputAdornment, IconButton, Chip,
+  Box, Typography, CircularProgress, Tooltip, Popover, List, ListItem,
+  ListItemText, Avatar, Divider
 } from '@mui/material';
-import { 
-  Search, 
-  Edit, 
-  Delete, 
-  People as PeopleIcon,
-  Close as CloseIcon // ✅ ADD: Close icon for the popover
+import {
+  Search, Edit, Delete, People as PeopleIcon, Close as CloseIcon
 } from '@mui/icons-material';
-import type { RoleDto, UserInfo } from '../../types';
-import { roleService } from '../../services/role.service';
-import { useTenant } from '@/contexts/TenantContext.js'; // 🔧 ADD: Import useTenant
+import type { RoleDto, UserInfo } from '@/types';
+import { roleService } from '@/services/role.service';
+import { useTenant } from '@/contexts/TenantContext.js';
 
 interface RoleListProps {
   onEditRole?: (roleId: number) => void;
@@ -47,8 +25,8 @@ export const RoleList: React.FC<RoleListProps> = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  // ✅ SIMPLIFIED: Basic popover state
+  const fetchInFlightRef = useRef(false); // prevent overlapping fetches (StrictMode/test double calls)
+
   const [userPopover, setUserPopover] = useState<{
     anchorEl: HTMLElement | null;
     roleId: number | null;
@@ -68,23 +46,19 @@ export const RoleList: React.FC<RoleListProps> = ({
     totalPages: 0
   });
 
-  const { currentTenant } = useTenant(); // 🔧 ADD: Get current tenant
+  const { currentTenant } = useTenant();
 
   const fetchRoles = async (page = 1, pageSize = 10, search = '') => {
-    console.log('🔍 RoleList: fetchRoles called', { page, pageSize, search, tenant: currentTenant?.name });
-    
+    if (fetchInFlightRef.current) return;
+    fetchInFlightRef.current = true;
     try {
       setLoading(true);
       setError(null);
-
       const result = await roleService.getRoles({
         page,
         pageSize,
         searchTerm: search || undefined
       });
-
-      console.log('✅ RoleList: fetchRoles result for tenant:', currentTenant?.name, result);
-
       setRoles(result.roles || []);
       setPagination(result.pagination || {
         totalCount: 0,
@@ -92,85 +66,66 @@ export const RoleList: React.FC<RoleListProps> = ({
         pageSize: pageSize,
         totalPages: 0
       });
-      
     } catch (err) {
-      console.error('❌ RoleList: Failed to fetch roles:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch roles');
       setRoles([]);
     } finally {
       setLoading(false);
+      fetchInFlightRef.current = false;
     }
   };
 
-  // 🔧 FIX: Add currentTenant as dependency to reload roles when tenant changes
   useEffect(() => {
     if (currentTenant) {
-      console.log('🔄 RoleList: Loading roles for tenant:', currentTenant.name);
       fetchRoles(1, 10, '');
     }
-  }, [currentTenant]); // 🔧 ADD: currentTenant dependency
+  }, [currentTenant]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (currentTenant) {
-        console.log('🔍 RoleList: Search term changed:', searchTerm, 'for tenant:', currentTenant.name);
         fetchRoles(1, pagination?.pageSize || 10, searchTerm);
       }
     }, 500);
-
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, currentTenant]); // 🔧 ADD: currentTenant dependency
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, currentTenant]);
 
   const handlePageChange = (_event: unknown, newPage: number) => {
     const pageNumber = newPage + 1;
-    console.log('🔍 RoleList: Page change to:', pageNumber, 'for tenant:', currentTenant?.name);
     fetchRoles(pageNumber, pagination?.pageSize || 10, searchTerm);
   };
 
   const handlePageSizeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newPageSize = parseInt(event.target.value, 10);
-    console.log('🔍 RoleList: Page size change to:', newPageSize, 'for tenant:', currentTenant?.name);
     fetchRoles(1, newPageSize, searchTerm);
   };
 
-  const canDeleteRole = (role: RoleDto): boolean => {
-    return !role.isSystemRole && (role.userCount || 0) === 0;
-  };
+  const canDeleteRole = (role: RoleDto): boolean =>
+    !role.isSystemRole && (role.userCount || 0) === 0;
 
   const getDeleteTooltipText = (role: RoleDto): string => {
-    if (role.isSystemRole) {
-      return "Cannot delete system roles";
-    }
-    if ((role.userCount || 0) > 0) {
-      return `Cannot delete role with ${role.userCount} assigned user${role.userCount === 1 ? '' : 's'}`;
-    }
-    return "Delete role";
+    if (role.isSystemRole) return 'Cannot delete system roles';
+    if ((role.userCount || 0) > 0) return `Cannot delete role with ${role.userCount} assigned user${role.userCount === 1 ? '' : 's'}`;
+    return 'Delete role';
   };
 
-  // ✅ SIMPLE: Show popup on hover
   const handleUserCountHover = async (event: React.MouseEvent<HTMLElement>, roleId: number, userCount: number) => {
     if (userCount === 0) return;
-
-    console.log('🔍 RoleList: User count hovered for role:', roleId, 'in tenant:', currentTenant?.name);
-    
     setUserPopover({
       anchorEl: event.currentTarget,
       roleId,
       users: [],
       loading: true
     });
-
     try {
       const users = await roleService.getRoleUsers(roleId);
-      console.log('✅ RoleList: Users loaded for role:', roleId, 'in tenant:', currentTenant?.name, users);
-      
       setUserPopover(prev => ({
         ...prev,
         users,
         loading: false
       }));
-    } catch (error) {
-      console.error('❌ RoleList: Failed to load users for role:', roleId, error);
+    } catch {
       setUserPopover(prev => ({
         ...prev,
         users: [],
@@ -179,9 +134,7 @@ export const RoleList: React.FC<RoleListProps> = ({
     }
   };
 
-  // ✅ SIMPLE: Close popup
   const handleUserPopoverClose = () => {
-    console.log('🔍 RoleList: Closing popover');
     setUserPopover({
       anchorEl: null,
       roleId: null,
@@ -190,11 +143,9 @@ export const RoleList: React.FC<RoleListProps> = ({
     });
   };
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
-  };
+  const getInitials = (firstName: string, lastName: string) =>
+    `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 
-  // 🔧 ADD: Don't render if no tenant is selected
   if (!currentTenant) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
@@ -221,9 +172,6 @@ export const RoleList: React.FC<RoleListProps> = ({
         <Typography color="error" variant="body2" sx={{ mt: 1 }}>
           {error}
         </Typography>
-        <Typography variant="body2" sx={{ mt: 2 }}>
-          Please check the console for more details.
-        </Typography>
       </Box>
     );
   }
@@ -231,12 +179,11 @@ export const RoleList: React.FC<RoleListProps> = ({
   const isPopoverOpen = Boolean(userPopover.anchorEl);
 
   return (
-    <Box>
-      {/* 🔧 ADD: Show current tenant name */}
+    <Box data-testid="role-list-root">
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6" component="h2">
+        <Typography variant="h6" component="div">
           Role Management
-          <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
+          <Typography variant="subtitle2" component="span" color="text.secondary" sx={{ mt: 0.5, ml: 1 }}>
             {currentTenant.name}
           </Typography>
         </Typography>
@@ -293,11 +240,10 @@ export const RoleList: React.FC<RoleListProps> = ({
                   </TableCell>
                   <TableCell>{role.permissions?.length || 0}</TableCell>
                   <TableCell>
-                    {/* ✅ SIMPLIFIED: Just hover to show, click outside to hide */}
                     <Box
-                      onMouseEnter={(role.userCount || 0) > 0 ? 
-                        (e) => handleUserCountHover(e, role.id, role.userCount || 0) : 
-                        undefined
+                      onMouseEnter={(role.userCount || 0) > 0
+                        ? (e) => handleUserCountHover(e, role.id, role.userCount || 0)
+                        : undefined
                       }
                       sx={{ display: 'inline-block' }}
                     >
@@ -306,18 +252,11 @@ export const RoleList: React.FC<RoleListProps> = ({
                         size="small"
                         color={(role.userCount || 0) > 0 ? 'primary' : 'default'}
                         variant={(role.userCount || 0) > 0 ? 'filled' : 'outlined'}
-                        sx={{
-                          cursor: (role.userCount || 0) > 0 ? 'pointer' : 'default',
-                          '&:hover': (role.userCount || 0) > 0 ? {
-                            transform: 'scale(1.05)',
-                            transition: 'transform 0.2s ease-in-out'
-                          } : undefined
-                        }}
                       />
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Tooltip title={role.isSystemRole ? "Cannot edit system roles" : "Edit role"}>
+                    <Tooltip title={role.isSystemRole ? 'Cannot edit system roles' : 'Edit role'}>
                       <span>
                         <IconButton
                           onClick={() => onEditRole?.(role.id)}
@@ -329,15 +268,15 @@ export const RoleList: React.FC<RoleListProps> = ({
                         </IconButton>
                       </span>
                     </Tooltip>
-                    
-                    <Tooltip title={getDeleteTooltipText(role)}>
+
+                    <Tooltip title={canDeleteRole(role) ? 'Delete role' : getDeleteTooltipText(role)}>
                       <span>
                         <IconButton
                           onClick={() => onDeleteRole?.(role.id)}
                           disabled={!canDeleteRole(role)}
                           aria-label={`Delete ${role.name} role`}
                           data-testid="delete-button"
-                          color={!canDeleteRole(role) ? 'default' : 'error'}
+                          color={canDeleteRole(role) ? 'error' : 'default'}
                         >
                           <Delete />
                         </IconButton>
@@ -363,40 +302,22 @@ export const RoleList: React.FC<RoleListProps> = ({
         showLastButton
       />
 
-      {/* ✅ ENHANCED: Popover with close button in header */}
       <Popover
         open={isPopoverOpen}
         anchorEl={userPopover.anchorEl}
         onClose={handleUserPopoverClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'center',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
-        }}
-        slotProps={{
-          paper: {
-            sx: {
-              maxWidth: 320,
-              maxHeight: 400,
-              overflow: 'auto',
-              mt: 1
-            }
-          }
-        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'center' }}
         disableRestoreFocus
         disableAutoFocus
         disableEnforceFocus
       >
         <Box sx={{ p: 2 }}>
-          {/* ✅ NEW: Header with close button */}
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
+          <Box sx={{
+            display: 'flex',
+            alignItems: 'center',
             justifyContent: 'space-between',
-            mb: 1 
+            mb: 1
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <PeopleIcon sx={{ mr: 1, color: 'primary.main' }} />
@@ -404,26 +325,17 @@ export const RoleList: React.FC<RoleListProps> = ({
                 Assigned Users
               </Typography>
             </Box>
-            {/* ✅ NEW: Close button */}
             <Tooltip title="Close">
               <IconButton
                 onClick={handleUserPopoverClose}
                 size="small"
-                sx={{ 
-                  ml: 1,
-                  color: 'text.secondary',
-                  '&:hover': {
-                    color: 'text.primary',
-                    backgroundColor: 'action.hover'
-                  }
-                }}
                 aria-label="Close user list"
               >
                 <CloseIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           </Box>
-          
+
           {userPopover.loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
               <CircularProgress size={24} />
@@ -436,13 +348,13 @@ export const RoleList: React.FC<RoleListProps> = ({
           ) : (
             <>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                {userPopover.users.length} user{userPopover.users.length === 1 ? '' : 's'} assigned to this role
+                {userPopover.users.length} user{userPopover.users.length === 1 ? '' : 's'} assigned
               </Typography>
               <Divider sx={{ mb: 1 }} />
               <List dense sx={{ maxHeight: 280, overflow: 'auto' }}>
                 {userPopover.users.map((user, index) => (
-                  <ListItem 
-                    key={user.id} 
+                  <ListItem
+                    key={user.id}
                     divider={index < userPopover.users.length - 1}
                     sx={{ px: 0 }}
                   >
@@ -470,14 +382,6 @@ export const RoleList: React.FC<RoleListProps> = ({
                   </ListItem>
                 ))}
               </List>
-              
-              {userPopover.users.length > 5 && (
-                <Box sx={{ mt: 1, p: 1, bgcolor: 'background.default', borderRadius: 1 }}>
-                  <Typography variant="caption" color="text.secondary">
-                    💡 Tip: Click "Edit Role" to manage user assignments
-                  </Typography>
-                </Box>
-              )}
             </>
           )}
         </Box>

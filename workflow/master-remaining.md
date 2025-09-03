@@ -75,13 +75,13 @@
 ### 2. Graph Validation Service
 * <s>On publish: assert exactly one Start, ≥1 End, all nodes reachable from Start, no unreachable End, no duplicate IDs, no isolated islands. Present any exceptions / errors in UI friendly manner to user.</s>
 ### 3. Outbox Dispatcher (MVP)
-* <s>Hosted worker polls unprocessed messages, logs or POSTs to a placeholder endpoint, sets ```IsProcessed + ProcessedAt/RetryCount```.
-* Add ```IdempotencyKey (Guid)``` + unique index to ```OutboxMessage```.</s>
+* <s>Hosted worker polls unprocessed messages, logs or POSTs to a placeholder endpoint, sets ```IsProcessed + ProcessedAt/RetryCount```.</s>
+* <s>Add ```IdempotencyKey (Guid)``` + unique index to ```OutboxMessage```.</s>
 ### 4. Automated Tests
-* ```GatewayCondition_ShouldSelectTruePathOnly```.
-* ```TimerWorker_ShouldAdvanceAfterDue```.
-* ```Runtime_SaveChanges_BatchCount_ShouldEqual1 for claim/complete/start```.
-* ```Validation_ShouldRejectMultipleStartNodes```.
+* <s>```GatewayCondition_ShouldSelectTruePathOnly```.</s>
+* <s>```TimerWorker_ShouldAdvanceAfterDue```.</s>
+* <s>```Runtime_SaveChanges_BatchCount_ShouldEqual1 for claim/complete/start```.</s>
+* <s>```Validation_ShouldRejectMultipleStartNodes```.</s>
 ### 5. RBAC & Permissions Audit
 * Ensure seed contains: ```workflow.view_tasks```, ```workflow.claim_tasks```, ```workflow.complete_tasks```, ```workflow.admin```, ```workflow.view_instances```, ```workflow.start_instances```.
 * Map each controller action to a permission doc.
