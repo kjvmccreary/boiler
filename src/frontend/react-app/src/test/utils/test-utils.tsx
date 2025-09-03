@@ -473,3 +473,140 @@ export const createMockTenantContext = (tenantId: string = '1') => {
     completeTenantSelection: vi.fn(),
   }
 }
+
+// ------------------------------------------------------------
+// WORKFLOW DSL HELPERS (added)
+// ------------------------------------------------------------
+import type {
+  DslDefinition,
+  DslNode,
+  DslEdge,
+  GatewayNode,
+  HumanTaskNode,
+  TimerNode
+} from '@/features/workflow/dsl/dsl.types';
+
+export function wfMakeNode<T extends DslNode>(
+  partial: Partial<T> & { id: string; type: T['type']; x?: number; y?: number }
+): DslNode {
+  return {
+    id: partial.id,
+    type: partial.type,
+    label: (partial as any).label,
+    x: partial.x ?? 0,
+    y: partial.y ?? 0,
+    ...(partial as any)
+  };
+}
+
+export function wfMakeEdge(
+  partial: Partial<DslEdge> & { id: string; from: string; to: string }
+): DslEdge {
+  return {
+    id: partial.id,
+    from: partial.from,
+    to: partial.to,
+    label: partial.label,
+    fromHandle: partial.fromHandle
+  };
+}
+
+export function wfMakeDefinition(
+  key: string,
+  nodes: DslNode[],
+  edges: DslEdge[],
+  version?: number
+): DslDefinition {
+  return { key, version, nodes, edges };
+}
+
+export function wfSampleApprovalDefinition(key = 'approval'): DslDefinition {
+  const start = wfMakeNode({ id: 'n1', type: 'start', label: 'Start', x: 40, y: 120 });
+  const human = wfMakeNode<HumanTaskNode>({
+    id: 'n2',
+    type: 'humanTask',
+    label: 'Approve Request',
+    assigneeRoles: ['Manager'],
+    x: 240,
+    y: 120
+  });
+  const gateway = wfMakeNode<GatewayNode>({
+    id: 'n3',
+    type: 'gateway',
+    label: 'Approved?',
+    condition: '{"==":[{"var":"approve"},true]}',
+    x: 440,
+    y: 120
+  });
+  const endYes = wfMakeNode({ id: 'n4', type: 'end', label: 'Approved', x: 640, y: 60 });
+  const endNo = wfMakeNode({ id: 'n5', type: 'end', label: 'Denied', x: 640, y: 200 });
+
+  const edges = [
+    wfMakeEdge({ id: 'e1', from: 'n1', to: 'n2' }),
+    wfMakeEdge({ id: 'e2', from: 'n2', to: 'n3' }),
+    wfMakeEdge({ id: 'e3', from: 'n3', to: 'n4', label: 'true' }),
+    wfMakeEdge({ id: 'e4', from: 'n3', to: 'n5', label: 'false' })
+  ];
+  return wfMakeDefinition(key, [start, human, gateway, endYes, endNo], edges);
+}
+
+export function wfSampleTimerDefinition(key = 'timer_flow'): DslDefinition {
+  const start = wfMakeNode({ id: 's', type: 'start', label: 'Start', x: 40, y: 80 });
+  const timer = wfMakeNode<TimerNode>({
+    id: 't',
+    type: 'timer',
+    label: 'Wait 2m',
+    delayMinutes: 2,
+    x: 200,
+    y: 80
+  });
+  const auto = wfMakeNode({
+    id: 'a',
+    type: 'automatic',
+    label: 'Auto Step',
+    action: { kind: 'noop' },
+    x: 360,
+    y: 80
+  });
+  const end = wfMakeNode({ id: 'e', type: 'end', label: 'Done', x: 520, y: 80 });
+
+  const edges = [
+    wfMakeEdge({ id: 'se', from: 's', to: 't' }),
+    wfMakeEdge({ id: 'ta', from: 't', to: 'a' }),
+    wfMakeEdge({ id: 'ae', from: 'a', to: 'e' })
+  ];
+  return wfMakeDefinition(key, [start, timer, auto, end], edges);
+}
+
+export function wfBuildPublishedDefinition(def: DslDefinition) {
+  return {
+    id: `def-${def.key}-${def.version ?? 1}`,
+    key: def.key,
+    version: def.version ?? 1,
+    status: 'Published',
+    json: def,
+    createdAt: new Date().toISOString(),
+    publishedAt: new Date().toISOString()
+  };
+}
+
+export function wfMakeMockTask(overrides: Partial<{
+  id: string;
+  instanceId: string;
+  nodeId: string;
+  label: string;
+  status: 'Open' | 'Claimed' | 'Completed';
+  dueDate?: string;
+}> = {}) {
+  return {
+    id: overrides.id ?? `task-${Math.random().toString(36).slice(2, 8)}`,
+    instanceId: overrides.instanceId ?? 'inst-1',
+    nodeId: overrides.nodeId ?? 'n2',
+    label: overrides.label ?? 'Approve Request',
+    status: overrides.status ?? 'Open',
+    dueDate: overrides.dueDate
+  };
+}
+// ------------------------------------------------------------
+// END WORKFLOW DSL HELPERS
+// ------------------------------------------------------------

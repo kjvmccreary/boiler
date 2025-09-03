@@ -1,0 +1,16 @@
+{
+  "key": "approval",
+  "nodes": [
+    { "id": "n1", "type": "start", "label": "Start", "x": 50, "y": 120 },
+    { "id": "n2", "type": "humanTask", "label": "Approve Request", "assigneeRoles": ["Manager"], "x": 250, "y": 120 },
+    { "id": "n3", "type": "gateway", "label": "Approved?", "condition": "{\"==\":[{\"var\":\"approve\"},true]}", "x": 450, "y": 120 },
+    { "id": "n4", "type": "end", "label": "Approved", "x": 650, "y": 40 },
+    { "id": "n5", "type": "end", "label": "Denied", "x": 650, "y": 200 }
+  ],
+  "edges": [
+    { "id": "e1", "from": "n1", "to": "n2" },
+    { "id": "e2", "from": "n2", "to": "n3" },
+    { "id": "e3", "from": "n3", "to": "n4", "label": "true" },
+    { "id": "e4", "from": "n3", "to": "n5", "label": "false" }
+  ]
+}
