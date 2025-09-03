@@ -1,33 +1,9 @@
 Building Test Projects
 ========== Starting test run ==========
 [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.04]   Starting:    WorkflowService.Tests
-[xUnit.net 00:00:00.67]     WorkflowService.Tests.Engine.WorkflowRuntimePhase4OutboxTests.TaskCompletion_ShouldAddTaskCompletedEvent_AndOutbox [FAIL]
-[xUnit.net 00:00:00.67]       Expected inst.Status to be InstanceStatus.Running {value: 1}, but found InstanceStatus.Completed {value: 2}.
-[xUnit.net 00:00:00.67]       Stack Trace:
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[xUnit.net 00:00:00.67]            at FluentAssertions.Primitives.EnumAssertions`2.Be(TEnum expected, String because, Object[] becauseArgs)
-[xUnit.net 00:00:00.67]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WorkflowRuntimePhase4OutboxTests.cs(184,0): at WorkflowService.Tests.Engine.WorkflowRuntimePhase4OutboxTests.TaskCompletion_ShouldAddTaskCompletedEvent_AndOutbox()
-[xUnit.net 00:00:00.67]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.70]     WorkflowService.Tests.Engine.WorkflowRuntimePhase4OutboxTests.RetryWorkflow_ShouldProduceRetriedEvent [FAIL]
-[xUnit.net 00:00:00.70]       Expected inst.Status to be InstanceStatus.Failed {value: 4}, but found InstanceStatus.Completed {value: 2}.
-[xUnit.net 00:00:00.70]       Stack Trace:
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[xUnit.net 00:00:00.70]            at FluentAssertions.Primitives.EnumAssertions`2.Be(TEnum expected, String because, Object[] becauseArgs)
-[xUnit.net 00:00:00.70]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WorkflowRuntimePhase4OutboxTests.cs(286,0): at WorkflowService.Tests.Engine.WorkflowRuntimePhase4OutboxTests.RetryWorkflow_ShouldProduceRetriedEvent()
-[xUnit.net 00:00:00.70]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.71]     WorkflowService.Tests.Engine.WorkflowRuntimePhase4OutboxTests.CancelWorkflow_ShouldProduceCancelledEvents_AndOutbox [FAIL]
-[xUnit.net 00:00:00.71]       Expected inst.Status to be InstanceStatus.Running {value: 1}, but found InstanceStatus.Completed {value: 2}.
+[xUnit.net 00:00:00.05]   Starting:    WorkflowService.Tests
+[xUnit.net 00:00:00.71]     WorkflowService.Tests.Engine.WorkflowRuntimePhase5ContextAndBatchingTests.StartWorkflow_AutoCommitFalse_ShouldLeaveChangesUncommitted_UntilManualSave [FAIL]
+[xUnit.net 00:00:00.71]       Expected pendingEvents to be greater than 0, but found 0.
 [xUnit.net 00:00:00.71]       Stack Trace:
 [xUnit.net 00:00:00.71]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
 [xUnit.net 00:00:00.71]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
@@ -35,8 +11,21 @@ Building Test Projects
 [xUnit.net 00:00:00.71]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
 [xUnit.net 00:00:00.71]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
 [xUnit.net 00:00:00.71]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[xUnit.net 00:00:00.71]            at FluentAssertions.Primitives.EnumAssertions`2.Be(TEnum expected, String because, Object[] becauseArgs)
-[xUnit.net 00:00:00.71]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WorkflowRuntimePhase4OutboxTests.cs(244,0): at WorkflowService.Tests.Engine.WorkflowRuntimePhase4OutboxTests.CancelWorkflow_ShouldProduceCancelledEvents_AndOutbox()
+[xUnit.net 00:00:00.71]            at FluentAssertions.Numeric.NumericAssertions`2.BeGreaterThan(T expected, String because, Object[] becauseArgs)
+[xUnit.net 00:00:00.71]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WorkflowRuntimePhase5ContextAndBatchingTests.cs(149,0): at WorkflowService.Tests.Engine.WorkflowRuntimePhase5ContextAndBatchingTests.StartWorkflow_AutoCommitFalse_ShouldLeaveChangesUncommitted_UntilManualSave()
 [xUnit.net 00:00:00.71]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.72]   Finished:    WorkflowService.Tests
-========== Test run finished: 3 Tests (0 Passed, 3 Failed, 0 Skipped) run in 725 ms ==========
+[xUnit.net 00:00:00.74]     WorkflowService.Tests.Engine.WorkflowRuntimePhase5ContextAndBatchingTests.UpdatedContext_FromExecutor_ShouldOverwriteInstanceContext [FAIL]
+[xUnit.net 00:00:00.74]       Expected ctx {["initial"] = True} to contain key "existing".
+[xUnit.net 00:00:00.74]       Stack Trace:
+[xUnit.net 00:00:00.74]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+[xUnit.net 00:00:00.74]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+[xUnit.net 00:00:00.74]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+[xUnit.net 00:00:00.74]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.74]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.74]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+[xUnit.net 00:00:00.74]            at FluentAssertions.Collections.GenericDictionaryAssertions`4.ContainKeys(IEnumerable`1 expected, String because, Object[] becauseArgs)
+[xUnit.net 00:00:00.74]            at FluentAssertions.Collections.GenericDictionaryAssertions`4.ContainKey(TKey expected, String because, Object[] becauseArgs)
+[xUnit.net 00:00:00.74]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WorkflowRuntimePhase5ContextAndBatchingTests.cs(127,0): at WorkflowService.Tests.Engine.WorkflowRuntimePhase5ContextAndBatchingTests.UpdatedContext_FromExecutor_ShouldOverwriteInstanceContext()
+[xUnit.net 00:00:00.74]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.74]   Finished:    WorkflowService.Tests
+========== Test run finished: 2 Tests (0 Passed, 2 Failed, 0 Skipped) run in 751 ms ==========
