@@ -215,6 +215,98 @@ const taskSummaryHandler = http.get('/api/workflow/tasks/mine/summary', () => {
   return HttpResponse.json(createApiResponse(counts));
 });
 
+// --- NEW: helper to find task by id
+function findTask(id: string) {
+  return workflowState.tasks.find(t => t.id === id);
+}
+
+// --- NEW: GET single instance (for optional assertions)
+const getInstanceHandler = http.get('/api/workflow/instances/:id', ({ params }) => {
+  const inst = workflowState.instances.find(i => i.id === (params.id as string));
+  if (!inst) {
+    return HttpResponse.json(createApiResponse(null, false, 'Instance not found'), { status: 404 });
+  }
+  return HttpResponse.json(createApiResponse(inst));
+});
+
+// --- NEW: GET single task
+const getTaskHandler = http.get('/api/workflow/tasks/:id', ({ params }) => {
+  const task = findTask(params.id as string);
+  if (!task) return HttpResponse.json(createApiResponse(null, false, 'Task not found'), { status: 404 });
+  return HttpResponse.json(createApiResponse(task));
+});
+
+// --- NEW: CLAIM task
+const claimTaskHandler = http.post('/api/workflow/tasks/:id/claim', async ({ params }) => {
+  const task = findTask(params.id as string);
+  if (!task) {
+    return HttpResponse.json(createApiResponse(null, false, 'Task not found'), { status: 404 });
+  }
+  if (task.status !== 'Open') {
+    return HttpResponse.json(createApiResponse(null, false, 'Task cannot be claimed'), { status: 409 });
+  }
+  task.status = 'Claimed';
+  return HttpResponse.json(createApiResponse(task));
+});
+
+// --- NEW: COMPLETE task
+const completeTaskHandler = http.post('/api/workflow/tasks/:id/complete', async ({ params }) => {
+  const task = findTask(params.id as string);
+  if (!task) {
+    return HttpResponse.json(createApiResponse(null, false, 'Task not found'), { status: 404 });
+  }
+  if (task.status !== 'Claimed' && task.status !== 'Open') {
+    return HttpResponse.json(createApiResponse(null, false, 'Task cannot be completed'), { status: 409 });
+  }
+  task.status = 'Completed';
+
+  // Mark instance completed if all tasks completed (simple heuristic)
+  const inst = workflowState.instances.find(i => i.id === task.instanceId);
+  if (inst) {
+    const remaining = workflowState.tasks.filter(t => t.instanceId === inst.id && t.status !== 'Completed');
+    if (remaining.length === 0) {
+      inst.status = 'Completed';
+      inst.currentNodeIds = [];
+    }
+  }
+  return HttpResponse.json(createApiResponse(task));
+});
+
+// --- Tenant mock handlers (add before export arrays) ---
+const tenantsListHandler = http.get('/api/tenants', () =>
+  HttpResponse.json({
+    success: true,
+    data: [
+      { id: '1', name: 'Test Tenant 1', domain: 'tenant1.test', isActive: true, createdAt: nowIso(), updatedAt: nowIso() }
+    ]
+  })
+);
+
+const currentTenantHandler = http.get('/api/tenants/current', () =>
+  HttpResponse.json({
+    success: true,
+    data: { id: '1', name: 'Test Tenant 1', domain: 'tenant1.test', isActive: true, createdAt: nowIso(), updatedAt: nowIso() }
+  })
+);
+
+// ADD just above the export const workflowHandlers = [...]
+const listDefinitionsHandler = http.get('/api/workflow/definitions', () => {
+  // Return just currently stored definitions (or empty array)
+  return HttpResponse.json(createApiResponse(
+    workflowState.definitions.map(d => ({
+      id: d.id,
+      key: d.key,
+      version: d.version,
+      status: d.status,
+      name: d.name ?? d.key,
+      json: d.json,
+      createdAt: d.createdAt,
+      publishedAt: d.publishedAt
+    }))
+  ));
+});
+
+// Then include it in the export array:
 export const workflowHandlers = [
   createDraftHandler,
   validateByIdHandler,
@@ -222,8 +314,15 @@ export const workflowHandlers = [
   publishHandler,
   startInstanceHandler,
   listTasksHandler,
-  taskSummaryHandler
+  taskSummaryHandler,
+  getInstanceHandler,
+  getTaskHandler,
+  claimTaskHandler,
+  completeTaskHandler,
+  tenantsListHandler,
+  currentTenantHandler,
+  listDefinitionsHandler   // <-- added
 ];
 
-// Backwards compatibility: expected by browser.ts & setup.ts
+// Backwards compatibility
 export const handlers = [...workflowHandlers];

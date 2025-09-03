@@ -8,13 +8,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export default defineConfig({
   plugins: [react()],
 
-  // ENV INJECTION (Optional future: move to .env.test and remove define)
   define: {
     'import.meta.env.VITE_API_BASE_URL': JSON.stringify('http://localhost:5000/api'),
     'import.meta.env.VITE_APP_TITLE': JSON.stringify('Test App')
   },
 
-  // PRODUCTION BUILD TUNING (unchanged)
   build: {
     rollupOptions: {
       output: {
@@ -26,25 +24,25 @@ export default defineConfig({
             '@emotion/react',
             '@emotion/styled'
           ],
-            'router-vendor': ['react-router-dom'],
-            'query-vendor': ['@tanstack/react-query'],
-            'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
-            'auth-components': [
-              './src/components/auth/LoginForm.jsx',
-              './src/components/auth/RegisterForm.jsx',
-              './src/components/auth/ChangePasswordForm.jsx',
-              './src/contexts/AuthContext.jsx'
-            ],
-            'user-components': [
-              './src/components/users/UserList.jsx',
-              './src/components/users/UserProfile.jsx',
-              './src/components/users/UserRoleAssignment.jsx'
-            ],
-            'role-components': [
-              './src/components/roles/RoleList.jsx',
-              './src/components/roles/RoleEditor.jsx',
-              './src/components/roles/PermissionSelector.jsx'
-            ]
+          'router-vendor': ['react-router-dom'],
+          'query-vendor': ['@tanstack/react-query'],
+          'form-vendor': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          'auth-components': [
+            './src/components/auth/LoginForm.jsx',
+            './src/components/auth/RegisterForm.jsx',
+            './src/components/auth/ChangePasswordForm.jsx',
+            './src/contexts/AuthContext.jsx'
+          ],
+          'user-components': [
+            './src/components/users/UserList.jsx',
+            './src/components/users/UserProfile.jsx',
+            './src/components/users/UserRoleAssignment.jsx'
+          ],
+          'role-components': [
+            './src/components/roles/RoleList.jsx',
+            './src/components/roles/RoleEditor.jsx',
+            './src/components/roles/PermissionSelector.jsx'
+          ]
         }
       }
     },
@@ -62,19 +60,11 @@ export default defineConfig({
     name: 'frontend',
     environment: 'jsdom',
     globals: true,
-    // Centralized setup (MSW, polyfills, custom matchers)
     setupFiles: ['src/test/setup.ts'],
 
-    // Broad include (you can tighten to only ts/tsx later)
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    exclude: [
-      'node_modules',
-      'dist',
-      '.vscode',
-      '.git'
-    ],
+    exclude: ['node_modules', 'dist', '.vscode', '.git'],
 
-    // Isolation / flake mitigation
     pool: 'forks',
     poolOptions: { forks: { singleFork: true } },
 
@@ -82,7 +72,21 @@ export default defineConfig({
     hookTimeout: 15000,
     retry: 1,
 
-    // Coverage config (unchanged). Include supersets; exclude narrows.
+    css: true,
+
+    server: {
+      deps: {
+        inline: [
+          /@mui\/x-data-grid.*/,
+          /@mui\/x-date-pickers.*/,
+          /@mui\/material.*/,
+          /@mui\/icons-material.*/,
+          /@emotion\/react.*/,
+          /@emotion\/styled.*/
+        ]
+      }
+    },
+
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -95,18 +99,19 @@ export default defineConfig({
         'src/vite-env.d.ts'
       ],
       thresholds: {
+        // Raised as part of Item 16 (was 70).
+        // TODO(WF-COV): Raise branches/functions/lines to 85 after operations tests re-enabled.
         global: {
-          branches: 70,
-          functions: 70,
-          lines: 70,
-          statements: 70
+          branches: 80,
+          functions: 80,
+          lines: 80,
+          statements: 80
         }
       }
     },
 
     reporters: ['verbose'],
 
-    // Test-only env (still available as import.meta.env.* if defined above)
     env: {
       NODE_ENV: 'test',
       VITE_API_BASE_URL: 'http://localhost:5000/api'

@@ -1,0 +1,11 @@
+{
+  "key": "invalid_multi_start",
+  "nodes": [
+    { "id": "s1", "type": "start", "x": 0, "y": 0 },
+    { "id": "s2", "type": "start", "x": 80, "y": 0 },
+    { "id": "e1", "type": "end", "x": 240, "y": 0 }
+  ],
+  "edges": [
+    { "id": "e_s1_e1", "from": "s1", "to": "e1" }
+  ]
+}

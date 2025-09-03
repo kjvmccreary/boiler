@@ -1,0 +1,13 @@
+{
+  "key": "invalid_unreachable",
+  "nodes": [
+    { "id": "s1", "type": "start", "x": 0, "y": 0 },
+    { "id": "a1", "type": "automatic", "x": 120, "y": 0 },
+    { "id": "e1", "type": "end", "x": 240, "y": 0 },
+    { "id": "island", "type": "humanTask", "x": 400, "y": 200 }
+  ],
+  "edges": [
+    { "id": "s1_a1", "from": "s1", "to": "a1" },
+    { "id": "a1_e1", "from": "a1", "to": "e1" }
+  ]
+}

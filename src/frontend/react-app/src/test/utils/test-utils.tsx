@@ -4,6 +4,8 @@ import { render, RenderOptions } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import type { User, Role, Permission } from '@/types/index'
+import { AuthProvider } from '@/contexts/AuthContext'
+import { TenantProvider } from '@/contexts/TenantContext'
 
 // ✅ Export the MockRoleType
 export type MockRoleType = 'superAdmin' | 'systemAdmin' | 'admin' | 'manager' | 'user' | 'viewer' | 'multiRole'
@@ -424,12 +426,56 @@ function createTestWrapper(options: CustomRenderOptions = {}) {
   }
 }
 
+// REMOVE this duplicate definition
+// import { AuthProvider } from '@/contexts/AuthContext';
+// import { TenantProvider } from '@/contexts/TenantContext';
+
+// (Optionally define shape for overrides if you have exported context types)
+interface ProviderOverrides {
+  tenant?: Partial<ReturnType<any>>; // refine if you export TenantContext type
+  auth?: Partial<ReturnType<any>>;
+}
+
+// Ensure your renderWithProviders looks like this (one definition only):
 export function renderWithProviders(
   ui: React.ReactElement,
   options: CustomRenderOptions = {}
 ) {
+  const { withQueryClient = true, withRouter = true } = options
+
+  function ProvidersWrapper({ children }: { children: React.ReactNode }) {
+    let content = children
+
+    if (withQueryClient) {
+      const queryClient = new QueryClient({
+        defaultOptions: {
+          queries: { retry: false, gcTime: 0 },
+          mutations: { retry: false },
+        },
+      })
+      content = (
+        <QueryClientProvider client={queryClient}>
+          {content}
+        </QueryClientProvider>
+      )
+    }
+
+    if (withRouter) {
+      content = <BrowserRouter>{content}</BrowserRouter>
+    }
+
+    // Wrap once with Auth + Tenant providers
+    return (
+      <AuthProvider>
+        <TenantProvider>
+          {content}
+        </TenantProvider>
+      </AuthProvider>
+    )
+  }
+
   return render(ui, {
-    wrapper: createTestWrapper(options),
+    wrapper: ProvidersWrapper,
     ...options,
   })
 }

@@ -1,0 +1,10 @@
+{
+  "key": "invalid_missing_end",
+  "nodes": [
+    { "id": "s1", "type": "start", "x": 0, "y": 0 },
+    { "id": "a1", "type": "automatic", "x": 120, "y": 0 }
+  ],
+  "edges": [
+    { "id": "s1_a1", "from": "s1", "to": "a1" }
+  ]
+}

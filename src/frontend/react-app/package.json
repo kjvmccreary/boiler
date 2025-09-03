@@ -17,6 +17,7 @@
     "test:workflow:dsl": "vitest run src/features/workflow/tests/dsl --config vitest.config.js",
     "test:workflow:all": "vitest run src/features/workflow/tests --config vitest.config.js",
     "test:workflow:service": "vitest run src/features/workflow/tests/service --config vitest.config.js",
+    "test:workflow:operations": "vitest run src/features/workflow/tests/operations --config vitest.config.js",
     "test:workflow:integration": "vitest run src/features/workflow/tests/integration-lite --config vitest.config.js",
     "test:workflow:builder": "vitest run src/features/workflow/tests/builder --config vitest.config.js",
     "test:changed": "vitest --changed --config vitest.config.js",

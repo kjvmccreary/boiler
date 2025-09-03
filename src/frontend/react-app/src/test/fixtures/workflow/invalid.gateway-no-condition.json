@@ -1,0 +1,12 @@
+{
+  "key": "invalid_gateway_no_condition",
+  "nodes": [
+    { "id": "s1", "type": "start", "x": 0, "y": 0 },
+    { "id": "g1", "type": "gateway", "label": "Decision", "condition": "", "x": 160, "y": 0 },
+    { "id": "e1", "type": "end", "x": 320, "y": 0 }
+  ],
+  "edges": [
+    { "id": "s1_g1", "from": "s1", "to": "g1" },
+    { "id": "g1_e1", "from": "g1", "to": "e1" }
+  ]
+}

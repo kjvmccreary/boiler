@@ -1,86 +1,12 @@
-PS C:\Users\mccre\dev\boiler\src\frontend\react-app> npm run test:workflow:all
+PS C:\Users\mccre\dev\boiler\src\frontend\react-app> npm run test:workflow:operations
 
-> microservices-frontend@0.0.0 test:workflow:all
-> vitest run src/features/workflow/tests --config vitest.config.js
+> microservices-frontend@0.0.0 test:workflow:operations
+> vitest run src/features/workflow/tests/operations --config vitest.config.js
 
+ Vitest  "deps.inline" is deprecated. If you rely on vite-node directly, use "server.deps.inline" instead. Otherwise, consider using "deps.optimizer.web.include"
 
  RUN  v1.6.1 C:/Users/mccre/dev/boiler/src/frontend/react-app
 
-stdout | src/features/workflow/tests/dsl/dsl.core.test.ts > DSL serialize/deserialize core > deduplicates true/false branch edges per source keeping first occurrences
-[DSL][serialize] edges [
-  { id: 'e1', from: 'g1', to: 'a', label: 'true', fromHandle: 'true' },
-  {
-    id: 'e3',
-    from: 'g1',
-    to: 'c',
-    label: 'false',
-    fromHandle: 'false'
-  },
-  {
-    id: 'e5',
-    from: 'g1',
-    to: 'd',
-    label: 'else',
-    fromHandle: undefined
-  }
-]
-
-stdout | src/features/workflow/tests/dsl/dsl.core.test.ts > DSL serialize/deserialize core > round-trips nodes & edges (excluding deduped duplicates)
-[DSL][serialize] edges [
-  {
-    id: 's_to_t',
-    from: 'start',
-    to: 't1',
-    label: undefined,
-    fromHandle: undefined
-  },
-  {
-    id: 't_to_g',
-    from: 't1',
-    to: 'g1',
-    label: undefined,
-    fromHandle: undefined
-  },
-  {
-    id: 'g_true',
-    from: 'g1',
-    to: 'h1',
-    label: 'true',
-    fromHandle: 'true'
-  },
-  {
-    id: 'g_false',
-    from: 'g1',
-    to: 'end',
-    label: 'false',
-    fromHandle: 'false'
-  }
-]
-[DSL][deserialize] edges [
-  { id: 's_to_t', sourceHandle: undefined, label: undefined },
-  { id: 't_to_g', sourceHandle: undefined, label: undefined },
-  { id: 'g_true', sourceHandle: 'true', label: 'true' },
-  { id: 'g_false', sourceHandle: 'false', label: 'false' }
-]
-
-stdout | src/features/workflow/tests/dsl/dsl.core.test.ts > DSL serialize/deserialize core > preserves arbitrary non-branch edge labels
-[DSL][serialize] edges [
-  {
-    id: 'e1',
-    from: 'n1',
-    to: 'n2',
-    label: 'INIT',
-    fromHandle: undefined
-  },
-  {
-    id: 'e2',
-    from: 'n2',
-    to: 'n3',
-    label: 'FINALIZE',
-    fromHandle: undefined
-  }
-]
-
 stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
 🔍 API CLIENT: Creating axios instance with baseURL: empty (using Vite proxy)
 
@@ -93,340 +19,386 @@ stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\ser
 stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:23:13)
   - /api/* → UserService (port 7002)
 
-stdout | src/features/workflow/tests/service/workflowService.definitions.test.ts > WorkflowService / Definitions > creates a draft definition
-🚨 API REQUEST (NO AUTH): POST /api/workflow/definitions/draft - No token found!
-✅ API RESPONSE: /api/workflow/definitions/draft 201
-🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure: { success: true, message: undefined, hasData: true, errors: 0 }
-🔍 API CLIENT: Unwrapped response for /api/workflow/definitions/draft : {
-  id: 'def-0wwfuyxv',
-  key: 'approval',
-  version: 1,
-  status: 'Draft',
-  json: {
-    key: 'approval',
-    nodes: [ [Object], [Object], [Object], [Object], [Object] ],
-    edges: [ [Object], [Object], [Object], [Object] ],
-    version: 1
-  },
-  createdAt: '2025-09-03T19:54:49.528Z',
-  name: 'Approval Flow',
-  description: 'Basic approval flow'
-}
+stdout | src/features/workflow/tests/operations/tasks.operations.test.tsx > Operations / MyTasksPage > lists tasks
+🏢 API CLIENT: Tenant context cleared (using JWT for tenant context)
+🔍 AuthContext: Initializing authentication...
+🔍 TokenManager: No token found
+🔍 TokenManager: Refresh token info: { hasRefreshToken: false, refreshTokenLength: undefined }
+🔍 AuthContext: Token check: { hasToken: false, hasRefreshToken: false, tokenExpired: 'no-token' }
+🔍 AuthContext: No token found, user not authenticated
 
-stdout | src/features/workflow/tests/service/workflowService.definitions.test.ts > WorkflowService / Definitions > publishes a draft after validation passes
-🚨 API REQUEST (NO AUTH): POST /api/workflow/definitions/draft - No token found!
-✅ API RESPONSE: /api/workflow/definitions/draft 201
-🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure: { success: true, message: undefined, hasData: true, errors: 0 }
-🔍 API CLIENT: Unwrapped response for /api/workflow/definitions/draft : {
-  id: 'def-lpdmi72t',
-  key: 'publish-test',
-  version: 1,
-  status: 'Draft',
-  json: {
-    key: 'publish-test',
-    nodes: [ [Object], [Object], [Object], [Object], [Object] ],
-    edges: [ [Object], [Object], [Object], [Object] ],
-    version: 1
-  },
-  createdAt: '2025-09-03T19:54:49.536Z',
-  name: 'Publish Test',
-  description: 'Publish flow'
-}
-🚨 API REQUEST (NO AUTH): GET /api/workflow/definitions/def-lpdmi72t/validate - No token found!
-✅ API RESPONSE: /api/workflow/definitions/def-lpdmi72t/validate 200
-🔍 API CLIENT: Response not wrapped, returning as-is
-🔍 API CLIENT: Unwrapped response for /api/workflow/definitions/def-lpdmi72t/validate : { success: true, errors: [], warnings: [] }
-🚨 API REQUEST (NO AUTH): POST /api/workflow/definitions/def-lpdmi72t/publish - No token found!
-✅ API RESPONSE: /api/workflow/definitions/def-lpdmi72t/publish 200
-🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure: { success: true, message: 'Published', hasData: true, errors: 0 }
-🔍 API CLIENT: Unwrapped response for /api/workflow/definitions/def-lpdmi72t/publish : {
-  id: 'def-lpdmi72t',
-  key: 'publish-test',
-  version: 1,
-  status: 'Published',
-  json: {
-    key: 'publish-test',
-    nodes: [ [Object], [Object], [Object], [Object], [Object] ],
-    edges: [ [Object], [Object], [Object], [Object] ],
-    version: 1
-  },
-  createdAt: '2025-09-03T19:54:49.536Z',
-  name: 'Publish Test',
-  description: 'Publish flow',
-  publishedAt: '2025-09-03T19:54:49.548Z'
-}
+stdout | src/features/workflow/tests/operations/tasks.operations.test.tsx > Operations / MyTasksPage > lists tasks
+🏢 API CLIENT: Tenant context cleared (using JWT for tenant context)
+🔍 AuthContext: Initializing authentication...
+🔍 TokenManager: No token found
+🔍 TokenManager: Refresh token info: { hasRefreshToken: false, refreshTokenLength: undefined }
+🔍 AuthContext: Token check: { hasToken: false, hasRefreshToken: false, tokenExpired: 'no-token' }
+🔍 AuthContext: No token found, user not authenticated
 
-stdout | src/features/workflow/tests/service/workflowService.definitions.test.ts > WorkflowService / Definitions > returns validation failure (simulated server invalid)
-🚨 API REQUEST (NO AUTH): GET /api/workflow/definitions/999/validate - No token found!
-✅ API RESPONSE: /api/workflow/definitions/999/validate 200
-🔍 API CLIENT: Response not wrapped, returning as-is
-🔍 API CLIENT: Unwrapped response for /api/workflow/definitions/999/validate : {
-  success: false,
-  errors: [ 'Multiple start nodes', 'Unreachable node X' ],
-  warnings: [ 'Gateway unlabeled' ]
-}
+stdout | src/features/workflow/tests/operations/tasks.operations.test.tsx > Operations / MyTasksPage > claim then complete flow
+🏢 API CLIENT: Tenant context cleared (using JWT for tenant context)
+🔍 AuthContext: Initializing authentication...
+🔍 TokenManager: No token found
+🔍 TokenManager: Refresh token info: { hasRefreshToken: false, refreshTokenLength: undefined }
+🔍 AuthContext: Token check: { hasToken: false, hasRefreshToken: false, tokenExpired: 'no-token' }
+🔍 AuthContext: No token found, user not authenticated
 
-stdout | src/features/workflow/tests/service/workflowService.definitions.test.ts > WorkflowService / Definitions > publishDefinition surfaces error messages
-🚨 API REQUEST (NO AUTH): POST /api/workflow/definitions/123/publish - No token found!
+stdout | src/features/workflow/tests/operations/tasks.operations.test.tsx > Operations / MyTasksPage > claim then complete flow
+🏢 API CLIENT: Tenant context cleared (using JWT for tenant context)
+🔍 AuthContext: Initializing authentication...
+🔍 TokenManager: No token found
+🔍 TokenManager: Refresh token info: { hasRefreshToken: false, refreshTokenLength: undefined }
+🔍 AuthContext: Token check: { hasToken: false, hasRefreshToken: false, tokenExpired: 'no-token' }
+🔍 AuthContext: No token found, user not authenticated
 
-stderr | src/features/workflow/tests/service/workflowService.definitions.test.ts > WorkflowService / Definitions > publishDefinition surfaces error messages
-🚨 API ERROR: /api/workflow/definitions/123/publish 422 Request failed with status code 422
-🚨 API Error Details: {
-  message: 'Graph invalid',
-  errors: [ 'Graph invalid' ],
-  traceId: undefined
-}
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
-🔍 API CLIENT: Creating axios instance with baseURL: empty (using Vite proxy)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:21:13)
-🔍 API CLIENT: Expected proxy config:
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:22:13)
-  - /api/auth/* → AuthService (port 7001)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:23:13)
-  - /api/* → UserService (port 7002)
-
-stdout | src/features/workflow/tests/service/workflowService.instances-tasks.test.ts > WorkflowService / Instances & Tasks > creates & publishes definition, then starts instance
-🚨 API REQUEST (NO AUTH): POST /api/workflow/definitions/draft - No token found!
-✅ API RESPONSE: /api/workflow/definitions/draft 201
-🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure: { success: true, message: undefined, hasData: true, errors: 0 }
-🔍 API CLIENT: Unwrapped response for /api/workflow/definitions/draft : {
-  id: 'def-3kvpmhpu',
-  key: 'service-inst',
-  version: 1,
-  status: 'Draft',
-  json: {
-    key: 'service-inst',
-    nodes: [ [Object], [Object], [Object], [Object], [Object] ],
-    edges: [ [Object], [Object], [Object], [Object] ],
-    version: 1
-  },
-  createdAt: '2025-09-03T19:54:49.585Z',
-  name: 'Service Inst',
-  description: 'Service inst test'
-}
-🚨 API REQUEST (NO AUTH): POST /api/workflow/definitions/def-3kvpmhpu/publish - No token found!
-✅ API RESPONSE: /api/workflow/definitions/def-3kvpmhpu/publish 200
-🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure: { success: true, message: 'Published', hasData: true, errors: 0 }
-🔍 API CLIENT: Unwrapped response for /api/workflow/definitions/def-3kvpmhpu/publish : {
-  id: 'def-3kvpmhpu',
-  key: 'service-inst',
-  version: 1,
-  status: 'Published',
-  json: {
-    key: 'service-inst',
-    nodes: [ [Object], [Object], [Object], [Object], [Object] ],
-    edges: [ [Object], [Object], [Object], [Object] ],
-    version: 1
-  },
-  createdAt: '2025-09-03T19:54:49.585Z',
-  name: 'Service Inst',
-  description: 'Service inst test',
-  publishedAt: '2025-09-03T19:54:49.587Z'
-}
-🚨 API REQUEST (NO AUTH): POST /api/workflow/instances - No token found!
-✅ API RESPONSE: /api/workflow/instances 201
-🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure: { success: true, message: undefined, hasData: true, errors: 0 }
-🔍 API CLIENT: Unwrapped response for /api/workflow/instances : {
-  id: 'inst-4nya8ylk',
-  definitionKey: 'service-inst',
-  definitionVersion: 1,
-  status: 'Running',
-  currentNodeIds: [ 'n2' ],
-  startedAt: '2025-09-03T19:54:49.592Z',
-  context: {}
-}
-
-stdout | src/features/workflow/tests/service/workflowService.instances-tasks.test.ts > WorkflowService / Instances & Tasks > lists tasks (mine filter)
-🚨 API REQUEST (NO AUTH): GET /api/workflow/tasks?mine=true - No token found!
-✅ API RESPONSE: /api/workflow/tasks?mine=true 200
-🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure: { success: true, message: undefined, hasData: true, errors: 0 }
-🔍 API CLIENT: Unwrapped response for /api/workflow/tasks?mine=true : [
-  {
-    id: 'task-c8wv1rq9',
-    instanceId: 'inst-4nya8ylk',
-    nodeId: 'n2',
-    label: 'Approve Request',
-    status: 'Open',
-    createdAt: '2025-09-03T19:54:49.592Z'
-  }
-]
-
-stdout | src/features/workflow/tests/service/workflowService.instances-tasks.test.ts > WorkflowService / Instances & Tasks > gracefully handles validateDefinitionJson (happy path)
-🚨 API REQUEST (NO AUTH): POST /api/workflow/definitions/validate - No token found!
-✅ API RESPONSE: /api/workflow/definitions/validate 200
-🔍 API CLIENT: Response not wrapped, returning as-is
-🔍 API CLIENT: Unwrapped response for /api/workflow/definitions/validate : { success: true, errors: [], warnings: [] }
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
-🔍 API CLIENT: Creating axios instance with baseURL: empty (using Vite proxy)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:21:13)
-🔍 API CLIENT: Expected proxy config:
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:22:13)
-  - /api/auth/* → AuthService (port 7001)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:23:13)
-  - /api/* → UserService (port 7002)
-
-stdout | src/features/workflow/tests/integration-lite/approval.happy-path.test.ts > Workflow Integration-Lite / Approval Happy Path > draft → publish → start → task summary
-🚨 API REQUEST (NO AUTH): POST /api/workflow/definitions/draft - No token found!
-✅ API RESPONSE: /api/workflow/definitions/draft 201
-🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure: { success: true, message: undefined, hasData: true, errors: 0 }
-🔍 API CLIENT: Unwrapped response for /api/workflow/definitions/draft : {
-  id: 'def-9jgf3xr8',
-  key: 'approval-int-lite',
-  version: 1,
-  status: 'Draft',
-  json: {
-    key: 'approval-int-lite',
-    nodes: [ [Object], [Object], [Object], [Object], [Object] ],
-    edges: [ [Object], [Object], [Object], [Object] ],
-    version: 1
-  },
-  createdAt: '2025-09-03T19:54:49.619Z',
-  name: 'Approval Integration',
-  description: 'Integration-lite flow'
-}
-🚨 API REQUEST (NO AUTH): POST /api/workflow/definitions/def-9jgf3xr8/publish - No token found!
-✅ API RESPONSE: /api/workflow/definitions/def-9jgf3xr8/publish 200
-🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure: { success: true, message: 'Published', hasData: true, errors: 0 }
-🔍 API CLIENT: Unwrapped response for /api/workflow/definitions/def-9jgf3xr8/publish : {
-  id: 'def-9jgf3xr8',
-  key: 'approval-int-lite',
-  version: 1,
-  status: 'Published',
-  json: {
-    key: 'approval-int-lite',
-    nodes: [ [Object], [Object], [Object], [Object], [Object] ],
-    edges: [ [Object], [Object], [Object], [Object] ],
-    version: 1
-  },
-  createdAt: '2025-09-03T19:54:49.619Z',
-  name: 'Approval Integration',
-  description: 'Integration-lite flow',
-  publishedAt: '2025-09-03T19:54:49.621Z'
-}
-🚨 API REQUEST (NO AUTH): POST /api/workflow/instances - No token found!
-✅ API RESPONSE: /api/workflow/instances 201
-🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure: { success: true, message: undefined, hasData: true, errors: 0 }
-🔍 API CLIENT: Unwrapped response for /api/workflow/instances : {
-  id: 'inst-c28p6tis',
-  definitionKey: 'approval-int-lite',
-  definitionVersion: 1,
-  status: 'Running',
-  currentNodeIds: [ 'n2' ],
-  startedAt: '2025-09-03T19:54:49.623Z',
-  context: {}
-}
-🚨 API REQUEST (NO AUTH): GET /api/workflow/tasks?mine=true - No token found!
-✅ API RESPONSE: /api/workflow/tasks?mine=true 200
-🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure: { success: true, message: undefined, hasData: true, errors: 0 }
-🔍 API CLIENT: Unwrapped response for /api/workflow/tasks?mine=true : [
-  {
-    id: 'task-yjqyb1di',
-    instanceId: 'inst-c28p6tis',
-    nodeId: 'n2',
-    label: 'Approve Request',
-    status: 'Open',
-    createdAt: '2025-09-03T19:54:49.623Z'
-  }
-]
-🚨 API REQUEST (NO AUTH): GET /api/workflow/tasks/mine/summary - No token found!
-✅ API RESPONSE: /api/workflow/tasks/mine/summary 200
-🔍 API CLIENT: Detected .NET 9 ApiResponseDto structure: { success: true, message: undefined, hasData: true, errors: 0 }
-🔍 API CLIENT: Unwrapped response for /api/workflow/tasks/mine/summary : {
-  available: 1,
-  assignedToMe: 0,
-  assignedToMyRoles: 0,
-  claimed: 0,
-  inProgress: 0,
-  completedToday: 0,
-  overdue: 0,
-  failed: 0,
-  totalActionable: 1
-}
-
-stdout | src/features/workflow/tests/builder/builder.serialization.test.ts > Builder Serialization (placeholder) > round-trips basic approval fixture
-[DSL][serialize] edges [
-  {
-    id: 'e1',
-    from: 'n1',
-    to: 'n2',
-    label: undefined,
-    fromHandle: undefined
-  },
-  {
-    id: 'e2',
-    from: 'n2',
-    to: 'n3',
-    label: undefined,
-    fromHandle: undefined
-  },
-  { id: 'e3', from: 'n3', to: 'n4', label: 'true', fromHandle: 'true' },
-  {
-    id: 'e4',
-    from: 'n3',
-    to: 'n5',
-    label: 'false',
-    fromHandle: 'false'
-  }
-]
-[DSL][deserialize] edges [
-  { id: 'e1', sourceHandle: undefined, label: undefined },
-  { id: 'e2', sourceHandle: undefined, label: undefined },
-  { id: 'e3', sourceHandle: 'true', label: 'true' },
-  { id: 'e4', sourceHandle: 'false', label: 'false' }
-]
-
- ✓ |frontend| src/features/workflow/tests/dsl/dsl.core.test.ts (13)
-   ✓ DSL serialize/deserialize core (3)
-     ✓ deduplicates true/false branch edges per source keeping first occurrences
-     ✓ round-trips nodes & edges (excluding deduped duplicates)
-     ✓ preserves arbitrary non-branch edge labels
-   ✓ DSL validateDefinition invalid fixtures (6)
-     ✓ flags multiple start nodes
-     ✓ flags missing end node
-     ✓ flags unreachable nodes
-     ✓ flags edge referencing unknown node
-     ✓ flags duplicate node IDs
-     ✓ flags gateway without condition
-   ✓ DSL validateNode (4)
-     ✓ accepts timer with delaySeconds only
-     ✓ errors on timer with no delayMinutes, delaySeconds, or untilIso
-     ✓ errors on gateway without condition
-     ✓ warns on humanTask without assignee roles
- ✓ |frontend| src/features/workflow/tests/service/workflowService.definitions.test.ts (4)
-   ✓ WorkflowService / Definitions (4)
-     ✓ creates a draft definition
-     ✓ publishes a draft after validation passes
-     ✓ returns validation failure (simulated server invalid)
-     ✓ publishDefinition surfaces error messages
- ✓ |frontend| src/features/workflow/tests/service/workflowService.instances-tasks.test.ts (3)
-   ✓ WorkflowService / Instances & Tasks (3)
-     ✓ creates & publishes definition, then starts instance
-     ✓ lists tasks (mine filter)
-     ✓ gracefully handles validateDefinitionJson (happy path)
- ✓ |frontend| src/features/workflow/tests/integration-lite/approval.happy-path.test.ts (1)
-   ✓ Workflow Integration-Lite / Approval Happy Path (1)
-     ✓ draft → publish → start → task summary
- ✓ |frontend| src/features/workflow/tests/builder/builder.serialization.test.ts (1)
-   ✓ Builder Serialization (placeholder) (1)
-     ✓ round-trips basic approval fixture
+ ❯ |frontend| src/features/workflow/tests/operations/tasks.operations.test.tsx (3) 4144ms
+   ❯ Operations / MyTasksPage (2) 4140ms
+     × lists tasks (retry x1) 2084ms
+     × claim then complete flow (retry x1) 2054ms
+   ↓ Operations / MyTasksPage (SKIPPED) (1) [skipped]
+     ↓ placeholder – see TODO in file header [skipped]
  ↓ |frontend| src/features/workflow/tests/operations/definitions.operations.test.tsx (1) [skipped]
-   ↓ Operations / DefinitionsTable (1) [skipped]
-     ↓ placeholder - enable after confirming component path [skipped]
- ↓ |frontend| src/features/workflow/tests/operations/tasks.operations.test.tsx (1) [skipped]
-   ↓ Operations / MyTasks (1) [skipped]
-     ↓ placeholder - enable after confirming component path [skipped]
+   ↓ Operations / DefinitionsPage (SKIPPED) (1) [skipped]
+     ↓ placeholder – restore real tests after AppTestWrapper is implemented [skipped]
 
- Test Files  5 passed | 2 skipped (7)
-      Tests  22 passed | 2 skipped (24)
-   Start at  14:54:48
-   Duration  1.37s (transform 132ms, setup 306ms, collect 147ms, tests 91ms, environment 461ms, prepare 80ms)
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |frontend| src/features/workflow/tests/operations/tasks.operations.test.tsx > Operations / MyTasksPage > lists tasks
+TestingLibraryElementError: Unable to find an element with the text: /Approve Request/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="MuiBox-root css-bx44ri"
+    >
+      <p
+        class="MuiTypography-root MuiTypography-body1 css-rizt0-MuiTypography-root"
+      >
+        Please select a tenant to view your tasks
+      </p>
+    </div>
+    <div
+      data-testid="tenant-context-probe"
+      style="display: none;"
+    >
+      <span
+        data-testid="probe-current-tenant"
+      />
+      <span
+        data-testid="probe-available-count"
+      >
+        0
+      </span>
+      <span
+        data-testid="probe-tenant-loading"
+      >
+        0
+      </span>
+      <span
+        data-testid="probe-tenant-error"
+      />
+      <span
+        data-testid="probe-tenant-show-selector"
+      >
+        0
+      </span>
+      <span
+        data-testid="probe-tenant-redirect"
+      >
+        0
+      </span>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<html>
+  <head>
+    <meta
+      content=""
+      name="emotion-insertion-point"
+    />
+  </head>
+  <body>
+    <div>
+      <div
+        class="MuiBox-root css-bx44ri"
+      >
+        <p
+          class="MuiTypography-root MuiTypography-body1 css-rizt0-MuiTypography-root"
+        >
+          Please select a tenant to view your tasks
+        </p>
+      </div>
+      <div
+        data-testid="tenant-context-probe"
+        style="display: none;"
+      >
+        <span
+          data-testid="probe-current-tenant"
+        />
+        <span
+          data-testid="probe-available-count"
+        >
+          0
+        </span>
+        <span
+          data-testid="probe-tenant-loading"
+        >
+          0
+        </span>
+        <span
+          data-testid="probe-tenant-error"
+        />
+        <span
+          data-testid="probe-tenant-show-selector"
+        >
+          0
+        </span>
+        <span
+          data-testid="probe-tenant-redirect"
+        >
+          0
+        </span>
+      </div>
+    </div>
+  </body>
+</html>
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/features/workflow/tests/operations/tasks.operations.test.tsx:29:11
+     27|     );
+     28|     renderWithProviders(<MyTasksPage />);
+     29|     await waitFor(() => {
+       |           ^
+     30|       expect(screen.getByText(/Approve Request/i)).toBeInTheDocument();
+     31|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  |frontend| src/features/workflow/tests/operations/tasks.operations.test.tsx > Operations / MyTasksPage > lists tasks
+TestingLibraryElementError: Unable to find an element with the text: /Approve Request/i. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="MuiBox-root css-bx44ri"
+    >
+      <p
+        class="MuiTypography-root MuiTypography-body1 css-rizt0-MuiTypography-root"
+      >
+        Please select a tenant to view your tasks
+      </p>
+    </div>
+    <div
+      data-testid="tenant-context-probe"
+      style="display: none;"
+    >
+      <span
+        data-testid="probe-current-tenant"
+      />
+      <span
+        data-testid="probe-available-count"
+      >
+        0
+      </span>
+      <span
+        data-testid="probe-tenant-loading"
+      >
+        0
+      </span>
+      <span
+        data-testid="probe-tenant-error"
+      />
+      <span
+        data-testid="probe-tenant-show-selector"
+      >
+        0
+      </span>
+      <span
+        data-testid="probe-tenant-redirect"
+      >
+        0
+      </span>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<html>
+  <head>
+    <meta
+      content=""
+      name="emotion-insertion-point"
+    />
+  </head>
+  <body>
+    <div>
+      <div
+        class="MuiBox-root css-bx44ri"
+      >
+        <p
+          class="MuiTypography-root MuiTypography-body1 css-rizt0-MuiTypography-root"
+        >
+          Please select a tenant to view your tasks
+        </p>
+      </div>
+      <div
+        data-testid="tenant-context-probe"
+        style="display: none;"
+      >
+        <span
+          data-testid="probe-current-tenant"
+        />
+        <span
+          data-testid="probe-available-count"
+        >
+          0
+        </span>
+        <span
+          data-testid="probe-tenant-loading"
+        >
+          0
+        </span>
+        <span
+          data-testid="probe-tenant-error"
+        />
+        <span
+          data-testid="probe-tenant-show-selector"
+        >
+          0
+        </span>
+        <span
+          data-testid="probe-tenant-redirect"
+        >
+          0
+        </span>
+      </div>
+    </div>
+  </body>
+</html>
+ ❯ Proxy.waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ src/features/workflow/tests/operations/tasks.operations.test.tsx:29:11
+     27|     );
+     28|     renderWithProviders(<MyTasksPage />);
+     29|     await waitFor(() => {
+       |           ^
+     30|       expect(screen.getByText(/Approve Request/i)).toBeInTheDocument();
+     31|     });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  |frontend| src/features/workflow/tests/operations/tasks.operations.test.tsx > Operations / MyTasksPage > claim then complete flow
+ FAIL  |frontend| src/features/workflow/tests/operations/tasks.operations.test.tsx > Operations / MyTasksPage > claim then complete flow
+TestingLibraryElementError: Unable to find role="button" and name `/claim/i`
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="MuiBox-root css-bx44ri"
+    >
+      <p
+        class="MuiTypography-root MuiTypography-body1 css-rizt0-MuiTypography-root"
+      >
+        Please select a tenant to view your tasks
+      </p>
+    </div>
+    <div
+      data-testid="tenant-context-probe"
+      style="display: none;"
+    >
+      <span
+        data-testid="probe-current-tenant"
+      />
+      <span
+        data-testid="probe-available-count"
+      >
+        0
+      </span>
+      <span
+        data-testid="probe-tenant-loading"
+      >
+        0
+      </span>
+      <span
+        data-testid="probe-tenant-error"
+      />
+      <span
+        data-testid="probe-tenant-show-selector"
+      >
+        0
+      </span>
+      <span
+        data-testid="probe-tenant-redirect"
+      >
+        0
+      </span>
+    </div>
+  </div>
+</body>
+
+Ignored nodes: comments, script, style
+<body>
+  <div>
+    <div
+      class="MuiBox-root css-bx44ri"
+    >
+      <p
+        class="MuiTypography-root MuiTypography-body1 css-rizt0-MuiTypography-root"
+      >
+        Please select a tenant to view your tasks
+      </p>
+    </div>
+    <div
+      data-testid="tenant-context-probe"
+      style="display: none;"
+    >
+      <span
+        data-testid="probe-current-tenant"
+      />
+      <span
+        data-testid="probe-available-count"
+      >
+        0
+      </span>
+      <span
+        data-testid="probe-tenant-loading"
+      >
+        0
+      </span>
+      <span
+        data-testid="probe-tenant-error"
+      />
+      <span
+        data-testid="probe-tenant-show-selector"
+      >
+        0
+      </span>
+      <span
+        data-testid="probe-tenant-redirect"
+      >
+        0
+      </span>
+    </div>
+  </div>
+</body>
+ ❯ waitForWrapper node_modules/@testing-library/dom/dist/wait-for.js:163:27
+ ❯ node_modules/@testing-library/dom/dist/query-helpers.js:86:33
+ ❯ src/features/workflow/tests/operations/tasks.operations.test.tsx:80:35
+     78|
+     79|     renderWithProviders(<MyTasksPage />);
+     80|     const claimBtn = await screen.findByRole('button', { name: /claim/i });
+       |                                   ^
+     81|     await userEvent.click(claimBtn);
+     82|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ Test Files  1 failed | 1 skipped (2)
+      Tests  2 failed | 2 skipped (4)
+   Start at  15:45:15
+   Duration  29.67s (transform 10.44s, setup 331ms, collect 24.23s, tests 4.14s, environment 561ms, prepare 95ms)
 
 PS C:\Users\mccre\dev\boiler\src\frontend\react-app>
