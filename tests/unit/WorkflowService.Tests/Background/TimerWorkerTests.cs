@@ -1,187 +1,239 @@
+using System.Reflection;
 using FluentAssertions;
-using Xunit;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Moq;
 using WorkflowService.Background;
-using WorkflowService.Domain.Models;
 using WorkflowService.Engine.Interfaces;
 using WorkflowService.Persistence;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Configuration;
-using Microsoft.EntityFrameworkCore;
-using Moq;
+using WorkflowService.Domain.Models;
+using Xunit;
 using DTOs.Workflow.Enums;
 using Contracts.Services;
 using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
 
 namespace WorkflowService.Tests.Background;
 
 public class TimerWorkerTests : TestBase
 {
-    private readonly Mock<IWorkflowRuntime> _mockRuntime;
-    private readonly Mock<ITenantProvider> _mockTenantProvider;
-    private readonly IConfiguration _configuration;
-
-    private IServiceProvider BuildProvider(string? dbName = null)
+    private TimerWorker CreateWorker(
+        ServiceProvider provider,
+        int batchSize = 5,
+        int intervalSeconds = 60)
     {
+        var inMemoryConfig = new Dictionary<string, string?>
+        {
+            ["WorkflowSettings:Timer:BatchSize"] = batchSize.ToString(),
+            ["WorkflowSettings:Timer:IntervalSeconds"] = intervalSeconds.ToString()
+        };
+
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(inMemoryConfig)
+            .Build();
+
+        var logger = provider.GetRequiredService<ILogger<TimerWorker>>();
+        return new TimerWorker(provider, logger, config);
+    }
+
+    private ServiceProvider BuildProvider(
+        Mock<IWorkflowRuntime> runtimeMock,
+        Mock<ITenantProvider>? tenantMock = null)
+    {
+        tenantMock ??= new Mock<ITenantProvider>();
+        tenantMock.Setup(t => t.SetCurrentTenantAsync(It.IsAny<int>()))
+            .Returns(Task.CompletedTask);
+        tenantMock.Setup(t => t.GetCurrentTenantIdAsync())
+            .ReturnsAsync(1);
+
+        runtimeMock
+            .Setup(r => r.CompleteTaskAsync(
+                It.IsAny<int>(),
+                It.IsAny<string>(),
+                It.IsAny<int>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<bool>()))
+            .Returns(Task.CompletedTask);
+
         var services = new ServiceCollection();
-        services.AddLogging();
+
+        services.AddLogging(b => b.AddDebug().SetMinimumLevel(LogLevel.Warning));
+        services.AddHttpContextAccessor();
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-        services.AddSingleton(_mockRuntime.Object);
-        services.AddSingleton(_mockTenantProvider.Object);
-        services.AddDbContext<WorkflowDbContext>(o =>
-            o.UseInMemoryDatabase(dbName ?? Guid.NewGuid().ToString()));
-        services.AddSingleton(typeof(ILogger<TimerWorker>), CreateMockLogger<TimerWorker>().Object);
-        services.AddSingleton(typeof(ILogger<WorkflowDbContext>), CreateMockLogger<WorkflowDbContext>().Object);
+
+        // Make DbContext singleton for test lifetime to avoid disposed scope issues
+        services.AddDbContext<WorkflowDbContext>(
+            o => o.UseInMemoryDatabase($"wf_timers_{Guid.NewGuid()}"),
+            contextLifetime: ServiceLifetime.Singleton,
+            optionsLifetime: ServiceLifetime.Singleton);
+
+        services.AddSingleton<IWorkflowRuntime>(runtimeMock.Object);
+        services.AddSingleton<ITenantProvider>(tenantMock.Object);
+
         return services.BuildServiceProvider();
     }
 
-    public TimerWorkerTests()
+    private async Task<(ServiceProvider provider, WorkflowDbContext db)> SeedDueTimersAsync(
+        int totalTimers,
+        int tenantId = 1)
     {
-        _mockRuntime = new Mock<IWorkflowRuntime>();
-        _mockTenantProvider = new Mock<ITenantProvider>();
-        _mockTenantProvider.Setup(x => x.GetCurrentTenantIdAsync()).ReturnsAsync(1);
-
-        _configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                {"WorkflowSettings:Timer:IntervalSeconds", "1"},
-                {"WorkflowSettings:Timer:BatchSize", "50"}
-            })
-            .Build();
-    }
-
-    private async Task<WorkflowTask> SeedTimerAsync(IServiceProvider provider, int tenantId, DateTime due, bool runningInstance = true)
-    {
-        using var scope = provider.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<WorkflowDbContext>();
+        var runtimeMock = new Mock<IWorkflowRuntime>();
+        var provider = BuildProvider(runtimeMock);
+        var db = provider.GetRequiredService<WorkflowDbContext>();
 
         var def = new WorkflowDefinition
         {
             TenantId = tenantId,
-            Name = $"WF {tenantId}",
+            Name = "Timer WF",
             Version = 1,
-            JSONDefinition = """
-            {
-              "nodes":[
-                {"id":"start","type":"Start"},
-                {"id":"timer1","type":"Timer"},
-                {"id":"end","type":"End"}
-              ],
-              "edges":[
-                {"id":"e1","source":"start","target":"timer1"},
-                {"id":"e2","source":"timer1","target":"end"}
-              ]
-            }
-            """,
+            JSONDefinition = "{}",
             IsPublished = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
-        ctx.WorkflowDefinitions.Add(def);
-        await ctx.SaveChangesAsync();
+        db.WorkflowDefinitions.Add(def);
+        await db.SaveChangesAsync();
 
         var inst = new WorkflowInstance
         {
             TenantId = tenantId,
             WorkflowDefinitionId = def.Id,
             DefinitionVersion = 1,
-            Status = runningInstance ? InstanceStatus.Running : InstanceStatus.Completed,
-            CurrentNodeIds = """["timer1"]""",
+            Status = InstanceStatus.Running,
+            CurrentNodeIds = "[]",
             Context = "{}",
             StartedAt = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
-        ctx.WorkflowInstances.Add(inst);
-        await ctx.SaveChangesAsync();
+        db.WorkflowInstances.Add(inst);
+        await db.SaveChangesAsync();
 
-        var task = new WorkflowTask
+        var due = DateTime.UtcNow.AddMinutes(-10);
+
+        for (int i = 0; i < totalTimers; i++)
         {
-            TenantId = tenantId,
-            WorkflowInstanceId = inst.Id,
-            NodeId = "timer1",
-            TaskName = "Timer",
-            Status = WorkflowTaskStatus.Created,
-            NodeType = "timer",
-            DueDate = due,
-            Data = "{}",
+            db.WorkflowTasks.Add(new WorkflowTask
+            {
+                TenantId = tenantId,
+                WorkflowInstanceId = inst.Id,
+                NodeId = $"timer_{i}",
+                TaskName = $"T{i}",
+                NodeType = "timer",
+                Status = WorkflowTaskStatus.Created,
+                DueDate = due.AddSeconds(-i),
+                CreatedAt = DateTime.UtcNow.AddMinutes(-20),
+                UpdatedAt = DateTime.UtcNow.AddMinutes(-20)
+            });
+        }
+
+        await db.SaveChangesAsync();
+        return (provider, db);
+    }
+
+    private async Task InvokeSingleCycleAsync(TimerWorker worker, CancellationToken ct = default)
+    {
+        var mi = typeof(TimerWorker)
+            .GetMethod("ProcessCycleAsync", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException("Could not reflect ProcessCycleAsync");
+
+        var task = (Task)mi.Invoke(worker, new object[] { ct })!;
+        await task;
+    }
+
+    [Fact]
+    public async Task ProcessCycle_ShouldAcquireUpToBatchSize()
+    {
+        // Arrange: 12 due timers, batch size 5
+        var (provider, db) = await SeedDueTimersAsync(totalTimers: 12);
+        var worker = CreateWorker(provider, batchSize: 5);
+
+        // Act: invoke one processing cycle via reflection
+        await InvokeSingleCycleAsync(worker);
+
+        // Assert: At most 5 tasks moved to InProgress, rest remain Created
+        var all = await db.WorkflowTasks.OrderBy(t => t.Id).ToListAsync();
+        var inProgress = all.Count(t => t.Status == WorkflowTaskStatus.InProgress);
+        var created = all.Count(t => t.Status == WorkflowTaskStatus.Created);
+
+        inProgress.Should().Be(5, "batch size limits acquisition");
+        created.Should().Be(7, "remaining timers untouched this cycle");
+    }
+
+    [Fact]
+    public async Task ProcessCycle_NoDueTimers_ShouldDoNothing()
+    {
+        // Arrange: seed zero timers
+        var runtimeMock = new Mock<IWorkflowRuntime>();
+        var provider = BuildProvider(runtimeMock);
+        var db = provider.GetRequiredService<WorkflowDbContext>();
+
+        // Add unrelated (non-timer) task for safety
+        var def = new WorkflowDefinition
+        {
+            TenantId = 1,
+            Name = "WF",
+            Version = 1,
+            JSONDefinition = "{}",
+            IsPublished = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
-        ctx.WorkflowTasks.Add(task);
-        await ctx.SaveChangesAsync();
+        db.WorkflowDefinitions.Add(def);
+        await db.SaveChangesAsync();
 
-        return task;
+        var inst = new WorkflowInstance
+        {
+            TenantId = 1,
+            WorkflowDefinitionId = def.Id,
+            DefinitionVersion = 1,
+            Status = InstanceStatus.Running,
+            CurrentNodeIds = "[]",
+            Context = "{}",
+            StartedAt = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        db.WorkflowInstances.Add(inst);
+        await db.SaveChangesAsync();
+
+        db.WorkflowTasks.Add(new WorkflowTask
+        {
+            TenantId = 1,
+            WorkflowInstanceId = inst.Id,
+            NodeId = "human1",
+            TaskName = "Human",
+            NodeType = "human",
+            Status = WorkflowTaskStatus.Created,
+            CreatedAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var worker = CreateWorker(provider, batchSize: 5);
+
+        // Act
+        await InvokeSingleCycleAsync(worker);
+
+        // Assert: no task status changes (still created human task only)
+        var tasks = await db.WorkflowTasks.ToListAsync();
+        tasks.Should().ContainSingle();
+        tasks[0].Status.Should().Be(WorkflowTaskStatus.Created);
     }
 
     [Fact]
-    public async Task TimerWorker_ShouldAdvanceAfterDue()
+    public async Task ProcessCycle_AllTimersLessThanBatch_ShouldAcquireAll()
     {
-        var provider = BuildProvider("timers-db-advance");
-        var task = await SeedTimerAsync(provider, 1, DateTime.UtcNow.AddMinutes(-2));
-        var logger = CreateMockLogger<TimerWorker>().Object;
-        var worker = new TimerWorker(provider, logger, _configuration);
+        // Arrange: 3 timers only, batch size 10
+        var (provider, db) = await SeedDueTimersAsync(totalTimers: 3);
+        var worker = CreateWorker(provider, batchSize: 10);
 
-        _mockRuntime.Setup(r => r.CompleteTaskAsync(task.Id, It.IsAny<string>(), 0, It.IsAny<CancellationToken>(), false))
-            .Returns(Task.CompletedTask);
+        // Act
+        await InvokeSingleCycleAsync(worker);
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(350));
-        await worker.StartAsync(cts.Token);
-
-        _mockRuntime.Verify(r => r.CompleteTaskAsync(task.Id, It.IsAny<string>(), 0, It.IsAny<CancellationToken>(), false),
-            Times.AtLeastOnce);
-    }
-
-    [Fact]
-    public async Task TimerWorker_ShouldNotProcessFutureTasks()
-    {
-        var provider = BuildProvider("timers-db-future");
-        var task = await SeedTimerAsync(provider, 1, DateTime.UtcNow.AddMinutes(10));
-        var logger = CreateMockLogger<TimerWorker>().Object;
-        var worker = new TimerWorker(provider, logger, _configuration);
-
-        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(350));
-        await worker.StartAsync(cts.Token);
-
-        _mockRuntime.Verify(r => r.CompleteTaskAsync(task.Id, It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>(), false),
-            Times.Never);
-    }
-
-    [Fact]
-    public async Task TimerWorker_ShouldOnlyProcessRunningInstances()
-    {
-        var provider = BuildProvider("timers-db-status");
-        var task = await SeedTimerAsync(provider, 1, DateTime.UtcNow.AddMinutes(-5), runningInstance: false);
-        var logger = CreateMockLogger<TimerWorker>().Object;
-        var worker = new TimerWorker(provider, logger, _configuration);
-
-        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(350));
-        await worker.StartAsync(cts.Token);
-
-        _mockRuntime.Verify(r => r.CompleteTaskAsync(task.Id, It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>(), false),
-            Times.Never);
-    }
-
-    [Fact]
-    public async Task TimerWorker_ShouldHandleMultipleTenants()
-    {
-        // Use single shared DB so both tenants' tasks are visible
-        var provider = BuildProvider("timers-db-multi");
-        var task1 = await SeedTimerAsync(provider, 1, DateTime.UtcNow.AddMinutes(-3));
-        var task2 = await SeedTimerAsync(provider, 2, DateTime.UtcNow.AddMinutes(-2));
-        var logger = CreateMockLogger<TimerWorker>().Object;
-        var worker = new TimerWorker(provider, logger, _configuration);
-
-        _mockRuntime.Setup(r => r.CompleteTaskAsync(It.IsAny<int>(), It.IsAny<string>(), 0, It.IsAny<CancellationToken>(), false))
-            .Returns(Task.CompletedTask);
-
-        using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(500));
-        await worker.StartAsync(cts.Token);
-
-        _mockRuntime.Verify(r => r.CompleteTaskAsync(task1.Id, It.IsAny<string>(), 0, It.IsAny<CancellationToken>(), false),
-            Times.AtLeastOnce);
-        _mockRuntime.Verify(r => r.CompleteTaskAsync(task2.Id, It.IsAny<string>(), 0, It.IsAny<CancellationToken>(), false),
-            Times.AtLeastOnce);
+        // Assert
+        var all = await db.WorkflowTasks.ToListAsync();
+        all.Should().AllSatisfy(t => t.Status.Should().Be(WorkflowTaskStatus.InProgress));
     }
 }

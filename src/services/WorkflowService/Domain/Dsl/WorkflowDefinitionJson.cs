@@ -69,7 +69,7 @@ public class WorkflowDefinitionJson
         if (Nodes.All(n => !n.Type.Equals("end", StringComparison.OrdinalIgnoreCase)))
             result.Errors.Add("An End node is required.");
 
-        var nodeIds = Nodes.Select(n => n.Id).ToHashSet();
+        var nodeIds = Nodes.Select(n => n.Id).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         // Ensure edges normalized before validation
         NormalizeEdges();
@@ -99,7 +99,6 @@ public class WorkflowDefinitionJson
             }
         }
 
-        // After existing gateway warnings in Validate()
         foreach (var gw in Nodes.Where(n => n.Type.Equals("gateway", StringComparison.OrdinalIgnoreCase)))
         {
             var outs = Edges.Where(e => e.EffectiveSource == gw.Id).ToList();
@@ -117,7 +116,7 @@ public class WorkflowDefinitionJson
 
     public ValidationResult ValidateForPublish()
     {
-        var baseResult = Validate(); // reuse existing structural checks (start presence, edge refs, gateway hints)
+        var baseResult = Validate(); 
         var result = new ValidationResult
         {
             Errors = new List<string>(baseResult.Errors),
@@ -131,28 +130,28 @@ public class WorkflowDefinitionJson
         else if (starts.Count > 1)
             result.Errors.Add($"Exactly one Start node is required (found {starts.Count}).");
 
-        // 2. At least one End already partially enforced, but ensure we list count
+        // 2. At least one End
         var ends = Nodes.Where(n => n.Type.Equals("end", StringComparison.OrdinalIgnoreCase)).ToList();
         if (ends.Count == 0)
             result.Errors.Add("At least one End node is required (found 0).");
 
-        // Short circuit if no start
+        // Short circuit if no single start
         if (starts.Count == 1)
         {
             var startId = starts[0].Id;
             var reachable = GetReachableNodes(startId);
 
-            // 3. Unreachable nodes (make them Errors for publish)
+            // 3. Unreachable nodes
             var unreachable = Nodes.Where(n => !reachable.Contains(n.Id)).Select(n => n.Id).ToList();
             if (unreachable.Count > 0)
                 result.Errors.Add($"Unreachable node(s) from Start: {string.Join(", ", unreachable)}");
 
-            // 4. Unreachable Ends (already included above, but call out)
+            // 4. Unreachable ends
             var unreachableEnds = ends.Where(e => !reachable.Contains(e.Id)).Select(e => e.Id).ToList();
             if (unreachableEnds.Count > 0)
                 result.Errors.Add($"End node(s) unreachable from Start: {string.Join(", ", unreachableEnds)}");
 
-            // 5/6. Isolated islands (connected components not containing Start)
+            // 5/6. Isolated components
             var islandComponents = GetUndirectedComponents();
             foreach (var comp in islandComponents)
             {
@@ -161,43 +160,43 @@ public class WorkflowDefinitionJson
             }
         }
 
-        // 7. Duplicate IDs
-        var duplicates = Nodes
+        // 7. Duplicate node IDs
+        var duplicateNodeIds = Nodes
             .GroupBy(n => n.Id, StringComparer.OrdinalIgnoreCase)
             .Where(g => g.Count() > 1)
             .Select(g => $"{g.Key} (x{g.Count()})")
             .ToList();
-        if (duplicates.Count > 0)
-            result.Errors.Add($"Duplicate node id(s): {string.Join(", ", duplicates)}");
+        if (duplicateNodeIds.Count > 0)
+            result.Errors.Add($"Duplicate node id(s): {string.Join(", ", duplicateNodeIds)}");
+
+        // 8. Duplicate edge IDs (NEW)
+        var duplicateEdgeIds = Edges
+            .GroupBy(e => e.Id, StringComparer.OrdinalIgnoreCase)
+            .Where(g => g.Count() > 1)
+            .Select(g => $"{g.Key} (x{g.Count()})")
+            .ToList();
+        if (duplicateEdgeIds.Count > 0)
+            result.Errors.Add($"Duplicate edge id(s): {string.Join(", ", duplicateEdgeIds)}");
 
         return result;
     }
 
     public ValidationResult ValidateForDraft()
     {
-        // Start from the existing relaxed Validate (which already produces warnings for reachability)
         var baseResult = Validate();
-
-        // Clone so we can manipulate
         var draftResult = new ValidationResult
         {
             Errors = new List<string>(baseResult.Errors),
             Warnings = new List<string>(baseResult.Warnings)
         };
 
-        // If "An End node is required." exists, downgrade to warning
         const string endError = "An End node is required.";
         if (draftResult.Errors.Remove(endError))
             draftResult.Warnings.Add("End node missing (required before publish).");
 
-        // If you later add a single‑start enforcement to Validate(), you can similarly downgrade “multiple starts”
-        // Leave missing Start as a hard error: drafts still need a start to be meaningful
-        // Leave unknown edge endpoints & duplicate IDs as hard errors (they indicate corruption or ID collisions)
-
         return draftResult;
     }
 
-    // Helper: build undirected connected components
     private List<HashSet<string>> GetUndirectedComponents()
     {
         var adj = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
@@ -236,7 +235,7 @@ public class WorkflowDefinitionJson
 
     private HashSet<string> GetReachableNodes(string startNodeId)
     {
-        var visited = new HashSet<string>();
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var queue = new Queue<string>();
         queue.Enqueue(startNodeId);
 

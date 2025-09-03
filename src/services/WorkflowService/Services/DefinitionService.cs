@@ -256,42 +256,63 @@ public class DefinitionService : IDefinitionService
 
             var query = _context.WorkflowDefinitions.Where(d => d.TenantId == tenantId.Value);
 
-            if (!string.IsNullOrEmpty(request.SearchTerm))
+            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+            {
+                var term = request.SearchTerm.Trim().ToLowerInvariant();
                 query = query.Where(d =>
-                    d.Name.Contains(request.SearchTerm) ||
-                    (d.Description != null && d.Description.Contains(request.SearchTerm)));
+                    d.Name.ToLower().Contains(term) ||
+                    (d.Description != null && d.Description.ToLower().Contains(term)));
+            }
 
             if (request.IsPublished.HasValue)
                 query = query.Where(d => d.IsPublished == request.IsPublished.Value);
 
-            if (!string.IsNullOrEmpty(request.Tags))
+            if (!string.IsNullOrWhiteSpace(request.Tags))
                 query = query.Where(d => d.Tags != null && d.Tags.Contains(request.Tags));
 
-            query = request.SortBy.ToLower() switch
+            var sortKey = string.IsNullOrWhiteSpace(request.SortBy)
+                ? "createdat"
+                : request.SortBy.Trim().ToLowerInvariant();
+
+            query = sortKey switch
             {
-                "name" => request.SortDescending ? query.OrderByDescending(d => d.Name) : query.OrderBy(d => d.Name),
-                "version" => request.SortDescending ? query.OrderByDescending(d => d.Version) : query.OrderBy(d => d.Version),
-                "publishedat" => request.SortDescending ? query.OrderByDescending(d => d.PublishedAt) : query.OrderBy(d => d.PublishedAt),
-                _ => request.SortDescending ? query.OrderByDescending(d => d.CreatedAt) : query.OrderBy(d => d.CreatedAt)
+                "name" => request.SortDescending
+                    ? query.OrderByDescending(d => d.Name)
+                    : query.OrderBy(d => d.Name),
+
+                "version" => request.SortDescending
+                    ? query.OrderByDescending(d => d.Version).ThenBy(d => d.Name)   // deterministic tie-breaker
+                    : query.OrderBy(d => d.Version).ThenBy(d => d.Name),
+
+                "publishedat" => request.SortDescending
+                    ? query.OrderByDescending(d => d.PublishedAt.HasValue).ThenByDescending(d => d.PublishedAt).ThenBy(d => d.Name)
+                    : query.OrderByDescending(d => d.PublishedAt.HasValue).ThenBy(d => d.PublishedAt).ThenBy(d => d.Name),
+
+                _ => request.SortDescending
+                    ? query.OrderByDescending(d => d.CreatedAt).ThenBy(d => d.Name)
+                    : query.OrderBy(d => d.CreatedAt).ThenBy(d => d.Name)
             };
+
+            var page = request.Page <= 0 ? 1 : request.Page;
+            var pageSize = request.PageSize <= 0 ? 20 : request.PageSize;
 
             var totalCount = await query.CountAsync(cancellationToken);
             var definitions = await query
-                .Skip((request.Page - 1) * request.PageSize)
-                .Take(request.PageSize)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync(cancellationToken);
 
             foreach (var def in definitions)
                 ApplyGatewayBackfill(def, persistIfChanged: false);
 
-            var dtos = _mapper.Map<List<WorkflowDefinitionDto>>(definitions);
+            var dtos = _mapper.Map<List<WorkflowDefinitionDto>>(definitions) ?? new List<WorkflowDefinitionDto>();
 
             var paged = new PagedResultDto<WorkflowDefinitionDto>
             {
                 Items = dtos,
                 TotalCount = totalCount,
-                Page = request.Page,
-                PageSize = request.PageSize
+                Page = page,
+                PageSize = pageSize
             };
 
             return ApiResponseDto<PagedResultDto<WorkflowDefinitionDto>>.SuccessResult(paged);

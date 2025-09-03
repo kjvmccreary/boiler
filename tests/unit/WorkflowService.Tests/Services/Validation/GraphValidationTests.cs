@@ -157,6 +157,66 @@ public class GraphValidationTests : TestBase
     }
 
     [Fact]
+    public void Validation_ShouldRejectDuplicateEdgeIds()
+    {
+        var def = new WorkflowDefinitionJson
+        {
+            Id = "wf",
+            Name = "dup-edges",
+            Nodes = new()
+            {
+                new() { Id = "start", Type = "Start" },
+                new() { Id = "mid", Type = "HumanTask" },
+                new() { Id = "end", Type = "End" }
+            },
+            Edges = new()
+            {
+                new() { Id = "e1", Source = "start", Target = "mid" },
+                new() { Id = "e1", Source = "mid", Target = "end" } // duplicate ID
+            }
+        };
+
+        var result = _validator.ValidateForPublish(def);
+
+        result.IsValid.Should().BeFalse("duplicate edge ids should invalidate publish");
+        result.Errors.Should().Contain(e =>
+            e.Contains("duplicate", StringComparison.OrdinalIgnoreCase) &&
+            e.Contains("e1", StringComparison.OrdinalIgnoreCase),
+            "error list should mention duplicate edge id 'e1'");
+    }
+
+    [Fact]
+    public void Validation_ShouldRejectUnreachableEndNode()
+    {
+        var def = new WorkflowDefinitionJson
+        {
+            Id = "wf",
+            Name = "unreachable-end",
+            Nodes = new()
+            {
+                new() { Id = "start", Type = "Start" },
+                new() { Id = "task", Type = "HumanTask" },
+                new() { Id = "end1", Type = "End" },
+                new() { Id = "end2", Type = "End" } // unreachable end
+            },
+            Edges = new()
+            {
+                new() { Id = "e1", Source = "start", Target = "task" },
+                new() { Id = "e2", Source = "task", Target = "end1" }
+            }
+        };
+
+        var result = _validator.ValidateForPublish(def);
+
+        result.IsValid.Should().BeFalse();
+        result.Errors.Should().Contain(e =>
+            e.Contains("End", StringComparison.OrdinalIgnoreCase) &&
+            e.Contains("unreachable", StringComparison.OrdinalIgnoreCase) &&
+            e.Contains("end2", StringComparison.OrdinalIgnoreCase),
+            "should explicitly call out unreachable end node id 'end2'");
+    }
+
+    [Fact]
     public void Validation_ShouldAcceptValidWorkflow()
     {
         var def = new WorkflowDefinitionJson

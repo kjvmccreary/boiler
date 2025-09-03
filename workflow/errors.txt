@@ -1,31 +1,42 @@
 Building Test Projects
 ========== Starting test run ==========
 [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.05]   Starting:    WorkflowService.Tests
-[BuilderDefinitionAdapter] Failed primary deserialize, falling back. 'i' is an invalid start of a property name. Expected a '"'. Path: $ | LineNumber: 0 | BytePositionInLine: 2.
-[xUnit.net 00:00:00.65]     WorkflowService.Tests.Services.DefinitionServiceExtendedTests.UpdateDraft_InvalidJson_ShouldReturnError [FAIL]
-[xUnit.net 00:00:00.65]       Expected resp.Success "Draft validation errors: A Start node is required." to contain "Invalid workflow JSON".
-[xUnit.net 00:00:00.65]       Stack Trace:
-[xUnit.net 00:00:00.65]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:00.65]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:00.65]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:00.65]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.65]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.65]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[xUnit.net 00:00:00.65]            at FluentAssertions.Primitives.StringAssertions`1.Contain(String expected, String because, Object[] becauseArgs)
-[xUnit.net 00:00:00.65]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServiceExtendedTests.cs(125,0): at WorkflowService.Tests.Services.DefinitionServiceExtendedTests.UpdateDraft_InvalidJson_ShouldReturnError()
-[xUnit.net 00:00:00.65]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.68]     WorkflowService.Tests.Services.DefinitionServiceExtendedTests.GetById_WithVersion_ShouldReturnSpecificVersion [FAIL]
-[xUnit.net 00:00:00.68]       Expected boolean to be True, but found False.
-[xUnit.net 00:00:00.68]       Stack Trace:
-[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.68]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[xUnit.net 00:00:00.68]            at FluentAssertions.Primitives.BooleanAssertions`1.BeTrue(String because, Object[] becauseArgs)
-[xUnit.net 00:00:00.68]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServiceExtendedTests.cs(235,0): at WorkflowService.Tests.Services.DefinitionServiceExtendedTests.GetById_WithVersion_ShouldReturnSpecificVersion()
-[xUnit.net 00:00:00.68]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.69]   Finished:    WorkflowService.Tests
-========== Test run finished: 2 Tests (0 Passed, 2 Failed, 0 Skipped) run in 697 ms ==========
+[xUnit.net 00:00:00.04]   Starting:    WorkflowService.Tests
+[xUnit.net 00:00:00.67]     WorkflowService.Tests.Engine.WorkflowRuntimePhase4OutboxTests.TaskCompletion_ShouldAddTaskCompletedEvent_AndOutbox [FAIL]
+[xUnit.net 00:00:00.67]       Expected inst.Status to be InstanceStatus.Running {value: 1}, but found InstanceStatus.Completed {value: 2}.
+[xUnit.net 00:00:00.67]       Stack Trace:
+[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.67]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+[xUnit.net 00:00:00.67]            at FluentAssertions.Primitives.EnumAssertions`2.Be(TEnum expected, String because, Object[] becauseArgs)
+[xUnit.net 00:00:00.67]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WorkflowRuntimePhase4OutboxTests.cs(184,0): at WorkflowService.Tests.Engine.WorkflowRuntimePhase4OutboxTests.TaskCompletion_ShouldAddTaskCompletedEvent_AndOutbox()
+[xUnit.net 00:00:00.67]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.70]     WorkflowService.Tests.Engine.WorkflowRuntimePhase4OutboxTests.RetryWorkflow_ShouldProduceRetriedEvent [FAIL]
+[xUnit.net 00:00:00.70]       Expected inst.Status to be InstanceStatus.Failed {value: 4}, but found InstanceStatus.Completed {value: 2}.
+[xUnit.net 00:00:00.70]       Stack Trace:
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+[xUnit.net 00:00:00.70]            at FluentAssertions.Primitives.EnumAssertions`2.Be(TEnum expected, String because, Object[] becauseArgs)
+[xUnit.net 00:00:00.70]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WorkflowRuntimePhase4OutboxTests.cs(286,0): at WorkflowService.Tests.Engine.WorkflowRuntimePhase4OutboxTests.RetryWorkflow_ShouldProduceRetriedEvent()
+[xUnit.net 00:00:00.70]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.71]     WorkflowService.Tests.Engine.WorkflowRuntimePhase4OutboxTests.CancelWorkflow_ShouldProduceCancelledEvents_AndOutbox [FAIL]
+[xUnit.net 00:00:00.71]       Expected inst.Status to be InstanceStatus.Running {value: 1}, but found InstanceStatus.Completed {value: 2}.
+[xUnit.net 00:00:00.71]       Stack Trace:
+[xUnit.net 00:00:00.71]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+[xUnit.net 00:00:00.71]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+[xUnit.net 00:00:00.71]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+[xUnit.net 00:00:00.71]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.71]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.71]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+[xUnit.net 00:00:00.71]            at FluentAssertions.Primitives.EnumAssertions`2.Be(TEnum expected, String because, Object[] becauseArgs)
+[xUnit.net 00:00:00.71]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WorkflowRuntimePhase4OutboxTests.cs(244,0): at WorkflowService.Tests.Engine.WorkflowRuntimePhase4OutboxTests.CancelWorkflow_ShouldProduceCancelledEvents_AndOutbox()
+[xUnit.net 00:00:00.71]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.72]   Finished:    WorkflowService.Tests
+========== Test run finished: 3 Tests (0 Passed, 3 Failed, 0 Skipped) run in 725 ms ==========

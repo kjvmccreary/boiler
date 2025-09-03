@@ -101,8 +101,8 @@ Controllers (src/services/WorkflowService/Controllers)
 <s>### 3.	DefinitionsController: Unpublish, Archive, Publish with graph validation failure (improves API surface reliability).</s>
 <s>### 4.	TasksController & AdminController: basic happy-path + one failure per critical endpoint (smoke coverage).</s>
 <s>### 5.	DefinitionService: UpdateDraft + CreateNewVersionAsync (authoring workflow).</s>
-### 6.	TimerWorker: fallback path (non-relational) already tested; add batch size test if timers are critical.
-### 7.	Graph validation: duplicate edge IDs & unreachable end nodes (expands rules regression safety).
+<s>### 6.	TimerWorker: fallback path (non-relational) already tested; add batch size test if timers are critical.</s>
+<s>### 7.	Graph validation: duplicate edge IDs & unreachable end nodes (expands rules regression safety).</s>
 ## Low Priority / Optional
 * Legacy WorkflowExecutionService (remove or add minimal coverage).
 * Exhaustive sorting/filter permutations (could be replaced by a couple of parameterized tests).
