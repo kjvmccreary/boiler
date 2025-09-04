@@ -15,6 +15,9 @@ using WorkflowService.Security;
 using System.Text.Json.Serialization;
 using WorkflowService.Hubs;
 using WorkflowService.Services.Validation;
+using WorkflowService.Engine.AutomaticActions;
+using WorkflowService.Engine.AutomaticActions.Executors;
+using WorkflowService.Engine.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -89,9 +92,20 @@ builder.Services.AddScoped<IWorkflowRuntime, WorkflowRuntime>();
 // Executors
 builder.Services.AddScoped<INodeExecutor, StartEndExecutor>();
 builder.Services.AddScoped<INodeExecutor, HumanTaskExecutor>();
-builder.Services.AddScoped<INodeExecutor, AutomaticExecutor>();
+builder.Services.AddScoped<INodeExecutor, AutomaticExecutor>(); // REFACTORED to use registry
 builder.Services.AddScoped<INodeExecutor, GatewayEvaluator>();
 builder.Services.AddScoped<INodeExecutor, TimerExecutor>();
+
+// Automatic Action Infrastructure
+builder.Services.AddScoped<IAutomaticActionExecutor, NoopAutomaticActionExecutor>();
+builder.Services.AddScoped<IAutomaticActionExecutor, WebhookAutomaticActionExecutor>();
+builder.Services.AddSingleton<IAutomaticActionRegistry, AutomaticActionRegistry>();
+builder.Services.AddHttpClient("workflow-webhook")
+    .ConfigureHttpClient(c =>
+    {
+        c.Timeout = TimeSpan.FromSeconds(15);
+        c.DefaultRequestHeaders.UserAgent.ParseAdd("WorkflowService/automatic-action");
+    });
 
 // Background workers
 builder.Services.AddHostedService<TimerWorker>();
@@ -101,7 +115,7 @@ builder.Services.AddHostedService<OutboxWorker>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUserContext, UserContext>();
 
-// Outbox dispatcher (enhanced version handles both logging and webhook modes)
+// Outbox dispatcher
 builder.Services.AddScoped<IOutboxDispatcher, LoggingOutboxDispatcher>();
 
 // Business services
@@ -111,9 +125,9 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IEventPublisher, EventPublisher>();
 builder.Services.AddScoped<IRoleWorkflowUsageService, RoleWorkflowUsageService>();
-builder.Services.AddScoped<IWorkflowExecutionService, WorkflowExecutionService>(); // Legacy traversal (kept until fully removed)
+builder.Services.AddScoped<IWorkflowExecutionService, WorkflowExecutionService>(); // Legacy
 
-// NEW: Graph validation service (strict publish-time validation)
+// NEW: Graph validation service
 builder.Services.AddScoped<IGraphValidationService, GraphValidationService>();
 builder.Services.AddScoped<IWorkflowGraphValidator, WorkflowGraphValidator>();
 
@@ -142,8 +156,12 @@ builder.Services.AddHealthChecks()
 builder.Services.AddSignalR();
 builder.Services.AddScoped<ITaskNotificationDispatcher, TaskNotificationDispatcher>();
 
-// UoW (if leveraged by controllers/services)
+// UoW
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+// Diagnostics options & buffers
+builder.Services.Configure<WorkflowDiagnosticsOptions>(builder.Configuration.GetSection("Workflow:Diagnostics"));
+builder.Services.AddSingleton<IAutomaticDiagnosticsBuffer, AutomaticDiagnosticsBuffer>();
 
 var app = builder.Build();
 
@@ -183,17 +201,17 @@ app.Lifetime.ApplicationStarted.Register(() =>
     foreach (var address in addresses ?? Enumerable.Empty<string>())
     {
         Console.WriteLine($"Now listening on: {address}");
-        Log.Information("Now listening on: {Address}", address);
+        Serilog.Log.Information("Now listening on: {Address}", address);
     }
 
     Console.WriteLine("🌊 WorkflowService started (runtime, timer automation, graph validation, outbox idempotency).");
-    Log.Information("WorkflowService startup complete (TimerWorker + GraphValidation + Outbox Idempotency).");
+    Serilog.Log.Information("WorkflowService startup complete (TimerWorker + GraphValidation + Outbox Idempotency).");
 });
 
 // Migrations + Run
 try
 {
-    Log.Information("Starting WorkflowService");
+    Serilog.Log.Information("Starting WorkflowService");
     Console.WriteLine("=== WorkflowService Starting ===");
 
     using (var scope = app.Services.CreateScope())
@@ -211,12 +229,12 @@ try
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "WorkflowService terminated unexpectedly");
+    Serilog.Log.Fatal(ex, "WorkflowService terminated unexpectedly");
     Console.WriteLine($"FATAL ERROR: {ex.Message}");
 }
 finally
 {
-    Log.CloseAndFlush();
+    Serilog.Log.CloseAndFlush();
 }
 
 public partial class Program { }

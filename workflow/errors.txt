@@ -1,25 +1,8 @@
-Building Test Projects
-Starting test discovery for requested test run
-========== Starting test discovery ==========
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.05]   Discovering: WorkflowService.Tests
-[xUnit.net 00:00:00.09]   Discovered:  WorkflowService.Tests
-========== Test discovery finished: 223 Tests found in 735.8 ms ==========
-========== Starting test run ==========
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.07]   Starting:    WorkflowService.Tests
-[xUnit.net 00:00:00.15]     WorkflowService.Tests.Security.PermissionAttributesTests.No_Legacy_RequirePermissionAttribute_Is_Used [FAIL]
-[xUnit.net 00:00:00.15]       Expected legacyAttributeType not to be <null>.
-[xUnit.net 00:00:00.15]       Stack Trace:
-[xUnit.net 00:00:00.15]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:00.15]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:00.15]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:00.15]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.15]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.15]            at FluentAssertions.Execution.AssertionScope.FailWith(String message)
-[xUnit.net 00:00:00.15]            at FluentAssertions.Primitives.ReferenceTypeAssertions`2.NotBeNull(String because, Object[] becauseArgs)
-[xUnit.net 00:00:00.15]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Security\PermissionAttributesTests.cs(87,0): at WorkflowService.Tests.Security.PermissionAttributesTests.No_Legacy_RequirePermissionAttribute_Is_Used()
-[xUnit.net 00:00:00.15]            at System.RuntimeMethodHandle.InvokeMethod(Object target, Void** arguments, Signature sig, Boolean isConstructor)
-[xUnit.net 00:00:00.15]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
-[xUnit.net 00:00:00.15]   Finished:    WorkflowService.Tests
-========== Test run finished: 2 Tests (1 Passed, 1 Failed, 0 Skipped) run in 163 ms ==========
+  WorkflowService failed with 5 error(s) and 2 warning(s) (0.3s)
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Engine\Executors\AutomaticExecutor.cs(8,30): error CS0234: The type or namespace name 'Diagnostics' does not exist in the namespace 'WorkflowService.Engine' (are you missing an assembly reference?)
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Migrations\20250826191453_mig.cs(8,26): warning CS8981: The type name 'mig' only contains lower-cased ascii characters. Such names may become reserved for the language.
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Migrations\20250826191453_mig.Designer.cs(16,19): warning CS8981: The type name 'mig' only contains lower-cased ascii characters. Such names may become reserved for the language.
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Engine\Executors\AutomaticExecutor.cs(17,22): error CS0246: The type or namespace name 'IAutomaticDiagnosticsBuffer' could not be found (are you missing a using directive or an assembly reference?)
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Engine\Executors\AutomaticExecutor.cs(18,22): error CS0246: The type or namespace name 'WorkflowDiagnosticsOptions' could not be found (are you missing a using directive or an assembly reference?)
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Engine\Executors\AutomaticExecutor.cs(26,9): error CS0246: The type or namespace name 'IAutomaticDiagnosticsBuffer' could not be found (are you missing a using directive or an assembly reference?)
+    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Engine\Executors\AutomaticExecutor.cs(27,18): error CS0246: The type or namespace name 'WorkflowDiagnosticsOptions' could not be found (are you missing a using directive or an assembly reference?)

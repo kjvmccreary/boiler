@@ -201,11 +201,19 @@ public class EventPublisher : IEventPublisher
         _logger.LogInformation("Published definition published {DefinitionId}", definition.Id);
     }
 
-    public async Task PublishCustomEventAsync(string eventType, string eventName, object eventData, int tenantId, int? userId = null, CancellationToken cancellationToken = default)
+    public async Task PublishCustomEventAsync(
+        string eventType,
+        string eventName,
+        object eventData,
+        int tenantId,
+        int? userId = null,
+        int? workflowInstanceId = null,
+        CancellationToken cancellationToken = default)
     {
         var normalized = $"workflow.{eventType.ToLowerInvariant()}.{eventName.ToLowerInvariant()}";
-        AddWorkflowEvent(0, tenantId, eventType, eventName, eventData, userId);
+        AddWorkflowEvent(workflowInstanceId ?? 0, tenantId, eventType, eventName, eventData, userId);
         AddOutboxMessage(normalized, eventData, tenantId);
+
         await _context.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("Published custom event {Event}", normalized);
     }
@@ -226,7 +234,6 @@ public class EventPublisher : IEventPublisher
             {
                 try
                 {
-                    // Here we would dispatch externally; MVP just marks processed
                     message.IsProcessed = true;
                     message.ProcessedAt = DateTime.UtcNow;
                     message.UpdatedAt = DateTime.UtcNow;
@@ -276,7 +283,7 @@ public class EventPublisher : IEventPublisher
             IsProcessed = false,
             TenantId = tenantId,
             RetryCount = 0,
-            IdempotencyKey = Guid.NewGuid(), // NEW
+            IdempotencyKey = Guid.NewGuid(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         });

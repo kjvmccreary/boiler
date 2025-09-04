@@ -83,8 +83,8 @@
 * <s>```Runtime_SaveChanges_BatchCount_ShouldEqual1 for claim/complete/start```.</s>
 * <s>```Validation_ShouldRejectMultipleStartNodes```.</s>
 ### 5. RBAC & Permissions Audit
-* Ensure seed contains: ```workflow.view_tasks```, ```workflow.claim_tasks```, ```workflow.complete_tasks```, ```workflow.admin```, ```workflow.view_instances```, ```workflow.start_instances```.
-* Map each controller action to a permission doc.
+* <s>Ensure seed contains: ```workflow.view_tasks```, ```workflow.claim_tasks```, ```workflow.complete_tasks```, ```workflow.admin```, ```workflow.view_instances```, ```workflow.start_instances```.</s>
+* <s>Map each controller action to a permission doc.</s>
 ### 6. Automatic Action Executor Abstraction
 * Interface + registry keyed by ```action.kind```.
 * Implement noop + future webhook placeholder.

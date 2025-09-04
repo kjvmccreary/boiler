@@ -12,10 +12,7 @@ using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
 namespace WorkflowService.Engine;
 
 /// <summary>
-/// Workflow runtime with reduced database chatter:
-/// - Aggregates changes and commits once per public API call
-/// - Executes nodes recursively without per-node SaveChanges
-/// - Emits rich events (still tracked, flushed in batch)
+/// Workflow runtime with reduced database chatter and event batching.
 /// </summary>
 public class WorkflowRuntime : IWorkflowRuntime
 {
@@ -26,10 +23,7 @@ public class WorkflowRuntime : IWorkflowRuntime
     private readonly IConditionEvaluator _conditionEvaluator;
     private readonly ITaskNotificationDispatcher _taskNotifier;
 
-    // Cache to avoid repeated tenant lookups per instance
     private readonly Dictionary<int, int> _instanceTenantCache = new();
-
-    // Tracks whether tracked entities / events changed and need committing
     private bool _dirty;
 
     public WorkflowRuntime(
@@ -84,7 +78,6 @@ public class WorkflowRuntime : IWorkflowRuntime
         };
 
         _context.WorkflowInstances.Add(instance);
-        // Need Id for subsequent events
         await _context.SaveChangesAsync(cancellationToken);
         _dirty = false;
 
@@ -102,7 +95,10 @@ public class WorkflowRuntime : IWorkflowRuntime
         return instance;
     }
 
-    public async Task ContinueWorkflowAsync(int instanceId, CancellationToken cancellationToken = default, bool autoCommit = true)
+    public async Task ContinueWorkflowAsync(
+        int instanceId,
+        CancellationToken cancellationToken = default,
+        bool autoCommit = true)
     {
         var instance = await _context.WorkflowInstances
             .Include(i => i.WorkflowDefinition)
@@ -121,32 +117,29 @@ public class WorkflowRuntime : IWorkflowRuntime
         var workflowDef = BuilderDefinitionAdapter.Parse(instance.WorkflowDefinition.JSONDefinition);
         var currentNodeIds = JsonSerializer.Deserialize<string[]>(instance.CurrentNodeIds) ?? Array.Empty<string>();
 
-        _logger.LogInformation("WF_CONTINUE Instance={InstanceId} Nodes=[{Nodes}]",
-            instanceId, string.Join(",", currentNodeIds));
+        _logger.LogInformation("WF_CONTINUE Instance={InstanceId} ActiveNodes=[{Nodes}] Edges={EdgeCount}",
+            instanceId, string.Join(",", currentNodeIds), workflowDef.Edges.Count);
 
         foreach (var nodeId in currentNodeIds.ToArray())
         {
             if (instance.Status != InstanceStatus.Running) break;
 
-            var node = workflowDef.Nodes.FirstOrDefault(n => n.Id == nodeId);
+            var node = workflowDef.Nodes.FirstOrDefault(n => n.Id.Equals(nodeId, StringComparison.OrdinalIgnoreCase));
             if (node == null)
             {
                 _logger.LogError("WF_NODE_MISSING Instance={InstanceId} NodeId={NodeId}", instance.Id, nodeId);
                 continue;
             }
 
-            // HUMANTASK SKIP: if a human node already has an open task, skip re-execution
             if (node.IsHumanTask())
             {
-                // Replace all ambiguous usages of 'TaskStatus' with the fully qualified 'DTOs.Workflow.Enums.TaskStatus'
-
                 var hasOpen = await _context.WorkflowTasks
                     .Where(t => t.WorkflowInstanceId == instance.Id
                                 && t.NodeId == node.Id
-                                && (t.Status == DTOs.Workflow.Enums.TaskStatus.Created
-                                    || t.Status == DTOs.Workflow.Enums.TaskStatus.Assigned
-                                    || t.Status == DTOs.Workflow.Enums.TaskStatus.Claimed
-                                    || t.Status == DTOs.Workflow.Enums.TaskStatus.InProgress))
+                                && (t.Status == WorkflowTaskStatus.Created
+                                    || t.Status == WorkflowTaskStatus.Assigned
+                                    || t.Status == WorkflowTaskStatus.Claimed
+                                    || t.Status == WorkflowTaskStatus.InProgress))
                     .AnyAsync(cancellationToken);
 
                 if (hasOpen)
@@ -216,10 +209,8 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         var instance = task.WorkflowInstance;
 
-        // --- NEW: Idempotent handling if instance already completed/cancelled (prevents user-facing error) ---
         if (instance.Status != InstanceStatus.Running)
         {
-            // If the instance finished and this task is still open, cancel it cleanly and return
             if ((instance.Status == InstanceStatus.Completed || instance.Status == InstanceStatus.Cancelled) &&
                 (task.Status == WorkflowTaskStatus.Created ||
                  task.Status == WorkflowTaskStatus.Assigned ||
@@ -246,13 +237,12 @@ public class WorkflowRuntime : IWorkflowRuntime
 
             throw new InvalidOperationException($"Cannot complete task; instance {instance.Id} not running");
         }
-        // --- END NEW ---
 
         if (!_instanceTenantCache.ContainsKey(instance.Id))
             _instanceTenantCache[instance.Id] = instance.TenantId;
 
         var workflowDef = BuilderDefinitionAdapter.Parse(instance.WorkflowDefinition.JSONDefinition);
-        var node = workflowDef.Nodes.FirstOrDefault(n => n.Id == task.NodeId)
+        var node = workflowDef.Nodes.FirstOrDefault(n => n.Id.Equals(task.NodeId, StringComparison.OrdinalIgnoreCase))
                    ?? throw new InvalidOperationException($"Node {task.NodeId} not found in definition");
 
         var isTimer = node.IsTimer();
@@ -314,7 +304,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         else
         {
             foreach (var n in nextNodeIds)
-                if (!currentNodes.Contains(n)) currentNodes.Add(n);
+                if (!currentNodes.Contains(n, StringComparer.OrdinalIgnoreCase)) currentNodes.Add(n);
             instance.CurrentNodeIds = JsonSerializer.Serialize(currentNodes);
             MarkDirty();
             _logger.LogInformation("WF_ADVANCE Instance={InstanceId} FromNode={NodeId} Next=[{Next}]",
@@ -326,7 +316,6 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
 
-        // Notify affected parties if human task completed
         if (!isTimer)
         {
             try
@@ -336,7 +325,7 @@ public class WorkflowRuntime : IWorkflowRuntime
                     await _taskNotifier.NotifyUserAsync(tenantId, task.AssignedToUserId.Value, cancellationToken);
                 await _taskNotifier.NotifyTenantAsync(tenantId, cancellationToken);
             }
-            catch { /* swallow notification errors */ }
+            catch { }
         }
     }
 
@@ -403,7 +392,7 @@ public class WorkflowRuntime : IWorkflowRuntime
 
     #endregion
 
-    #region Core Execution
+    #region Node Execution
 
     private async Task ExecuteNodeAsync(
         WorkflowNode node,
@@ -413,11 +402,11 @@ public class WorkflowRuntime : IWorkflowRuntime
     {
         try
         {
-            var executor = _executors.FirstOrDefault(e => e.CanExecute(node))
+            var executor = _executors.FirstOrDefault(e => SafeCanExecute(e, node))
                            ?? throw new InvalidOperationException($"No executor for node type {node.Type}");
 
-            _logger.LogInformation("WF_NODE_EXEC_START Instance={InstanceId} Node={NodeId} Type={Type}",
-                instance.Id, node.Id, node.Type);
+            _logger.LogInformation("WF_NODE_EXEC_START Instance={InstanceId} Node={NodeId} Type={Type} Exec={Exec}",
+                instance.Id, node.Id, node.Type, executor.GetType().Name);
 
             var result = await executor.ExecuteAsync(node, instance, instance.Context, cancellationToken);
 
@@ -447,19 +436,6 @@ public class WorkflowRuntime : IWorkflowRuntime
                         taskId = 0,
                         label = node.Properties.GetValueOrDefault("label") ?? node.Id
                     }), null);
-
-                // Notify on creation of human tasks
-                if (result.CreatedTask.NodeType == "human")
-                {
-                    try
-                    {
-                        var tenantId = instance.TenantId;
-                        if (result.CreatedTask.AssignedToUserId.HasValue)
-                            await _taskNotifier.NotifyUserAsync(tenantId, result.CreatedTask.AssignedToUserId.Value, cancellationToken);
-                        await _taskNotifier.NotifyTenantAsync(tenantId, cancellationToken);
-                    }
-                    catch { }
-                }
             }
 
             if (!result.ShouldWait)
@@ -498,90 +474,50 @@ public class WorkflowRuntime : IWorkflowRuntime
         }
     }
 
+    private bool SafeCanExecute(INodeExecutor exec, WorkflowNode node)
+    {
+        try { return exec.CanExecute(node); }
+        catch { return false; }
+    }
+
     #endregion
 
-    #region Gateway Selection
+    #region Edge / Gateway Logic
+
+    private List<WorkflowEdge> GetOutgoingEdgesCaseInsensitive(WorkflowDefinitionJson def, string nodeId)
+    {
+        var list = def.Edges
+            .Where(e => e.Source.Equals(nodeId, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        _logger.LogDebug("WF_DBG_OUTGOING From={From} Count={Count} Raw=[{List}]",
+            nodeId, list.Count, string.Join(",", list.Select(e => $"{e.Source}->{e.Target}")));
+
+        if (list.Count == 0)
+            _logger.LogDebug("WF_DBG_NO_OUTGOING From={From}", nodeId);
+
+        return list;
+    }
 
     private List<string> GetNextNodeIdsWithGatewayAware(
         WorkflowNode currentNode,
         WorkflowDefinitionJson workflowDef,
         WorkflowInstance instance)
     {
-        var edges = workflowDef.Edges.Where(e => e.Source == currentNode.Id).ToList();
+        var edges = GetOutgoingEdgesCaseInsensitive(workflowDef, currentNode.Id);
         if (!edges.Any()) return new List<string>();
 
         if (!currentNode.IsGateway())
         {
-            var linearTargets = edges
+            return edges
                 .Select(e => e.Target)
                 .Where(t => !string.IsNullOrWhiteSpace(t))
-                .Select(t => t!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
-            return RecordAndReturn(workflowDef, linearTargets, currentNode, instance, "LinearAdvance");
         }
 
         var selected = SelectGatewayTargets(currentNode, instance, edges, "inline-exec");
-        return RecordAndReturn(workflowDef, selected, currentNode, instance, "GatewayAdvance");
-    }
-
-    /// <summary>
-    /// Records EdgeTraversed events for each target (including edgeId) and returns a cleaned list of targets.
-    /// </summary>
-    private List<string> RecordAndReturn(
-        WorkflowDefinitionJson workflowDef,
-        IEnumerable<string?> targets,
-        WorkflowNode currentNode,
-        WorkflowInstance instance,
-        string mode)
-    {
-        var clean = targets
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .Select(t => t!.Trim())
-            .ToList();
-
-        foreach (var t in clean)
-        {
-            var edgeId = FindEdgeId(currentNode.Id, t, workflowDef);
-            // Synchronous fire-and-forget (keeps method non-async)
-            CreateEventAsync(instance.Id, "Edge", "EdgeTraversed",
-                JsonSerializer.Serialize(new
-                {
-                    edgeId,
-                    from = currentNode.Id,
-                    to = t,
-                    mode
-                }), null).GetAwaiter().GetResult();
-        }
-
-        return clean;
-    }
-
-    /// <summary>
-    /// Simplified variant (no edgeId resolution) kept for parity; currently unused but retained for future calls.
-    /// </summary>
-    private List<string> RecordAndReturn(
-        IEnumerable<string?> targets,
-        WorkflowNode currentNode,
-        WorkflowInstance instance,
-        string mode)
-    {
-        var clean = targets
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .Select(t => t!.Trim())
-            .ToList();
-
-        foreach (var t in clean)
-        {
-            CreateEventAsync(instance.Id, "Edge", "EdgeTraversed",
-                JsonSerializer.Serialize(new
-                {
-                    from = currentNode.Id,
-                    to = t,
-                    mode
-                }), null).GetAwaiter().GetResult();
-        }
-
-        return clean;
+        return selected;
     }
 
     private List<string> GetOutgoingTargetsForAdvance(
@@ -589,14 +525,15 @@ public class WorkflowRuntime : IWorkflowRuntime
         WorkflowNode currentNode,
         WorkflowInstance instance)
     {
-        var edges = workflowDef.Edges.Where(e => e.Source == currentNode.Id).ToList();
+        var edges = GetOutgoingEdgesCaseInsensitive(workflowDef, currentNode.Id);
         if (!edges.Any()) return new List<string>();
+
         if (!currentNode.IsGateway())
         {
             return edges
                 .Select(e => e.Target)
                 .Where(t => !string.IsNullOrWhiteSpace(t))
-                .Select(t => t!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
 
@@ -628,6 +565,10 @@ public class WorkflowRuntime : IWorkflowRuntime
             }
         }
 
+        // Infer labels (unchanged logic)
+        foreach (var e in edges)
+            e.InferLabelIfMissing();
+
         string Normalize(string? raw)
         {
             if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
@@ -641,20 +582,17 @@ public class WorkflowRuntime : IWorkflowRuntime
             };
         }
 
-        foreach (var e in edges)
-            e.InferLabelIfMissing();
-
         var classified = edges.Select(e =>
         {
-            var eff = Normalize(e.Label);
-            if (string.IsNullOrEmpty(eff))
+            var label = Normalize(e.Label);
+            if (string.IsNullOrEmpty(label))
             {
                 var idl = e.Id.ToLowerInvariant();
-                if (idl.Contains("true")) eff = "true";
-                else if (idl.Contains("false")) eff = "false";
-                else if (idl.Contains("else")) eff = "else";
+                if (idl.Contains("true")) label = "true";
+                else if (idl.Contains("false")) label = "false";
+                else if (idl.Contains("else")) label = "else";
             }
-            return new { Edge = e, Label = eff };
+            return new { Edge = e, Label = label };
         }).ToList();
 
         var trueEdges = classified.Where(c => c.Label == "true").Select(c => c.Edge).ToList();
@@ -674,8 +612,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         {
             if (falseEdges.Any()) chosen = falseEdges;
             else if (elseEdges.Any()) chosen = elseEdges;
-            else if (unlabeled.Count == 2) chosen = new List<WorkflowEdge> { unlabeled[1] };
-            else if (unlabeled.Count >= 3) chosen = new List<WorkflowEdge> { unlabeled[1] };
+            else if (unlabeled.Count >= 2) chosen = new List<WorkflowEdge> { unlabeled[1] };
             else chosen = new List<WorkflowEdge>();
         }
 
@@ -688,35 +625,26 @@ public class WorkflowRuntime : IWorkflowRuntime
                 condition = conditionJson,
                 result = conditionResult,
                 outgoingEdges = edges.Count,
-                labeledTrue = trueEdges.Count,
-                labeledFalse = falseEdges.Count,
-                labeledElse = elseEdges.Count,
-                unlabeled = unlabeled.Count,
                 selected = selectedIds,
                 phase
             }), null);
 
         _logger.LogInformation(
-            "WF_GATEWAY_SELECT Instance={InstanceId} Node={NodeId} Result={Result} Sel=[{Selected}] True={TrueCnt} False={FalseCnt} Else={ElseCnt} Unlab={UnlabCnt} Phase={Phase}",
-            instance.Id,
-            gateway.Id,
-            conditionResult,
-            string.Join(",", selectedIds),
-            trueEdges.Count,
-            falseEdges.Count,
-            elseEdges.Count,
-            unlabeled.Count,
-            phase);
+            "WF_GATEWAY_SELECT Instance={InstanceId} Node={NodeId} Result={Result} Selected=[{Selected}] Phase={Phase}",
+            instance.Id, gateway.Id, conditionResult, string.Join(",", selectedIds), phase);
 
         return selectedIds;
     }
 
     private static string? FindEdgeId(string from, string to, WorkflowDefinitionJson def)
-        => def.Edges.FirstOrDefault(e => e.Source == from && e.Target == to)?.Id;
+        => def.Edges.FirstOrDefault(e =>
+               e.Source.Equals(from, StringComparison.OrdinalIgnoreCase)
+               && e.Target.Equals(to, StringComparison.OrdinalIgnoreCase))
+              ?.Id;
 
     #endregion
 
-    #region Advancement / Events / Context
+    #region Advancement / Failure / Events / Context
 
     private void AdvanceToNextNodes(
         WorkflowInstance instance,
@@ -725,16 +653,14 @@ public class WorkflowRuntime : IWorkflowRuntime
     {
         if (!nextNodeIds.Any())
         {
-            // Cancel other open tasks BEFORE marking complete so consumers see consistent final state
             CancelOpenTasksAsync(instance, "instance-completed", default).GetAwaiter().GetResult();
-
             instance.Status = InstanceStatus.Completed;
             instance.CompletedAt = DateTime.UtcNow;
             instance.CurrentNodeIds = JsonSerializer.Serialize(Array.Empty<string>());
             MarkDirty();
             CreateEventAsync(instance.Id, "Instance", "Completed",
                 "{\"reason\":\"end-of-path\"}", null).GetAwaiter().GetResult();
-            _logger.LogInformation("WF_INSTANCE_COMPLETE Instance={InstanceId}", instance.Id);
+            _logger.LogInformation("WF_INSTANCE_COMPLETE Instance={InstanceId} (no outgoing)", instance.Id);
             return;
         }
 
@@ -742,11 +668,10 @@ public class WorkflowRuntime : IWorkflowRuntime
         MarkDirty();
 
         var endNodes = nextNodeIds.Where(id =>
-            workflowDef.Nodes.Any(n => n.Id == id && n.IsEnd())).ToList();
+            workflowDef.Nodes.Any(n => n.Id.Equals(id, StringComparison.OrdinalIgnoreCase) && n.IsEnd())).ToList();
 
         if (endNodes.Any())
         {
-            // --- NEW: cancel sibling open tasks when an End is reached alongside other active branches ---
             CancelOpenTasksAsync(instance, "instance-completed", default).GetAwaiter().GetResult();
             instance.Status = InstanceStatus.Completed;
             instance.CompletedAt = DateTime.UtcNow;
@@ -771,7 +696,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         await CreateEventAsync(instance.Id, "Node", "Failed",
             $"{{\"nodeId\":\"{node.Id}\",\"error\":\"{errorMessage}\"}}", null);
 
-        await SaveIfDirtyAsync(); // commit failure immediately
+        await SaveIfDirtyAsync();
         _logger.LogError("WF_INSTANCE_FAILED Instance={InstanceId} Node={NodeId} Error={Error}",
             instance.Id, node.Id, errorMessage);
     }
@@ -867,10 +792,6 @@ public class WorkflowRuntime : IWorkflowRuntime
         _dirty = false;
     }
 
-    #endregion
-
-    #region Helpers
-
     private async Task CancelOpenTasksAsync(WorkflowInstance instance, string reason, CancellationToken ct = default)
     {
         var openTasks = await _context.WorkflowTasks
@@ -889,7 +810,6 @@ public class WorkflowRuntime : IWorkflowRuntime
             t.CompletedAt = DateTime.UtcNow;
             MarkDirty();
 
-            // Emit per-task cancellation event (lightweight)
             await CreateEventAsync(instance.Id, "Task", "Cancelled",
                 JsonSerializer.Serialize(new
                 {
@@ -906,4 +826,3 @@ public class WorkflowRuntime : IWorkflowRuntime
 
     #endregion
 }
-

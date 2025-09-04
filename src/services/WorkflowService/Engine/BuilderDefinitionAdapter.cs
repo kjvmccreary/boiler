@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using WorkflowService.Domain.Dsl;
@@ -5,9 +6,9 @@ using WorkflowService.Domain.Dsl;
 namespace WorkflowService.Engine;
 
 /// <summary>
-/// Adapts raw front-end builder JSON (lowercase types, from/to edges, label/x/y, ad-hoc fields)
-/// into the internal runtime DSL (WorkflowDefinitionJson).
-/// This DOES NOT mutate or normalize the stored JSON; it is a read-time adapter only.
+/// Adapter from front-end builder JSON to internal runtime definition.
+/// - Canonicalizes node types
+/// - Supports edge key synonyms: from/to or source/target
 /// </summary>
 public static class BuilderDefinitionAdapter
 {
@@ -17,10 +18,8 @@ public static class BuilderDefinitionAdapter
         ReadCommentHandling = JsonCommentHandling.Skip
     };
 
-    /// <summary>
-    /// Parse builder JSON into WorkflowDefinitionJson.
-    /// Safe: returns empty definition on any failure.
-    /// </summary>
+    private static readonly TextInfo TI = CultureInfo.InvariantCulture.TextInfo;
+
     public static WorkflowDefinitionJson Parse(string builderJson)
     {
         if (string.IsNullOrWhiteSpace(builderJson))
@@ -31,22 +30,13 @@ public static class BuilderDefinitionAdapter
         {
             root = JsonSerializer.Deserialize<BuilderRoot>(builderJson, RawOptions);
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"[BuilderDefinitionAdapter] Failed primary deserialize, falling back. {ex.Message}");
-            // As a fallback, attempt to parse assuming already canonical
-            try
-            {
-                return WorkflowDefinitionJson.FromJson(builderJson);
-            }
-            catch
-            {
-                return new WorkflowDefinitionJson();
-            }
+            try { return WorkflowDefinitionJson.FromJson(builderJson); }
+            catch { return new WorkflowDefinitionJson(); }
         }
 
-        if (root == null)
-            return new WorkflowDefinitionJson();
+        if (root == null) return new WorkflowDefinitionJson();
 
         var def = new WorkflowDefinitionJson
         {
@@ -63,36 +53,40 @@ public static class BuilderDefinitionAdapter
                 if (string.IsNullOrWhiteSpace(n.Id) || string.IsNullOrWhiteSpace(n.Type))
                     continue;
 
+                var canonicalType = CanonicalizeType(n.Type);
+
                 var node = new WorkflowNode
                 {
                     Id = n.Id!,
-                    Type = n.Type!, // keep case; IsType is already case-insensitive
-                    Name = n.Label ?? n.Type ?? n.Id!,
+                    Type = canonicalType,
+                    Name = n.Label ?? canonicalType ?? n.Id!,
                     Position = (n.X.HasValue && n.Y.HasValue)
                         ? new NodePosition { X = n.X.Value, Y = n.Y.Value }
                         : null,
                     Properties = new Dictionary<string, object>()
                 };
 
-                // Copy known optional semantic fields into Properties for executors
-                CopyIfSet(node.Properties, "label", n.Label);
-                CopyIfSet(node.Properties, "assigneeRoles", n.AssigneeRoles);
-                CopyIfSet(node.Properties, "dueInMinutes", n.DueInMinutes);
-                CopyIfSet(node.Properties, "formSchema", n.FormSchema);
-                CopyIfSet(node.Properties, "action", n.Action);
-                CopyIfSet(node.Properties, "condition", n.Condition);
-                CopyIfSet(node.Properties, "delayMinutes", n.DelayMinutes);
-                CopyIfSet(node.Properties, "untilIso", n.UntilIso);
-                CopyIfSet(node.Properties, "delaySeconds", n.DelaySeconds); // <<< NEW
+                if (!string.Equals(canonicalType, n.Type, StringComparison.Ordinal))
+                    node.Properties["originalType"] = n.Type!;
 
-                // Copy any remaining ad-hoc fields (extension data)
+                Copy(node.Properties, "label", n.Label);
+                Copy(node.Properties, "assigneeRoles", n.AssigneeRoles);
+                Copy(node.Properties, "dueInMinutes", n.DueInMinutes);
+                Copy(node.Properties, "formSchema", n.FormSchema);
+                Copy(node.Properties, "action", n.Action);
+                Copy(node.Properties, "condition", n.Condition);
+                Copy(node.Properties, "delayMinutes", n.DelayMinutes);
+                Copy(node.Properties, "untilIso", n.UntilIso);
+                Copy(node.Properties, "delaySeconds", n.DelaySeconds);
+
                 if (n.Extra != null)
                 {
                     foreach (var kv in n.Extra)
                     {
-                        if (kv.Value is null) continue;
+                        if (kv.Value.ValueKind == JsonValueKind.Null ||
+                            kv.Value.ValueKind == JsonValueKind.Undefined) continue;
                         if (!node.Properties.ContainsKey(kv.Key))
-                            node.Properties[kv.Key] = kv.Value;
+                            node.Properties[kv.Key] = JsonElementToObject(kv.Value);
                     }
                 }
 
@@ -100,19 +94,35 @@ public static class BuilderDefinitionAdapter
             }
         }
 
-        // Edges
+        // Edges (with synonyms)
         if (root.Edges != null)
         {
             foreach (var e in root.Edges)
             {
-                if (string.IsNullOrWhiteSpace(e.From) || string.IsNullOrWhiteSpace(e.To))
+                string? from = e.From;
+                string? to = e.To;
+
+                if ((from == null || to == null) && e.Extra != null)
+                {
+                    if (from == null &&
+                        e.Extra.TryGetValue("source", out var srcEl) &&
+                        srcEl.ValueKind == JsonValueKind.String)
+                        from = srcEl.GetString();
+
+                    if (to == null &&
+                        e.Extra.TryGetValue("target", out var tgtEl) &&
+                        tgtEl.ValueKind == JsonValueKind.String)
+                        to = tgtEl.GetString();
+                }
+
+                if (string.IsNullOrWhiteSpace(from) || string.IsNullOrWhiteSpace(to))
                     continue;
 
                 def.Edges.Add(new WorkflowEdge
                 {
                     Id = e.Id ?? Guid.NewGuid().ToString("N"),
-                    Source = e.From!,
-                    Target = e.To!,
+                    Source = from!,
+                    Target = to!,
                     Label = e.Label
                 });
             }
@@ -121,13 +131,42 @@ public static class BuilderDefinitionAdapter
         return def;
     }
 
-    private static void CopyIfSet(IDictionary<string, object> bag, string key, object? value)
+    private static string CanonicalizeType(string raw)
+    {
+        var trimmed = raw.Trim();
+        if (trimmed.Length == 0) return trimmed;
+
+        return trimmed.ToLowerInvariant() switch
+        {
+            "start" => NodeTypes.Start,
+            "end" => NodeTypes.End,
+            "humantask" or "human_task" or "human-task" or "human task" => NodeTypes.HumanTask,
+            "automatic" or "automated" => NodeTypes.Automatic,
+            "gateway" => NodeTypes.Gateway,
+            "timer" => NodeTypes.Timer,
+            _ => TI.ToTitleCase(trimmed)
+        };
+    }
+
+    private static void Copy(IDictionary<string, object> bag, string key, object? value)
     {
         if (value != null)
             bag[key] = value;
     }
 
-    // Builder DTOs
+    private static object JsonElementToObject(JsonElement el) =>
+        el.ValueKind switch
+        {
+            JsonValueKind.String => el.GetString()!,
+            JsonValueKind.Number => el.TryGetInt64(out var l) ? l :
+                                    el.TryGetDouble(out var d) ? d : el.GetRawText(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Null => null!,
+            _ => el
+        };
+
+    // DTOs
     private sealed class BuilderRoot
     {
         [JsonPropertyName("key")] public string? Key { get; set; }
@@ -144,7 +183,6 @@ public static class BuilderDefinitionAdapter
         [JsonPropertyName("label")] public string? Label { get; set; }
         [JsonPropertyName("x")] public double? X { get; set; }
         [JsonPropertyName("y")] public double? Y { get; set; }
-
         [JsonPropertyName("assigneeRoles")] public string[]? AssigneeRoles { get; set; }
         [JsonPropertyName("dueInMinutes")] public int? DueInMinutes { get; set; }
         [JsonPropertyName("formSchema")] public object? FormSchema { get; set; }
@@ -152,8 +190,8 @@ public static class BuilderDefinitionAdapter
         [JsonPropertyName("condition")] public string? Condition { get; set; }
         [JsonPropertyName("delayMinutes")] public double? DelayMinutes { get; set; }
         [JsonPropertyName("untilIso")] public string? UntilIso { get; set; }
-        [JsonPropertyName("delaySeconds")] public double? DelaySeconds { get; set; } // <<< NEW
-        [JsonExtensionData] public Dictionary<string, object>? Extra { get; set; }
+        [JsonPropertyName("delaySeconds")] public double? DelaySeconds { get; set; }
+        [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
     }
 
     private sealed class BuilderEdge
@@ -162,5 +200,6 @@ public static class BuilderDefinitionAdapter
         [JsonPropertyName("from")] public string? From { get; set; }
         [JsonPropertyName("to")] public string? To { get; set; }
         [JsonPropertyName("label")] public string? Label { get; set; }
+        [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
     }
 }
