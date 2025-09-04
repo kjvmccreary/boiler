@@ -1,18 +1,8 @@
-Building Test Projects
-========== Starting test run ==========
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.04]   Starting:    WorkflowService.Tests
-[xUnit.net 00:00:00.76]     WorkflowService.Tests.Engine.QuorumAndTimeoutTests.D3_Quorum_BelowThreshold_NotSatisfiedUntilHumanCompletes [FAIL]
-[xUnit.net 00:00:00.76]       Expected satisfied.Count to be 1, but found 0 (difference of -1).
-[xUnit.net 00:00:00.76]       Stack Trace:
-[xUnit.net 00:00:00.76]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[xUnit.net 00:00:00.76]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[xUnit.net 00:00:00.76]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[xUnit.net 00:00:00.76]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.76]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[xUnit.net 00:00:00.76]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[xUnit.net 00:00:00.76]            at FluentAssertions.Numeric.NumericAssertions`2.Be(T expected, String because, Object[] becauseArgs)
-[xUnit.net 00:00:00.76]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\QuorumAndTimeoutTests.cs(221,0): at WorkflowService.Tests.Engine.QuorumAndTimeoutTests.D3_Quorum_BelowThreshold_NotSatisfiedUntilHumanCompletes()
-[xUnit.net 00:00:00.76]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.76]   Finished:    WorkflowService.Tests
-========== Test run finished: 1 Tests (0 Passed, 1 Failed, 0 Skipped) run in 769 ms ==========
+  WorkflowService.Tests failed with 3 error(s) and 2 warning(s) (0.2s)
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\ConcurrencyTests.cs(18,6): error CS9000: Raw string literal delimiter must be on its own line.
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\MultiTenantIsolationTests.cs(18,6): error CS9000: Raw string literal delimiter must be on its own line.
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\GatewayPruningTests.cs(17,34): warning CS1570: XML comment has badly formed XML -- 'Whitespace is not allowed at this location.'
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\QuorumAndTimeoutTests.cs(31,56): warning CS1570: XML comment has badly formed XML -- 'Whitespace is not allowed at this location.'
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\PerformanceShapeTests.cs(21,6): error CS9000: Raw string literal delimiter must be on its own line.
+
+Build failed with 3 error(s) and 2 warning(s) in 1.8s

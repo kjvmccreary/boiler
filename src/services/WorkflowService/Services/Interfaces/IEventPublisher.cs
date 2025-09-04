@@ -2,9 +2,6 @@ using WorkflowService.Domain.Models;
 
 namespace WorkflowService.Services.Interfaces;
 
-/// <summary>
-/// Service for publishing workflow events
-/// </summary>
 public interface IEventPublisher
 {
     Task PublishInstanceStartedAsync(WorkflowInstance instance, CancellationToken cancellationToken = default);
@@ -14,6 +11,8 @@ public interface IEventPublisher
     Task PublishTaskCompletedAsync(WorkflowTask task, int completedByUserId, CancellationToken cancellationToken = default);
     Task PublishTaskAssignedAsync(WorkflowTask task, int assignedToUserId, CancellationToken cancellationToken = default);
     Task PublishDefinitionPublishedAsync(WorkflowDefinition definition, CancellationToken cancellationToken = default);
+    Task PublishDefinitionUnpublishedAsync(WorkflowDefinition definition, CancellationToken cancellationToken = default);
+    Task PublishInstanceForceCancelledAsync(WorkflowInstance instance, string reason, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Publish custom workflow event (instance-scoped if workflowInstanceId provided).

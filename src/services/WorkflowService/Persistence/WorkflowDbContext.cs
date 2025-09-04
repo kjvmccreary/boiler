@@ -62,7 +62,6 @@ public class WorkflowDbContext : DbContext
             EF.Property<int>(wt, "TenantId") == GetCurrentTenantIdFromProvider());
         modelBuilder.Entity<WorkflowEvent>().HasQueryFilter(we =>
             EF.Property<int>(we, "TenantId") == GetCurrentTenantIdFromProvider());
-        // OutboxMessages intentionally not tenant filtered (diagnostics / cross-scope ops)
     }
 
     private int? GetCurrentTenantIdFromProvider()
@@ -81,6 +80,9 @@ public class WorkflowDbContext : DbContext
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        // Immutability guard BEFORE transaction commit
+        EnforceDefinitionJsonImmutability();
+
         _logger.LogInformation("🔍 WorkflowDbContext: SaveChangesAsync starting");
         var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
 
@@ -91,13 +93,9 @@ public class WorkflowDbContext : DbContext
             return await base.SaveChangesAsync(cancellationToken);
         }
 
-        // ✅ FIX: Check if we're using a relational database provider
         try
         {
-            // This will throw if not using a relational provider (e.g., in-memory database)
             var connection = Database.GetDbConnection();
-            
-            // For PostgreSQL/relational databases, use the transaction with tenant context
             var strategy = Database.CreateExecutionStrategy();
             return await strategy.ExecuteAsync(async () =>
             {
@@ -120,10 +118,31 @@ public class WorkflowDbContext : DbContext
         }
         catch (InvalidOperationException)
         {
-            // ✅ FIX: For in-memory database (testing), just set tenant IDs and save
             SetTenantIdForNewEntities(tenantId.Value);
             UpdateTimestamps();
             return await base.SaveChangesAsync(cancellationToken);
+        }
+    }
+
+    private void EnforceDefinitionJsonImmutability()
+    {
+        var modifiedDefs = ChangeTracker.Entries<WorkflowDefinition>()
+            .Where(e => e.State == EntityState.Modified)
+            .ToList();
+
+        foreach (var entry in modifiedDefs)
+        {
+            var wasPublished = (bool)entry.OriginalValues["IsPublished"];
+            if (!wasPublished) continue;
+
+            var originalJson = (string)entry.OriginalValues["JSONDefinition"];
+            var currentJson = entry.CurrentValues.GetValue<string>("JSONDefinition") ?? "";
+
+            if (!string.Equals(originalJson, currentJson, StringComparison.Ordinal))
+            {
+                _logger.LogError("Immutability violation attempt on definition {Id}", entry.Entity.Id);
+                throw new InvalidOperationException("Published workflow JSONDefinition is immutable. Create a new version.");
+            }
         }
     }
 
@@ -174,14 +193,13 @@ public class WorkflowDbContext : DbContext
             entity.HasIndex(e => new { e.TenantId, e.Name, e.Version }).IsUnique();
             entity.HasIndex(e => new { e.TenantId, e.IsPublished });
             entity.Property(e => e.JSONDefinition).IsRequired();
-            
-            // ✅ FIX: Only apply PostgreSQL-specific configurations when not in test environment
+
             var isTestEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
                                    Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Testing" ||
                                    AppDomain.CurrentDomain.GetAssemblies()
                                        .Any(a => a.FullName?.Contains("xunit") == true ||
                                                 a.FullName?.Contains("Microsoft.VisualStudio.TestPlatform") == true);
-            
+
             if (!isTestEnvironment)
             {
                 entity.Property(e => e.JSONDefinition).HasColumnType("jsonb");
@@ -200,14 +218,13 @@ public class WorkflowDbContext : DbContext
             entity.HasIndex(e => new { e.TenantId, e.WorkflowDefinitionId });
             entity.Property(e => e.CurrentNodeIds);
             entity.Property(e => e.Context);
-            
-            // ✅ FIX: Only apply PostgreSQL-specific configurations when not in test environment
+
             var isTestEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
                                    Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Testing" ||
                                    AppDomain.CurrentDomain.GetAssemblies()
                                        .Any(a => a.FullName?.Contains("xunit") == true ||
                                                 a.FullName?.Contains("Microsoft.VisualStudio.TestPlatform") == true);
-            
+
             if (!isTestEnvironment)
             {
                 entity.Property(e => e.CurrentNodeIds).HasColumnType("jsonb");
@@ -226,14 +243,13 @@ public class WorkflowDbContext : DbContext
             entity.HasIndex(e => new { e.TenantId, e.Status });
             entity.HasIndex(e => new { e.TenantId, e.DueDate });
             entity.Property(e => e.Data);
-            
-            // ✅ FIX: Only apply PostgreSQL-specific configurations when not in test environment
+
             var isTestEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
                                    Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Testing" ||
                                    AppDomain.CurrentDomain.GetAssemblies()
                                        .Any(a => a.FullName?.Contains("xunit") == true ||
                                                 a.FullName?.Contains("Microsoft.VisualStudio.TestPlatform") == true);
-            
+
             if (!isTestEnvironment)
             {
                 entity.Property(e => e.Data).HasColumnType("jsonb");
@@ -250,14 +266,13 @@ public class WorkflowDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => new { e.TenantId, e.Type, e.OccurredAt });
             entity.Property(e => e.Data);
-            
-            // ✅ FIX: Only apply PostgreSQL-specific configurations when not in test environment
+
             var isTestEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
                                    Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Testing" ||
                                    AppDomain.CurrentDomain.GetAssemblies()
                                        .Any(a => a.FullName?.Contains("xunit") == true ||
                                                 a.FullName?.Contains("Microsoft.VisualStudio.TestPlatform") == true);
-            
+
             if (!isTestEnvironment)
             {
                 entity.Property(e => e.Data).HasColumnType("jsonb");
@@ -277,14 +292,13 @@ public class WorkflowDbContext : DbContext
             entity.HasIndex(e => e.NextRetryAt);
             entity.HasIndex(e => new { e.TenantId, e.IdempotencyKey }).IsUnique();
             entity.Property(e => e.EventData);
-            
-            // ✅ FIX: Only apply PostgreSQL-specific configurations when not in test environment
+
             var isTestEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
                                    Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Testing" ||
                                    AppDomain.CurrentDomain.GetAssemblies()
                                        .Any(a => a.FullName?.Contains("xunit") == true ||
                                                 a.FullName?.Contains("Microsoft.VisualStudio.TestPlatform") == true);
-            
+
             if (!isTestEnvironment)
             {
                 entity.Property(e => e.EventData).HasColumnType("jsonb");

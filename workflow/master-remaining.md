@@ -1,3 +1,59 @@
+# 4. Recommended Next Sprint (Priority Order)
+### 1. TimerWorker Implementation
+* <s>Hosted service every 30–60s: ```SELECT``` due timer tasks (Status in Created/Assigned, DueDate ≤ now, NodeType timer).</s>
+* <s>Complete them via ```runtime.CompleteTaskAsync(autoCommit:false)``` in batches; single UoW commit.</s>
+* <s>Add concurrency guard (```SKIP LOCKED``` or update status to ```InProgressTimer``` before processing).</s>
+### 2. Graph Validation Service
+* <s>On publish: assert exactly one Start, ≥1 End, all nodes reachable from Start, no unreachable End, no duplicate IDs, no isolated islands. Present any exceptions / errors in UI friendly manner to user.</s>
+### 3. Outbox Dispatcher (MVP)
+* <s>Hosted worker polls unprocessed messages, logs or POSTs to a placeholder endpoint, sets ```IsProcessed + ProcessedAt/RetryCount```.</s>
+* <s>Add ```IdempotencyKey (Guid)``` + unique index to ```OutboxMessage```.</s>
+### 4. Automated Tests
+* <s>```GatewayCondition_ShouldSelectTruePathOnly```.</s>
+* <s>```TimerWorker_ShouldAdvanceAfterDue```.</s>
+* <s>```Runtime_SaveChanges_BatchCount_ShouldEqual1 for claim/complete/start```.</s>
+* <s>```Validation_ShouldRejectMultipleStartNodes```.</s>
+### 5. RBAC & Permissions Audit
+* <s>Ensure seed contains: ```workflow.view_tasks```, ```workflow.claim_tasks```, ```workflow.complete_tasks```, ```workflow.admin```, ```workflow.view_instances```, ```workflow.start_instances```.</s>
+* <s>Map each controller action to a permission doc.</s>
+### 6. Automatic Action Executor Abstraction
+* <s>Interface + registry keyed by ```action.kind```.</s>
+* <s>Implement noop + future webhook placeholder.</s>
+* <s>Guard with try/catch + failure event emission.</s>
+### 7. Definition Immutability Enforcement
+* Block updates to ```JSONDefinition``` after publish (require new version).
+* Disallow unpublish if active running instances (or add rule).
+### 8. Tenant Audit & Guard Tests
+* Unit/integration test that cross-tenant tasks / instances are not retrievable.
+
+### 9. Outbox Idempotency & Schema Migration
+* Add columns: ```IdempotencyKey (uuid)```, ```ProcessedAt (timestamp)```, ```Error (text)```.
+* Add unique index ```(TenantId, IdempotencyKey)```.
+### 10. Documentation & Developer Onboarding
+* “How to start a workflow from another service” one-pager.
+* Example conditional gateway definition JSON.
+
+# 5. Quick Wins (Low Effort, High Clarity)
+* Add logging prefix TIMER_WORKER / OUTBOX_WORKER for future operations.
+* Add HealthCheck tag grouping (e.g., readiness vs liveness).
+* Add simple /api/workflow/definitions/{id}/validate endpoint returning the new graph validator output before publish.
+# 6. Suggested Metrics (Post-Refactor)
+
+| Metric                                       | Target     |
+| -------------------------------------------- | ------------- |
+| SaveChanges per Claim/Complete	           | 1          |
+| Timer cycle latency                          |	< 60s (configurable) |
+| Gateway evaluation error fallback rate | Near 0  |
+| Outbox processing lag | < 2 minutes in MVP |
+| Validation failures at publish | Surfaced with actionable error list |
+
+# 7. Proposed Branching Strategy (Optional)
+* ```feature/timer-worker```
+* ```feature/graph-validation```
+* ```feature/outbox-dispatch```
+* ```feature/auto-action-registry```
+
+
 # 1. Checklist Alignment (master-mvp-checklist.md)
 | Section      | Item                                                  | Status                | Notes                                                                                              |
 | ------------ | ----------------------------------------------------- | --------------------- | -------------------------------------------------------------------------------------------------- |
@@ -67,60 +123,6 @@
 | Automatic executor extensibility    | Tight coupling of “automatic” behavior   | Hard to add domain actions later               |
 | Tenant enforcement audit            | Potential data leakage vector            | Security / compliance issue                    |
 
-# 4. Recommended Next Sprint (Priority Order)
-### 1. TimerWorker Implementation
-* <s>Hosted service every 30–60s: ```SELECT``` due timer tasks (Status in Created/Assigned, DueDate ≤ now, NodeType timer).</s>
-* <s>Complete them via ```runtime.CompleteTaskAsync(autoCommit:false)``` in batches; single UoW commit.</s>
-* <s>Add concurrency guard (```SKIP LOCKED``` or update status to ```InProgressTimer``` before processing).</s>
-### 2. Graph Validation Service
-* <s>On publish: assert exactly one Start, ≥1 End, all nodes reachable from Start, no unreachable End, no duplicate IDs, no isolated islands. Present any exceptions / errors in UI friendly manner to user.</s>
-### 3. Outbox Dispatcher (MVP)
-* <s>Hosted worker polls unprocessed messages, logs or POSTs to a placeholder endpoint, sets ```IsProcessed + ProcessedAt/RetryCount```.</s>
-* <s>Add ```IdempotencyKey (Guid)``` + unique index to ```OutboxMessage```.</s>
-### 4. Automated Tests
-* <s>```GatewayCondition_ShouldSelectTruePathOnly```.</s>
-* <s>```TimerWorker_ShouldAdvanceAfterDue```.</s>
-* <s>```Runtime_SaveChanges_BatchCount_ShouldEqual1 for claim/complete/start```.</s>
-* <s>```Validation_ShouldRejectMultipleStartNodes```.</s>
-### 5. RBAC & Permissions Audit
-* <s>Ensure seed contains: ```workflow.view_tasks```, ```workflow.claim_tasks```, ```workflow.complete_tasks```, ```workflow.admin```, ```workflow.view_instances```, ```workflow.start_instances```.</s>
-* <s>Map each controller action to a permission doc.</s>
-### 6. Automatic Action Executor Abstraction
-* Interface + registry keyed by ```action.kind```.
-* Implement noop + future webhook placeholder.
-* Guard with try/catch + failure event emission.
-### 7. Definition Immutability Enforcement
-* Block updates to ```JSONDefinition``` after publish (require new version).
-* Disallow unpublish if active running instances (or add rule).
-### 8. Tenant Audit & Guard Tests
-* Unit/integration test that cross-tenant tasks / instances are not retrievable.
-
-### 9. Outbox Idempotency & Schema Migration
-* Add columns: ```IdempotencyKey (uuid)```, ```ProcessedAt (timestamp)```, ```Error (text)```.
-* Add unique index ```(TenantId, IdempotencyKey)```.
-### 10. Documentation & Developer Onboarding
-* “How to start a workflow from another service” one-pager.
-* Example conditional gateway definition JSON.
-
-# 5. Quick Wins (Low Effort, High Clarity)
-* Add logging prefix TIMER_WORKER / OUTBOX_WORKER for future operations.
-* Add HealthCheck tag grouping (e.g., readiness vs liveness).
-* Add simple /api/workflow/definitions/{id}/validate endpoint returning the new graph validator output before publish.
-# 6. Suggested Metrics (Post-Refactor)
-
-| Metric                                       | Target     |
-| -------------------------------------------- | ------------- |
-| SaveChanges per Claim/Complete	           | 1          |
-| Timer cycle latency                          |	< 60s (configurable) |
-| Gateway evaluation error fallback rate | Near 0  |
-| Outbox processing lag | < 2 minutes in MVP |
-| Validation failures at publish | Surfaced with actionable error list |
-
-# 7. Proposed Branching Strategy (Optional)
-* ```feature/timer-worker```
-* ```feature/graph-validation```
-* ```feature/outbox-dispatch```
-* ```feature/auto-action-registry```
 
 Integrate sequentially to reduce merge complexity.
 ***

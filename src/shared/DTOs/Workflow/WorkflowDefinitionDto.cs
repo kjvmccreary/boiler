@@ -16,6 +16,7 @@ public class WorkflowDefinitionDto
     public DateTime UpdatedAt { get; set; }
     public bool IsArchived { get; set; }
     public DateTime? ArchivedAt { get; set; }
+    public int ActiveInstanceCount { get; set; }
 }
 
 public class CreateWorkflowDefinitionDto
@@ -23,14 +24,12 @@ public class CreateWorkflowDefinitionDto
     [Required]
     [StringLength(255, MinimumLength = 1)]
     public string Name { get; set; } = string.Empty;
-    
+
     [Required]
     public string JSONDefinition { get; set; } = string.Empty;
-    
+
     [StringLength(1000)]
     public string? Description { get; set; }
-    
-    // 🔧 ADD: Tags support
     public string? Tags { get; set; }
 }
 
@@ -38,25 +37,21 @@ public class UpdateWorkflowDefinitionDto
 {
     [StringLength(255, MinimumLength = 1)]
     public string? Name { get; set; }
-    
     public string? JSONDefinition { get; set; }
-    
     [StringLength(1000)]
     public string? Description { get; set; }
-    
-    // 🔧 ADD: Tags support
     public string? Tags { get; set; }
 }
 
 public class PublishDefinitionRequestDto
 {
     public string? PublishNotes { get; set; }
-    
-    // 🔧 ADD: Force publish option
+
+    // Restored for backward compatibility with legacy tests.
+    // Semantics: if already published and ForcePublish=true → idempotent success.
     public bool ForcePublish { get; set; } = false;
 }
 
-// 🔧 ADD: Missing DTOs needed by DefinitionService
 public class GetWorkflowDefinitionsRequestDto
 {
     public string? SearchTerm { get; set; }
@@ -96,6 +91,21 @@ public class CreateNewVersionRequestDto
 
     [StringLength(500)]
     public string? VersionNotes { get; set; }
-
     public string? Tags { get; set; }
+}
+
+public class UnpublishDefinitionRequestDto
+{
+    public bool ForceTerminateAndUnpublish { get; set; } = false;
+}
+
+public class WorkflowDefinitionInstanceUsageDto
+{
+    public int DefinitionId { get; set; }
+    public int Version { get; set; }
+    public int RunningCount { get; set; }
+    public int SuspendedCount { get; set; }
+    public int CompletedCount { get; set; }
+    public int ActiveInstanceCount => RunningCount + SuspendedCount;
+    public int LatestVersion { get; set; }
 }

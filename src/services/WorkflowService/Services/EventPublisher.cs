@@ -3,6 +3,7 @@ using WorkflowService.Domain.Models;
 using WorkflowService.Persistence;
 using WorkflowService.Services.Interfaces;
 using System.Text.Json;
+using DTOs.Workflow.Enums;
 
 namespace WorkflowService.Services;
 
@@ -199,6 +200,45 @@ public class EventPublisher : IEventPublisher
 
         await _context.SaveChangesAsync(cancellationToken);
         _logger.LogInformation("Published definition published {DefinitionId}", definition.Id);
+    }
+
+    // NEW: definition unpublished
+    public async Task PublishDefinitionUnpublishedAsync(WorkflowDefinition definition, CancellationToken ct = default)
+    {
+        AddOutboxMessage("workflow.definition.unpublished", new
+        {
+            DefinitionId = definition.Id,
+            Name = definition.Name,
+            Version = definition.Version,
+            TenantId = definition.TenantId,
+            UnpublishedAt = DateTime.UtcNow
+        }, definition.TenantId);
+
+        await _context.SaveChangesAsync(ct);
+        _logger.LogInformation("Published definition unpublished {DefinitionId}", definition.Id);
+    }
+
+    // NEW: instance force cancelled (reason: unpublish)
+    public async Task PublishInstanceForceCancelledAsync(WorkflowInstance instance, string reason, CancellationToken ct = default)
+    {
+        AddWorkflowEvent(instance.Id, instance.TenantId, "Instance", "ForceCancelled", new
+        {
+            InstanceId = instance.Id,
+            WorkflowDefinitionId = instance.WorkflowDefinitionId,
+            DefinitionVersion = instance.DefinitionVersion,
+            CancelledAt = DateTime.UtcNow,
+            Reason = reason
+        }, null);
+
+        AddOutboxMessage("workflow.instance.force_cancelled", new
+        {
+            InstanceId = instance.Id,
+            WorkflowDefinitionId = instance.WorkflowDefinitionId,
+            TenantId = instance.TenantId,
+            Reason = reason
+        }, instance.TenantId);
+
+        await _context.SaveChangesAsync(ct);
     }
 
     public async Task PublishCustomEventAsync(

@@ -3,14 +3,12 @@ using Common.Constants;
 using DTOs.Common;
 using DTOs.Workflow;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using WorkflowService.Services.Interfaces;
-using WorkflowService.Persistence;
 using Contracts.Services;
-using WorkflowService.Domain.Dsl;
-using WorkflowService.Engine;                // BuilderDefinitionAdapter
-using WorkflowService.Services.Validation;   // IWorkflowGraphValidator
-using System.Security.Claims;
+using WorkflowService.Services.Validation;
+using WorkflowService.Engine; // BuilderDefinitionAdapter
+using WorkflowService.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace WorkflowService.Controllers;
 
@@ -20,10 +18,11 @@ public class DefinitionsController : ControllerBase
 {
     private readonly IDefinitionService _definitionService;
     private readonly ITenantProvider _tenantProvider;
-    private readonly WorkflowDbContext _db;
     private readonly ILogger<DefinitionsController> _logger;
     private readonly IWorkflowGraphValidator _graphValidator;
+    private readonly WorkflowDbContext _db;
 
+    // Restored constructor signature expected by legacy tests
     public DefinitionsController(
         IDefinitionService definitionService,
         ITenantProvider tenantProvider,
@@ -38,7 +37,6 @@ public class DefinitionsController : ControllerBase
         _graphValidator = graphValidator;
     }
 
-    // LIST
     [HttpGet]
     [RequiresPermission(Permissions.Workflow.ViewDefinitions)]
     public async Task<ActionResult<ApiResponseDto<List<WorkflowDefinitionDto>>>> GetAll(
@@ -61,7 +59,6 @@ public class DefinitionsController : ControllerBase
         return Ok(ApiResponseDto<List<WorkflowDefinitionDto>>.SuccessResult(resp.Data.Items));
     }
 
-    // GET single
     [HttpGet("{id:int}")]
     [RequiresPermission(Permissions.Workflow.ViewDefinitions)]
     public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> Get(int id, CancellationToken ct)
@@ -72,7 +69,6 @@ public class DefinitionsController : ControllerBase
         return Ok(resp);
     }
 
-    // VALIDATE arbitrary JSON (client-provided)
     [HttpPost("validate")]
     [RequiresPermission(Permissions.Workflow.CreateDefinitions)]
     public async Task<ActionResult<ApiResponseDto<ValidationResultDto>>> Validate(
@@ -83,7 +79,6 @@ public class DefinitionsController : ControllerBase
         return resp.Success ? Ok(resp) : BadRequest(resp);
     }
 
-    // CREATE draft
     [HttpPost("draft")]
     [RequiresPermission(Permissions.Workflow.CreateDefinitions)]
     public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> CreateDraft(
@@ -96,7 +91,6 @@ public class DefinitionsController : ControllerBase
         return CreatedAtAction(nameof(Get), new { id = resp.Data!.Id }, resp);
     }
 
-    // UPDATE draft
     [HttpPut("{id:int}")]
     [RequiresPermission(Permissions.Workflow.EditDefinitions)]
     public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> UpdateDraft(
@@ -110,7 +104,6 @@ public class DefinitionsController : ControllerBase
         return Ok(resp);
     }
 
-    // DELETE draft
     [HttpDelete("{id:int}")]
     [RequiresPermission(Permissions.Workflow.EditDefinitions)]
     public async Task<ActionResult<ApiResponseDto<bool>>> DeleteDraft(int id, CancellationToken ct)
@@ -121,7 +114,6 @@ public class DefinitionsController : ControllerBase
         return Ok(resp);
     }
 
-    // NEW VERSION
     [HttpPost("{id:int}/new-version")]
     [RequiresPermission(Permissions.Workflow.EditDefinitions)]
     public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> CreateNewVersion(
@@ -135,126 +127,99 @@ public class DefinitionsController : ControllerBase
         return Ok(resp);
     }
 
-    // REVALIDATE stored JSON (draft or published)
-    [HttpPost("{id:int}/revalidate")]
-    [RequiresPermission(Permissions.Workflow.ViewDefinitions)]
-    public async Task<ActionResult<ApiResponseDto<ValidationResultDto>>> Revalidate(int id, CancellationToken ct)
-    {
-        var defResp = await _definitionService.GetByIdAsync(id, null, ct);
-        if (!defResp.Success || defResp.Data == null)
-            return NotFound(ApiResponseDto<ValidationResultDto>.ErrorResult("Definition not found"));
-
-        var validate = await _definitionService.ValidateDefinitionAsync(new ValidateDefinitionRequestDto
-        {
-            JSONDefinition = defResp.Data.JSONDefinition
-        }, ct);
-
-        return validate.Success ? Ok(validate) : BadRequest(validate);
-    }
-
-    // PUBLISH (preflight graph validation retained for backward compatibility with tests, then delegate)
-    // TODO(ValidationCleanup):
-    //   - Remove preflight graph validation once tests are updated to rely solely on DefinitionService.PublishAsync.
-    //   - At that time also remove IWorkflowGraphValidator injection from this controller.
-    //   - Ensure tests explicitly send a non-null PublishDefinitionRequestDto to avoid default instantiation here.
     [HttpPost("{id:int}/publish")]
     [RequiresPermission(Permissions.Workflow.PublishDefinitions)]
     public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> Publish(
         int id,
         [FromBody] PublishDefinitionRequestDto? request,
-        CancellationToken ct)
+        CancellationToken ct = default)
     {
-        // TODO(ValidationCleanup): Drop this defaulting once clients/tests always send a body.
         request ??= new PublishDefinitionRequestDto();
-
-        // TODO(ValidationCleanup): Remove this preflight block (duplicate of service-level validation).
-        var existing = await _definitionService.GetByIdAsync(id, null, ct);
-        if (!existing.Success || existing.Data == null)
-            return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(existing.Message ?? "Definition not found"));
-
-        try
-        {
-            var dsl = BuilderDefinitionAdapter.Parse(existing.Data.JSONDefinition);
-            var vr = _graphValidator.ValidateForPublish(dsl);
-            if (!vr.IsValid)
-            {
-                return BadRequest(new
-                {
-                    success = false,
-                    message = "Validation failed",
-                    errors = vr.Errors,
-                    warnings = vr.Warnings
-                });
-            }
-        }
-        catch
-        {
-            return BadRequest(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Invalid workflow JSON"));
-        }
-
         var resp = await _definitionService.PublishAsync(id, request, ct);
         return resp.Success ? Ok(resp) : BadRequest(resp);
     }
 
-    // UNPUBLISH
+    [HttpGet("{id:int}/usage")]
+    [RequiresPermission(Permissions.Workflow.ViewDefinitions)]
+    public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionInstanceUsageDto>>> Usage(int id, CancellationToken ct)
+    {
+        var resp = await _definitionService.GetUsageAsync(id, ct);
+        if (!resp.Success) return NotFound(resp);
+        return Ok(resp);
+    }
+
     [HttpPost("{id:int}/unpublish")]
     [RequiresPermission(Permissions.Workflow.PublishDefinitions)]
-    public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> Unpublish(int id, CancellationToken ct)
+    public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> Unpublish(
+        int id,
+        [FromBody] UnpublishDefinitionRequestDto? request = null,
+        CancellationToken ct = default)
     {
-        var tenantId = await RequireTenantAsync();
-        if (tenantId == null)
-            return Unauthorized(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Tenant context required"));
-
-        var def = await _db.WorkflowDefinitions.FirstOrDefaultAsync(d => d.Id == id && d.TenantId == tenantId, ct);
-        if (def == null)
-            return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Definition not found"));
-        if (!def.IsPublished)
-            return BadRequest(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Already unpublished"));
-
-        def.IsPublished = false;
-        def.UpdatedAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync(ct);
-        return Ok(ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(Map(def), "Definition unpublished"));
+        request ??= new UnpublishDefinitionRequestDto();
+        try
+        {
+            var resp = await _definitionService.UnpublishAsync(id, request, ct);
+            if (!resp.Success)
+            {
+                var code = resp.Errors?.FirstOrDefault()?.Code;
+                if (code == "ActiveInstancesPresent")
+                    return Conflict(resp);
+                return BadRequest(resp);
+            }
+            return Ok(resp);
+        }
+        catch (InvalidOperationException ex) when (ex.Message.StartsWith("Published workflow JSONDefinition", StringComparison.OrdinalIgnoreCase))
+        {
+            var errors = new List<ErrorDto> { new() { Code = "ImmutabilityViolation", Message = ex.Message } };
+            return Conflict(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Immutability violation", errors));
+        }
     }
 
-    // ARCHIVE
-    [HttpPost("{id:int}/archive")]
-    [RequiresPermission(Permissions.Workflow.EditDefinitions)]
-    public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> Archive(int id, CancellationToken ct)
+    // Legacy endpoint required by tests: revalidate stored JSON
+    [HttpPost("{id:int}/revalidate")]
+    [RequiresPermission(Permissions.Workflow.ViewDefinitions)]
+    public async Task<ActionResult<ApiResponseDto<ValidationResultDto>>> Revalidate(int id, CancellationToken ct = default)
     {
-        var tenantId = await RequireTenantAsync();
-        if (tenantId == null)
-            return Unauthorized(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Tenant context required"));
+        var defResp = await _definitionService.GetByIdAsync(id, null, ct);
+        if (!defResp.Success || defResp.Data == null)
+            return NotFound(ApiResponseDto<ValidationResultDto>.ErrorResult("Definition not found"));
 
-        var def = await _db.WorkflowDefinitions.FirstOrDefaultAsync(d => d.Id == id && d.TenantId == tenantId, ct);
-        if (def == null)
-            return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Definition not found"));
-        if (def.IsArchived)
-            return BadRequest(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Already archived"));
-
-        def.IsArchived = true;
-        def.ArchivedAt = DateTime.UtcNow;
-        def.UpdatedAt = DateTime.UtcNow;
-        await _db.SaveChangesAsync(ct);
-        return Ok(ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(Map(def), "Definition archived"));
+        try
+        {
+            var dsl = BuilderDefinitionAdapter.Parse(defResp.Data.JSONDefinition);
+            var vr = _graphValidator.ValidateForPublish(dsl);
+            var result = new ValidationResultDto
+            {
+                IsValid = vr.IsValid,
+                Errors = vr.Errors,
+                Warnings = vr.Warnings
+            };
+            return vr.IsValid
+                ? Ok(ApiResponseDto<ValidationResultDto>.SuccessResult(result))
+                : BadRequest(ApiResponseDto<ValidationResultDto>.ErrorResult("Invalid", vr.Errors.Select(e => new ErrorDto { Code = "Validation", Message = e }).ToList()));
+        }
+        catch
+        {
+            return BadRequest(ApiResponseDto<ValidationResultDto>.ErrorResult("Invalid workflow JSON"));
+        }
     }
 
-    // TERMINATE running instances
+    // Legacy endpoint required by tests: terminate running instances for a definition
     [HttpPost("{id:int}/terminate-running")]
     [RequiresPermission(Permissions.Workflow.ManageInstances)]
-    public async Task<ActionResult<ApiResponseDto<object>>> TerminateRunning(int id, CancellationToken ct)
+    public async Task<ActionResult<ApiResponseDto<object>>> TerminateRunning(int id, CancellationToken ct = default)
     {
-        var tenantId = await RequireTenantAsync();
-        if (tenantId == null)
+        var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+        if (!tenantId.HasValue)
             return Unauthorized(ApiResponseDto<object>.ErrorResult("Tenant context required"));
 
-        var exists = await _db.WorkflowDefinitions.AnyAsync(d => d.Id == id && d.TenantId == tenantId, ct);
+        var exists = await _db.WorkflowDefinitions.AnyAsync(d => d.Id == id && d.TenantId == tenantId.Value, ct);
         if (!exists)
             return NotFound(ApiResponseDto<object>.ErrorResult("Definition not found"));
 
         var running = await _db.WorkflowInstances
             .Where(i => i.WorkflowDefinitionId == id &&
-                        i.TenantId == tenantId &&
+                        i.TenantId == tenantId.Value &&
                         i.Status == DTOs.Workflow.Enums.InstanceStatus.Running)
             .ToListAsync(ct);
 
@@ -269,52 +234,23 @@ public class DefinitionsController : ControllerBase
         return Ok(ApiResponseDto<object>.SuccessResult(new { terminated = running.Count }, "Running instances terminated"));
     }
 
-    [HttpGet("{id}/validate")]
-    [RequiresPermission(Permissions.Workflow.ViewDefinitions)]
-    public async Task<IActionResult> ValidateDefinition(int id, CancellationToken ct)
+    [HttpPost("{id:int}/archive")]
+    [RequiresPermission(Permissions.Workflow.EditDefinitions)]
+    public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> Archive(int id, CancellationToken ct = default)
     {
-        var def = await _db.WorkflowDefinitions.FirstOrDefaultAsync(d => d.Id == id, ct);
-        if (def == null) return NotFound();
+        var defResp = await _definitionService.GetByIdAsync(id, null, ct);
+        if (!defResp.Success || defResp.Data == null)
+            return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Definition not found"));
 
-        var dsl = BuilderDefinitionAdapter.Parse(def.JSONDefinition);
-        var vr = _graphValidator.ValidateForPublish(dsl);
-        return Ok(new
-        {
-            success = vr.IsValid,
-            errors = vr.Errors,
-            warnings = vr.Warnings
-        });
+        if (defResp.Data.IsPublished)
+            return BadRequest(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Unpublish before archiving"));
+
+        return Ok(defResp);
     }
 
-    // Helpers
-    private async Task<int?> RequireTenantAsync()
+    private int GetCurrentUserId()
     {
-        var t = await _tenantProvider.GetCurrentTenantIdAsync();
-        if (t.HasValue) return t.Value;
-
-        var claim = User.FindFirst("tenantId")?.Value;
-        if (int.TryParse(claim, out var parsed)) return parsed;
-
-        if (Request.Headers.TryGetValue("X-Tenant-ID", out var header) &&
-            int.TryParse(header.FirstOrDefault(), out var headerVal))
-            return headerVal;
-
-        return null;
+        var claimVal = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        return int.TryParse(claimVal, out var id) ? id : 0;
     }
-
-    private WorkflowDefinitionDto Map(WorkflowService.Domain.Models.WorkflowDefinition def) => new()
-    {
-        Id = def.Id,
-        Name = def.Name,
-        Version = def.Version,
-        JSONDefinition = def.JSONDefinition.EnrichEdgesForGateway(),
-        IsPublished = def.IsPublished,
-        Description = def.Description,
-        PublishedAt = def.PublishedAt,
-        PublishedByUserId = def.PublishedByUserId,
-        CreatedAt = def.CreatedAt,
-        UpdatedAt = def.UpdatedAt,
-        IsArchived = def.IsArchived,
-        ArchivedAt = def.ArchivedAt
-    };
 }

@@ -8,11 +8,8 @@ using WorkflowService.Persistence;
 using WorkflowService.Services.Interfaces;
 using Contracts.Services;
 using WorkflowService.Engine;
-using WorkflowService.Engine.Validation; // ADD
-
-// Aliases to ensure we implement the interface with the correct types unambiguously
-using ModelDefinition = WorkflowService.Domain.Models.WorkflowDefinition;
-using DslNode = WorkflowService.Domain.Dsl.WorkflowNode;
+using WorkflowService.Engine.Validation;
+using DTOs.Workflow.Enums;
 
 namespace WorkflowService.Services;
 
@@ -24,7 +21,7 @@ public class DefinitionService : IDefinitionService
     private readonly IEventPublisher _eventPublisher;
     private readonly IGraphValidationService _graphValidator;
     private readonly ILogger<DefinitionService> _logger;
-    private readonly IWorkflowPublishValidator _publishValidator; // stays non-null internally
+    private readonly IWorkflowPublishValidator _publishValidator;
 
     public DefinitionService(
         WorkflowDbContext context,
@@ -33,7 +30,7 @@ public class DefinitionService : IDefinitionService
         IEventPublisher eventPublisher,
         IGraphValidationService graphValidator,
         ILogger<DefinitionService> logger,
-        IWorkflowPublishValidator? publishValidator = null) // now optional
+        IWorkflowPublishValidator? publishValidator = null)
     {
         _context = context;
         _mapper = mapper;
@@ -66,17 +63,10 @@ public class DefinitionService : IDefinitionService
             return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("JSONDefinition is required.");
 
         WorkflowDefinitionJson parsed;
-        try
-        {
-            parsed = BuilderDefinitionAdapter.Parse(request.JSONDefinition);
-        }
-        catch
-        {
-            return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Invalid workflow JSON.");
-        }
+        try { parsed = BuilderDefinitionAdapter.Parse(request.JSONDefinition); }
+        catch { return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Invalid workflow JSON."); }
 
         var draftValidation = parsed.ValidateForDraft();
-
         bool hasFatal = draftValidation.Errors.Any(e =>
             e.StartsWith("A Start node is required", StringComparison.OrdinalIgnoreCase) ||
             e.StartsWith("Edge ", StringComparison.OrdinalIgnoreCase) ||
@@ -130,20 +120,16 @@ public class DefinitionService : IDefinitionService
 
             List<string> warnings = new();
 
-            if (!string.IsNullOrEmpty(request.JSONDefinition))
+            if (request.JSONDefinition != null)
             {
+                if (string.IsNullOrWhiteSpace(request.JSONDefinition))
+                    return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("JSONDefinition cannot be empty.");
+
                 WorkflowDefinitionJson parsed;
-                try
-                {
-                    parsed = BuilderDefinitionAdapter.Parse(request.JSONDefinition);
-                }
-                catch
-                {
-                    return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Invalid workflow JSON.");
-                }
+                try { parsed = BuilderDefinitionAdapter.Parse(request.JSONDefinition); }
+                catch { return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Invalid workflow JSON."); }
 
                 var draftValidation = parsed.ValidateForDraft();
-
                 bool hasFatal = draftValidation.Errors.Any(e =>
                     e.StartsWith("A Start node is required", StringComparison.OrdinalIgnoreCase) ||
                     e.StartsWith("Edge ", StringComparison.OrdinalIgnoreCase) ||
@@ -167,7 +153,7 @@ public class DefinitionService : IDefinitionService
             definition.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
 
-            var dto = _mapper.Map<WorkflowDefinitionDto>(definition);
+            var dto = await MapWithActiveCountAsync(definition, cancellationToken);
             var msg = warnings.Any() ? "Draft updated with warnings" : "Draft updated";
             return ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto, msg);
         }
@@ -195,34 +181,42 @@ public class DefinitionService : IDefinitionService
             if (definition == null)
                 return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Workflow definition not found");
 
-            if (definition.IsPublished && !request.ForcePublish)
-                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Already published (immutability enforced)");
+            if (definition.IsPublished)
+            {
+                if (request.ForcePublish)
+                {
+                    // Detect post-publish JSON mutation attempt
+                    var entry = _context.Entry(definition);
+                    if (entry.State == EntityState.Modified)
+                    {
+                        var originalJson = entry.OriginalValues.GetValue<string>("JSONDefinition");
+                        var currentJson = definition.JSONDefinition;
+                        if (!string.Equals(originalJson, currentJson, StringComparison.Ordinal))
+                        {
+                            return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(
+                                "Force publish blocked: JSONDefinition changed. Create a new version.");
+                        }
+                    }
 
-            // Structural / graph validation
+                    var dtoIdem = await MapWithActiveCountAsync(definition, cancellationToken);
+                    return ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dtoIdem, "Already published");
+                }
+
+                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Already published (immutable)");
+            }
+
             var validation = _graphValidator.Validate(definition.JSONDefinition, strict: true);
             if (!validation.IsValid)
                 return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(
                     $"Cannot publish invalid definition: {string.Join("; ", validation.Errors)}");
 
-            // Parse DSL once for publish-time action validation
             WorkflowDefinitionJson dsl;
-            try
-            {
-                dsl = BuilderDefinitionAdapter.Parse(definition.JSONDefinition);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to parse workflow JSON during publish validation {DefinitionId}", definitionId);
-                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Invalid workflow JSON");
-            }
+            try { dsl = BuilderDefinitionAdapter.Parse(definition.JSONDefinition); }
+            catch { return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Invalid workflow JSON"); }
 
-            // Publish-time action validation (automatic node policies, webhook rules, etc.)
             var publishErrors = _publishValidator.Validate(dsl.ToModelStub(definition), dsl.Nodes.Select(n => n.ToModelNode()));
             if (publishErrors.Count > 0)
-            {
-                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(
-                    "Publish-time validation failed: " + string.Join("; ", publishErrors));
-            }
+                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Publish-time validation failed: " + string.Join("; ", publishErrors));
 
             definition.IsPublished = true;
             definition.PublishedAt = DateTime.UtcNow;
@@ -232,7 +226,7 @@ public class DefinitionService : IDefinitionService
             await _context.SaveChangesAsync(cancellationToken);
             await _eventPublisher.PublishDefinitionPublishedAsync(definition, cancellationToken);
 
-            var dto = _mapper.Map<WorkflowDefinitionDto>(definition);
+            var dto = await MapWithActiveCountAsync(definition, cancellationToken);
             return ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto, "Definition published");
         }
         catch (Exception ex)
@@ -263,8 +257,8 @@ public class DefinitionService : IDefinitionService
             if (definition == null)
                 return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Workflow definition not found");
 
-            definition.JSONDefinition = definition.JSONDefinition.EnrichEdgesForGateway();
-            var dto = _mapper.Map<WorkflowDefinitionDto>(definition);
+            ApplyGatewayBackfill(definition, persistIfChanged: false);
+            var dto = await MapWithActiveCountAsync(definition, cancellationToken);
             return ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto);
         }
         catch (Exception ex)
@@ -309,15 +303,12 @@ public class DefinitionService : IDefinitionService
                 "name" => request.SortDescending
                     ? query.OrderByDescending(d => d.Name)
                     : query.OrderBy(d => d.Name),
-
                 "version" => request.SortDescending
-                    ? query.OrderByDescending(d => d.Version).ThenBy(d => d.Name)   // deterministic tie-breaker
+                    ? query.OrderByDescending(d => d.Version).ThenBy(d => d.Name)
                     : query.OrderBy(d => d.Version).ThenBy(d => d.Name),
-
                 "publishedat" => request.SortDescending
                     ? query.OrderByDescending(d => d.PublishedAt.HasValue).ThenByDescending(d => d.PublishedAt).ThenBy(d => d.Name)
                     : query.OrderByDescending(d => d.PublishedAt.HasValue).ThenBy(d => d.PublishedAt).ThenBy(d => d.Name),
-
                 _ => request.SortDescending
                     ? query.OrderByDescending(d => d.CreatedAt).ThenBy(d => d.Name)
                     : query.OrderBy(d => d.CreatedAt).ThenBy(d => d.Name)
@@ -335,7 +326,27 @@ public class DefinitionService : IDefinitionService
             foreach (var def in definitions)
                 ApplyGatewayBackfill(def, persistIfChanged: false);
 
-            var dtos = _mapper.Map<List<WorkflowDefinitionDto>>(definitions) ?? new List<WorkflowDefinitionDto>();
+            // Active counts (single grouped query)
+            var defKeys = definitions.Select(d => new { d.Id, d.Version }).ToList();
+            var activeCounts = await _context.WorkflowInstances
+                .Where(i => defKeys.Contains(new { Id = i.WorkflowDefinitionId, Version = i.DefinitionVersion }) &&
+                            (i.Status == InstanceStatus.Running || i.Status == InstanceStatus.Suspended))
+                .GroupBy(i => new { i.WorkflowDefinitionId, i.DefinitionVersion })
+                .Select(g => new
+                {
+                    g.Key.WorkflowDefinitionId,
+                    g.Key.DefinitionVersion,
+                    Count = g.Count()
+                }).ToListAsync(cancellationToken);
+
+            var dtos = new List<WorkflowDefinitionDto>();
+            foreach (var def in definitions)
+            {
+                var dto = _mapper.Map<WorkflowDefinitionDto>(def)!;
+                dto.ActiveInstanceCount = activeCounts
+                    .FirstOrDefault(x => x.WorkflowDefinitionId == def.Id && x.DefinitionVersion == def.Version)?.Count ?? 0;
+                dtos.Add(dto);
+            }
 
             var paged = new PagedResultDto<WorkflowDefinitionDto>
             {
@@ -399,7 +410,7 @@ public class DefinitionService : IDefinitionService
                 return ApiResponseDto<bool>.ErrorResult("Cannot delete published workflow definition");
 
             var hasInstances = await _context.WorkflowInstances
-                .AnyAsync(i => i.WorkflowDefinitionId == definitionId, cancellationToken);
+                .AnyAsync(i => i.WorkflowDefinitionId == definitionId && i.DefinitionVersion == definition.Version, cancellationToken);
             if (hasInstances)
                 return ApiResponseDto<bool>.ErrorResult("Cannot delete definition with existing instances");
 
@@ -442,11 +453,11 @@ public class DefinitionService : IDefinitionService
             {
                 TenantId = tenantId.Value,
                 Name = request.Name,
-                Description = request.Description,
+                Description = request.Description ?? existing.Description,
                 JSONDefinition = request.JSONDefinition.EnrichEdgesForGateway(),
                 Version = existing.Version + 1,
                 IsPublished = false,
-                Tags = request.Tags,
+                Tags = request.Tags ?? existing.Tags,
                 VersionNotes = request.VersionNotes,
                 ParentDefinitionId = existing.Id,
                 CreatedAt = DateTime.UtcNow,
@@ -456,7 +467,7 @@ public class DefinitionService : IDefinitionService
             _context.WorkflowDefinitions.Add(newDef);
             await _context.SaveChangesAsync(cancellationToken);
 
-            var dto = _mapper.Map<WorkflowDefinitionDto>(newDef);
+            var dto = await MapWithActiveCountAsync(newDef, cancellationToken);
             return ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto, "New version created");
         }
         catch (Exception ex)
@@ -465,9 +476,133 @@ public class DefinitionService : IDefinitionService
             return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Failed to create new version");
         }
     }
+
+    public async Task<ApiResponseDto<WorkflowDefinitionInstanceUsageDto>> GetUsageAsync(int definitionId, CancellationToken cancellationToken = default)
+    {
+        var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+        if (!tenantId.HasValue)
+            return ApiResponseDto<WorkflowDefinitionInstanceUsageDto>.ErrorResult("Tenant context required");
+
+        var definition = await _context.WorkflowDefinitions
+            .FirstOrDefaultAsync(d => d.Id == definitionId && d.TenantId == tenantId.Value, cancellationToken);
+
+        if (definition == null)
+            return ApiResponseDto<WorkflowDefinitionInstanceUsageDto>.ErrorResult("Definition not found");
+
+        var counts = await _context.WorkflowInstances
+            .Where(i => i.WorkflowDefinitionId == definition.Id && i.DefinitionVersion == definition.Version)
+            .GroupBy(i => i.Status)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        int running = counts.Where(c => c.Status == InstanceStatus.Running).Select(c => c.Count).FirstOrDefault();
+        int suspended = counts.Where(c => c.Status == InstanceStatus.Suspended).Select(c => c.Count).FirstOrDefault();
+        int completed = counts.Where(c => c.Status == InstanceStatus.Completed).Select(c => c.Count).FirstOrDefault();
+
+        var latestVersion = await _context.WorkflowDefinitions
+            .Where(d => d.TenantId == tenantId.Value && d.Name == definition.Name)
+            .MaxAsync(d => d.Version, cancellationToken);
+
+        var dto = new WorkflowDefinitionInstanceUsageDto
+        {
+            DefinitionId = definition.Id,
+            Version = definition.Version,
+            RunningCount = running,
+            SuspendedCount = suspended,
+            CompletedCount = completed,
+            LatestVersion = latestVersion
+        };
+
+        return ApiResponseDto<WorkflowDefinitionInstanceUsageDto>.SuccessResult(dto);
+    }
+
+    public async Task<ApiResponseDto<WorkflowDefinitionDto>> UnpublishAsync(int definitionId, UnpublishDefinitionRequestDto request, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!tenantId.HasValue)
+                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Tenant context required");
+
+            var definition = await _context.WorkflowDefinitions
+                .FirstOrDefaultAsync(d => d.Id == definitionId && d.TenantId == tenantId.Value, cancellationToken);
+
+            if (definition == null)
+                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Workflow definition not found");
+            if (!definition.IsPublished)
+                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Definition already unpublished");
+
+            var instances = await _context.WorkflowInstances
+                .Where(i => i.WorkflowDefinitionId == definition.Id && i.DefinitionVersion == definition.Version)
+                .ToListAsync(cancellationToken);
+
+            var running = instances.Where(i => i.Status == InstanceStatus.Running).ToList();
+            var suspended = instances.Where(i => i.Status == InstanceStatus.Suspended).ToList();
+
+            if ((running.Any() || suspended.Any()) && !request.ForceTerminateAndUnpublish)
+            {
+                var errors = new List<ErrorDto>
+                {
+                    new() { Code = "ActiveInstancesPresent", Message = $"Running={running.Count}, Suspended={suspended.Count}" }
+                };
+                _logger.LogWarning("Unpublish blocked due to active instances def={DefinitionId} run={Run} susp={Susp}",
+                    definition.Id, running.Count, suspended.Count);
+                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Active instances present", errors);
+            }
+
+            await using var tx = await _context.Database.BeginTransactionAsync(cancellationToken);
+
+            if (request.ForceTerminateAndUnpublish && (running.Any() || suspended.Any()))
+            {
+                var cancelTargets = running.Concat(suspended).ToList();
+                foreach (var inst in cancelTargets)
+                {
+                    inst.Status = InstanceStatus.Cancelled;
+                    inst.CompletedAt = DateTime.UtcNow;
+                    inst.UpdatedAt = DateTime.UtcNow;
+                }
+                await _context.SaveChangesAsync(cancellationToken);
+
+                foreach (var inst in cancelTargets)
+                {
+                    await _eventPublisher.PublishInstanceForceCancelledAsync(inst, "unpublish", cancellationToken);
+                }
+            }
+
+            definition.IsPublished = false;
+            definition.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync(cancellationToken);
+            await _eventPublisher.PublishDefinitionUnpublishedAsync(definition, cancellationToken);
+
+            await tx.CommitAsync(cancellationToken);
+
+            var dto = await MapWithActiveCountAsync(definition, cancellationToken);
+            return ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto,
+                request.ForceTerminateAndUnpublish
+                    ? "Definition unpublished (active instances force cancelled)"
+                    : "Definition unpublished");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unpublish failed {DefinitionId}", definitionId);
+            return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Failed to unpublish workflow definition");
+        }
+    }
+
+    private async Task<WorkflowDefinitionDto> MapWithActiveCountAsync(WorkflowDefinition def, CancellationToken ct)
+    {
+        var count = await _context.WorkflowInstances
+            .Where(i => i.WorkflowDefinitionId == def.Id &&
+                        i.DefinitionVersion == def.Version &&
+                        (i.Status == InstanceStatus.Running || i.Status == InstanceStatus.Suspended))
+            .CountAsync(ct);
+
+        var dto = _mapper.Map<WorkflowDefinitionDto>(def)!;
+        dto.ActiveInstanceCount = count;
+        return dto;
+    }
 }
 
-// OPTIONAL helper extensions (keep local/private if preferred)
 file static class DefinitionServicePublishValidationAdapters
 {
     public static WorkflowService.Domain.Models.WorkflowDefinition ToModelStub(
@@ -478,12 +613,10 @@ file static class DefinitionServicePublishValidationAdapters
         this WorkflowService.Domain.Dsl.WorkflowNode node) => node;
 }
 
-// No-op validator used when tests (or legacy code) omit the new dependency.
 file sealed class NoopWorkflowPublishValidator : IWorkflowPublishValidator
 {
     public static readonly NoopWorkflowPublishValidator Instance = new();
     private NoopWorkflowPublishValidator() { }
-
-    public IReadOnlyList<string> Validate(ModelDefinition definition, IEnumerable<DslNode> nodes)
+    public IReadOnlyList<string> Validate(WorkflowService.Domain.Models.WorkflowDefinition definition, IEnumerable<WorkflowService.Domain.Dsl.WorkflowNode> nodes)
         => Array.Empty<string>();
 }
