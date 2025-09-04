@@ -7,6 +7,7 @@ using WorkflowService.Domain.Dsl;
 using Microsoft.Extensions.Logging;
 using Moq;
 using System.Text.Json;
+using WorkflowService.Engine.Gateways; // ADD
 
 namespace WorkflowService.Tests.Engine;
 
@@ -20,7 +21,15 @@ public class GatewayConditionTests : TestBase
     {
         _mockConditionEvaluator = new Mock<IConditionEvaluator>();
         _mockLogger = CreateMockLogger<GatewayEvaluator>();
-        _gatewayEvaluator = new GatewayEvaluator(_mockConditionEvaluator.Object, _mockLogger.Object);
+
+        // Create registry with only the exclusive strategy (legacy behavior)
+        IGatewayStrategyRegistry registry = new GatewayStrategyRegistry(
+            new IGatewayStrategy[] { new ExclusiveGatewayStrategy() });
+
+        _gatewayEvaluator = new GatewayEvaluator(
+            _mockConditionEvaluator.Object,
+            _mockLogger.Object,
+            registry);
     }
 
     [Fact]
@@ -84,7 +93,7 @@ public class GatewayConditionTests : TestBase
         // Arrange
         var context = """{"approval": false, "amount": 15000}""";
         
-        var approvalGateway = new WorkflowNode
+        var gateway = new WorkflowNode
         {
             Id = "amount_gateway",
             Type = NodeTypes.Gateway,
@@ -96,7 +105,7 @@ public class GatewayConditionTests : TestBase
             }
         };
 
-        var testInstance = new WorkflowInstance
+        var instance = new WorkflowInstance
         {
             Id = 2,
             TenantId = 1,
@@ -112,7 +121,7 @@ public class GatewayConditionTests : TestBase
             .ReturnsAsync(false);
 
         // Act
-        var result = await _gatewayEvaluator.ExecuteAsync(approvalGateway, testInstance, context);
+        var result = await _gatewayEvaluator.ExecuteAsync(gateway, instance, context);
 
         // Assert
         result.Should().NotBeNull();
@@ -125,8 +134,8 @@ public class GatewayConditionTests : TestBase
             Times.Once);
 
         // Verify context shows false result
-        var updatedContext = JsonSerializer.Deserialize<Dictionary<string, object>>(result.UpdatedContext!);
-        updatedContext.Should().ContainKey("gateway_amount_gateway");
+        var updated = JsonSerializer.Deserialize<Dictionary<string, object>>(result.UpdatedContext!);
+        updated.Should().ContainKey("gateway_amount_gateway");
     }
 
     [Fact]
@@ -135,7 +144,7 @@ public class GatewayConditionTests : TestBase
         // Arrange
         var context = """{"malformed": "json"}""";
         
-        var faultyGateway = new WorkflowNode
+        var gateway = new WorkflowNode
         {
             Id = "faulty_gateway",
             Type = NodeTypes.Gateway,
@@ -147,7 +156,7 @@ public class GatewayConditionTests : TestBase
             }
         };
 
-        var testInstance = new WorkflowInstance
+        var instance = new WorkflowInstance
         {
             Id = 3,
             TenantId = 1,
@@ -163,7 +172,7 @@ public class GatewayConditionTests : TestBase
             .ThrowsAsync(new InvalidOperationException("Invalid JsonLogic expression"));
 
         // Act
-        var result = await _gatewayEvaluator.ExecuteAsync(faultyGateway, testInstance, context);
+        var result = await _gatewayEvaluator.ExecuteAsync(gateway, instance, context);
 
         // Assert
         result.Should().NotBeNull();
@@ -176,7 +185,7 @@ public class GatewayConditionTests : TestBase
             Times.Once);
             
         // Context should still be updated with the default true result
-        result.UpdatedContext.Should().NotBeNull();
+        result.UpdatedContext.Should().Contain("gateway_faulty_gateway");
     }
 
     [Fact]
@@ -185,7 +194,7 @@ public class GatewayConditionTests : TestBase
         // Arrange
         var context = """{"data": "test"}""";
         
-        var simpleGateway = new WorkflowNode
+        var gateway = new WorkflowNode
         {
             Id = "simple_gateway",
             Type = NodeTypes.Gateway,
@@ -197,7 +206,7 @@ public class GatewayConditionTests : TestBase
             }
         };
 
-        var testInstance = new WorkflowInstance
+        var instance = new WorkflowInstance
         {
             Id = 4,
             TenantId = 1,
@@ -208,7 +217,7 @@ public class GatewayConditionTests : TestBase
         };
 
         // Act
-        var result = await _gatewayEvaluator.ExecuteAsync(simpleGateway, testInstance, context);
+        var result = await _gatewayEvaluator.ExecuteAsync(gateway, instance, context);
 
         // Assert
         result.Should().NotBeNull();
@@ -221,6 +230,6 @@ public class GatewayConditionTests : TestBase
             Times.Never);
             
         // Context should be updated with default true result
-        result.UpdatedContext.Should().NotBeNull();
+        result.UpdatedContext.Should().Contain("gateway_simple_gateway");
     }
 }

@@ -19,6 +19,7 @@ using WorkflowService.Engine.AutomaticActions;
 using WorkflowService.Engine.AutomaticActions.Executors;
 using WorkflowService.Engine.Diagnostics;
 using WorkflowService.Engine.Validation; // ADD
+using WorkflowService.Engine.Gateways; // ADD
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -164,6 +165,11 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 // Diagnostics options & buffers
 builder.Services.Configure<WorkflowDiagnosticsOptions>(builder.Configuration.GetSection("Workflow:Diagnostics"));
 builder.Services.AddSingleton<IAutomaticDiagnosticsBuffer, AutomaticDiagnosticsBuffer>();
+
+// Gateway strategies
+builder.Services.AddSingleton<IGatewayStrategy, ExclusiveGatewayStrategy>();
+builder.Services.AddSingleton<IGatewayStrategy, ParallelGatewayStrategy>();
+builder.Services.AddSingleton<IGatewayStrategyRegistry, GatewayStrategyRegistry>();
 
 var app = builder.Build();
 

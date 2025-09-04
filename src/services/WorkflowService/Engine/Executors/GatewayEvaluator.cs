@@ -2,75 +2,71 @@ using WorkflowService.Domain.Dsl;
 using WorkflowService.Domain.Models;
 using WorkflowService.Engine.Interfaces;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using WorkflowService.Engine.Gateways;
 
 namespace WorkflowService.Engine.Executors;
 
 /// <summary>
-/// Executor for gateway nodes (conditional branching)
+/// Delegating gateway executor using strategy abstraction.
 /// </summary>
 public class GatewayEvaluator : INodeExecutor
 {
     private readonly IConditionEvaluator _conditionEvaluator;
     private readonly ILogger<GatewayEvaluator> _logger;
+    private readonly IGatewayStrategyRegistry _strategyRegistry;
 
     public string NodeType => NodeTypes.Gateway;
 
     public GatewayEvaluator(
         IConditionEvaluator conditionEvaluator,
-        ILogger<GatewayEvaluator> logger)
+        ILogger<GatewayEvaluator> logger,
+        IGatewayStrategyRegistry strategyRegistry)
     {
         _conditionEvaluator = conditionEvaluator;
         _logger = logger;
+        _strategyRegistry = strategyRegistry;
     }
 
     public bool CanExecute(WorkflowNode node) => node.IsGateway();
 
-    public async Task<NodeExecutionResult> ExecuteAsync(WorkflowNode node, WorkflowInstance instance, string context, CancellationToken cancellationToken = default)
+    public async Task<NodeExecutionResult> ExecuteAsync(
+        WorkflowNode node,
+        WorkflowInstance instance,
+        string context,
+        CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Executing gateway node {NodeId} for instance {InstanceId}", node.Id, instance.Id);
+            var (kind, cfgNode) = ExtractStrategy(node);
+            var strategy = _strategyRegistry.Get(kind);
 
-            var condition = GetCondition(node);
-            var gatewayType = node.GetGatewayType();
+            _logger.LogInformation("GATEWAY_EXEC Node={NodeId} Strategy={Strategy}", node.Id, strategy.Kind);
 
-            _logger.LogInformation("Gateway node {NodeId} type: {GatewayType}, condition: {Condition}", 
-                node.Id, gatewayType, condition);
+            var gCtx = new GatewayStrategyContext(
+                node,
+                instance,
+                context,
+                cfgNode,
+                _conditionEvaluator,
+                cancellationToken);
 
-            // ✅ FIX: Evaluate condition using the proper condition evaluator
-            bool conditionResult = true; // Default for MVP
-            
-            if (!string.IsNullOrEmpty(condition) && condition != "true")
-            {
-                try
-                {
-                    conditionResult = await _conditionEvaluator.EvaluateAsync(condition, context);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to evaluate condition '{Condition}' for gateway {NodeId}, defaulting to true", 
-                        condition, node.Id);
-                    conditionResult = true; // Default to true on evaluation failure
-                }
-            }
+            var decision = await strategy.EvaluateAsync(gCtx);
 
-            _logger.LogInformation("Gateway node {NodeId} condition evaluated to: {Result}", node.Id, conditionResult);
+            var updatedContext = RecordDecision(context, node.Id, decision);
 
-            // ✅ FIX: Let the WorkflowRuntime handle next node calculation
-            // The runtime has access to the full workflow definition with edges
-            var result = new NodeExecutionResult
+            return new NodeExecutionResult
             {
                 IsSuccess = true,
-                ShouldWait = false, // Gateways evaluate immediately
-                NextNodeIds = new List<string>(), // Let runtime calculate next nodes based on edges
-                UpdatedContext = UpdateContextWithGatewayResult(context, node.Id, conditionResult)
+                ShouldWait = decision.ShouldWait,
+                // Leave traversal to runtime for now; future: use decision.ChosenEdgeIds
+                NextNodeIds = new List<string>(),
+                UpdatedContext = updatedContext
             };
-
-            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error evaluating gateway node {NodeId}", node.Id);
+            _logger.LogError(ex, "GATEWAY_EXEC_FAIL Node={NodeId}", node.Id);
             return new NodeExecutionResult
             {
                 IsSuccess = false,
@@ -79,44 +75,75 @@ public class GatewayEvaluator : INodeExecutor
         }
     }
 
-    // ✅ ADD: Helper methods to handle frontend JSON structure
-    private string GetCondition(WorkflowNode node)
+    private (string strategyKind, JsonObject? cfg) ExtractStrategy(WorkflowNode node)
     {
-        // Handle frontend JSON structure
-        if (node.Properties.TryGetValue("condition", out var conditionValue))
+        // Expected: properties.strategy = { kind: "exclusive", config: {...} }
+        if (node.Properties.TryGetValue("strategy", out var raw))
         {
-            if (conditionValue is JsonElement jsonElement && jsonElement.ValueKind == JsonValueKind.String)
+            try
             {
-                return jsonElement.GetString() ?? string.Empty;
+                if (raw is JsonElement el && el.ValueKind == JsonValueKind.Object)
+                {
+                    var obj = JsonNode.Parse(el.GetRawText()) as JsonObject;
+                    if (obj != null)
+                    {
+                        var kind = obj.TryGetPropertyValue("kind", out var kNode) &&
+                                   kNode is JsonValue kv &&
+                                   kv.TryGetValue<string>(out var kStr) &&
+                                   !string.IsNullOrWhiteSpace(kStr)
+                            ? kStr.Trim()
+                            : "exclusive";
+
+                        JsonObject? cfg = null;
+                        if (obj.TryGetPropertyValue("config", out var cfgNode) && cfgNode is JsonObject cObj)
+                            cfg = cObj;
+                        return (kind, cfg);
+                    }
+                }
+                else if (raw is string s && !string.IsNullOrWhiteSpace(s))
+                {
+                    return (s.Trim(), null);
+                }
             }
+            catch { /* fall through */ }
         }
 
-        return node.GetProperty<string>("condition") ?? "true";
+        // Legacy gatewayType fallback -> exclusive
+        var legacy = node.GetProperty<string>("gatewayType");
+        if (!string.IsNullOrWhiteSpace(legacy))
+            return (legacy!, null);
+
+        return ("exclusive", null);
     }
 
-    private string UpdateContextWithGatewayResult(string currentContext, string nodeId, bool conditionResult)
+    private string RecordDecision(string currentContextJson, string nodeId, GatewayStrategyDecision decision)
     {
+        JsonObject root;
         try
         {
-            var context = JsonSerializer.Deserialize<Dictionary<string, object>>(currentContext) ?? new();
-            
-            // Add gateway result to context for future nodes to use
-            context[$"gateway_{nodeId}"] = new
-            {
-                NodeId = nodeId,
-                ConditionResult = conditionResult,
-                EvaluatedAt = DateTime.UtcNow
-            };
-
-            return JsonSerializer.Serialize(context);
+            root = JsonNode.Parse(currentContextJson) as JsonObject ?? new JsonObject();
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogWarning(ex, "Failed to update context with gateway result for node {NodeId}", nodeId);
-            return currentContext;
+            root = new JsonObject();
         }
-    }
 
-    // NOTE: Edge selection & condition branching now handled centrally in WorkflowRuntime.
-    // This executor only records evaluation success/failure context
+        if (root["_gatewayDecisions"] is not JsonObject decisionsObj)
+        {
+            decisionsObj = new JsonObject();
+            root["_gatewayDecisions"] = decisionsObj;
+        }
+
+        decisionsObj[nodeId] = new JsonObject
+        {
+            ["strategy"] = decision.StrategyKind,
+            ["conditionResult"] = decision.ConditionResult,
+            ["chosenEdgeIds"] = new JsonArray(decision.ChosenEdgeIds.Select(e => (JsonNode?)e).ToArray()),
+            ["shouldWait"] = decision.ShouldWait,
+            ["notes"] = decision.Notes,
+            ["evaluatedAtUtc"] = DateTime.UtcNow.ToString("O")
+        };
+
+        return root.ToJsonString(new JsonSerializerOptions { WriteIndented = false });
+    }
 }
