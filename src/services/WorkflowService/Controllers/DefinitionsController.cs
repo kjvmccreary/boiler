@@ -153,6 +153,10 @@ public class DefinitionsController : ControllerBase
     }
 
     // PUBLISH (preflight graph validation retained for backward compatibility with tests, then delegate)
+    // TODO(ValidationCleanup):
+    //   - Remove preflight graph validation once tests are updated to rely solely on DefinitionService.PublishAsync.
+    //   - At that time also remove IWorkflowGraphValidator injection from this controller.
+    //   - Ensure tests explicitly send a non-null PublishDefinitionRequestDto to avoid default instantiation here.
     [HttpPost("{id:int}/publish")]
     [RequiresPermission(Permissions.Workflow.PublishDefinitions)]
     public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> Publish(
@@ -160,10 +164,10 @@ public class DefinitionsController : ControllerBase
         [FromBody] PublishDefinitionRequestDto? request,
         CancellationToken ct)
     {
-        // Some existing tests send null body; create a default so downstream logic doesn’t NRE.
+        // TODO(ValidationCleanup): Drop this defaulting once clients/tests always send a body.
         request ??= new PublishDefinitionRequestDto();
 
-        // Preflight: load definition (draft or already published) to run graph validation
+        // TODO(ValidationCleanup): Remove this preflight block (duplicate of service-level validation).
         var existing = await _definitionService.GetByIdAsync(id, null, ct);
         if (!existing.Success || existing.Data == null)
             return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(existing.Message ?? "Definition not found"));
@@ -174,7 +178,6 @@ public class DefinitionsController : ControllerBase
             var vr = _graphValidator.ValidateForPublish(dsl);
             if (!vr.IsValid)
             {
-                // Mirror legacy response shape expected by tests
                 return BadRequest(new
                 {
                     success = false,
@@ -189,7 +192,6 @@ public class DefinitionsController : ControllerBase
             return BadRequest(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Invalid workflow JSON"));
         }
 
-        // Delegate to service (which will also validate; duplication tolerated until tests are updated)
         var resp = await _definitionService.PublishAsync(id, request, ct);
         return resp.Success ? Ok(resp) : BadRequest(resp);
     }
