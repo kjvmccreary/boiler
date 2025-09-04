@@ -1228,6 +1228,17 @@ public class WorkflowRuntime : IWorkflowRuntime
         var cancelRemaining = joinNode.GetProperty<bool?>("cancelRemaining") ?? false;
         var count = joinNode.GetProperty<int?>("count") ?? 0;
         var expression = joinNode.GetProperty<string>("expression");
+        // Quorum (B1): optional properties
+        var quorumThresholdCount = joinNode.GetProperty<int?>("thresholdCount") ?? 0;
+        double quorumThresholdPercent = 0;
+        if (joinNode.Properties.TryGetValue("thresholdPercent", out var tpRaw))
+        {
+            if (tpRaw is int iTp) quorumThresholdPercent = iTp;
+            else if (tpRaw is long lTp) quorumThresholdPercent = lTp;
+            else if (tpRaw is double dTp) quorumThresholdPercent = dTp;
+            else if (tpRaw is float fTp) quorumThresholdPercent = fTp;
+            else if (tpRaw is string sTp && double.TryParse(sTp, out var p)) quorumThresholdPercent = p;
+        }
 
         var root = SafeParseContext(instance);
         if (root["_parallelGroups"] is not JsonObject groups ||
@@ -1252,11 +1263,38 @@ public class WorkflowRuntime : IWorkflowRuntime
                 ["mode"] = mode,
                 ["cancelRemaining"] = cancelRemaining,
                 ["count"] = count,
+                ["thresholdPercent"] = quorumThresholdPercent,
+                ["thresholdCount"] = quorumThresholdCount,
                 ["expression"] = expression,
                 ["arrivals"] = new JsonArray(),
                 ["satisfied"] = false,
                 ["satisfiedAtUtc"] = null
             };
+
+            // ---- B2: Timeout metadata capture (configured on join node) ----
+            if (joinNode.Properties.TryGetValue("timeout", out var timeoutRaw) && timeoutRaw is JsonElement toEl && toEl.ValueKind == JsonValueKind.Object)
+            {
+                int seconds = 0;
+                string? onTimeout = null;
+                string? timeoutTarget = null;
+                if (toEl.TryGetProperty("seconds", out var sEl) && sEl.ValueKind == JsonValueKind.Number)
+                    seconds = sEl.GetInt32();
+                if (toEl.TryGetProperty("onTimeout", out var otEl) && otEl.ValueKind == JsonValueKind.String)
+                    onTimeout = otEl.GetString();
+                if (toEl.TryGetProperty("target", out var tgtEl) && tgtEl.ValueKind == JsonValueKind.String)
+                    timeoutTarget = tgtEl.GetString();
+
+                if (seconds > 0)
+                {
+                    var timeoutAt = DateTime.UtcNow.AddSeconds(seconds);
+                    joinMeta["timeoutSeconds"] = seconds;
+                    joinMeta["timeoutAtUtc"] = timeoutAt.ToString("O");
+                    joinMeta["onTimeout"] = (onTimeout ?? "force").Trim().ToLowerInvariant(); // route | fail | force
+                    joinMeta["timeoutTarget"] = string.IsNullOrWhiteSpace(timeoutTarget) ? null : timeoutTarget;
+                    joinMeta["timeoutTriggered"] = false;
+                }
+            }
+            // ----------------------------------------------------------------
             groupObj["join"] = joinMeta;
         }
 
@@ -1294,16 +1332,37 @@ public class WorkflowRuntime : IWorkflowRuntime
         }
 
         // evaluate satisfaction
-        bool satisfied = mode switch
+        bool satisfied;
+        if (mode == "quorum")
         {
-            "all" => branches.All(bn => arrivals.Any(a => a!.GetValue<string>()!
-                .Equals(bn!.GetValue<string>(), StringComparison.OrdinalIgnoreCase))),
-            "any" => arrivals.Count > 0,
-            "count" => count > 0 && arrivals.Count >= count,
-            "expression" => EvaluateJoinExpression(mode, expression, branches, arrivals, instance.Context),
-            _ => branches.All(bn => arrivals.Any(a => a!.GetValue<string>()!
-                .Equals(bn!.GetValue<string>(), StringComparison.OrdinalIgnoreCase)))
-        };
+            // Determine effective quorum count
+            int totalBranches = branches.Count;
+            int effectiveCount = quorumThresholdCount;
+            if (effectiveCount <= 0)
+            {
+                if (quorumThresholdPercent > 0)
+                {
+                    effectiveCount = (int)Math.Ceiling(totalBranches * (quorumThresholdPercent / 100.0));
+                }
+            }
+            if (effectiveCount <= 0) effectiveCount = totalBranches; // fallback -> all
+            joinMeta["thresholdCount"] = effectiveCount;
+            joinMeta["thresholdPercent"] = quorumThresholdPercent;
+            satisfied = arrivals.Count >= effectiveCount;
+        }
+        else
+        {
+            satisfied = mode switch
+            {
+                "all" => branches.All(bn => arrivals.Any(a => a!.GetValue<string>()!
+                    .Equals(bn!.GetValue<string>(), StringComparison.OrdinalIgnoreCase))),
+                "any" => arrivals.Count > 0,
+                "count" => count > 0 && arrivals.Count >= count,
+                "expression" => EvaluateJoinExpression(mode, expression, branches, arrivals, instance.Context),
+                _ => branches.All(bn => arrivals.Any(a => a!.GetValue<string>()!
+                    .Equals(bn!.GetValue<string>(), StringComparison.OrdinalIgnoreCase)))
+            };
+        }
 
         if (!satisfied)
         {
@@ -1355,6 +1414,10 @@ public class WorkflowRuntime : IWorkflowRuntime
                 mode,
                 count,
                 cancelRemaining,
+                quorumThresholdPercent = mode == "quorum" ? quorumThresholdPercent : (double?)null,
+                quorumThresholdCount = mode == "quorum" ? (int?)joinMeta["thresholdCount"]!.GetValue<int>() : null,
+                timeoutSeconds = joinMeta.TryGetPropertyValue("timeoutSeconds", out var ts) ? ts?.GetValue<int?>() : null,
+                timeoutTriggered = false,
                 arrivals = arrivals.Select(a => a!.GetValue<string>()),
                 cancelledBranches = cancelled
             }), null).GetAwaiter().GetResult();

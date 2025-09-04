@@ -23,11 +23,9 @@ public sealed class AbTestGatewayStrategy : IGatewayStrategy
 
     public Task<GatewayStrategyDecision> EvaluateAsync(GatewayStrategyContext context)
     {
-        // 1. Attempt snapshot reuse BEFORE any hashing
-        if (TryReuseSnapshot(context, out var reusedDecision))
-        {
-            return Task.FromResult(reusedDecision);
-        }
+        // A4: Check forced override first (takes precedence over snapshot & hashing)
+        // Path: _overrides.gateway[gatewayNodeId] = "VariantName"
+        string? forcedVariant = TryGetForcedOverride(context.CurrentContextJson, context.Node.Id);
 
         // 2. Normal fresh evaluation
         var configObj = TryGetStrategyConfig(context.Node);
@@ -39,7 +37,7 @@ public sealed class AbTestGatewayStrategy : IGatewayStrategy
         if (variantsArr == null || variantsArr.Count == 0)
             return Task.FromResult(Fallback("No variants", context));
 
-        var variants = new List<VariantRow>(variantsArr.Count);
+        var variants = new List<VariantRow>(variantsArr.Count); // includes weights for diagnostics
         double totalWeightRaw = 0;
         foreach (var v in variantsArr)
         {
@@ -53,6 +51,7 @@ public sealed class AbTestGatewayStrategy : IGatewayStrategy
         if (variants.Count == 0)
             return Task.FromResult(Fallback("All variants invalid", context));
 
+        // Build cumulative distribution (for potential normal selection)
         double cumulative = 0;
         foreach (var vr in variants)
         {
@@ -62,6 +61,60 @@ public sealed class AbTestGatewayStrategy : IGatewayStrategy
 
         var keyValue = ExtractKeyValue(context.CurrentContextJson, keyPath) ?? "∅";
 
+        // 1) Forced override path (no snapshot write)
+        if (!string.IsNullOrWhiteSpace(forcedVariant))
+        {
+            // Optional: find weight if variant part of config
+            var match = variants.FirstOrDefault(v =>
+                v.Target.Equals(forcedVariant, StringComparison.OrdinalIgnoreCase));
+
+            // Still compute composite hash for telemetry consistency
+            var overrideHash = _hasher.HashComposite(
+                keyValue,
+                context.Node.Id ?? "",
+                context.Instance.DefinitionVersion.ToString());
+
+            var edgesForced = context.OutgoingEdges
+                .Where(e =>
+                    string.Equals(e.Target ?? e.To ?? e.EffectiveTarget, forcedVariant,
+                        StringComparison.OrdinalIgnoreCase))
+                .Select(e => e.Id ?? $"{e.Source ?? e.From}->{e.Target ?? e.To}")
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var diagnosticsForced = new Dictionary<string, object>
+            {
+                ["keyPath"] = keyPath,
+                ["keyValue"] = keyValue,
+                ["hash"] = overrideHash,
+                ["overrideApplied"] = true,
+                ["overrideVariant"] = forcedVariant,
+                ["variantTarget"] = forcedVariant,
+                ["variantWeight"] = match?.Weight,
+                ["selectionIndex"] = match is null ? -1 : variants.IndexOf(match),
+                ["forced"] = true
+            };
+
+            return Task.FromResult(new GatewayStrategyDecision
+            {
+                StrategyKind = Kind,
+                ConditionResult = true,
+                ChosenEdgeIds = edgesForced,
+                SelectedTargetNodeIds = new List<string> { forcedVariant },
+                ShouldWait = false,
+                Diagnostics = diagnosticsForced,
+                Notes = "abTest override selection",
+                ElapsedMs = 0
+            });
+        }
+
+        // 2) Snapshot reuse (only if no override)
+        if (TryReuseSnapshot(context, out var reusedDecision))
+        {
+            return Task.FromResult(reusedDecision);
+        }
+
+        // 3) Normal deterministic selection
         var compositeHash = _hasher.HashComposite(
             keyValue,
             context.Node.Id ?? "",
@@ -209,6 +262,30 @@ public sealed class AbTestGatewayStrategy : IGatewayStrategy
     #endregion
 
     #region Helpers
+    private static string? TryGetForcedOverride(string contextJson, string? gatewayId)
+    {
+        if (string.IsNullOrWhiteSpace(contextJson) || string.IsNullOrWhiteSpace(gatewayId))
+            return null;
+        try
+        {
+            using var doc = JsonDocument.Parse(contextJson);
+            if (!doc.RootElement.TryGetProperty("_overrides", out var ovRoot) ||
+                ovRoot.ValueKind != JsonValueKind.Object)
+                return null;
+            if (!ovRoot.TryGetProperty("gateway", out var gwObj) ||
+                gwObj.ValueKind != JsonValueKind.Object)
+                return null;
+            if (!gwObj.TryGetProperty(gatewayId, out var forced) ||
+                forced.ValueKind != JsonValueKind.String)
+                return null;
+            var v = forced.GetString();
+            return string.IsNullOrWhiteSpace(v) ? null : v.Trim();
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
     private static JsonObject? TryGetStrategyConfig(WorkflowNode node)
     {

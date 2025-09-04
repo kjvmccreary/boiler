@@ -14,7 +14,7 @@ A. A/B TEST / FEATURE FLAG STRATEGY
 •	Dependencies: None beyond existing strategy registry.
 •	Risk: Low.
 •	Triage: MVP (Critical).~~
-A2. External Feature Flag Provider Plug-In
+~~A2. External Feature Flag Provider Plug-In
 •	Intent: Allow strategy to ask an injected provider whether a flag is on → pick branch A (flag on) else branch B.
 •	Scope:
 •	config: { flag:"newFlowX", onTarget:"nodeA", offTarget:"nodeB", required=true }
@@ -25,7 +25,7 @@ A2. External Feature Flag Provider Plug-In
 •	Outage path produces deterministic fallback and an event FeatureFlagFallback.
 •	Dependencies: DI registration.
 •	Risk: Medium (external latency).
-•	Triage: MVP (Useful for progressive rollout).
+•	Triage: MVP (Useful for progressive rollout).~~
 ~~A3. Experiment Enrollment Snapshot (Persist Enrollment ID)
 •	Intent: Persist chosen experiment metadata in context to keep consistent if key changes mid-flow.
 •	Scope:
@@ -34,7 +34,7 @@ A2. External Feature Flag Provider Plug-In
 •	Acceptance: Changing context key after decision does not alter variant.
 •	Risk: Low.
 •	Triage: MVP (Consistency).~~
-A4. Override / Forced Variant via Context
+~~A4. Override / Forced Variant via Context
 •	Intent: Permit forced override (e.g., QA or targeted user) with context path _overrides.gateway[gatewayId]="variantName".
 •	Acceptance: Override logged, variant respected even if weight mismatch.
 •	Risk: Low.
@@ -43,7 +43,7 @@ A5. Metrics Hook / Outbox Event “ExperimentAssigned”
 •	Intent: Emit outbox message for experiment telemetry.
 •	Acceptance: Event contains: gatewayId, variant, definitionId, instanceId, tenantId, hash.
 •	Risk: Low.
-•	Triage: Post-MVP.
+•	Triage: Post-MVP.~~
 A6. Multi-Variant (Top-K) Selection (allowMultiple)
 •	Intent: Select K distinct variants (e.g., multi-arm test).
 •	Acceptance: When allowMultiple:true & topK:N, returns up to N unique targets deterministically stable.
@@ -60,15 +60,15 @@ A8. Sampling Guard / Minimum Traffic Threshold
 •	Risk: Low.
 •	Triage: Post-MVP.
 B. ADVANCED JOIN / WAIT (CONVERGENCE) STRATEGIES
-B1. Convergence Policy: “quorum”
+~~B1. Convergence Policy: “quorum”
 •	Intent: Flow continues when X% (or fraction) of parallel branches arrive.
 •	Scope:
 •	join.mode = "quorum", config: { thresholdPercent: 60 } or thresholdCount override.
 •	Satisfied when arrivals / total ≥ threshold.
 •	Acceptance: Event includes quorumSatisfied:true + threshold data.
 •	Risk: Low.
-•	Triage: MVP (Common partial convergence use case).
-B2. Convergence Timeout
+•	Triage: MVP (Common partial convergence use case).~~
+~~B2. Convergence Timeout
 •	Intent: If join not satisfied within duration, escalate (complete with partial, fail, or route to timeoutTarget).
 •	Scope:
 •	join.timeout: { seconds: 900, onTimeout:"route" | "fail" | "force" , target:"timeoutHandler" }
@@ -76,7 +76,7 @@ B2. Convergence Timeout
 •	Acceptance: Deterministic action; context updates join.timeoutTriggered:true.
 •	Dependencies: Timer/worker reuse or new lightweight query.
 •	Risk: Medium (operational timing).
-•	Triage: MVP (Prevents indefinite hang).
+•	Triage: MVP (Prevents indefinite hang).~~
 B3. Partial Cancellation Policy Extensions
 •	Intent: Fine-grained control after satisfaction.
 •	cancelRemainingMode: "immediate" | "graceful" | "none"
@@ -158,18 +158,18 @@ D7. Expression Mode Safety Tests (malformed expressions)
 MVP CUT (RECOMMENDED FOR INITIAL PHASE 3 INCREMENT)
 Critical (ship first):
 •	A1: abTest strategy core (DONE ✅)
-•	A2: Feature flag provider (basic on/off)
+•	A2: Feature flag provider (basic on/off) (DONE ✅)
 •	A3: Enrollment snapshot persistence (DONE ✅)
-•	B1: quorum join mode
-•	B2: join timeout
+•	B1: quorum join mode (DONE ✅)
+•	B2: join timeout (DONE ✅)
 •	C1: context history pruning (DONE ✅)
 •	C2: diagnostics version tag (DONE ✅)
 •	C3: deterministic hash utility (DONE ✅)
 •	C4: strategy config validation (DONE ✅)
 •	D1, D3, D4, D5 (pending), D6 (DONE ✅)
 Nice-to-have but deferrable:
-•	Override (A4)
-•	Experiment assigned outbox event (A5)
+•	Override (A4) (DONE ✅)
+•	Experiment assigned outbox event (A5) (DONE ✅)
 •	Partial cancellation refinements (B3)
 •	Weighted quorum (B6)
 •	Telemetry sink (C5)

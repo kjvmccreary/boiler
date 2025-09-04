@@ -78,6 +78,7 @@ public class GatewayParallelStrategyTests : TestBase
         var pruner = new Mock<IWorkflowContextPruner>();
         pruner.Setup(p => p.PruneGatewayHistory(It.IsAny<JsonArray>())).Returns(0);
         var pruneEmitter = new Mock<IGatewayPruningEventEmitter>();
+        var expEmitter = new Mock<IExperimentAssignmentEmitter>();
 
         var gatewayExecutor = new GatewayEvaluator(
             condEval.Object,
@@ -85,7 +86,8 @@ public class GatewayParallelStrategyTests : TestBase
             gatewayStrategies,
             hasher.Object,
             pruner.Object,
-            pruneEmitter.Object);
+            pruneEmitter.Object,
+            expEmitter.Object);
 
         var executors = new INodeExecutor[]
         {

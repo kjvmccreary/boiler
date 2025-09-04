@@ -3,7 +3,7 @@ using Moq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using WorkflowService.Domain.Models;
-using WorkflowService.Domain.Dsl;              // ADDED (WorkflowNode, WorkflowEdge)
+using WorkflowService.Domain.Dsl;
 using WorkflowService.Engine.Executors;
 using WorkflowService.Engine.Gateways;
 using WorkflowService.Engine.Interfaces;
@@ -11,6 +11,7 @@ using Contracts.Services;
 using Xunit;
 using WorkflowService.Engine.Pruning;
 using Microsoft.Extensions.Logging;
+using WorkflowService.Engine.Diagnostics; // ADDED for IExperimentAssignmentEmitter
 
 namespace WorkflowService.Tests.Engine;
 
@@ -105,6 +106,7 @@ public class AbTestEnrollmentSnapshotTests : TestBase
             new ExclusiveGatewayStrategy(),
             new ParallelGatewayStrategy()
         });
+        var expEmitter = new Mock<IExperimentAssignmentEmitter>(); // ADDED
 
         return new GatewayEvaluator(
             _conditions.Object,
@@ -112,7 +114,8 @@ public class AbTestEnrollmentSnapshotTests : TestBase
             registry,
             _hasher.Object,
             _pruner.Object,
-            _pruneEmitter.Object);
+            _pruneEmitter.Object,
+            expEmitter.Object); // ADDED
     }
 
     private string DefinitionJson => """
@@ -142,39 +145,31 @@ public class AbTestEnrollmentSnapshotTests : TestBase
     [Fact]
     public async Task Snapshot_Should_Be_Persisted_And_Reused_When_Key_Changes()
     {
-        // Arrange - forced hash sequence: first favors variant A, second would favor B if recomputed
         _hasher.SetupSequence(h => h.HashComposite(It.IsAny<string?[]>()))
-            .Returns(100_000UL) // normalized small -> A
-            .Returns(900_000UL); // large -> would map to B if recomputed
+            .Returns(100_000UL)      // pick A first
+            .Returns(900_000UL);     // would pick B if recomputed
 
         var evaluator = CreateEvaluator();
         var (instance, gwNode, _) = BuildModel(DefinitionJson);
 
-        // First evaluation with user.id = u1
         var context1 = """{"user":{"id":"u1"}}""";
         var result1 = await evaluator.ExecuteAsync(gwNode, instance, context1);
         result1.IsSuccess.Should().BeTrue();
 
-        // Extract updated context (contains _experiments)
         var updated1 = JsonNode.Parse(result1.UpdatedContext!) as JsonObject;
         updated1!["_experiments"].Should().NotBeNull();
         var expObj = updated1!["_experiments"]!["gw1"]!.AsObject();
         expObj["variant"]!.GetValue<string>().Should().Be("A");
 
-        // Second evaluation with CHANGED user.id (would hash to B if recomputed)
         var context2 = result1.UpdatedContext!.Replace("\"u1\"", "\"otherUser\"");
         var result2 = await evaluator.ExecuteAsync(gwNode, instance, context2);
         result2.IsSuccess.Should().BeTrue();
-
-        // The variant should remain A due to snapshot reuse
         result2.NextNodeIds.Should().ContainSingle(v => v == "A");
 
-        // Diagnostics history appended - ensure new decision added but variant stable
         var updated2 = JsonNode.Parse(result2.UpdatedContext!) as JsonObject;
         var decisions = updated2!["_gatewayDecisions"]!["gw1"]!.AsArray();
         decisions.Count.Should().BeGreaterThan(1);
 
-        // Verify snapshot still same
         var expAfter = (updated2!["_experiments"]!["gw1"] as JsonObject)!;
         expAfter["variant"]!.GetValue<string>().Should().Be("A");
     }

@@ -22,6 +22,7 @@ using WorkflowService.Middleware;
 using Common.Hashing;
 using WorkflowService.Engine.Pruning;
 using WorkflowService.Engine.FeatureFlags;
+using WorkflowService.Engine.Timeouts;
 
 namespace WorkflowService;
 
@@ -90,6 +91,7 @@ public class Program
             builder.Configuration.GetSection("Workflow:Pruning"));
         builder.Services.AddSingleton<IWorkflowContextPruner, WorkflowContextPruner>();
         builder.Services.AddScoped<IGatewayPruningEventEmitter, GatewayPruningEventEmitter>();
+        builder.Services.AddScoped<IExperimentAssignmentEmitter, ExperimentAssignmentEmitter>(); // A5
 
         builder.Services.AddScoped<INodeExecutor, StartEndExecutor>();
         builder.Services.AddScoped<INodeExecutor, HumanTaskExecutor>();
@@ -111,6 +113,9 @@ public class Program
         builder.Services.AddScoped<IWorkflowDiagnosticsService, WorkflowDiagnosticsService>();
 
         builder.Services.AddHostedService<TimerWorker>();
+        // B2: Join timeout scanner
+        builder.Services.Configure<JoinTimeoutOptions>(builder.Configuration.GetSection("Workflow:JoinTimeouts"));
+        builder.Services.AddHostedService<JoinTimeoutWorker>();
 
         builder.Services.AddAuthorization(options =>
         {
@@ -120,7 +125,7 @@ public class Program
         });
 
         // Register gateway strategies (add abTest)
-        builder.Services.AddScoped<IGatewayStrategy, AbTestGatewayStrategy>();
+        builder.Services.AddScoped<IGatewayStrategy, AbTestGatewayStrategy>(); // NEW
         builder.Services.AddScoped<IGatewayStrategy, FeatureFlagGatewayStrategy>(); // NEW A2
         builder.Services.AddScoped<IFeatureFlagProvider, NoopFeatureFlagProvider>(); // Default provider
         builder.Services.AddScoped<IFeatureFlagFallbackEmitter, FeatureFlagFallbackEmitter>(); // Fallback event emitter

@@ -24,6 +24,7 @@ public class GatewayEvaluator : INodeExecutor
     private readonly IDeterministicHasher _hasher;
     private readonly IWorkflowContextPruner _pruner;
     private readonly IGatewayPruningEventEmitter _pruneEvents;
+    private readonly IExperimentAssignmentEmitter _experimentEmitter;
 
     public string NodeType => NodeTypes.Gateway;
 
@@ -33,7 +34,8 @@ public class GatewayEvaluator : INodeExecutor
         IGatewayStrategyRegistry strategyRegistry,
         IDeterministicHasher hasher,
         IWorkflowContextPruner pruner,
-        IGatewayPruningEventEmitter pruneEvents)
+        IGatewayPruningEventEmitter pruneEvents,
+        IExperimentAssignmentEmitter experimentEmitter)
     {
         _conditionEvaluator = conditionEvaluator;
         _logger = logger;
@@ -41,6 +43,7 @@ public class GatewayEvaluator : INodeExecutor
         _hasher = hasher;
         _pruner = pruner;
         _pruneEvents = pruneEvents;
+        _experimentEmitter = experimentEmitter;
     }
 
     public bool CanExecute(WorkflowNode node) => node.IsGateway();
@@ -449,5 +452,63 @@ public class GatewayEvaluator : INodeExecutor
     private static string Escape(string s) =>
         s.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
+    #endregion
+
+    #region Experiment Assignment Event (A5)
+    private void TryEmitExperimentAssignment(
+        WorkflowInstance instance,
+        string gatewayNodeId,
+        GatewayStrategyDecision decision)
+    {
+        try
+        {
+            if (!string.Equals(decision.StrategyKind, "abTest", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            if (decision.Diagnostics is not IDictionary<string, object> diag)
+                return;
+
+            var snapshotReuse = diag.ContainsKey("snapshotReuse");
+            var overrideApplied = diag.TryGetValue("overrideApplied", out var ov) && ov is bool b && b;
+
+            // Only emit on first assignment OR override (still useful), skip pure reuse
+            if (snapshotReuse && !overrideApplied) return;
+
+            if (!diag.TryGetValue("variantTarget", out var variantObj) || variantObj is null)
+                return;
+            var variant = variantObj.ToString();
+            if (string.IsNullOrWhiteSpace(variant)) return;
+
+            string? hash = null;
+            if (diag.TryGetValue("hash", out var hv) && hv != null)
+                hash = hv.ToString();
+            else if (diag.TryGetValue("experimentSnapshot", out var snapObj) &&
+                     snapObj is not null)
+            {
+                // experimentSnapshot may be anonymous; serialize & read assignedHash
+                var json = System.Text.Json.JsonSerializer.Serialize(snapObj);
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("assignedHash", out var ah) &&
+                        ah.ValueKind == System.Text.Json.JsonValueKind.String)
+                        hash = ah.GetString();
+                }
+                catch { }
+            }
+
+            _experimentEmitter.EmitAssigned(
+                instance,
+                gatewayNodeId,
+                variant,
+                hash,
+                overrideApplied,
+                snapshotReuse);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Experiment assignment emit failed (non-fatal)");
+        }
+    }
     #endregion
 }
