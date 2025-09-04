@@ -1,7 +1,11 @@
-I have completed a software application as described at C:\Users\mccre\dev\boiler\microservices-system-spec.md. I am now building a workflow service into the application as described at C:\Users\mccre\dev\boiler\workflow\workflow-engine-dev-plan.md. I have made great progress. The backend for the MVP is basically complete as is the frontend. I just finished critial testing for both the backend and the frontend. 
+I have completed a software application as described at C:\Users\mccre\dev\boiler\microservices-system-spec.md. I am now building a workflow service into the application as described at C:\Users\mccre\dev\boiler\workflow\workflow-engine-dev-plan.md. I am using the checklist at C:\Users\mccre\dev\boiler\workflow\workflow-mvp-checklist.md to guide you and me. In my last session, I had you create a context document at C:\Users\mccre\dev\boiler\workflow\context.md to get you up to speed.
+This session needs to be about:
+### 9. Outbox Idempotency & Schema Migration
+* Add columns: ```IdempotencyKey (uuid)```, ```ProcessedAt (timestamp)```, ```Error (text)```.
+* Add unique index ```(TenantId, IdempotencyKey)```.
+This comes from C:\Users\mccre\dev\boiler\workflow\master-remaining.md which I'm using to track the remaining items in my MVP.
 
-For a higher level reference, I am more or less following C:\Users\mccre\dev\boiler\workflow\master-mvp-checklist.md. Specific to the front-end UI, I am following C:\Users\mccre\dev\boiler\workflow\WF_MVP_Frontend_Implementation_Guide.md. You created both of these documents. For the remaining items in the MVP, I am following C:\Users\mccre\dev\boiler\workflow\master-remaining.md and am ready to move forward with section 5 - "RBAC & Permission Audit" of that document.
+In my last session, you created the game plan for this session. The description of the session and the specific stories are at C:\Users\mccre\dev\boiler\workflow\status.md. We will use this document as our guide and we will keep it updated as we knock things out.
 
-Please do a full deep scan of my project understanding all of the files and folder structure before we resume. Once you are complete, let me know. 
-
-Additionally, you are to 100% of the code analysis and code generation. Also, when providing code, please provide complete files. 
+Please do a deep scan of my project structure as well as the documents described above. Additionally, you are to 100% of the code analysis and code generation. Also, when providing code, please provide complete files. Also, as we progress through the critical items of status.md, I would like you to strikethrough the items as we complete them.
+When you are complete with your deep scan of both the backend and frontend, please generate the first tranche of code based on the "Story & Test Plan" section (around line 229) in status.md.

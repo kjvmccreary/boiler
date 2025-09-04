@@ -1,3 +1,4 @@
+using DTOs.Common;
 using FluentAssertions;
 
 namespace WorkflowService.Tests.TestSupport;

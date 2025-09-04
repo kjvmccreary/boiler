@@ -1,82 +1,336 @@
-## Summary (Current Coverage) Present:
-### MultiTenantIsolationTests only cover:
-1.  TenantA_Cannot_Unpublish_TenantB_Definition
-2.  ForceTerminate_Does_Not_Cancel_OtherTenant_Instances Missing (re: “cross-tenant tasks / instances are not retrievable”):
-* No tests asserting a tenant cannot read another tenant’s:
-* WorkflowInstances (list/detail)
-* WorkflowTasks (list/my-tasks/claim/complete)
-* Definitions list (another tenant’s definitions filtered out)
-* Events / admin bulk operations
-* No negative tests for cross-tenant StartInstance, ClaimTask, CompleteTask, TerminateInstance.
-* No guard that cross-tenant ID probing returns 404/Forbidden. Important Gap: In WorkflowDbContext, tenant query filters are intentionally DISABLED in test environment (isTestEnvironment short‑circuits). So current tests do NOT validate the real production filter behavior. We need explicit scenarios or a way to re-enable filters for integration tests.
+OUTBOX & IDEMPOTENCY CONTEXT (NEXT SPRINT PREP)
 
-## Proposed Story Set: Tenant Audit & Guard Tests
-### ✅ DONE!  Story T1: Re-enable Tenant Filters for Integration Mode
-* ✅ DONE! Allow an override (e.g., env var TEST_ENABLE_TENANT_FILTERS=true) so integration tests run with real global filters.
-* ✅ DONE! Add helper to spin context with filters ON vs OFF to prove difference.
-### ✅ DONE! Story T2: Definition List Isolation
-* ✅ DONE! Seed tenant 1 & tenant 2 definitions.
-* ✅ DONE! Under tenant 1 context (controller + auth claims), GET /api/workflow/definitions should not include tenant 2 definitions.
-* ✅ DONE! Same for tenant 2.
-### ✅ DONE! Story T3: Instance Retrieval Isolation
-* ✅ DONE! Seed one instance per tenant using same DefinitionId value (different tenant rows).
-* ✅ DONE! GET /api/workflow/instances?workflowDefinitionId=… as tenant 1 should only return its own.
-* ✅ DONE! GET /api/workflow/instances/{id} for other tenant → 404.
-### ✅ DONE! Story T4: Start Instance Cross-Tenant Guard
-* ✅ DONE! Attempt StartInstance specifying definition ID belonging to different tenant → 404 or Forbidden (define expected).
-* ✅ DONE! Confirm success with same-tenant definition.
-### ✅ DONE! Story T5: Task List + My Tasks Isolation
-* ✅ DONE! Seed tasks across both tenants.
-* ✅ DONE! Tenant 1: GET /api/workflow/tasks → only tenant 1 tasks.
-* ✅ DONE! Tenant 1: GET /api/workflow/tasks/my → only tasks assigned to tenant 1 users.
-* ✅ DONE! Cross-tenant task ID access → 404.
-### ✅ DONE! Story T6: Task Mutation Isolation
-* ✅ DONE! Claim / Complete / Cancel / Reassign using another tenant’s task ID → 404 (or Forbidden).
-* ✅ DONE! Ensure no row changed in other tenant.
-### ✅ DONE! Story T7: Admin Operations Isolation
-* ✅ DONE! Admin bulk cancel endpoint with definitionId from another tenant → 404.
-* ✅ DONE! MoveInstance / RetryInstance given other tenant instance ID → 404.
-### ✅ DONE! Story T8: Unpublish + ForceTerminate Isolation (Already Partially Covered)
-* ✅ DONE! Add retrieval assertions: after tenant 2 force-terminates its own instances, tenant 1 still cannot see tenant 2 cancelled instances by probing IDs.
-### ✅ DONE! Story T9: Events & Usage Endpoint Isolation
-* ✅ DONE! /api/workflow/definitions/{id}/usage for other tenant’s definition → 404.
-* ✅ DONE! Attempt enumeration of events (/api/workflow/admin/events if exists) returns only in-tenant events.
-### ✅ DONE! Story T10: Direct EF Defensive Unit Tests (Service Layer)
-* Create DefinitionService with tenantProvider returning tenant 1; manually insert tenant 2 rows; service GetAllAsync must exclude tenant 2 when filters enabled (configure context with filters ON).
-* Repeat for InstanceService / TaskService.
-### Story T11 (Optional): Race Condition Guard
-* Simulate rapid alternating tenant contexts (two scoped DbContexts) creating tasks / reading counts; ensure no leakage / cross contamination in aggregate counts.
-### Story T12 (Optional): Fuzzed ID Probing
-* Randomly generate 50 nonexistent IDs (belonging to other tenant) for instances/tasks; all must return 404 and not log unhandled exceptions.
+Scope
+Add idempotent, observable, and retry-safe delivery semantics to the existing Outbox pattern by introducing new columns, enforcing a tenant-scoped uniqueness guarantee, and enhancing dispatcher + producer logic.
 
-## Support Tasks
-### Support S1: Test Utilities Update
-* Add TestTenantContextFactory(enableFilters: bool).
-* Add TenantScopedHttpClient helper that injects X-Tenant-ID header + token.
-### Support S2: Assertion Helpers
-* AssertContainsOnlyTenantEntities<T>(IEnumerable<T>, tenantId).
-* AssertNotFound(ActionResult) convenience wrapper.
-### Support S3: Seed Enhancements
-* Unified MultiTenantWorkflowSeeder producing:
-* N definitions per tenant
-* M instances referencing each definition
-* K tasks per instance (mix statuses)
-* Distinct user IDs per tenant
+Current State (Baseline)
+- OutboxMessages table (assumed existing): Id (PK), TenantId, EventType / Name, Payload (JSON), CreatedAt, RetryCount (if present), IsProcessed (bool?) or similar.
+- Events are written during domain operations (publish/unpublish, instance lifecycle, gateway decisions, task events).
+- Dispatcher (MVP) either missing or only logs.
+- No column enforcing uniqueness or dedupe across retries or producer replays.
+- No timestamp marking actual dispatch completion.
+- No persistent error detail for failed attempts.
+- No deterministic idempotency key logic.
 
-## Acceptance Criteria
-* All tenant isolation stories T2–T9 implemented.
-* Each access attempt across tenants returns consistent 404 (not 403) unless security policy dictates otherwise (decide & document).
-* No direct modifications observed in other tenant data after mutation attempts.
-* Global filter ON integration run passes (tracked via a single test toggling the env var).
-* Documentation section added: “Tenant Isolation Guarantees & Test Coverage”.
+Target Schema (Delta)
+Add three nullable columns initially:
+1. IdempotencyKey (uuid) – required for new rows, backfilled for legacy rows.
+2. ProcessedAt (timestamp with time zone) – null until successfully dispatched.
+3. Error (text) – last failure (truncated), cleared on success.
 
-### Open Decisions (Clarify Before Implementing)
-1.  Expected status code for cross-tenant resource probe: 404 (security through obscurity) vs 403 (explicit denial)?
-2.  Re-enable filters in all tests or only integration suite?
-3.  Do we treat definitions as discoverable names across tenants (shared library) or strictly isolated? (Assumed isolated.)
-4.  Should events endpoint (if any) intentionally allow system/central admin cross-tenant view?
+Indexes:
+- Unique index UX_Outbox_Tenant_IdempotencyKey (TenantId, IdempotencyKey).
+- Supporting non-unique index IDX_Outbox_Unprocessed (ProcessedAt NULL) to accelerate dispatcher polling.
 
-If you confirm these stories & decisions, I can generate the test scaffolding next (integration + unit variants) and optional context toggle.
-Next Step Suggestion Confirm status code choice (404 vs 403) and whether to add filter re-enable switch. Reply with:
-* “Use 404” or “Use 403”
-* “Enable filters in all integration tests” or “Selective enable” Then I’ll generate code.
+(OPTIONAL LATER) Add DeadLetter (bool), NextAttemptAt (timestamp), or Status enum if complexity increases.
+
+Idempotency Strategy
+Deterministic Key (preferred when a natural semantic identity exists):
+Guid = Hash(UUID namespace + $"{tenant}:{domainType}:{entityId}:{eventKind}:{version|timestampBucket|correlation}")
+If no natural key: generate Guid.NewGuid().
+Producer contract: Always supply or derive a stable key for logical duplicates (e.g., re-publish event triggered twice due to retry).
+On uniqueness violation: treat as idempotent success (do NOT fail business transaction).
+
+Dispatcher Behavior (Target)
+Loop:
+1. SELECT batch WHERE ProcessedAt IS NULL ORDER BY CreatedAt LIMIT N.
+2. For each message:
+   - Attempt delivery (e.g., HTTP POST / internal bus / log stub).
+   - On success: set ProcessedAt=UtcNow, Error=NULL.
+   - On transient failure: increment RetryCount, set Error, leave ProcessedAt NULL.
+   - Respect MaxRetries (config). If exceeded → still leave ProcessedAt NULL (MVP) OR (future) mark as dead letter.
+3. Metrics/logging for each cycle.
+
+Configuration (Add strongly-typed options)
+OutboxOptions:
+- PollIntervalSeconds (default: 5–15)
+- BatchSize (default: 50–200)
+- MaxRetries (default: 5)
+- BaseRetryDelaySeconds (default: 10) – constant or backoff
+- UseExponentialBackoff (bool) – if true, Delay = Base * 2^RetryCount ± jitter
+- MaxErrorTextLength (e.g., 2000)
+
+Logging Prefixes
+- OUTBOX_WORKER_FETCH count=…
+- OUTBOX_WORKER_DISPATCH_SUCCESS id=… key=…
+- OUTBOX_WORKER_DISPATCH_FAIL id=… key=… retry=… max=…
+- OUTBOX_WORKER_DUPLICATE tenant=… key=…
+- OUTBOX_WORKER_SKIP_PROCESSED id=…
+
+Observability / Metrics
+Derive:
+- BacklogSize = COUNT(ProcessedAt IS NULL)
+- FailedPending = COUNT(ProcessedAt IS NULL AND RetryCount > 0)
+- OldestAgeSeconds = MAX(NOW - CreatedAt WHERE ProcessedAt IS NULL)
+- Throughput = processed / interval
+- FailureRatio = (failures per cycle) / batch size
+
+API (Optional Admin)
+GET /api/workflow/outbox?status=pending|failed|processed&page=x&pageSize=y
+Response includes minimal fields (Id, EventType, CreatedAt, RetryCount, ProcessedAt, LastErrorSnippet).
+
+Migration Plan (Zero-Downtime)
+1. Add nullable columns + indexes (online).
+2. Backfill IdempotencyKey for existing rows (script or UPDATE with generated UUID).
+3. Deploy application version generating IdempotencyKey.
+4. After monitoring, (optional) enforce NOT NULL on IdempotencyKey.
+5. (Optional future) Remove legacy IsProcessed if replaced by ProcessedAt semantics.
+
+Backfill Strategy
+- Single statement if data volume low:
+  UPDATE OutboxMessages SET "IdempotencyKey" = gen_random_uuid() WHERE "IdempotencyKey" IS NULL;
+- For large tables: chunked updates by CreatedAt range.
+
+Producer Integration Changes
+Add helper OutboxWriter.AddAsync(tenantId, eventType, payload, optionalDeterministicKey).
+Internally:
+- Compute key (if empty).
+- Try insert.
+- On unique violation -> SELECT existing row (idempotent success).
+Return row Id + IdempotencyKey to caller (tracking/logging).
+
+Duplicate Handling Flow
+try Insert (TenantId, IdempotencyKey)
+catch DbUpdateException (unique index):
+  - Query for existing row (TenantId + IdempotencyKey)
+  - Return existing row (Success = true, AlreadyExisted = true)
+
+Testing Matrix
+
+| Area | Test | Goal |
+|------|------|------|
+| Schema | Migration_Adds_Columns | Columns exist post-migration |
+| Schema | Migration_Backfills_IdempotencyKey | Legacy rows have non-null key |
+| Entity | OutboxMessage_DefaultValues | IdempotencyKey auto, ProcessedAt null |
+| Insert | Insert_Duplicate_SameTenant_Idempotent | Single row only |
+| Insert | Insert_SameKey_DifferentTenant | Two rows allowed |
+| Producer | DeterministicKey_SameInput_SameGuid | Stability |
+| Producer | DeterministicKey_DifferentInput_DifferentGuid | Dedupe correctness |
+| Dispatcher | Dispatcher_Marks_Processed | Sets ProcessedAt |
+| Dispatcher | Dispatcher_Retry_OnFailure | RetryCount++, Error set |
+| Dispatcher | Dispatcher_Clears_Error_OnSuccess | Error null after success |
+| Retry | Retry_Stops_After_MaxRetries | No further attempt (check elapsed attempts) |
+| Backoff | Backoff_Delay_Grows_Exponentially | Verify delay schedule function |
+| Logging | Logs_On_Success_And_Failure | Contains expected prefixes |
+| Metrics | Metrics_Computation_Accurate | Derived values correct with known dataset |
+| Concurrency | Parallel_Inserts_SingleRow | Race-safe insertion |
+| Concurrency | Parallel_Dispatch_SingleProcessPerMessage | (Optional) row-level concurrency guard |
+| Error Handling | Error_Truncated_When_TooLong | Enforces MaxErrorTextLength |
+| Admin (optional) | Admin_List_Pending | Only unprocessed rows returned |
+| Admin (optional) | Admin_Filter_Failed | Failed subset matches criteria |
+
+Open Decisions
+1. Dead letter semantics: Defer or implement (DeadLetter bool)?
+2. Hard TTL for processed rows purge? (Not in MVP; retention config later.)
+3. Deterministic key base: Use deterministic namespace GUID or stable hash→Guid conversion?
+4. Backoff: Exponential vs fixed for MVP?
+5. Should dispatcher be single-instance (leader election) or allow multi-node with DB-side filtering? (Current design: safe multi-node; rely on SKIP LOCKED or row version update—if provider supports. For InMemory, single node only.)
+6. Payload size / compression needed? (Probably not MVP.)
+7. Health check integration? (Expose backlog + oldest age via IHealthCheck.)
+
+Implementation Order (Recommended)
+1. Migration + EF model updates.
+2. Deterministic key utility + producer updates (no-op dispatcher can still run).
+3. Dispatcher enhancements (mark ProcessedAt).
+4. Duplicate handling + concurrency test.
+5. Retry/backoff logic.
+6. Observability (logging/metrics).
+7. Optional admin endpoint.
+8. Hardening (error truncation, dead letter future).
+
+Deterministic Key Utility (Concept)
+OutboxIdempotency.CreateKey(tenantId, category, entityId, kind, versionOrSeq?)
+- Canonical string normalized (lowercase, ‘:’ delimiter)
+- Compute SHA-256 → take first 16 bytes → Guid
+- Ensures portability without reliance on Guid namespace algorithms.
+
+Sample Pseudocode (Key Generation)
+ComputeString = $"{tenantId}:{category}:{entityId}:{kind}:{version ?? 0}";
+Hash = SHA256(UTF8(ComputeString));
+Guid = new Guid(first16BytesOf(Hash));
+
+Dispatcher Pseudocode
+while (!stopping)
+{
+  rows = SELECT ... WHERE ProcessedAt IS NULL ORDER BY CreatedAt LIMIT BatchSize;
+  if (rows.Empty) delay(PollInterval); continue;
+
+  foreach(row in rows)
+  {
+    try {
+      Deliver(row);
+      UPDATE set ProcessedAt=UtcNow, Error=NULL WHERE Id=...
+      log success
+    } catch(ex) {
+      UPDATE set RetryCount=RetryCount+1, Error=Truncate(ex.Message) WHERE Id=...
+      log failure
+    }
+  }
+
+  delay(PollInterval);
+}
+
+Risk & Mitigation
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| Duplicate message under retry storm | Downstream duplication | IdempotencyKey dedupe |
+| Long backlog grows unbounded | Storage pressure | Future retention policy + metrics alerts |
+| Dispatcher crash mid-flight | Partial progress | ProcessedAt atomic update ensures retry-only unprocessed |
+| Large error payloads | Table bloat | Truncate to configured length |
+| Multi-node race on same message | Double delivery | Add SELECT ... FOR UPDATE / row-level version OR rely on relational locking; not fully addressed in InMemory |
+| Missing deterministic key when possible | Reduced dedupe value | Enforce helper usage, code reviews |
+
+Rollout Checklist
+- Apply migration in staging with high event volume simulation.
+- Verify no null IdempotencyKey after backfill (SELECT COUNT WHERE IdempotencyKey IS NULL).
+- Deploy producers (writes new key).
+- Deploy dispatcher update.
+- Monitor backlog + error metrics.
+- (Optional) Add NOT NULL + default constraint once confirmed stable.
+
+Glossary
+- Outbox Message: Durable record representing a domain/integration event awaiting dispatch.
+- IdempotencyKey: Logical unique fingerprint for an event, enabling deduplication.
+- ProcessedAt: Timestamp marking successful completion of side-effect dispatch.
+- Backlog: Set of messages with ProcessedAt IS NULL.
+- Dead Letter: (Future) Message exceeding retry policy requiring manual intervention.
+
+Next Step
+Confirm open decisions (dead letter, retry strategy, key algorithm). Then proceed with Migration + EF model code generation (Story O1/O2).
+
+
+Outbox Idempotency & Schema Migration — Explanation
+The Outbox pattern guarantees reliable, exactly-once (or at-least-once with dedupe) publication of domain events / integration messages by persisting them in the same transaction as business state changes, then dispatching them asynchronously.
+Adding an IdempotencyKey and processing metadata formalizes safe re-delivery, retry, and observability.
+Key additions:
+•	IdempotencyKey (Guid): Stable identifier supplied (preferably) by the producer (e.g., logical workflow event identity) or generated server-side. Used to prevent duplicate logical messages (e.g., retry from client, race across nodes).
+•	ProcessedAt (timestamp / UTC): Set once dispatcher finishes the side-effect (HTTP call, enqueue, etc.). Enables lag metrics and cleanup.
+•	Error (text / nullable): Last failure detail (truncated/sanitized) for inspection & alerting.
+•	Unique index (TenantId, IdempotencyKey): Enforces tenant-scoped idempotent insert. (Tenant isolation preserved; same key can exist across tenants.)
+•	Dispatcher logic uses IsProcessed OR ProcessedAt as terminal flag to skip further handling.
+•	RetryCount (if already present) increments; on success Error cleared.
+Migration concerns:
+1.	Backfill existing rows: New columns must allow NULL initially. IdempotencyKey assigned for legacy rows (deterministic new Guid per row) so uniqueness is satisfied.
+2.	Online deployment: Add columns (NULLable), backfill batch-wise if large, then create unique partial index. If small, single migration fine.
+3.	Code path must not assume non-null until after migration deployed (feature flag or null-safe code).
+4.	Concurrency: Inserting duplicate key should catch DbUpdateException; convert to application-level idempotent success (return existing message or treat as no-op).
+Idempotency generation strategy:
+•	For workflow events derived from underlying entity (InstanceId + EventType + Sequence), prefer hash-based deterministic Guid (e.g., GuidUtility.CreateV5(namespace, $"{tenant}:{eventType}:{entityId}:{version}:{optionalCorrelation}")).
+•	If no natural key, generate Guid.NewGuid().
+Failure recording:
+•	On transient failure: increment RetryCount, set Error, leave ProcessedAt null.
+•	On poison failing after MaxRetries (config), optionally mark Error + DeadLetter=True (future column) or still leave as retriable.
+Metrics enabled:
+•	Outbox backlog = COUNT where ProcessedAt IS NULL.
+•	Old failures = COUNT where Error NOT NULL AND RetryCount >= threshold.
+•	Processing latency = NOW() - CreatedAt for unprocessed items.
+•	Throughput = processed per interval.
+---
+Story & Test Plan
+O1: Schema Migration
+Tasks:
+•	Alter OutboxMessage table: add columns
+•	IdempotencyKey uuid NULL
+•	ProcessedAt timestamptz NULL
+•	Error text NULL
+•	Backfill: update all existing rows set IdempotencyKey = gen_random_uuid() (or NEWID() / uuid_generate_v4()).
+•	Add unique index: UX_Outbox_Tenant_Idem (TenantId, IdempotencyKey).
+•	(Optional) Add supporting index on ProcessedAt IS NULL for dispatcher scan. Tests:
+•	Migration_DDL_Contains_NewColumns (if using migration inspection).
+•	Outbox_Insert_DuplicateIdempotencyKey_SameTenant_ShouldFailDB (unit/integration) – asserts uniqueness enforced.
+•	Outbox_Insert_SameKey_DifferentTenant_ShouldSucceed.
+O2: Domain / Model Update
+Tasks:
+•	Update OutboxMessage entity + EF configuration (HasIndex composite unique).
+•	Ensure property types: Guid IdempotencyKey (non-null in code after insert), DateTime? ProcessedAt, string? Error.
+•	Ensure SaveChanges interceptor or repository assigns IdempotencyKey if default(Guid). Tests:
+•	OutboxMessage_Defaults_Assigned_OnAdd (IdempotencyKey auto-populated, ProcessedAt null).
+•	OutboxMessage_Roundtrip_Persists_Values.
+O3: Producer Integration
+Tasks:
+•	Update all places creating outbox rows (e.g., event publisher):
+•	Accept optional idempotency seed parameters.
+•	Provide deterministic key where logical duplication risk exists (e.g., publish definition published event multiple times).
+•	Overload PublishX methods to accept IdempotencyKey (optional). Tests:
+•	PublishDefinition_Event_Uses_Deterministic_IdempotencyKey (two publish attempts produce same key if logically same event).
+•	PublishInstanceForceCancelled_Events_Have_UniqueKeys (different instance events differ).
+O4: Dispatcher Enhancements
+Tasks:
+•	Modify dispatcher query: SELECT * FROM OutboxMessages WHERE ProcessedAt IS NULL ORDER BY CreatedAt LIMIT N.
+•	On success: set ProcessedAt=UtcNow, clear Error.
+•	On failure: set Error (truncated), increment RetryCount.
+•	Add logging prefixes OUTBOX_WORKER. Tests:
+•	Dispatcher_Sets_ProcessedAt_OnSuccess.
+•	Dispatcher_Sets_Error_And_Increments_Retry_OnFailure (mock transport throw).
+•	Dispatcher_Skips_AlreadyProcessed.
+O5: Idempotent Insert Handling
+Tasks:
+•	Wrap outbox write in try/catch; if uniqueness violation on (TenantId, IdempotencyKey), treat as idempotent success (return existing row or ignore).
+•	Provide helper TryAddOutboxAsync(TenantId, key, factory) that re-queries on conflict. Tests:
+•	TryAddOutbox_Twice_SameKey_SingleRowExists.
+•	TryAddOutbox_Parallel_Inserts_SingleRow (multi-thread simulation / race).
+O6: Retry / Backoff Policy
+Tasks:
+•	Add configuration: MaxRetries, BaseDelay, Jitter.
+•	Implement backoff evaluation (e.g., exponential for next attempt).
+•	Dispatcher respects next-attempt time (optional: add NextAttemptAt column later; for MVP simple constant delay). Tests:
+•	Dispatcher_Retry_Until_MaxRetries_Reached.
+•	Dispatcher_NoRetry_After_MaxRetries (still unprocessed but flagged).
+O7: Observability & Metrics
+Tasks:
+•	Add log lines:
+•	OUTBOX_WORKER_FETCH count=X
+•	OUTBOX_WORKER_DISPATCH_SUCCESS id=...
+•	OUTBOX_WORKER_DISPATCH_FAIL id=... retry=...
+•	OUTBOX_WORKER_DUPLICATE_KEY tenant=... key=...
+•	Add health/diagnostics endpoint or log summary every N cycles. Tests:
+•	(Log Assertion) Outbox_Dispatch_Emits_Success_Log (optional).
+•	Metrics_Snapshot_Computation (unit of helper).
+O8: API / Admin Visibility (Optional)
+Tasks:
+•	Add admin endpoint GET /api/workflow/outbox?status=pending|failed|processed for observability.
+•	Support pagination, filtering by EventType. Tests:
+•	Outbox_Admin_List_Pending.
+•	Outbox_Admin_Filter_By_Status.
+O9: Backfill Script Safety (Deployment)
+Tasks:
+•	Ensure migration is additive & backward compatible.
+•	Confirm dispatcher code tolerant to NULL IdempotencyKey until post-migration (guard generation before use).
+•	Document zero-downtime rollout steps. Tests:
+•	LegacyRow_Backfill_Adds_Generated_IdempotencyKey (integration using manual insert without key).
+O10: Failure Scenarios & Poison Handling (Deferred if not MVP)
+Tasks:
+•	Decide on threshold: if RetryCount >= MaxRetries mark a status (future column) or continue indefinite.
+•	Decide if Error length should be truncated (e.g., 2000 chars). Tests:
+•	Outbox_Error_Truncated_When_TooLong.
+O11: Deterministic Key Strategy (Design)
+Tasks:
+•	Utility: OutboxIdempotency.CreateDeterministicKey(params) → Guid (namespace-based v5 or hash → Guid).
+•	Centralize to avoid drift across producers. Tests:
+•	DeterministicKey_SameInputs_SameGuid.
+•	DeterministicKey_DifferentInputs_DifferentGuid.
+O12: Concurrency & Isolation Tests
+Tasks:
+•	Simulate multiple threads adding same idempotent event (Task.WhenAll).
+•	Use barrier to align execution and assert single row created. Tests:
+•	Concurrency_IdempotentInsert_Race_Produces_SingleRow.
+---
+Test Coverage Matrix (Summary)
+| Story | Unit Tests | Integration Tests | Notes | |-------|------------|-------------------|-------| | O1 | Migration DDL reflection (optional) | Backfill legacy rows | May mock relational provider | | O2 | Entity default assignment | Roundtrip via real DB | | | O3 | Deterministic key generation | Duplicate logical event path | | | O4 | Dispatcher success/failure logic | End-to-end dispatch cycle | Mock transport | | O5 | Duplicate insert handling | Parallel insert scenario | | | O6 | Retry progression logic | Max retry boundary | Delay calc pure unit | | O7 | Metrics helper pure funcs | (Optional) log capture | | | O8 | (If implemented) endpoint query shape | API response filter tests | Optional MVP | | O9 | Legacy row upgrade | Full migration path | | | O10 | Error truncation | — | Optional | | O11 | Key generation determinism | — | Utility only | | O12 | Race handling | High-contention test | Use in-memory or sqlite |
+---
+Implementation Order (Recommended)
+1.	O1/O2: Schema & model (migration first).
+2.	O3: Producers emit idempotent keys.
+3.	O4/O5: Dispatcher logic + conflict handling.
+4.	O6: Retry/backoff (simple constant first).
+5.	O11: Deterministic key utility integrated.
+6.	O7: Logging & metrics.
+7.	O12: Concurrency assurance.
+8.	Optional: O8 admin view / O10 truncation.
+---
+Rollout / Deployment Notes
+1.	Deploy migration adding nullable columns & unique index (after backfill of IdempotencyKey to avoid null duplicates).
+2.	Release code that:
+•	Always sets IdempotencyKey for new messages.
+•	Skips processing when ProcessedAt != null.
+3.	After verifying backlog stable, optionally add NOT NULL constraint to IdempotencyKey in later hardening migration.

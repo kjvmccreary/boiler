@@ -22,10 +22,9 @@
 * <s>Guard with try/catch + failure event emission.</s>
 ### 7. Definition Immutability Enforcement
 * <s>Block updates to ```JSONDefinition``` after publish (require new version).
-* Disallow unpublish if active running instances (or add rule).</>
+* Disallow unpublish if active running instances (or add rule).
 ### 8. Tenant Audit & Guard Tests
-* Unit/integration test that cross-tenant tasks / instances are not retrievable.
-
+* Unit/integration test that cross-tenant tasks / instances are not retrievable.</s>
 ### 9. Outbox Idempotency & Schema Migration
 * Add columns: ```IdempotencyKey (uuid)```, ```ProcessedAt (timestamp)```, ```Error (text)```.
 * Add unique index ```(TenantId, IdempotencyKey)```.
