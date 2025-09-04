@@ -4,82 +4,15 @@ Starting test discovery for requested test run
 [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
 [xUnit.net 00:00:00.06]   Discovering: WorkflowService.Tests
 [xUnit.net 00:00:00.10]   Discovered:  WorkflowService.Tests
-========== Test discovery finished: 238 Tests found in 665.2 ms ==========
+========== Test discovery finished: 244 Tests found in 671.3 ms ==========
 ========== Starting test run ==========
 [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
 [xUnit.net 00:00:00.05]   Starting:    WorkflowService.Tests
-info: Test[0]
-      RAW_DEFINITION_JSON: {
-        "nodes":[
-          { "id":"start", "type":"start" },
-          { "id":"gw", "type":"gateway", "properties": { "gatewayType": "parallel" } },
-          { "id":"a", "type":"automatic", "properties": { "action": { "kind":"noop" } } },
-          { "id":"b", "type":"automatic", "properties": { "action": { "kind":"noop" } } },
-          { "id":"c", "type":"end" }
-        ],
-        "edges":[
-          { "id":"e1", "from":"start", "to":"gw" },
-          { "id":"e2", "from":"gw", "to":"a" },
-          { "id":"e3", "from":"gw", "to":"b" },
-          { "id":"e4", "from":"a", "to":"c" },
-          { "id":"e5", "from":"b", "to":"c" }
-        ]
-      }
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_START Instance=1 Def=1 Version=1 StartNode=start
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_CONTINUE Instance=1 ActiveNodes=[start] Edges=5
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_NODE_EXEC_START Instance=1 Node=start Type=Start Exec=StartEndExecutor
-info: WorkflowService.Engine.Executors.StartEndExecutor[0]
-      Executing start node start for instance 1
-dbug: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_DBG_OUTGOING From=start Count=1 Raw=[start->gw]
-dbug: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_GATEWAY_NONPARALLEL_EMIT Instance=1 Node=start TargetCount=1
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_NODE_ADVANCE Instance=1 Node=start Next=[gw]
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_CONTINUE Instance=1 ActiveNodes=[gw] Edges=5
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_NODE_EXEC_START Instance=1 Node=gw Type=Gateway Exec=GatewayEvaluator
-dbug: WorkflowService.Engine.Executors.GatewayEvaluator[0]
-      GATEWAY_STRATEGY_DEFAULT Node=gw Kind=exclusive
-info: WorkflowService.Engine.Executors.GatewayEvaluator[0]
-      GATEWAY_EXEC Node=gw Strategy=exclusive
-dbug: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_DBG_OUTGOING From=gw Count=2 Raw=[gw->a,gw->b]
-dbug: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_GATEWAY_PARALLEL_HEURISTIC Instance=1 Node=gw Outgoing=2
-dbug: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_GATEWAY_PARALLEL_DISCOVERY Instance=1 Node=gw RawEdgeCount=2 Edges=[id:e2 src:gw tgt:a lbl:;id:e3 src:gw tgt:b lbl:]
-dbug: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_GATEWAY_PARALLEL_MAP Instance=1 Node=gw MapCount=2 Map=[e2->a;e3->b]
-dbug: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_GATEWAY_FORCE_PARALLEL Instance=1 Node=gw Targets=[a,b]
-dbug: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_GATEWAY_PARALLEL_EMIT Instance=1 Node=gw EdgeEvents=2
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_NODE_ADVANCE Instance=1 Node=gw Next=[a,b]
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_CONTINUE Instance=1 ActiveNodes=[a,b] Edges=5
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_NODE_EXEC_START Instance=1 Node=a Type=Automatic Exec=AutomaticExecutor
-info: WorkflowService.Engine.Executors.AutomaticExecutor[0]
-      WF_AUTO_EXEC_BEGIN Instance=1 Node=a Kind=noop Policy=(default)
-dbug: WorkflowService.Engine.Executors.AutomaticExecutor[0]
-      WF_AUTO_OUTPUT_PERSISTED Instance=1 Node=a
-dbug: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_DBG_OUTGOING From=a Count=1 Raw=[a->c]
-dbug: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_GATEWAY_NONPARALLEL_EMIT Instance=1 Node=a TargetCount=1
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_NODE_ADVANCE Instance=1 Node=a Next=[c]
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_INSTANCE_COMPLETE_END Instance=1 EndNodes=[c]
-info: Test[0]
-      EDGE_EVENTS (4): {"edgeId":"e1","from":"start","to":"gw","mode":"AutoAdvance"} | {"edgeId":"e2","from":"gw","to":"a","mode":"AutoAdvanceParallel"} | {"edgeId":"e3","from":"gw","to":"b","mode":"AutoAdvanceParallel"} | {"edgeId":"e4","from":"a","to":"c","mode":"AutoAdvance"}
-info: Test[0]
-      GATEWAY_EVENTS (0): 
-[xUnit.net 00:00:00.72]   Finished:    WorkflowService.Tests
-========== Test run finished: 1 Tests (1 Passed, 0 Failed, 0 Skipped) run in 726 ms ==========
+[xUnit.net 00:00:00.58]     WorkflowService.Tests.Engine.ParallelGatewayDeclaredStrategyTests.DeclaredParallelGateway_Should_Emit_GatewayEvaluated_With_All_Branches_And_EdgeTraversed_Events [FAIL]
+[xUnit.net 00:00:00.58]       System.InvalidOperationException : Workflow definition must contain a Start node
+[xUnit.net 00:00:00.58]       Stack Trace:
+[xUnit.net 00:00:00.58]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Engine\WorkflowRuntime.cs(84,0): at WorkflowService.Engine.WorkflowRuntime.StartWorkflowAsync(Int32 definitionId, String initialContext, Nullable`1 startedByUserId, CancellationToken cancellationToken, Boolean autoCommit)
+[xUnit.net 00:00:00.58]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\ParallelGatewayDeclaredStrategyTests.cs(142,0): at WorkflowService.Tests.Engine.ParallelGatewayDeclaredStrategyTests.DeclaredParallelGateway_Should_Emit_GatewayEvaluated_With_All_Branches_And_EdgeTraversed_Events()
+[xUnit.net 00:00:00.58]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.59]   Finished:    WorkflowService.Tests
+========== Test run finished: 1 Tests (0 Passed, 1 Failed, 0 Skipped) run in 597 ms ==========

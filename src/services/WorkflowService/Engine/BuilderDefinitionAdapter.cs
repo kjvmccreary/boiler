@@ -9,6 +9,7 @@ namespace WorkflowService.Engine;
 /// Adapter from front-end builder JSON to internal runtime definition.
 /// - Canonicalizes node types
 /// - Supports edge key synonyms: from/to or source/target
+/// - Flattens nested "properties" object (if present) into node.Properties
 /// </summary>
 public static class BuilderDefinitionAdapter
 {
@@ -32,6 +33,7 @@ public static class BuilderDefinitionAdapter
         }
         catch
         {
+            // Fallback: attempt to parse directly as WorkflowDefinitionJson DSL form
             try { return WorkflowDefinitionJson.FromJson(builderJson); }
             catch { return new WorkflowDefinitionJson(); }
         }
@@ -69,6 +71,7 @@ public static class BuilderDefinitionAdapter
                 if (!string.Equals(canonicalType, n.Type, StringComparison.Ordinal))
                     node.Properties["originalType"] = n.Type!;
 
+                // Direct mapped scalar / array / object style fields
                 Copy(node.Properties, "label", n.Label);
                 Copy(node.Properties, "assigneeRoles", n.AssigneeRoles);
                 Copy(node.Properties, "dueInMinutes", n.DueInMinutes);
@@ -79,16 +82,24 @@ public static class BuilderDefinitionAdapter
                 Copy(node.Properties, "untilIso", n.UntilIso);
                 Copy(node.Properties, "delaySeconds", n.DelaySeconds);
 
+                // Extension data (unknown fields)
                 if (n.Extra != null)
                 {
                     foreach (var kv in n.Extra)
                     {
                         if (kv.Value.ValueKind == JsonValueKind.Null ||
                             kv.Value.ValueKind == JsonValueKind.Undefined) continue;
+
+                        // Skip if a direct property already populated it (precedence for explicit mapped fields)
                         if (!node.Properties.ContainsKey(kv.Key))
                             node.Properties[kv.Key] = JsonElementToObject(kv.Value);
                     }
                 }
+
+                // NEW: Flatten nested "properties" object if present in extension data
+                // This supports builder output like:
+                // { "id":"gw", "type":"gateway", "properties": { "strategy": { "kind":"parallel" }, "gatewayType":"parallel" } }
+                FlattenNestedProperties(node);
 
                 def.Nodes.Add(node);
             }
@@ -131,9 +142,57 @@ public static class BuilderDefinitionAdapter
         return def;
     }
 
+    /// <summary>
+    /// Flatten a nested "properties" JsonElement object (if present) into the node's top-level Properties dictionary.
+    /// Does not overwrite existing keys. After flattening removes the original "properties" entry.
+    /// This enables strategy / gatewayType values to be detected by downstream GatewayEvaluator & runtime logic.
+    /// </summary>
+    private static void FlattenNestedProperties(WorkflowNode node)
+    {
+        if (!node.Properties.TryGetValue("properties", out var nestedRaw))
+            return;
+
+        try
+        {
+            if (nestedRaw is JsonElement je && je.ValueKind == JsonValueKind.Object)
+            {
+                using var doc = JsonDocument.Parse(je.GetRawText());
+                foreach (var prop in doc.RootElement.EnumerateObject())
+                {
+                    var key = prop.Name;
+
+                    // Never overwrite an already populated key
+                    if (node.Properties.ContainsKey(key))
+                        continue;
+
+                    // Preserve strategy object as JsonElement (object) so GatewayEvaluator can parse it
+                    if (prop.Value.ValueKind == JsonValueKind.Object)
+                    {
+                        // Re-serialize + parse to keep a compact JsonElement clone
+                        using var inner = JsonDocument.Parse(prop.Value.GetRawText());
+                        node.Properties[key] = inner.RootElement.Clone();
+                    }
+                    else
+                    {
+                        node.Properties[key] = JsonElementToObject(prop.Value);
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Swallow – flattening is best-effort
+        }
+        finally
+        {
+            // Remove the container key to avoid confusion
+            node.Properties.Remove("properties");
+        }
+    }
+
     private static string CanonicalizeType(string raw)
     {
-        var trimmed = raw.Trim();
+        var trimmed = SanitizeType(raw);
         if (trimmed.Length == 0) return trimmed;
 
         return trimmed.ToLowerInvariant() switch
@@ -146,6 +205,30 @@ public static class BuilderDefinitionAdapter
             "timer" => NodeTypes.Timer,
             _ => TI.ToTitleCase(trimmed)
         };
+    }
+
+    /// <summary>
+    /// Strips common invisible / non-breaking whitespace characters that can
+    /// silently break type comparisons (e.g. "Start\u200B").
+    /// </summary>
+    private static string SanitizeType(string raw)
+    {
+        if (string.IsNullOrEmpty(raw)) return raw;
+        Span<char> buf = stackalloc char[raw.Length];
+        var i = 0;
+        foreach (var c in raw)
+        {
+            // Zero-width & non-breaking space variants
+            if (c is '\u200B' // zero width space
+                or '\u200C'   // zero width non-joiner
+                or '\u200D'   // zero width joiner
+                or '\u2060'   // word joiner
+                or '\uFEFF'   // BOM
+                or '\u00A0')  // NBSP
+                continue;
+            buf[i++] = c;
+        }
+        return new string(buf[..i]).Trim();
     }
 
     private static void Copy(IDictionary<string, object> bag, string key, object? value)
@@ -163,6 +246,8 @@ public static class BuilderDefinitionAdapter
             JsonValueKind.True => true,
             JsonValueKind.False => false,
             JsonValueKind.Null => null!,
+            // For objects / arrays we keep the JsonElement so downstream code (GatewayEvaluator, etc.)
+            // can inspect raw JSON (e.g., strategy.kind)
             _ => el
         };
 

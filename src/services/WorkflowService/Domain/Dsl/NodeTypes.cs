@@ -47,25 +47,41 @@ public static class TimerTypes
 /// </summary>
 public static class WorkflowNodeExtensions
 {
-    public static bool IsStart(this WorkflowNode node) =>
-        node.Type.Equals(NodeTypes.Start, StringComparison.OrdinalIgnoreCase);
+    private static string CleanType(string? raw)
+    {
+        if (string.IsNullOrEmpty(raw)) return string.Empty;
+        Span<char> buf = stackalloc char[raw.Length];
+        var i = 0;
+        foreach (var c in raw)
+        {
+            if (c is '\u200B' // zero width space
+                or '\u200C'   // zero width non-joiner
+                or '\u200D'   // zero width joiner
+                or '\u2060'   // word joiner
+                or '\uFEFF'   // BOM
+                or '\u00A0')  // NBSP
+                continue;
+            buf[i++] = c;
+        }
+        return new string(buf[..i]).Trim();
+    }
 
-    public static bool IsEnd(this WorkflowNode node) =>
-        node.Type.Equals(NodeTypes.End, StringComparison.OrdinalIgnoreCase);
+    private static bool Eq(string? a, string b) =>
+        CleanType(a).Equals(b, StringComparison.OrdinalIgnoreCase);
+
+    public static bool IsStart(this WorkflowNode node) => Eq(node.Type, NodeTypes.Start);
+
+    public static bool IsEnd(this WorkflowNode node) => Eq(node.Type, NodeTypes.End);
 
     public static bool IsHumanTask(this WorkflowNode node) =>
-        node.Type.Equals(NodeTypes.HumanTask, StringComparison.OrdinalIgnoreCase)
-        || node.Type.Equals("humantask", StringComparison.OrdinalIgnoreCase);
+        Eq(node.Type, NodeTypes.HumanTask) || Eq(node.Type, "humantask");
 
     public static bool IsAutomatic(this WorkflowNode node) =>
-        node.Type.Equals(NodeTypes.Automatic, StringComparison.OrdinalIgnoreCase)
-        || node.Type.Equals("automatic", StringComparison.OrdinalIgnoreCase);
+        Eq(node.Type, NodeTypes.Automatic) || Eq(node.Type, "automatic");
 
-    public static bool IsGateway(this WorkflowNode node) =>
-        node.Type.Equals(NodeTypes.Gateway, StringComparison.OrdinalIgnoreCase);
+    public static bool IsGateway(this WorkflowNode node) => Eq(node.Type, NodeTypes.Gateway);
 
-    public static bool IsTimer(this WorkflowNode node) =>
-        node.Type.Equals(NodeTypes.Timer, StringComparison.OrdinalIgnoreCase);
+    public static bool IsTimer(this WorkflowNode node) => Eq(node.Type, NodeTypes.Timer);
 
     // Human Task helpers
     public static string GetTaskName(this WorkflowNode node) =>
