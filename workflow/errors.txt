@@ -1,28 +1,18 @@
 Building Test Projects
-Starting test discovery for requested test run
-========== Starting test discovery ==========
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.05]   Discovering: WorkflowService.Tests
-[xUnit.net 00:00:00.09]   Discovered:  WorkflowService.Tests
-========== Test discovery finished: 242 Tests found in 800 ms ==========
 ========== Starting test run ==========
 [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
 [xUnit.net 00:00:00.04]   Starting:    WorkflowService.Tests
-[xUnit.net 00:00:03.46]     WorkflowService.Tests.Engine.WorkflowRuntimePhase4OutboxTests.TaskCompletion_ShouldAddTaskCompletedEvent_AndOutbox [FAIL]
-[xUnit.net 00:00:03.47]       System.InvalidOperationException : Sequence contains more than one element
-[xUnit.net 00:00:03.47]       Stack Trace:
-[xUnit.net 00:00:03.47]            at System.Linq.ThrowHelper.ThrowMoreThanOneElementException()
-[xUnit.net 00:00:03.47]            at System.Linq.Enumerable.TryGetSingle[TSource](IEnumerable`1 source, Boolean& found)
-[xUnit.net 00:00:03.47]            at lambda_method814(Closure)
-[xUnit.net 00:00:03.47]            at Microsoft.EntityFrameworkCore.InMemory.Query.Internal.InMemoryQueryExpression.ResultEnumerable.GetEnumerator()
-[xUnit.net 00:00:03.47]            at Microsoft.EntityFrameworkCore.InMemory.Query.Internal.InMemoryShapedQueryCompilingExpressionVisitor.QueryingEnumerable`1.Enumerator.MoveNextHelper()
-[xUnit.net 00:00:03.47]            at Microsoft.EntityFrameworkCore.InMemory.Query.Internal.InMemoryShapedQueryCompilingExpressionVisitor.QueryingEnumerable`1.Enumerator.MoveNext()
-[xUnit.net 00:00:03.47]            at System.Linq.Enumerable.TryGetSingle[TSource](IEnumerable`1 source, Boolean& found)
-[xUnit.net 00:00:03.47]            at lambda_method813(Closure, QueryContext)
-[xUnit.net 00:00:03.47]            at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteCore[TResult](Expression query, Boolean async, CancellationToken cancellationToken)
-[xUnit.net 00:00:03.47]            at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.Execute[TResult](Expression query)
-[xUnit.net 00:00:03.47]            at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryProvider.Execute[TResult](Expression expression)
-[xUnit.net 00:00:03.47]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WorkflowRuntimePhase4OutboxTests.cs(201,0): at WorkflowService.Tests.Engine.WorkflowRuntimePhase4OutboxTests.TaskCompletion_ShouldAddTaskCompletedEvent_AndOutbox()
-[xUnit.net 00:00:03.47]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:03.47]   Finished:    WorkflowService.Tests
-========== Test run finished: 1 Tests (0 Passed, 1 Failed, 0 Skipped) run in 3.5 sec ==========
+[xUnit.net 00:00:00.76]     WorkflowService.Tests.Engine.QuorumAndTimeoutTests.D3_Quorum_BelowThreshold_NotSatisfiedUntilHumanCompletes [FAIL]
+[xUnit.net 00:00:00.76]       Expected satisfied.Count to be 1, but found 0 (difference of -1).
+[xUnit.net 00:00:00.76]       Stack Trace:
+[xUnit.net 00:00:00.76]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+[xUnit.net 00:00:00.76]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+[xUnit.net 00:00:00.76]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+[xUnit.net 00:00:00.76]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.76]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.76]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+[xUnit.net 00:00:00.76]            at FluentAssertions.Numeric.NumericAssertions`2.Be(T expected, String because, Object[] becauseArgs)
+[xUnit.net 00:00:00.76]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\QuorumAndTimeoutTests.cs(221,0): at WorkflowService.Tests.Engine.QuorumAndTimeoutTests.D3_Quorum_BelowThreshold_NotSatisfiedUntilHumanCompletes()
+[xUnit.net 00:00:00.76]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.76]   Finished:    WorkflowService.Tests
+========== Test run finished: 1 Tests (0 Passed, 1 Failed, 0 Skipped) run in 769 ms ==========

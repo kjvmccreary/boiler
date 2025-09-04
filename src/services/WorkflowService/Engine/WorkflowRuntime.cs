@@ -320,17 +320,42 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         foreach (var target in nextNodeIds)
         {
+            var edgeId = FindEdgeId(node.Id, target, workflowDef)
+                         ?? $"{node.Id}->{target}";
             await CreateEventAsync(instance.Id, "Edge", "EdgeTraversed",
                 JsonSerializer.Serialize(new
                 {
-                    edgeId = FindEdgeId(node.Id, target, workflowDef),
+                    edgeId,
                     from = node.Id,
                     to = target,
                     mode = "TaskCompletionAdvance"
                 }), null);
         }
 
-        AddActiveNodes(instance, nextNodeIds);
+        // --- JOIN ARRIVAL HANDLING (fix for quorum / join satisfaction on human & timer completion) ---
+        // Automatic branches use ExecuteNodeInternalAsync which already invokes HandleJoinCandidateArrival.
+        // Task completions (human/timer) previously skipped join arrival logic, preventing quorum joins from satisfying.
+        var joinReady = new List<string>();
+        foreach (var candidate in nextNodeIds)
+        {
+            var candNode = workflowDef.Nodes
+                .FirstOrDefault(n => n.Id.Equals(candidate, StringComparison.OrdinalIgnoreCase));
+
+            if (candNode?.IsJoin() == true)
+            {
+                var arrival = HandleJoinCandidateArrival(instance, workflowDef, node, candidate);
+                if (arrival.Satisfied && arrival.AddedToActive)
+                    joinReady.Add(candidate);
+                // If not satisfied yet, DO NOT activate join node (it will activate when threshold met)
+            }
+            else
+            {
+                joinReady.Add(candidate);
+            }
+        }
+
+        AddActiveNodes(instance, joinReady);
+        // -------------------------------------------------------------------------
 
         if (!nextNodeIds.Any())
             UpdateParallelBranchProgress(instance, node.Id);

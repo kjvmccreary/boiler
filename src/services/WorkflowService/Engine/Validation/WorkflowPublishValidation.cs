@@ -330,6 +330,19 @@ public sealed class WorkflowPublishValidator : IWorkflowPublishValidator
                     o[kv.Key] = kv.Value is null ? null : JsonValue.Create(kv.Value);
                 return o;
             }
+            // SUPPORT anonymous objects (unit tests pass anonymous types for strategy)
+            // Fallback: serialize any other CLR object with public properties into JsonObject.
+            case object clr:
+                try
+                {
+                    var json = JsonSerializer.Serialize(clr);
+                    var node = JsonNode.Parse(json) as JsonObject;
+                    return node;
+                }
+                catch
+                {
+                    return null;
+                }
             default:
                 return null;
         }

@@ -103,6 +103,9 @@ public class GatewayEvaluator : INodeExecutor
                 decision,
                 strategyConfigHash);
 
+            // Emit experiment assignment event (A5) AFTER recording decision (so context has history).
+            TryEmitExperimentAssignment(instance, node.Id, decision);
+
             _logger.LogInformation("GATEWAY_EVAL_DONE Node={NodeId} Strategy={Strategy} Targets=[{Targets}] DecisionId={DecisionId}",
                 node.Id, decision.StrategyKind, string.Join(",", decision.SelectedTargetNodeIds), decision.DecisionId);
 
