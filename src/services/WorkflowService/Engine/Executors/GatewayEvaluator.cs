@@ -77,8 +77,9 @@ public class GatewayEvaluator : INodeExecutor
 
     private (string strategyKind, JsonObject? cfg) ExtractStrategy(WorkflowNode node)
     {
-        // Expected: properties.strategy = { kind: "exclusive", config: {...} }
-        if (node.Properties.TryGetValue("strategy", out var raw))
+        // Expected: properties.strategy = { kind: "...", config:{...} }
+        // But be defensive: case-insensitive key, dictionary forms, JsonObject, fallback scan.
+        if (TryGetRawStrategyObject(node.Properties, out var raw))
         {
             try
             {
@@ -97,23 +98,113 @@ public class GatewayEvaluator : INodeExecutor
                         JsonObject? cfg = null;
                         if (obj.TryGetPropertyValue("config", out var cfgNode) && cfgNode is JsonObject cObj)
                             cfg = cObj;
+                        _logger.LogDebug("GATEWAY_STRATEGY_DETECTED Node={NodeId} Kind={Kind} (JsonElement)", node.Id, kind);
                         return (kind, cfg);
                     }
                 }
-                else if (raw is string s && !string.IsNullOrWhiteSpace(s))
+                if (raw is IDictionary<string, object> dict)
                 {
+                    var (kind, cfgObj) = FromDictionary(dict);
+                    _logger.LogDebug("GATEWAY_STRATEGY_DETECTED Node={NodeId} Kind={Kind} (Dictionary)", node.Id, kind);
+                    return (kind, cfgObj);
+                }
+                if (raw is JsonObject jo)
+                {
+                    var (kind, cfgObj) = FromJsonObject(jo);
+                    _logger.LogDebug("GATEWAY_STRATEGY_DETECTED Node={NodeId} Kind={Kind} (JsonObject)", node.Id, kind);
+                    return (kind, cfgObj);
+                }
+                if (raw is string s && !string.IsNullOrWhiteSpace(s))
+                {
+                    _logger.LogDebug("GATEWAY_STRATEGY_DETECTED Node={NodeId} Kind={Kind} (String)", node.Id, s.Trim());
                     return (s.Trim(), null);
                 }
             }
-            catch { /* fall through */ }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "GATEWAY_STRATEGY_PARSE_FAIL Node={NodeId}", node.Id);
+            }
         }
 
         // Legacy gatewayType fallback -> exclusive
         var legacy = node.GetProperty<string>("gatewayType");
         if (!string.IsNullOrWhiteSpace(legacy))
+        {
+            _logger.LogDebug("GATEWAY_STRATEGY_FALLBACK_LEGACY Node={NodeId} Kind={Kind}", node.Id, legacy);
             return (legacy!, null);
+        }
 
+        _logger.LogDebug("GATEWAY_STRATEGY_DEFAULT Node={NodeId} Kind=exclusive", node.Id);
         return ("exclusive", null);
+    }
+
+    private static bool TryGetRawStrategyObject(
+        IDictionary<string, object> props,
+        out object? raw)
+    {
+        // Direct, case-insensitive
+        raw = null;
+        var direct = props
+            .FirstOrDefault(kv => kv.Key.Equals("strategy", StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrEmpty(direct.Key))
+        {
+            raw = direct.Value;
+            return true;
+        }
+
+        // Fallback scan: any property whose value is object/dictionary with a "kind" key
+        foreach (var kv in props)
+        {
+            if (kv.Value is IDictionary<string, object> dict &&
+                dict.Keys.Any(k => k.Equals("kind", StringComparison.OrdinalIgnoreCase)))
+            {
+                raw = kv.Value;
+                return true;
+            }
+            if (kv.Value is JsonElement je && je.ValueKind == JsonValueKind.Object)
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(je.GetRawText());
+                    if (doc.RootElement.TryGetProperty("kind", out _))
+                    {
+                        raw = kv.Value;
+                        return true;
+                    }
+                }
+                catch { }
+            }
+        }
+        return false;
+    }
+
+    private static (string kind, JsonObject? cfg) FromDictionary(IDictionary<string, object> dict)
+    {
+        var kind = dict.TryGetValue("kind", out var kv) && kv is string ks && !string.IsNullOrWhiteSpace(ks)
+            ? ks.Trim()
+            : "exclusive";
+        JsonObject? cfgObj = null;
+        if (dict.TryGetValue("config", out var cv) && cv is IDictionary<string, object> cfgDict)
+        {
+            cfgObj = new JsonObject();
+            foreach (var c in cfgDict)
+                cfgObj[c.Key] = c.Value is null ? null : JsonValue.Create(c.Value);
+        }
+        return (kind, cfgObj);
+    }
+
+    private static (string kind, JsonObject? cfg) FromJsonObject(JsonObject jo)
+    {
+        string kind = "exclusive";
+        if (jo.TryGetPropertyValue("kind", out var kNode) &&
+            kNode is JsonValue kv &&
+            kv.TryGetValue<string>(out var ks) &&
+            !string.IsNullOrWhiteSpace(ks))
+            kind = ks.Trim();
+        JsonObject? cfg = null;
+        if (jo.TryGetPropertyValue("config", out var cNode) && cNode is JsonObject cJo)
+            cfg = cJo;
+        return (kind, cfg);
     }
 
     private string RecordDecision(string currentContextJson, string nodeId, GatewayStrategyDecision decision)
