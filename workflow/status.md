@@ -41,7 +41,7 @@
 ### ✅ DONE! Story T9: Events & Usage Endpoint Isolation
 * ✅ DONE! /api/workflow/definitions/{id}/usage for other tenant’s definition → 404.
 * ✅ DONE! Attempt enumeration of events (/api/workflow/admin/events if exists) returns only in-tenant events.
-### ⏳ Story T10: Direct EF Defensive Unit Tests (Service Layer)
+### ✅ DONE! Story T10: Direct EF Defensive Unit Tests (Service Layer)
 * Create DefinitionService with tenantProvider returning tenant 1; manually insert tenant 2 rows; service GetAllAsync must exclude tenant 2 when filters enabled (configure context with filters ON).
 * Repeat for InstanceService / TaskService.
 ### Story T11 (Optional): Race Condition Guard

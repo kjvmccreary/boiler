@@ -1,105 +1,41 @@
 Building Test Projects
-Starting test discovery for requested test run
-========== Starting test discovery ==========
-[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.06]   Discovering: WorkflowService.Tests
-[xUnit.net 00:00:00.10]   Discovered:  WorkflowService.Tests
-========== Test discovery finished: 291 Tests found in 617.5 ms ==========
 ========== Starting test run ==========
 [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.07]   Starting:    WorkflowService.Tests
-[xUnit.net 00:00:00.09]     WorkflowService.Tests.Engine.WorkflowRuntimePhase3SignalTests.CompleteHumanTask_ShouldUpdateContextAndFinish [SKIP]
-[xUnit.net 00:00:00.10]       Skipped: signal wait simulation unstable with current executor harness. Requires dedicated runtime instrumentation.
-[xUnit.net 00:00:00.11]     WorkflowService.Tests.Engine.WorkflowRuntimePhase3SignalTests.SignalWorkflow_ShouldUnblockWaitingNodeAndAdvance [SKIP]
-[xUnit.net 00:00:00.11]       Skipped: signal wait simulation unstable with current executor harness. Requires dedicated runtime instrumentation.
-info: Test[0]
-      RAW_DEFINITION_JSON: {
-        "nodes":[
-          { "id":"start", "type":"start" },
-          { "id":"gw", "type":"gateway", "properties": { "gatewayType": "parallel" } },
-          { "id":"a", "type":"automatic", "properties": { "action": { "kind":"noop" } } },
-          { "id":"b", "type":"automatic", "properties": { "action": { "kind":"noop" } } },
-          { "id":"c", "type":"end" }
-        ],
-        "edges":[
-          { "id":"e1", "from":"start", "to":"gw" },
-          { "id":"e2", "from":"gw", "to":"a" },
-          { "id":"e3", "from":"gw", "to":"b" },
-          { "id":"e4", "from":"a", "to":"c" },
-          { "id":"e5", "from":"b", "to":"c" }
-        ]
-      }
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_START Instance=1 Def=1 Version=1 StartNode=start
+[xUnit.net 00:00:00.05]   Starting:    WorkflowService.Tests
+dbug: WorkflowService.Services.DefinitionService[0]
+      UNPUBLISH_REQUEST def=1 force=False tenant=1
+info: WorkflowService.Services.DefinitionService[0]
+      UNPUBLISH_SUCCESS def=1 forceTerminate=False
 dbug: WorkflowService.Services.DefinitionService[0]
       UNPUBLISH_REQUEST def=1 force=False tenant=2
 dbug: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_REQUEST def=2 force=True tenant=2
-[xUnit.net 00:00:00.62]     WorkflowService.Tests.Definitions.MultiTenantIsolationTests.ForceTerminate_Does_Not_Cancel_OtherTenant_Instances [FAIL]
-[xUnit.net 00:00:00.62]       Assert.True() Failure
-[xUnit.net 00:00:00.62]       Expected: True
-[xUnit.net 00:00:00.62]       Actual:   False
-[xUnit.net 00:00:00.62]       Stack Trace:
-[xUnit.net 00:00:00.62]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\MultiTenantIsolationTests.cs(82,0): at WorkflowService.Tests.Definitions.MultiTenantIsolationTests.ForceTerminate_Does_Not_Cancel_OtherTenant_Instances()
-[xUnit.net 00:00:00.62]         --- End of stack trace from previous location ---
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_NODE_EXEC_START Instance=1 Node=start Type=Start Exec=StartEndExecutor
-info: WorkflowService.Engine.Executors.StartEndExecutor[0]
-      Executing start node start for instance 1
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_NODE_EXEC_START Instance=1 Node=gw Type=Gateway Exec=GatewayEvaluator
-info: WorkflowService.Engine.Executors.GatewayEvaluator[0]
-      GATEWAY_EVAL_START Node=gw Strategy=parallel Outgoing=2
-info: WorkflowService.Engine.Executors.GatewayEvaluator[0]
-      GATEWAY_EVAL_DONE Node=gw Strategy=parallel Targets=[a,b] DecisionId=856ee091-e84e-42d5-89db-0fe7dfcfcf9b
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_NODE_EXEC_START Instance=1 Node=a Type=Automatic Exec=AutomaticExecutor
-info: WorkflowService.Engine.Executors.AutomaticExecutor[0]
-      WF_AUTO_EXEC_BEGIN Instance=1 Node=a Kind=noop Policy=(default)
-dbug: WorkflowService.Engine.Executors.AutomaticExecutor[0]
-      WF_AUTO_OUTPUT_PERSISTED Instance=1 Node=a
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_NODE_EXEC_START Instance=1 Node=b Type=Automatic Exec=AutomaticExecutor
-info: WorkflowService.Engine.Executors.AutomaticExecutor[0]
-      WF_AUTO_EXEC_BEGIN Instance=1 Node=b Kind=noop Policy=(default)
-dbug: WorkflowService.Engine.Executors.AutomaticExecutor[0]
-      WF_AUTO_OUTPUT_PERSISTED Instance=1 Node=b
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_NODE_EXEC_START Instance=1 Node=c Type=End Exec=StartEndExecutor
-info: WorkflowService.Engine.Executors.StartEndExecutor[0]
-      Executing end node c for instance 1
-info: WorkflowService.Engine.WorkflowRuntime[0]
-      WF_INSTANCE_COMPLETE Instance=1 Reason=active-set-drained
-[xUnit.net 00:00:00.67]     WorkflowService.Tests.Engine.WorkflowRuntimePhase3SignalTests.SignalWorkflow_BeforeRelease_ShouldNotAdvance [SKIP]
-[xUnit.net 00:00:00.67]       Skipped: signal wait simulation unstable with current executor harness. Requires dedicated runtime instrumentation.
-[xUnit.net 00:00:00.67]     WorkflowService.Tests.Engine.WorkflowRuntimePhase3SignalTests.CompleteHumanTask_IdempotentLateAfterInstanceComplete_ShouldCancelTask [SKIP]
-[xUnit.net 00:00:00.67]       Skipped: signal wait simulation unstable with current executor harness. Requires dedicated runtime instrumentation.
-info: Test[0]
-      EDGE_EVENTS (5): {"edgeId":"e1","from":"start","to":"gw","mode":"AutoAdvance"} | {"edgeId":"e2","from":"gw","to":"a","mode":"AutoAdvanceParallel"} | {"edgeId":"e3","from":"gw","to":"b","mode":"AutoAdvanceParallel"} | {"edgeId":"e4","from":"a","to":"c","mode":"AutoAdvance"} | {"edgeId":"e5","from":"b","to":"c","mode":"AutoAdvance"}
-info: Test[0]
-      GATEWAY_EVENTS (1): {"nodeId":"gw","strategy":"parallel","outgoingEdges":2,"selected":["a","b"]}
-dbug: WorkflowService.Services.DefinitionService[0]
       UNPUBLISH_REQUEST def=1 force=True tenant=1
+dbug: WorkflowService.Services.DefinitionService[0]
+      UNPUBLISH_REQUEST def=1 force=False tenant=1
+warn: WorkflowService.Services.DefinitionService[0]
+      UNPUBLISH_BLOCKED def=1 running=1 suspended=0
 info: WorkflowService.Services.DefinitionService[0]
       UNPUBLISH_FORCE_TERMINATE def=1 cancelledCount=1
 info: WorkflowService.Services.DefinitionService[0]
       UNPUBLISH_SUCCESS def=1 forceTerminate=True
 dbug: WorkflowService.Services.DefinitionService[0]
+      UNPUBLISH_REQUEST def=1 force=True tenant=1
+dbug: WorkflowService.Services.DefinitionService[0]
+      UNPUBLISH_REQUEST def=1 force=True tenant=1
+info: WorkflowService.Services.DefinitionService[0]
+      UNPUBLISH_FORCE_TERMINATE def=1 cancelledCount=2
+info: WorkflowService.Services.DefinitionService[0]
+      UNPUBLISH_FORCE_TERMINATE def=1 cancelledCount=2
+info: WorkflowService.Services.DefinitionService[0]
+      UNPUBLISH_SUCCESS def=1 forceTerminate=True
+info: WorkflowService.Services.DefinitionService[0]
+      UNPUBLISH_SUCCESS def=1 forceTerminate=True
+dbug: WorkflowService.Services.DefinitionService[0]
       UNPUBLISH_REQUEST def=1 force=False tenant=1
 info: WorkflowService.Services.DefinitionService[0]
       UNPUBLISH_SUCCESS def=1 forceTerminate=False
 dbug: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_REQUEST def=1 force=True tenant=1
-info: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_FORCE_TERMINATE def=1 cancelledCount=2
-info: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_SUCCESS def=1 forceTerminate=True
-dbug: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_REQUEST def=1 force=True tenant=1
-info: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_FORCE_TERMINATE def=1 cancelledCount=2
-info: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_SUCCESS def=1 forceTerminate=True
+      UNPUBLISH_REQUEST def=2 force=True tenant=2
 dbug: WorkflowService.Services.DefinitionService[0]
       UNPUBLISH_REQUEST def=1 force=False tenant=1
 warn: WorkflowService.Services.DefinitionService[0]
@@ -109,34 +45,13 @@ dbug: WorkflowService.Services.DefinitionService[0]
 info: WorkflowService.Services.DefinitionService[0]
       UNPUBLISH_SUCCESS def=1 forceTerminate=False
 dbug: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_REQUEST def=1 force=False tenant=1
-info: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_SUCCESS def=1 forceTerminate=False
-dbug: WorkflowService.Services.DefinitionService[0]
       UNPUBLISH_REQUEST def=1 force=True tenant=1
-[xUnit.net 00:00:00.82]     WorkflowService.Tests.Engine.WorkflowRuntimePhase2GatewayTests.Gateway_Unlabeled_FalseCondition_PicksSecond [SKIP]
-[xUnit.net 00:00:00.82]       Skipped: Gateway event emission not reliably observable in current runtime harness (avoid blocking progress).
-[xUnit.net 00:00:00.82]     WorkflowService.Tests.Engine.WorkflowRuntimePhase2GatewayTests.Gateway_ElseBranch_Fallback_WhenNoTrueLabel [SKIP]
-[xUnit.net 00:00:00.82]       Skipped: Gateway event emission not reliably observable in current runtime harness (avoid blocking progress).
-[xUnit.net 00:00:00.82]     WorkflowService.Tests.Engine.WorkflowRuntimePhase2GatewayTests.Gateway_Unlabeled_TwoEdges_TrueCondition_PicksFirst [SKIP]
-[xUnit.net 00:00:00.82]       Skipped: Gateway event emission not reliably observable in current runtime harness (avoid blocking progress).
-[xUnit.net 00:00:00.82]     WorkflowService.Tests.Engine.WorkflowRuntimePhase2GatewayTests.Gateway_TrueBranch_SelectsTrueEdge [SKIP]
-[xUnit.net 00:00:00.82]       Skipped: Gateway event emission not reliably observable in current runtime harness (avoid blocking progress).
-[xUnit.net 00:00:00.82]     WorkflowService.Tests.Engine.WorkflowRuntimePhase2GatewayTests.Gateway_FalseBranch_SelectsFalseEdge [SKIP]
-[xUnit.net 00:00:00.82]       Skipped: Gateway event emission not reliably observable in current runtime harness (avoid blocking progress).
-[xUnit.net 00:00:00.86]     WorkflowService.Tests.Engine.WorkflowRuntimePhase1Tests.NodeFailure_ShouldMarkInstanceFailed_AndPersistErrorEvent [SKIP]
-[xUnit.net 00:00:00.86]       Temporarily skipped: executor harness instability (not indicative of production defect).
-[xUnit.net 00:00:00.86]     WorkflowService.Tests.Engine.WorkflowRuntimePhase1Tests.RetryWorkflow_WithResetNode_ShouldUseProvidedNode [SKIP]
-[xUnit.net 00:00:00.86]       Temporarily skipped: executor harness instability (not indicative of production defect).
-dbug: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_REQUEST def=1 force=False tenant=1
-warn: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_BLOCKED def=1 running=1 suspended=0
-[xUnit.net 00:00:00.88]     WorkflowService.Tests.Engine.WorkflowRuntimePhase1Tests.CompleteTask_AfterInstanceCompleted_ShouldCancelTaskIdempotently [SKIP]
-[xUnit.net 00:00:00.88]       Temporarily skipped: executor harness instability (not indicative of production defect).
-[xUnit.net 00:00:00.88]     WorkflowService.Tests.Engine.WorkflowRuntimePhase1Tests.CancelWorkflow_ShouldCancelOpenTasksAndSetInstanceCancelled [SKIP]
-[xUnit.net 00:00:00.88]       Temporarily skipped: executor harness instability (not indicative of production defect).
-[xUnit.net 00:00:00.88]     WorkflowService.Tests.Engine.WorkflowRuntimePhase1Tests.RetryWorkflow_FromFailed_NoReset_ShouldResume [SKIP]
-[xUnit.net 00:00:00.88]       Temporarily skipped: executor harness instability (not indicative of production defect).
-[xUnit.net 00:00:34.07]   Finished:    WorkflowService.Tests
-========== Test run finished: 291 Tests (276 Passed, 1 Failed, 14 Skipped) run in 34.1 sec ==========
+[xUnit.net 00:00:00.65]     WorkflowService.Tests.Definitions.MultiTenantIsolationTests.ForceTerminate_Does_Not_Cancel_OtherTenant_Instances [FAIL]
+[xUnit.net 00:00:00.65]       System.InvalidOperationException : Published workflow JSONDefinition is immutable. Create a new version.
+[xUnit.net 00:00:00.65]       Stack Trace:
+[xUnit.net 00:00:00.65]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Persistence\WorkflowDbContext.cs(155,0): at WorkflowService.Persistence.WorkflowDbContext.EnforceDefinitionJsonImmutability()
+[xUnit.net 00:00:00.65]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Persistence\WorkflowDbContext.cs(95,0): at WorkflowService.Persistence.WorkflowDbContext.SaveChangesAsync(CancellationToken cancellationToken)
+[xUnit.net 00:00:00.65]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\MultiTenantIsolationTests.cs(97,0): at WorkflowService.Tests.Definitions.MultiTenantIsolationTests.ForceTerminate_Does_Not_Cancel_OtherTenant_Instances()
+[xUnit.net 00:00:00.65]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.65]   Finished:    WorkflowService.Tests
+========== Test run finished: 23 Tests (22 Passed, 1 Failed, 0 Skipped) run in 662 ms ==========
