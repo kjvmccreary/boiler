@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
 using WorkflowService.Domain.Dsl;
 using WorkflowService.Domain.Models;
@@ -60,12 +61,7 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         var workflowDef = BuilderDefinitionAdapter.Parse(definition.JSONDefinition);
 
-        // Primary lookup (expected path)
         var startNode = workflowDef.Nodes.FirstOrDefault(n => n.IsStart());
-
-        // Fallback: tolerate minor casing / parse irregularities instead of throwing immediately.
-        // (Added because a recent change caused a valid JSON definition to deserialize without marking the Start node.
-        //  This ensures tests surface a warning log rather than fail hard while we diagnose upstream parsing.)
         if (startNode == null && workflowDef.Nodes.Count > 0)
         {
             startNode = workflowDef.Nodes.FirstOrDefault(n =>
@@ -75,7 +71,7 @@ public class WorkflowRuntime : IWorkflowRuntime
             if (startNode != null)
             {
                 _logger.LogWarning(
-                    "WF_START_FALLBACK InstanceDefinition={DefinitionId} FallbackStartNodeUsed Id={NodeId} Type={Type} (upstream IsStart detection failed)",
+                    "WF_START_FALLBACK InstanceDefinition={DefinitionId} FallbackStartNodeUsed Id={NodeId} Type={Type}",
                     definitionId, startNode.Id, startNode.Type);
             }
         }
@@ -133,41 +129,68 @@ public class WorkflowRuntime : IWorkflowRuntime
         }
 
         var workflowDef = BuilderDefinitionAdapter.Parse(instance.WorkflowDefinition.JSONDefinition);
-        var currentNodeIds = JsonSerializer.Deserialize<string[]>(instance.CurrentNodeIds) ?? Array.Empty<string>();
 
-        _logger.LogInformation("WF_CONTINUE Instance={InstanceId} ActiveNodes=[{Nodes}] Edges={EdgeCount}",
-            instanceId, string.Join(",", currentNodeIds), workflowDef.Edges.Count);
-
-        foreach (var nodeId in currentNodeIds.ToArray())
+        // Loop until no immediate progress can be made
+        var safetyCounter = 0;
+        while (instance.Status == InstanceStatus.Running)
         {
-            if (instance.Status != InstanceStatus.Running) break;
-
-            var node = workflowDef.Nodes.FirstOrDefault(n => n.Id.Equals(nodeId, StringComparison.OrdinalIgnoreCase));
-            if (node == null)
+            safetyCounter++;
+            if (safetyCounter > 5000)
             {
-                _logger.LogError("WF_NODE_MISSING Instance={InstanceId} NodeId={NodeId}", instance.Id, nodeId);
-                continue;
+                _logger.LogWarning("WF_CONTINUE_SAFETY_BREAK Instance={InstanceId}", instance.Id);
+                break;
             }
 
-            if (node.IsHumanTask())
+            var activeNodes = DeserializeActive(instance);
+            if (activeNodes.Count == 0)
             {
-                var hasOpen = await _context.WorkflowTasks
-                    .Where(t => t.WorkflowInstanceId == instance.Id
-                                && t.NodeId == node.Id
-                                && (t.Status == WorkflowTaskStatus.Created
-                                    || t.Status == WorkflowTaskStatus.Assigned
-                                    || t.Status == WorkflowTaskStatus.Claimed
-                                    || t.Status == WorkflowTaskStatus.InProgress))
-                    .AnyAsync(cancellationToken);
+                await TryCompleteInstanceAsync(instance, "active-set-empty");
+                break;
+            }
 
-                if (hasOpen)
+            // Snapshot to iterate (may change during execution)
+            var iteration = activeNodes.ToArray();
+            var madeProgress = false;
+
+            foreach (var nodeId in iteration)
+            {
+                if (instance.Status != InstanceStatus.Running) break;
+
+                // Node might have been removed already
+                var currentActive = DeserializeActive(instance);
+                if (!currentActive.Contains(nodeId, StringComparer.OrdinalIgnoreCase))
+                    continue;
+
+                var node = workflowDef.Nodes
+                    .FirstOrDefault(n => n.Id.Equals(nodeId, StringComparison.OrdinalIgnoreCase));
+
+                if (node == null)
                 {
-                    _logger.LogTrace("WF_SKIP_WAITING_HUMAN Instance={InstanceId} Node={NodeId}", instance.Id, node.Id);
+                    _logger.LogError("WF_NODE_MISSING Instance={InstanceId} NodeId={NodeId}", instance.Id, nodeId);
+                    RemoveActiveNode(instance, nodeId);
+                    madeProgress = true;
                     continue;
                 }
+
+                // If node is a human (or timer) waiting task with an open, skip for now
+                if (await HasOpenWaitingTaskAsync(instance.Id, node, cancellationToken))
+                {
+                    _logger.LogTrace("WF_SKIP_WAITING Instance={InstanceId} Node={NodeId}", instance.Id, node.Id);
+                    continue;
+                }
+
+                await ExecuteNodeInternalAsync(node, instance, workflowDef, cancellationToken);
+                madeProgress = true;
+
+                if (instance.Status != InstanceStatus.Running)
+                    break;
             }
 
-            await ExecuteNodeAsync(node, instance, workflowDef, cancellationToken);
+            if (!madeProgress)
+            {
+                // No immediate auto nodes left; exit loop
+                break;
+            }
         }
 
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
@@ -280,7 +303,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         task.CompletedAt = DateTime.UtcNow;
         task.CompletionData = completionData;
         MarkDirty();
-        UpdateWorkflowContext(instance, task.NodeId, completionData);
+        UpdateWorkflowContextTaskCompletion(instance, task.NodeId, completionData);
 
         await CreateEventAsync(instance.Id, "Task", isTimer ? "TimerCompleted" : "Completed",
             JsonSerializer.Serialize(new
@@ -291,10 +314,9 @@ public class WorkflowRuntime : IWorkflowRuntime
                 system = isTimer && completedByUserId == 0
             }), completedByUserId == 0 ? null : completedByUserId);
 
-        var currentNodes = JsonSerializer.Deserialize<List<string>>(instance.CurrentNodeIds) ?? new List<string>();
-        currentNodes.Remove(task.NodeId);
+        RemoveActiveNode(instance, node.Id);
 
-        var nextNodeIds = GetOutgoingTargetsForAdvance(workflowDef, node, instance);
+        var nextNodeIds = GetOutgoingTargetsForAdvance(workflowDef, node);
 
         foreach (var target in nextNodeIds)
         {
@@ -308,29 +330,15 @@ public class WorkflowRuntime : IWorkflowRuntime
                 }), null);
         }
 
+        AddActiveNodes(instance, nextNodeIds);
+
         if (!nextNodeIds.Any())
-        {
-            await CancelOpenTasksAsync(instance, "instance-completed", CancellationToken.None);
-            instance.Status = InstanceStatus.Completed;
-            instance.CompletedAt = DateTime.UtcNow;
-            instance.CurrentNodeIds = JsonSerializer.Serialize(Array.Empty<string>());
-            MarkDirty();
-            await CreateEventAsync(instance.Id, "Instance", "Completed",
-                "{\"reason\":\"end-of-path\"}", completedByUserId == 0 ? null : completedByUserId);
-            _logger.LogInformation("WF_ADVANCE_COMPLETE Instance={InstanceId} Node={NodeId}", instance.Id, node.Id);
-        }
-        else
-        {
-            foreach (var n in nextNodeIds)
-                if (!currentNodes.Contains(n, StringComparer.OrdinalIgnoreCase)) currentNodes.Add(n);
-            instance.CurrentNodeIds = JsonSerializer.Serialize(currentNodes);
-            MarkDirty();
-            _logger.LogInformation("WF_ADVANCE Instance={InstanceId} FromNode={NodeId} Next=[{Next}]",
-                instance.Id, node.Id, string.Join(",", nextNodeIds));
-        }
+            UpdateParallelBranchProgress(instance, node.Id);
+
+        await TryCompleteIfNoActiveAsync(instance);
 
         if (instance.Status == InstanceStatus.Running)
-            await ContinueWorkflowAsync(instance.Id, cancellationToken);
+            await ContinueWorkflowAsync(instance.Id, cancellationToken, autoCommit: false);
 
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
 
@@ -365,11 +373,11 @@ public class WorkflowRuntime : IWorkflowRuntime
         instance.CompletedAt = DateTime.UtcNow;
         MarkDirty();
 
-        await CancelOpenTasksAsync(instance, reason, cancellationToken);
+        await CancelOpenTasksAsync(instance, "instance-cancelled", cancellationToken);
 
         await CreateEventAsync(instanceId, "Instance", "Cancelled",
             $"{{\"reason\":\"{reason}\"}}", cancelledByUserId);
-        _logger.LogWarning("WF_CANCEL Instance={InstanceId} Reason={Reason}", instanceId, reason);
+        _logger.LogWarning("WF_CANCEL Instance={InstanceId} Reason={Reason}", instance.Id, reason);
 
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
     }
@@ -402,7 +410,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         await CreateEventAsync(instanceId, "Instance", "Retried",
             JsonSerializer.Serialize(new { resetToNodeId = resetToNodeId ?? "current" }), null);
 
-        _logger.LogInformation("WF_RETRY Instance={InstanceId} ResetTo={ResetNode}", instanceId, resetToNodeId);
+        _logger.LogInformation("WF_RETRY Instance={InstanceId} ResetTo={ResetNode}", instance.Id, resetToNodeId);
 
         await ContinueWorkflowAsync(instance.Id, cancellationToken);
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
@@ -478,9 +486,9 @@ public class WorkflowRuntime : IWorkflowRuntime
 
     #endregion
 
-    #region Node Execution
+    #region Internal Execution
 
-    private async Task ExecuteNodeAsync(
+    private async Task ExecuteNodeInternalAsync(
         WorkflowNode node,
         WorkflowInstance instance,
         WorkflowDefinitionJson workflowDef,
@@ -488,8 +496,26 @@ public class WorkflowRuntime : IWorkflowRuntime
     {
         try
         {
-            var executor = _executors.FirstOrDefault(e => SafeCanExecute(e, node))
-                           ?? throw new InvalidOperationException($"No executor for node type {node.Type}");
+            var executor = _executors.FirstOrDefault(e => SafeCanExecute(e, node));
+            if (executor == null)
+            {
+                if (node.IsEnd())
+                {
+                    RemoveActiveNode(instance, node.Id);
+                    await CreateEventAsync(instance.Id, "Node", "Executed",
+                        JsonSerializer.Serialize(new
+                        {
+                            nodeId = node.Id,
+                            nodeType = node.Type,
+                            shouldWait = false,
+                            taskCreated = false,
+                            fallback = "implicit-end"
+                        }), null);
+                    await TryCompleteIfNoActiveAsync(instance);
+                    return;
+                }
+                throw new InvalidOperationException($"No executor for node type {node.Type}");
+            }
 
             _logger.LogInformation("WF_NODE_EXEC_START Instance={InstanceId} Node={NodeId} Type={Type} Exec={Exec}",
                 instance.Id, node.Id, node.Type, executor.GetType().Name);
@@ -528,87 +554,129 @@ public class WorkflowRuntime : IWorkflowRuntime
                 MarkDirty();
             }
 
+            // FIX TASK DUP: Add new task only if no LOCAL or DB open task already exists; persist immediately so next loop sees it.
             if (result.CreatedTask != null)
             {
-                _context.WorkflowTasks.Add(result.CreatedTask);
-                MarkDirty();
-                await CreateEventAsync(instance.Id, "Node", "NodeActivated",
+                if (!HasLocalOpenTask(instance.Id, node.Id))
+                {
+                    var dbHas = await _context.WorkflowTasks
+                        .AsNoTracking()
+                        .Where(t => t.WorkflowInstanceId == instance.Id
+                                    && t.NodeId == node.Id
+                                    && OpenStatuses.Contains(t.Status))
+                        .AnyAsync(cancellationToken);
+
+                    if (dbHas)
+                    {
+                        _logger.LogDebug("WF_TASK_DUP_DB_SUPPRESS Instance={InstanceId} Node={NodeId}", instance.Id, node.Id);
+                    }
+                    else
+                    {
+                        _context.WorkflowTasks.Add(result.CreatedTask);
+                        MarkDirty();
+                        await SaveIfDirtyAsync(cancellationToken); // flush so subsequent HasOpenWaitingTask sees it
+
+                        await CreateEventAsync(instance.Id, "Node", "NodeActivated",
+                            JsonSerializer.Serialize(new
+                            {
+                                nodeId = node.Id,
+                                nodeType = node.Type,
+                                taskId = 0,
+                                label = node.Properties.GetValueOrDefault("label") ?? node.Id
+                            }), null);
+                    }
+                }
+                else
+                {
+                    _logger.LogDebug("WF_TASK_DUP_LOCAL_SUPPRESS Instance={InstanceId} Node={NodeId}", instance.Id, node.Id);
+                }
+            }
+
+            if (result.ShouldWait)
+            {
+                await CreateEventAsync(instance.Id, "Node", "Executed",
                     JsonSerializer.Serialize(new
                     {
                         nodeId = node.Id,
                         nodeType = node.Type,
-                        taskId = 0,
-                        label = node.Properties.GetValueOrDefault("label") ?? node.Id
+                        shouldWait = true,
+                        taskCreated = result.CreatedTask != null
                     }), null);
+                return;
             }
 
-            if (!result.ShouldWait)
+            RemoveActiveNode(instance, node.Id);
+
+            List<string> next;
+
+            if (node.IsGateway())
             {
-                // Declared strategy (flattened parser ensures direct detection)
-                string? declaredStrategy = null;
-                if (node.IsGateway())
+                var (strategy, selected, outgoingCount) = ReadGatewayDecision(instance.Context, node.Id);
+
+                next = result.NextNodeIds?.Any() == true
+                    ? result.NextNodeIds.ToList()
+                    : selected.ToList();
+
+                if (!next.Any())
                 {
-                    declaredStrategy = TryGetDeclaredGatewayStrategy(node)
-                                       ?? TryGetGatewayStrategy(instance.Context, node.Id);
-                }
+                    var fallbackKind = ExtractGatewayKindFallback(node);
+                    var allTargets = GetLinearOutgoingTargets(workflowDef, node.Id);
 
-                List<string> next;
-
-                if (node.IsGateway() &&
-                    declaredStrategy != null &&
-                    declaredStrategy.Equals("parallel", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Declared parallel: all outgoing targets
-                    var outgoingEdges = GetOutgoingEdgeObjects(workflowDef, node.Id);
-                    var targets = NormalizeEdgeTargets(outgoingEdges);
-
-                    // Emit GatewayEvaluated (parallel) with full selection
-                    await CreateEventAsync(instance.Id, "Gateway", "GatewayEvaluated",
-                        JsonSerializer.Serialize(new
-                        {
-                            nodeId = node.Id,
-                            strategy = "parallel",
-                            outgoingEdges = outgoingEdges.Count,
-                            selected = targets,
-                            phase = "declared-parallel"
-                        }), null);
-
-                    // EdgeTraversed per concrete edge
-                    foreach (var e in outgoingEdges)
+                    if (fallbackKind.Equals("parallel", StringComparison.OrdinalIgnoreCase))
                     {
-                        var edgeId = e.Id ?? $"{node.Id}->{(e.Target ?? e.To ?? e.EffectiveTarget)}";
-                        var target = (e.Target ?? e.To ?? e.EffectiveTarget ?? string.Empty).Trim();
-                        if (string.IsNullOrEmpty(target)) continue;
-
-                        await CreateEventAsync(instance.Id, "Edge", "EdgeTraversed",
-                            JsonSerializer.Serialize(new
-                            {
-                                edgeId,
-                                from = node.Id,
-                                to = target,
-                                mode = "AutoAdvanceParallel"
-                            }), null);
-                    }
-
-                    _logger.LogInformation(
-                        "WF_GATEWAY_PARALLEL_DECLARED Instance={InstanceId} Node={NodeId} Targets=[{Targets}]",
-                        instance.Id, node.Id, string.Join(",", targets));
-
-                    next = targets;
-                }
-                else
-                {
-                    // Exclusive or non-gateway path (existing logic)
-                    if (result.NextNodeIds.Any())
-                    {
-                        next = result.NextNodeIds.ToList();
+                        next = allTargets;
+                        CreateOrUpdateParallelGroup(instance, node.Id, next);
+                        strategy = "parallel";
+                        outgoingCount = allTargets.Count;
                     }
                     else
                     {
-                        next = GetNextNodeIdsWithGatewayAware(node, workflowDef, instance);
+                        if (allTargets.Count > 0)
+                            next = new List<string> { allTargets[0] };
+                        strategy = fallbackKind;
+                        outgoingCount = allTargets.Count;
                     }
+                }
 
-                    // Edge events (only for automatic advance here; task completion path handled elsewhere)
+                await CreateEventAsync(instance.Id, "Gateway", "GatewayEvaluated",
+                    JsonSerializer.Serialize(new
+                    {
+                        nodeId = node.Id,
+                        strategy = strategy ?? "exclusive",
+                        outgoingEdges = outgoingCount,
+                        selected = next
+                    }), null);
+
+                var mode = (strategy ?? "exclusive").Equals("parallel", StringComparison.OrdinalIgnoreCase)
+                    ? "AutoAdvanceParallel"
+                    : "AutoAdvance";
+
+                foreach (var target in next)
+                {
+                    var edgeId = FindEdgeId(node.Id, target, workflowDef)
+                                 ?? $"{node.Id}->{target}";
+                    await CreateEventAsync(instance.Id, "Edge", "EdgeTraversed",
+                        JsonSerializer.Serialize(new
+                        {
+                            edgeId,
+                            from = node.Id,
+                            to = target,
+                            mode
+                        }), null);
+                }
+
+                if ((strategy ?? "").Equals("parallel", StringComparison.OrdinalIgnoreCase))
+                    CreateOrUpdateParallelGroup(instance, node.Id, next);
+            }
+            else
+            {
+                if (result.NextNodeIds.Any())
+                {
+                    next = result.NextNodeIds.ToList();
+                }
+                else
+                {
+                    next = GetLinearOutgoingTargets(workflowDef, node.Id);
                     foreach (var target in next)
                     {
                         var edgeId = FindEdgeId(node.Id, target, workflowDef)
@@ -623,29 +691,35 @@ public class WorkflowRuntime : IWorkflowRuntime
                             }), null);
                     }
                 }
-
-                _logger.LogInformation("WF_NODE_ADVANCE Instance={InstanceId} Node={NodeId} Next=[{Next}]",
-                    instance.Id, node.Id, string.Join(",", next));
-
-                AdvanceToNextNodes(instance, workflowDef, next);
             }
-            else
+
+            var joinReady = new List<string>();
+            foreach (var candidate in next)
             {
-                _logger.LogInformation("WF_NODE_WAIT Instance={InstanceId} Node={NodeId} Type={Type}",
-                    instance.Id, node.Id, node.Type);
+                var candNode = workflowDef.Nodes.FirstOrDefault(n => n.Id.Equals(candidate, StringComparison.OrdinalIgnoreCase));
+                if (candNode?.IsJoin() == true)
+                {
+                    var arrival = HandleJoinCandidateArrival(instance, workflowDef, node, candidate);
+                    if (arrival.Satisfied && arrival.AddedToActive)
+                        joinReady.Add(candidate);
+                }
+                else
+                {
+                    joinReady.Add(candidate);
+                }
             }
+            AddActiveNodes(instance, joinReady);
 
             await CreateEventAsync(instance.Id, "Node", "Executed",
                 JsonSerializer.Serialize(new
                 {
                     nodeId = node.Id,
                     nodeType = node.Type,
-                    shouldWait = result.ShouldWait,
+                    shouldWait = false,
                     taskCreated = result.CreatedTask != null
                 }), null);
 
-            if (!result.ShouldWait && instance.Status == InstanceStatus.Running)
-                await ContinueWorkflowAsync(instance.Id, cancellationToken);
+            await TryCompleteIfNoActiveAsync(instance);
         }
         catch (Exception ex)
         {
@@ -662,262 +736,141 @@ public class WorkflowRuntime : IWorkflowRuntime
 
     #endregion
 
-    #region Edge / Gateway Logic
+    #region Gateway Decision Reading Helpers
 
-    private List<WorkflowEdge> GetOutgoingEdgesCaseInsensitive(WorkflowDefinitionJson def, string nodeId)
+    private (string? strategy, IEnumerable<string> selectedTargets, int outgoingCount) ReadGatewayDecision(
+        string contextJson,
+        string nodeId)
     {
-        var list = def.Edges
+        try
+        {
+            using var doc = JsonDocument.Parse(contextJson);
+            if (!doc.RootElement.TryGetProperty("_gatewayDecisions", out var decisions) ||
+                decisions.ValueKind != JsonValueKind.Object)
+                return (null, Array.Empty<string>(), 0);
+
+            if (!decisions.TryGetProperty(nodeId, out var nodeEntry))
+                return (null, Array.Empty<string>(), 0);
+
+            JsonElement decisionEl;
+
+            // New format: array of decision objects (append-only history)
+            if (nodeEntry.ValueKind == JsonValueKind.Array)
+            {
+                if (nodeEntry.GetArrayLength() == 0) return (null, Array.Empty<string>(), 0);
+                decisionEl = nodeEntry[nodeEntry.GetArrayLength() - 1]; // last decision
+            }
+            // Legacy single object
+            else if (nodeEntry.ValueKind == JsonValueKind.Object)
+            {
+                decisionEl = nodeEntry;
+            }
+            else return (null, Array.Empty<string>(), 0);
+
+            string? strategy = null;
+            if (decisionEl.TryGetProperty("strategy", out var stratEl) &&
+                stratEl.ValueKind == JsonValueKind.String)
+                strategy = stratEl.GetString();
+
+            var selected = new List<string>();
+            if (decisionEl.TryGetProperty("selectedTargets", out var targetsEl) &&
+                targetsEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var t in targetsEl.EnumerateArray())
+                {
+                    if (t.ValueKind == JsonValueKind.String)
+                    {
+                        var v = t.GetString();
+                        if (!string.IsNullOrWhiteSpace(v))
+                            selected.Add(v);
+                    }
+                }
+            }
+
+            var outgoing = 0;
+            if (decisionEl.TryGetProperty("diagnostics", out var diagEl) &&
+                diagEl.ValueKind == JsonValueKind.Object &&
+                diagEl.TryGetProperty("outgoingEdgeCount", out var outEl) &&
+                outEl.ValueKind == JsonValueKind.Number)
+            {
+                outgoing = outEl.GetInt32();
+            }
+            else if (decisionEl.TryGetProperty("outgoingEdges", out var legacyOut) &&
+                     legacyOut.ValueKind == JsonValueKind.Number)
+            {
+                outgoing = legacyOut.GetInt32();
+            }
+
+            return (strategy, selected, outgoing);
+        }
+        catch
+        {
+            return (null, Array.Empty<string>(), 0);
+        }
+    }
+
+    private string ExtractGatewayKindFallback(WorkflowNode node)
+    {
+        // strategy (string)
+        if (node.Properties.TryGetValue("strategy", out var sVal))
+        {
+            if (sVal is string sStr && !string.IsNullOrWhiteSpace(sStr))
+                return sStr.Trim();
+            if (sVal is JsonElement el)
+            {
+                if (el.ValueKind == JsonValueKind.String)
+                {
+                    var sv = el.GetString();
+                    if (!string.IsNullOrWhiteSpace(sv)) return sv.Trim();
+                }
+                if (el.ValueKind == JsonValueKind.Object && el.TryGetProperty("kind", out var kEl) && kEl.ValueKind == JsonValueKind.String)
+                {
+                    var kv = kEl.GetString();
+                    if (!string.IsNullOrWhiteSpace(kv)) return kv.Trim();
+                }
+            }
+        }
+        // object with kind
+        foreach (var kv in node.Properties)
+        {
+            if (kv.Value is JsonElement jel && jel.ValueKind == JsonValueKind.Object &&
+                jel.TryGetProperty("kind", out var kNode) && kNode.ValueKind == JsonValueKind.String)
+            {
+                var ks = kNode.GetString();
+                if (!string.IsNullOrWhiteSpace(ks)) return ks.Trim();
+            }
+        }
+        // gatewayType legacy
+        var gt = node.GetProperty<string>("gatewayType");
+        if (!string.IsNullOrWhiteSpace(gt)) return gt.Trim();
+        return "exclusive";
+    }
+
+    #endregion
+
+    #region Outgoing Utilities (Non-Gateway)
+
+    private List<string> GetLinearOutgoingTargets(WorkflowDefinitionJson def, string nodeId)
+    {
+        var edges = def.Edges
             .Where(e =>
                 (e.Source?.Equals(nodeId, StringComparison.OrdinalIgnoreCase) == true) ||
                 (e.From?.Equals(nodeId, StringComparison.OrdinalIgnoreCase) == true) ||
                 (e.EffectiveSource?.Equals(nodeId, StringComparison.OrdinalIgnoreCase) == true))
             .ToList();
 
-        _logger.LogDebug("WF_DBG_OUTGOING From={From} Count={Count} Raw=[{List}]",
-            nodeId, list.Count,
-            string.Join(",", list.Select(e =>
-                $"{(e.Source ?? e.From ?? e.EffectiveSource)}->{(e.Target ?? e.To ?? e.EffectiveTarget)}")));
-
-        if (list.Count == 0)
-            _logger.LogDebug("WF_DBG_NO_OUTGOING From={From}", nodeId);
-
-        return list;
-    }
-
-    private List<string> GetNextNodeIdsWithGatewayAware(
-        WorkflowNode currentNode,
-        WorkflowDefinitionJson workflowDef,
-        WorkflowInstance instance)
-    {
-        var edges = GetOutgoingEdgesCaseInsensitive(workflowDef, currentNode.Id);
-        if (!edges.Any()) return new List<string>();
-
-        if (!currentNode.IsGateway())
-            return NormalizeEdgeTargets(edges);
-
-        var strategyKind = TryGetDeclaredGatewayStrategy(currentNode)
-                           ?? TryGetGatewayStrategy(instance.Context, currentNode.Id);
-
-        if (string.Equals(strategyKind, "parallel", StringComparison.OrdinalIgnoreCase))
-        {
-            return NormalizeEdgeTargets(edges);
-        }
-
-        return SelectGatewayTargets(currentNode, instance, edges, "inline-exec");
+        return edges
+            .Select(e => (e.Target ?? e.To ?? e.EffectiveTarget ?? "").Trim())
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     private List<string> GetOutgoingTargetsForAdvance(
         WorkflowDefinitionJson workflowDef,
-        WorkflowNode currentNode,
-        WorkflowInstance instance)
+        WorkflowNode currentNode)
     {
-        var edges = GetOutgoingEdgesCaseInsensitive(workflowDef, currentNode.Id);
-        if (!edges.Any()) return new List<string>();
-
-        if (!currentNode.IsGateway())
-            return NormalizeEdgeTargets(edges);
-
-        var strategyKind = TryGetDeclaredGatewayStrategy(currentNode)
-                           ?? TryGetGatewayStrategy(instance.Context, currentNode.Id);
-
-        if (string.Equals(strategyKind, "parallel", StringComparison.OrdinalIgnoreCase))
-        {
-            return NormalizeEdgeTargets(edges);
-        }
-
-        return SelectGatewayTargets(currentNode, instance, edges, "advance-after-task");
-    }
-
-    private static string? TryGetGatewayStrategy(string contextJson, string nodeId)
-    {
-        if (string.IsNullOrWhiteSpace(contextJson)) return null;
-        try
-        {
-            using var doc = JsonDocument.Parse(contextJson);
-            if (doc.RootElement.ValueKind != JsonValueKind.Object) return null;
-            if (!doc.RootElement.TryGetProperty("_gatewayDecisions", out var decisionsEl) ||
-                decisionsEl.ValueKind != JsonValueKind.Object)
-                return null;
-            if (!decisionsEl.TryGetProperty(nodeId, out var nodeEl) ||
-                nodeEl.ValueKind != JsonValueKind.Object)
-                return null;
-            if (!nodeEl.TryGetProperty("strategy", out var stratEl) ||
-                stratEl.ValueKind != JsonValueKind.String)
-                return null;
-            return stratEl.GetString();
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
-    private static string? TryGetDeclaredGatewayStrategy(WorkflowNode node)
-    {
-        try
-        {
-            if (node.Properties == null || node.Properties.Count == 0) return null;
-
-            if (node.Properties.TryGetValue("gatewayType", out var gtObj) &&
-                gtObj is string gtStr &&
-                !string.IsNullOrWhiteSpace(gtStr))
-            {
-                var gtv = gtStr.Trim();
-                if (gtv.Equals("parallel", StringComparison.OrdinalIgnoreCase) ||
-                    gtv.Equals("exclusive", StringComparison.OrdinalIgnoreCase))
-                    return gtv.ToLowerInvariant();
-            }
-
-            object? raw = null;
-            if (!node.Properties.TryGetValue("strategy", out raw))
-            {
-                var match = node.Properties
-                    .FirstOrDefault(kv => kv.Key.Equals("strategy", StringComparison.OrdinalIgnoreCase));
-                if (!string.IsNullOrEmpty(match.Key))
-                    raw = match.Value;
-            }
-
-            if (raw is null)
-            {
-                foreach (var kv in node.Properties)
-                {
-                    if (kv.Value is IDictionary<string, object> d &&
-                        d.Keys.Any(k => k.Equals("kind", StringComparison.OrdinalIgnoreCase)))
-                    {
-                        raw = kv.Value;
-                        break;
-                    }
-                    if (kv.Value is JsonElement je && je.ValueKind == JsonValueKind.Object)
-                    {
-                        using var doc = JsonDocument.Parse(je.GetRawText());
-                        if (doc.RootElement.TryGetProperty("kind", out _))
-                        {
-                            raw = kv.Value;
-                            break;
-                        }
-                    }
-                }
-                if (raw is null) return null;
-            }
-
-            if (raw is JsonElement el && el.ValueKind == JsonValueKind.Object &&
-                el.TryGetProperty("kind", out var kindEl) && kindEl.ValueKind == JsonValueKind.String)
-                return kindEl.GetString()?.Trim().ToLowerInvariant();
-
-            if (raw is string s && !string.IsNullOrWhiteSpace(s))
-                return s.Trim().ToLowerInvariant();
-
-            if (raw is IDictionary<string, object> dict &&
-                dict.TryGetValue("kind", out var kindValue) &&
-                kindValue is string ks &&
-                !string.IsNullOrWhiteSpace(ks))
-                return ks.Trim().ToLowerInvariant();
-
-            if (raw is System.Text.Json.Nodes.JsonObject jo &&
-                jo.TryGetPropertyValue("kind", out var kindNode) &&
-                kindNode is System.Text.Json.Nodes.JsonValue kindJsonValue &&
-                kindJsonValue.TryGetValue<string>(out var js) &&
-                !string.IsNullOrWhiteSpace(js))
-                return js.Trim().ToLowerInvariant();
-        }
-        catch { }
-        return null;
-    }
-
-    private List<string> SelectGatewayTargets(
-        WorkflowNode gateway,
-        WorkflowInstance instance,
-        List<WorkflowEdge> edges,
-        string phase)
-    {
-        var conditionJson = gateway.GetProperty<string>("condition") ?? string.Empty;
-        bool conditionResult = true;
-        if (!string.IsNullOrWhiteSpace(conditionJson) && conditionJson.Trim() != "true")
-        {
-            try
-            {
-                conditionResult = _conditionEvaluator
-                    .EvaluateAsync(conditionJson, instance.Context)
-                    .GetAwaiter()
-                    .GetResult();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex,
-                    "WF_GATEWAY_CONDITION_FAIL Instance={InstanceId} Node={NodeId} DefaultingTrue",
-                    instance.Id, gateway.Id);
-                conditionResult = true;
-            }
-        }
-
-        foreach (var e in edges)
-            e.InferLabelIfMissing();
-
-        string Normalize(string? raw)
-        {
-            if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
-            raw = raw.Trim().ToLowerInvariant();
-            return raw switch
-            {
-                "yes" => "true",
-                "no" => "false",
-                "default" => "else",
-                _ => raw
-            };
-        }
-
-        var classified = edges.Select(e =>
-        {
-            var label = Normalize(e.Label);
-            if (string.IsNullOrEmpty(label))
-            {
-                var idl = e.Id.ToLowerInvariant();
-                if (idl.Contains("true")) label = "true";
-                else if (idl.Contains("false")) label = "false";
-                else if (idl.Contains("else")) label = "else";
-            }
-            return new { Edge = e, Label = label };
-        }).ToList();
-
-        var trueEdges = classified.Where(c => c.Label == "true").Select(c => c.Edge).ToList();
-        var falseEdges = classified.Where(c => c.Label == "false").Select(c => c.Edge).ToList();
-        var elseEdges = classified.Where(c => c.Label == "else").Select(c => c.Edge).ToList();
-        var unlabeled = classified.Where(c => string.IsNullOrEmpty(c.Label)).Select(c => c.Edge).ToList();
-
-        List<WorkflowEdge> chosen;
-        if (conditionResult)
-        {
-            if (trueEdges.Any()) chosen = trueEdges;
-            else if (elseEdges.Any()) chosen = elseEdges;
-            else if (unlabeled.Any()) chosen = new List<WorkflowEdge> { unlabeled[0] };
-            else chosen = new List<WorkflowEdge>();
-        }
-        else
-        {
-            if (falseEdges.Any()) chosen = falseEdges;
-            else if (elseEdges.Any()) chosen = elseEdges;
-            else if (unlabeled.Count >= 2) chosen = new List<WorkflowEdge> { unlabeled[1] };
-            else chosen = new List<WorkflowEdge>();
-        }
-
-        var selectedIds = chosen.Select(c => c.EffectiveTarget).ToList();
-
-        _ = CreateEventAsync(instance.Id, "Gateway", "GatewayEvaluated",
-            JsonSerializer.Serialize(new
-            {
-                nodeId = gateway.Id,
-                condition = conditionJson,
-                result = conditionResult,
-                outgoingEdges = edges.Count,
-                selected = selectedIds,
-                phase
-            }), null);
-
-        _logger.LogInformation(
-            "WF_GATEWAY_SELECT Instance={InstanceId} Node={NodeId} Result={Result} Selected=[{Selected}] Phase={Phase}",
-            instance.Id, gateway.Id, conditionResult, string.Join(",", selectedIds), phase);
-
-        return selectedIds;
+        return GetLinearOutgoingTargets(workflowDef, currentNode.Id);
     }
 
     private static string? FindEdgeId(string from, string to, WorkflowDefinitionJson def)
@@ -931,62 +884,171 @@ public class WorkflowRuntime : IWorkflowRuntime
                  e.EffectiveTarget?.Equals(to, StringComparison.OrdinalIgnoreCase) == true))
                ?.Id;
 
-    private static List<WorkflowEdge> GetOutgoingEdgeObjects(WorkflowDefinitionJson def, string nodeId)
-        => def.Edges
-            .Where(e =>
-                (e.Source?.Equals(nodeId, StringComparison.OrdinalIgnoreCase) == true) ||
-                (e.From?.Equals(nodeId, StringComparison.OrdinalIgnoreCase) == true) ||
-                (e.EffectiveSource?.Equals(nodeId, StringComparison.OrdinalIgnoreCase) == true))
-            .ToList();
+    #endregion
 
-    private static List<string> NormalizeEdgeTargets(IEnumerable<WorkflowEdge> edges)
-        => edges
-            .Select(e => (e.Target ?? e.To ?? e.EffectiveTarget ?? string.Empty).Trim())
-            .Where(t => !string.IsNullOrWhiteSpace(t))
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
+    #region Active Set / Parallel Groups
+
+    private List<string> DeserializeActive(WorkflowInstance instance)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize<List<string>>(instance.CurrentNodeIds)
+                   ?.Where(s => !string.IsNullOrWhiteSpace(s))
+                   .Distinct(StringComparer.OrdinalIgnoreCase)
+                   .ToList()
+                   ?? new List<string>();
+        }
+        catch
+        {
+            return new List<string>();
+        }
+    }
+
+    private void SerializeActive(WorkflowInstance instance, List<string> nodes)
+    {
+        instance.CurrentNodeIds = JsonSerializer.Serialize(nodes.Distinct(StringComparer.OrdinalIgnoreCase));
+        MarkDirty();
+    }
+
+    private void RemoveActiveNode(WorkflowInstance instance, string nodeId)
+    {
+        var active = DeserializeActive(instance);
+        if (active.RemoveAll(a => a.Equals(nodeId, StringComparison.OrdinalIgnoreCase)) > 0)
+            SerializeActive(instance, active);
+    }
+
+    private void AddActiveNodes(WorkflowInstance instance, IEnumerable<string> nodes)
+    {
+        if (nodes == null) return;
+        var list = DeserializeActive(instance);
+        foreach (var n in nodes)
+            if (!list.Contains(n, StringComparer.OrdinalIgnoreCase))
+                list.Add(n);
+        SerializeActive(instance, list);
+    }
+
+    private async Task TryCompleteIfNoActiveAsync(WorkflowInstance instance)
+    {
+        if (instance.Status != InstanceStatus.Running) return;
+        var active = DeserializeActive(instance);
+        if (active.Count == 0)
+            await TryCompleteInstanceAsync(instance, "active-set-drained");
+    }
+
+    private async Task TryCompleteInstanceAsync(WorkflowInstance instance, string reason)
+    {
+        if (instance.Status != InstanceStatus.Running) return;
+
+        await CancelOpenTasksAsync(instance, "instance-completed", default);
+        instance.Status = InstanceStatus.Completed;
+        instance.CompletedAt = DateTime.UtcNow;
+        instance.CurrentNodeIds = JsonSerializer.Serialize(Array.Empty<string>());
+        MarkDirty();
+        await CreateEventAsync(instance.Id, "Instance", "Completed",
+            JsonSerializer.Serialize(new { reason }), null);
+        _logger.LogInformation("WF_INSTANCE_COMPLETE Instance={InstanceId} Reason={Reason}", instance.Id, reason);
+    }
+
+    private void CreateOrUpdateParallelGroup(WorkflowInstance instance, string gatewayNodeId, List<string> branches)
+    {
+        if (branches == null || branches.Count == 0) return;
+        var root = SafeParseContext(instance);
+
+        if (root["_parallelGroups"] is not JsonObject groups)
+        {
+            groups = new JsonObject();
+            root["_parallelGroups"] = groups;
+        }
+
+        if (groups[gatewayNodeId] is not JsonObject existing)
+        {
+            existing = new JsonObject
+            {
+                ["branches"] = new JsonArray(branches.Select(b => (JsonNode?)b).ToArray()),
+                ["remaining"] = new JsonArray(branches.Select(b => (JsonNode?)b).ToArray()),
+                ["completed"] = new JsonArray(),
+                ["createdAtUtc"] = DateTime.UtcNow.ToString("O"),
+                ["joinNodeId"] = null
+            };
+            groups[gatewayNodeId] = existing;
+        }
+        else
+        {
+            if (existing["branches"] is JsonArray arr)
+            {
+                foreach (var b in branches)
+                    if (!arr.Any(n => n?.GetValue<string>()?.Equals(b, StringComparison.OrdinalIgnoreCase) == true))
+                        arr.Add(b);
+            }
+            if (existing["remaining"] is JsonArray rem)
+            {
+                foreach (var b in branches)
+                    if (!rem.Any(n => n?.GetValue<string>()?.Equals(b, StringComparison.OrdinalIgnoreCase) == true))
+                        rem.Add(b);
+            }
+        }
+
+        instance.Context = root.ToJsonString();
+        MarkDirty();
+    }
+
+    private void UpdateParallelBranchProgress(WorkflowInstance instance, string finishedNodeId)
+    {
+        var root = SafeParseContext(instance);
+        if (root["_parallelGroups"] is not JsonObject groups) return;
+
+        foreach (var kv in groups)
+        {
+            if (kv.Value is not JsonObject grp) continue;
+
+            if (grp["branches"] is not JsonArray branches) continue;
+            if (!branches.Any(b => b?.GetValue<string>()?.Equals(finishedNodeId, StringComparison.OrdinalIgnoreCase) == true))
+                continue;
+
+            var remaining = grp["remaining"] as JsonArray ?? new JsonArray();
+            var completed = grp["completed"] as JsonArray ?? new JsonArray();
+
+            var toRemove = remaining
+                .Where(r => r?.GetValue<string>()?.Equals(finishedNodeId, StringComparison.OrdinalIgnoreCase) == true)
+                .ToList();
+            foreach (var r in toRemove) remaining.Remove(r);
+
+            if (!completed.Any(c => c?.GetValue<string>()?.Equals(finishedNodeId, StringComparison.OrdinalIgnoreCase) == true))
+                completed.Add(finishedNodeId);
+
+            grp["remaining"] = remaining;
+            grp["completed"] = completed;
+
+            CreateEventAsync(instance.Id, "Parallel", "ParallelBranchProgress",
+                JsonSerializer.Serialize(new
+                {
+                    gatewayNodeId = kv.Key,
+                    finishedNodeId,
+                    remaining = remaining.Select(r => r?.GetValue<string>()).Where(s => s != null),
+                    completed = completed.Select(r => r?.GetValue<string>()).Where(s => s != null)
+                }), null).GetAwaiter().GetResult();
+
+            instance.Context = root.ToJsonString();
+            MarkDirty();
+        }
+    }
+
+    private JsonObject SafeParseContext(WorkflowInstance instance)
+    {
+        try
+        {
+            var node = JsonNode.Parse(string.IsNullOrWhiteSpace(instance.Context) ? "{}" : instance.Context);
+            return node as JsonObject ?? new JsonObject();
+        }
+        catch
+        {
+            return new JsonObject();
+        }
+    }
 
     #endregion
 
-    #region Advancement / Failure / Events / Context
-
-    private void AdvanceToNextNodes(
-        WorkflowInstance instance,
-        WorkflowDefinitionJson workflowDef,
-        List<string> nextNodeIds)
-    {
-        if (!nextNodeIds.Any())
-        {
-            CancelOpenTasksAsync(instance, "instance-completed", default).GetAwaiter().GetResult();
-            instance.Status = InstanceStatus.Completed;
-            instance.CompletedAt = DateTime.UtcNow;
-            instance.CurrentNodeIds = JsonSerializer.Serialize(Array.Empty<string>());
-            MarkDirty();
-            CreateEventAsync(instance.Id, "Instance", "Completed",
-                "{\"reason\":\"end-of-path\"}", null).GetAwaiter().GetResult();
-            _logger.LogInformation("WF_INSTANCE_COMPLETE Instance={InstanceId} (no outgoing)", instance.Id);
-            return;
-        }
-
-        instance.CurrentNodeIds = JsonSerializer.Serialize(nextNodeIds.ToArray());
-        MarkDirty();
-
-        var endNodes = nextNodeIds.Where(id =>
-            workflowDef.Nodes.Any(n => n.Id.Equals(id, StringComparison.OrdinalIgnoreCase) && n.IsEnd())).ToList();
-
-        if (endNodes.Any())
-        {
-            CancelOpenTasksAsync(instance, "instance-completed", default).GetAwaiter().GetResult();
-            instance.Status = InstanceStatus.Completed;
-            instance.CompletedAt = DateTime.UtcNow;
-            instance.CurrentNodeIds = JsonSerializer.Serialize(Array.Empty<string>());
-            MarkDirty();
-            CreateEventAsync(instance.Id, "Instance", "Completed",
-                JsonSerializer.Serialize(new { endNodes }), null).GetAwaiter().GetResult();
-            _logger.LogInformation("WF_INSTANCE_COMPLETE_END Instance={InstanceId} EndNodes=[{Ends}]",
-                instance.Id, string.Join(",", endNodes));
-        }
-    }
+    #region Failure / Context / Events
 
     private async Task HandleNodeExecutionFailure(
         WorkflowInstance instance,
@@ -1009,7 +1071,7 @@ public class WorkflowRuntime : IWorkflowRuntime
             instance.Id, node.Id, errorMessage);
     }
 
-    private void UpdateWorkflowContext(
+    private void UpdateWorkflowContextTaskCompletion(
         WorkflowInstance instance,
         string nodeId,
         string completionData)
@@ -1104,8 +1166,8 @@ public class WorkflowRuntime : IWorkflowRuntime
     {
         var openTasks = await _context.WorkflowTasks
             .Where(t => t.WorkflowInstanceId == instance.Id &&
-                        (t.Status == DTOs.Workflow.Enums.TaskStatus.Created ||
-                         t.Status == DTOs.Workflow.Enums.TaskStatus.Assigned ||
+                        (t.Status == WorkflowTaskStatus.Created ||
+                         t.Status == WorkflowTaskStatus.Assigned ||
                          t.Status == WorkflowTaskStatus.Claimed ||
                          t.Status == WorkflowTaskStatus.InProgress))
             .ToListAsync(ct);
@@ -1114,7 +1176,7 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         foreach (var t in openTasks)
         {
-            t.Status = DTOs.Workflow.Enums.TaskStatus.Cancelled;
+            t.Status = WorkflowTaskStatus.Cancelled;
             t.CompletedAt = DateTime.UtcNow;
             MarkDirty();
 
@@ -1123,7 +1185,7 @@ public class WorkflowRuntime : IWorkflowRuntime
                 {
                     taskId = t.Id,
                     nodeId = t.NodeId,
-                    reason = reason
+                    reason
                 }),
                 null);
         }
@@ -1133,4 +1195,285 @@ public class WorkflowRuntime : IWorkflowRuntime
     }
 
     #endregion
+
+    #region Join Helpers
+
+    private readonly struct JoinArrivalResult
+    {
+        public bool Satisfied { get; init; }
+        public bool NewlySatisfied { get; init; }
+        public bool AddedToActive { get; init; }
+        public List<string> CancelledBranches { get; init; }
+    }
+
+    private JoinArrivalResult HandleJoinCandidateArrival(
+        WorkflowInstance instance,
+        WorkflowDefinitionJson def,
+        WorkflowNode sourceNode,
+        string joinNodeId)
+    {
+        var joinNode = def.Nodes.FirstOrDefault(n => n.Id.Equals(joinNodeId, StringComparison.OrdinalIgnoreCase));
+        if (joinNode == null) return new JoinArrivalResult { Satisfied = false, NewlySatisfied = false, AddedToActive = false, CancelledBranches = new() };
+        if (!joinNode.IsJoin())
+            return new JoinArrivalResult { Satisfied = false, NewlySatisfied = false, AddedToActive = true, CancelledBranches = new() }; // not actually a join; treat normal
+
+        var gatewayId = joinNode.GetProperty<string>("gatewayId")?.Trim();
+        if (string.IsNullOrWhiteSpace(gatewayId))
+        {
+            _logger.LogWarning("WF_JOIN_NO_GATEWAY Instance={InstanceId} JoinNode={JoinNode}", instance.Id, joinNode.Id);
+            return new JoinArrivalResult { Satisfied = true, NewlySatisfied = true, AddedToActive = true, CancelledBranches = new() }; // fail-open
+        }
+
+        var mode = (joinNode.GetProperty<string>("mode") ?? "all").Trim().ToLowerInvariant();
+        var cancelRemaining = joinNode.GetProperty<bool?>("cancelRemaining") ?? false;
+        var count = joinNode.GetProperty<int?>("count") ?? 0;
+        var expression = joinNode.GetProperty<string>("expression");
+
+        var root = SafeParseContext(instance);
+        if (root["_parallelGroups"] is not JsonObject groups ||
+            groups[gatewayId] is not JsonObject groupObj)
+        {
+            _logger.LogWarning("WF_JOIN_MISSING_GROUP Instance={InstanceId} JoinNode={JoinNode} Gateway={GatewayId}", instance.Id, joinNode.Id, gatewayId);
+            return new JoinArrivalResult { Satisfied = true, NewlySatisfied = true, AddedToActive = true, CancelledBranches = new() };
+        }
+
+        // attach join metadata if missing
+        if (!groupObj.TryGetPropertyValue("joinNodeId", out var jVal) || (jVal?.GetValue<string>() ?? "") == "")
+            groupObj["joinNodeId"] = joinNode.Id;
+
+        JsonArray branches = groupObj["branches"] as JsonArray ?? new JsonArray();
+        groupObj["branches"] = branches;
+
+        if (groupObj["join"] is not JsonObject joinMeta)
+        {
+            joinMeta = new JsonObject
+            {
+                ["nodeId"] = joinNode.Id,
+                ["mode"] = mode,
+                ["cancelRemaining"] = cancelRemaining,
+                ["count"] = count,
+                ["expression"] = expression,
+                ["arrivals"] = new JsonArray(),
+                ["satisfied"] = false,
+                ["satisfiedAtUtc"] = null
+            };
+            groupObj["join"] = joinMeta;
+        }
+
+        var arrivals = joinMeta["arrivals"] as JsonArray ?? new JsonArray();
+        joinMeta["arrivals"] = arrivals;
+
+        var sourceId = sourceNode.Id;
+
+        // record arrival if not already
+        if (!arrivals.Any(a => a?.GetValue<string>()?.Equals(sourceId, StringComparison.OrdinalIgnoreCase) == true))
+        {
+            arrivals.Add(sourceId);
+
+            // Emit arrival event
+            CreateEventAsync(instance.Id, "Parallel", "ParallelJoinArrived",
+                JsonSerializer.Serialize(new
+                {
+                    joinNodeId = joinNode.Id,
+                    gatewayNodeId = gatewayId,
+                    branchNodeId = sourceId,
+                    mode,
+                    arrivals = arrivals.Select(a => a!.GetValue<string>()),
+                    totalBranches = branches.Count
+                }), null).GetAwaiter().GetResult();
+        }
+
+        bool alreadySatisfied = joinMeta.TryGetPropertyValue("satisfied", out var satVal) &&
+                            satVal is JsonValue sv && sv.TryGetValue<bool>(out var b) && b;
+
+        if (alreadySatisfied)
+        {
+            instance.Context = root.ToJsonString();
+            MarkDirty();
+            return new JoinArrivalResult { Satisfied = true, NewlySatisfied = false, AddedToActive = false, CancelledBranches = new() };
+        }
+
+        // evaluate satisfaction
+        bool satisfied = mode switch
+        {
+            "all" => branches.All(bn => arrivals.Any(a => a!.GetValue<string>()!
+                .Equals(bn!.GetValue<string>(), StringComparison.OrdinalIgnoreCase))),
+            "any" => arrivals.Count > 0,
+            "count" => count > 0 && arrivals.Count >= count,
+            "expression" => EvaluateJoinExpression(mode, expression, branches, arrivals, instance.Context),
+            _ => branches.All(bn => arrivals.Any(a => a!.GetValue<string>()!
+                .Equals(bn!.GetValue<string>(), StringComparison.OrdinalIgnoreCase)))
+        };
+
+        if (!satisfied)
+        {
+            instance.Context = root.ToJsonString();
+            MarkDirty();
+            return new JoinArrivalResult { Satisfied = false, NewlySatisfied = false, AddedToActive = false, CancelledBranches = new() };
+        }
+
+        // Mark satisfied
+        joinMeta["satisfied"] = true;
+        joinMeta["satisfiedAtUtc"] = DateTime.UtcNow.ToString("O");
+
+        // determine cancellations
+        var cancelled = new List<string>();
+        if (cancelRemaining && (mode == "any" || mode == "count"))
+        {
+            var active = DeserializeActive(instance);
+            var arrivedSet = arrivals
+                .Select(a => a!.GetValue<string>())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var br in branches.OfType<JsonValue>()
+                         .Select(v => v.GetValue<string>())
+                         .Where(id => !arrivedSet.Contains(id)))
+            {
+                if (active.Contains(br, StringComparer.OrdinalIgnoreCase))
+                {
+                    RemoveActiveNode(instance, br);
+                    cancelled.Add(br);
+                    CancelOpenTasksForNode(instance, br, "join-cancelled");
+                    CreateEventAsync(instance.Id, "Parallel", "ParallelJoinBranchCancelled",
+                        JsonSerializer.Serialize(new
+                        {
+                            joinNodeId = joinNode.Id,
+                            gatewayNodeId = gatewayId,
+                            branchNodeId = br,
+                            reason = "join-cancelRemaining"
+                        }), null).GetAwaiter().GetResult();
+                }
+            }
+        }
+
+        // Emit satisfied event
+        CreateEventAsync(instance.Id, "Parallel", "ParallelJoinSatisfied",
+            JsonSerializer.Serialize(new
+            {
+                joinNodeId = joinNode.Id,
+                gatewayNodeId = gatewayId,
+                mode,
+                count,
+                cancelRemaining,
+                arrivals = arrivals.Select(a => a!.GetValue<string>()),
+                cancelledBranches = cancelled
+            }), null).GetAwaiter().GetResult();
+
+        instance.Context = root.ToJsonString();
+        MarkDirty();
+
+        return new JoinArrivalResult
+        {
+            Satisfied = true,
+            NewlySatisfied = true,
+            AddedToActive = true,
+            CancelledBranches = cancelled
+        };
+    }
+
+    private bool EvaluateJoinExpression(
+        string mode,
+        string? expression,
+        JsonArray branches,
+        JsonArray arrivals,
+        string currentContextJson)
+    {
+        if (string.IsNullOrWhiteSpace(expression)) return false;
+
+        try
+        {
+            // Build ephemeral context overlay with _joinEval
+            var overlay = new Dictionary<string, object?>
+            {
+                ["_joinEval"] = new
+                {
+                    mode,
+                    total = branches.Count,
+                    arrived = arrivals.Count,
+                    remaining = branches.Count - arrivals.Count,
+                    arrivedIds = arrivals.Select(a => a!.GetValue<string>()).ToArray(),
+                    branchIds = branches.OfType<JsonValue>().Select(b => b.GetValue<string>()).ToArray()
+                }
+            };
+
+            // Merge simplistic (shallow) - if needed we can perform real merge later
+            using var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(currentContextJson) ? "{}" : currentContextJson);
+            var rootDict = new Dictionary<string, object?>();
+            foreach (var prop in doc.RootElement.EnumerateObject())
+                rootDict[prop.Name] = prop.Value.ToString();
+
+            foreach (var kv in overlay)
+                rootDict[kv.Key] = kv.Value;
+
+            var mergedJson = JsonSerializer.Serialize(rootDict);
+            return _conditionEvaluator
+                .EvaluateAsync(expression!, mergedJson)
+                .GetAwaiter()
+                .GetResult();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "WF_JOIN_EXPR_FAIL Expression evaluation failed");
+            return false;
+        }
+    }
+
+    private void CancelOpenTasksForNode(WorkflowInstance instance, string nodeId, string reason)
+    {
+        var openTasks = _context.WorkflowTasks
+        .Where(t => t.WorkflowInstanceId == instance.Id &&
+                    t.NodeId == nodeId &&
+                    (t.Status == WorkflowTaskStatus.Created ||
+                     t.Status == WorkflowTaskStatus.Assigned ||
+                     t.Status == WorkflowTaskStatus.Claimed ||
+                     t.Status == WorkflowTaskStatus.InProgress))
+        .ToList();
+
+        if (!openTasks.Any()) return;
+
+        foreach (var t in openTasks)
+        {
+            t.Status = WorkflowTaskStatus.Cancelled;
+            t.CompletedAt = DateTime.UtcNow;
+            MarkDirty();
+
+            CreateEventAsync(instance.Id, "Task", "Cancelled",
+                JsonSerializer.Serialize(new
+                {
+                    taskId = t.Id,
+                    nodeId = t.NodeId,
+                    reason
+                }), null).GetAwaiter().GetResult();
+        }
+    }
+    #endregion
+
+    // NEW: open status set & local task helper
+    private static readonly WorkflowTaskStatus[] OpenStatuses =
+    {
+        WorkflowTaskStatus.Created,
+        WorkflowTaskStatus.Assigned,
+        WorkflowTaskStatus.Claimed,
+        WorkflowTaskStatus.InProgress
+    };
+
+    private bool HasLocalOpenTask(int instanceId, string nodeId) =>
+        _context.WorkflowTasks.Local.Any(t =>
+            t.WorkflowInstanceId == instanceId &&
+            t.NodeId == nodeId &&
+            OpenStatuses.Contains(t.Status));
+
+    private async Task<bool> HasOpenWaitingTaskAsync(int instanceId, WorkflowNode node, CancellationToken ct)
+    {
+        // Local (unsaved) first
+        if (HasLocalOpenTask(instanceId, node.Id))
+            return true;
+
+        // Persisted
+        return await _context.WorkflowTasks
+            .Where(t => t.WorkflowInstanceId == instanceId
+                        && t.NodeId == node.Id
+                        && OpenStatuses.Contains(t.Status))
+            .AnyAsync(ct);
+    }
 }

@@ -8,8 +8,6 @@ namespace WorkflowService.Engine.Executors;
 public class TimerExecutor : INodeExecutor
 {
     private readonly ILogger<TimerExecutor> _logger;
-
-    // Interface-required node type identifier
     public string NodeType => "timer";
 
     public TimerExecutor(ILogger<TimerExecutor> logger)
@@ -20,7 +18,7 @@ public class TimerExecutor : INodeExecutor
     public bool CanExecute(WorkflowNode node) =>
         node.Type.Equals("timer", StringComparison.OrdinalIgnoreCase);
 
-    public async Task<NodeExecutionResult> ExecuteAsync(
+    public Task<NodeExecutionResult> ExecuteAsync(
         WorkflowNode node,
         WorkflowInstance instance,
         string currentContext,
@@ -48,14 +46,14 @@ public class TimerExecutor : INodeExecutor
                 "WF_TIMER_SCHEDULE Instance={InstanceId} Node={NodeId} DueUtc={DueUtc}",
                 instance.Id, node.Id, due);
 
-            return new NodeExecutionResult
+            return Task.FromResult(new NodeExecutionResult
             {
                 IsSuccess = true,
-                ShouldWait = true,      // Timer pauses progression until worker completes it
+                ShouldWait = true,
                 CreatedTask = task,
                 NextNodeIds = new List<string>(),
                 UpdatedContext = currentContext
-            };
+            });
         }
         catch (Exception ex)
         {
@@ -63,13 +61,13 @@ public class TimerExecutor : INodeExecutor
                 "WF_TIMER_SCHEDULE_FAIL Instance={InstanceId} Node={NodeId}",
                 instance.Id, node.Id);
 
-            return new NodeExecutionResult
+            return Task.FromResult(new NodeExecutionResult
             {
                 IsSuccess = false,
                 ShouldWait = false,
                 ErrorMessage = ex.Message,
                 NextNodeIds = new List<string>()
-            };
+            });
         }
     }
 

@@ -5,7 +5,7 @@ namespace WorkflowService.Domain.Dsl;
 /// <summary>
 /// Constants for workflow node types
 /// </summary>
-public static class NodeTypes
+public static partial class NodeTypes
 {
     public const string Start      = "Start";
     public const string End        = "End";
@@ -13,13 +13,15 @@ public static class NodeTypes
     public const string Automatic  = "Automatic";
     public const string Gateway    = "Gateway";
     public const string Timer      = "Timer";
+    // Join constant lives in partial (NodeTypes.Join.cs) but we still reference it here.
+    // Ensure SupportedTypes includes it (the partial provides the actual constant).
 
     /// <summary>
-    /// All supported node types in MVP
+    /// All supported node types in MVP (extended with Join via partial)
     /// </summary>
     public static readonly string[] SupportedTypes =
     {
-        Start, End, HumanTask, Automatic, Gateway, Timer
+        Start, End, HumanTask, Automatic, Gateway, Timer, Join  // Join from partial
     };
 
     public static bool IsSupported(string nodeType) =>
@@ -41,11 +43,9 @@ public static class TimerTypes
 }
 
 /// <summary>
-/// Helper extensions for working with workflow nodes (now all case-insensitive).
-/// Frontend supplies lowercase types (e.g. "automatic", "humanTask") while
-/// backend constants are PascalCase. These helpers normalize that mismatch.
+/// Helper extensions for working with workflow nodes (case-insensitive).
 /// </summary>
-public static class WorkflowNodeExtensions
+public static partial class WorkflowNodeExtensions
 {
     private static string CleanType(string? raw)
     {
@@ -70,7 +70,6 @@ public static class WorkflowNodeExtensions
         CleanType(a).Equals(b, StringComparison.OrdinalIgnoreCase);
 
     public static bool IsStart(this WorkflowNode node) => Eq(node.Type, NodeTypes.Start);
-
     public static bool IsEnd(this WorkflowNode node) => Eq(node.Type, NodeTypes.End);
 
     public static bool IsHumanTask(this WorkflowNode node) =>
@@ -80,7 +79,6 @@ public static class WorkflowNodeExtensions
         Eq(node.Type, NodeTypes.Automatic) || Eq(node.Type, "automatic");
 
     public static bool IsGateway(this WorkflowNode node) => Eq(node.Type, NodeTypes.Gateway);
-
     public static bool IsTimer(this WorkflowNode node) => Eq(node.Type, NodeTypes.Timer);
 
     // Human Task helpers

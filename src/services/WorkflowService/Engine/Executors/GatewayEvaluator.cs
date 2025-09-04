@@ -1,14 +1,17 @@
-using WorkflowService.Domain.Dsl;
-using WorkflowService.Domain.Models;
-using WorkflowService.Engine.Interfaces;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using WorkflowService.Domain.Dsl;
+using WorkflowService.Domain.Models;
 using WorkflowService.Engine.Gateways;
+using WorkflowService.Engine.Interfaces;
 
 namespace WorkflowService.Engine.Executors;
 
 /// <summary>
-/// Delegating gateway executor using strategy abstraction.
+/// Gateway node executor.
+/// Delegates branch selection to strategies and enriches workflow context with
+/// a detailed, append-only decision history for diagnostics & replay.
 /// </summary>
 public class GatewayEvaluator : INodeExecutor
 {
@@ -38,29 +41,52 @@ public class GatewayEvaluator : INodeExecutor
     {
         try
         {
-            var (kind, cfgNode) = ExtractStrategy(node);
-            var strategy = _strategyRegistry.Get(kind);
+            var (strategyKind, cfgNode) = ExtractStrategy(node);
+            var strategy = _strategyRegistry.Get(strategyKind);
 
-            _logger.LogInformation("GATEWAY_EXEC Node={NodeId} Strategy={Strategy}", node.Id, strategy.Kind);
+            var workflowJson = instance.WorkflowDefinition?.JSONDefinition;
+            if (string.IsNullOrWhiteSpace(workflowJson))
+                throw new InvalidOperationException("Workflow definition JSON not available in instance.");
 
-            var gCtx = new GatewayStrategyContext(
+            var def = BuilderDefinitionAdapter.Parse(workflowJson);
+            var outgoingEdges = def.Edges
+                .Where(e =>
+                    (e.Source?.Equals(node.Id, StringComparison.OrdinalIgnoreCase) == true) ||
+                    (e.From?.Equals(node.Id, StringComparison.OrdinalIgnoreCase) == true) ||
+                    (e.EffectiveSource?.Equals(node.Id, StringComparison.OrdinalIgnoreCase) == true))
+                .ToList();
+
+            var gwCtx = new GatewayStrategyContext(
                 node,
                 instance,
+                outgoingEdges,
                 context,
-                cfgNode,
                 _conditionEvaluator,
                 cancellationToken);
 
-            var decision = await strategy.EvaluateAsync(gCtx);
+            _logger.LogInformation("GATEWAY_EVAL_START Node={NodeId} Strategy={Strategy} Outgoing={Count}",
+                node.Id, strategy.Kind, outgoingEdges.Count);
+
+            var sw = Stopwatch.StartNew();
+            var decision = await strategy.EvaluateAsync(gwCtx);
+            sw.Stop();
+
+            // If strategy did not set elapsed we record wrapper time
+            if (decision.ElapsedMs <= 0 && decision.Diagnostics is IDictionary<string, object> diag)
+            {
+                diag["wrapperElapsedMs"] = sw.Elapsed.TotalMilliseconds;
+            }
 
             var updatedContext = RecordDecision(context, node.Id, decision);
+
+            _logger.LogInformation("GATEWAY_EVAL_DONE Node={NodeId} Strategy={Strategy} Targets=[{Targets}] DecisionId={DecisionId}",
+                node.Id, decision.StrategyKind, string.Join(",", decision.SelectedTargetNodeIds), decision.DecisionId);
 
             return new NodeExecutionResult
             {
                 IsSuccess = true,
                 ShouldWait = decision.ShouldWait,
-                // Leave traversal to runtime for now; future: use decision.ChosenEdgeIds
-                NextNodeIds = new List<string>(),
+                NextNodeIds = decision.SelectedTargetNodeIds.ToList(),
                 UpdatedContext = updatedContext
             };
         }
@@ -75,10 +101,10 @@ public class GatewayEvaluator : INodeExecutor
         }
     }
 
+    #region Strategy Extraction
+
     private (string strategyKind, JsonObject? cfg) ExtractStrategy(WorkflowNode node)
     {
-        // Expected: properties.strategy = { kind: "...", config:{...} }
-        // But be defensive: case-insensitive key, dictionary forms, JsonObject, fallback scan.
         if (TryGetRawStrategyObject(node.Properties, out var raw))
         {
             try
@@ -98,25 +124,21 @@ public class GatewayEvaluator : INodeExecutor
                         JsonObject? cfg = null;
                         if (obj.TryGetPropertyValue("config", out var cfgNode) && cfgNode is JsonObject cObj)
                             cfg = cObj;
-                        _logger.LogDebug("GATEWAY_STRATEGY_DETECTED Node={NodeId} Kind={Kind} (JsonElement)", node.Id, kind);
                         return (kind, cfg);
                     }
                 }
                 if (raw is IDictionary<string, object> dict)
                 {
                     var (kind, cfgObj) = FromDictionary(dict);
-                    _logger.LogDebug("GATEWAY_STRATEGY_DETECTED Node={NodeId} Kind={Kind} (Dictionary)", node.Id, kind);
                     return (kind, cfgObj);
                 }
                 if (raw is JsonObject jo)
                 {
                     var (kind, cfgObj) = FromJsonObject(jo);
-                    _logger.LogDebug("GATEWAY_STRATEGY_DETECTED Node={NodeId} Kind={Kind} (JsonObject)", node.Id, kind);
                     return (kind, cfgObj);
                 }
                 if (raw is string s && !string.IsNullOrWhiteSpace(s))
                 {
-                    _logger.LogDebug("GATEWAY_STRATEGY_DETECTED Node={NodeId} Kind={Kind} (String)", node.Id, s.Trim());
                     return (s.Trim(), null);
                 }
             }
@@ -126,15 +148,11 @@ public class GatewayEvaluator : INodeExecutor
             }
         }
 
-        // Legacy gatewayType fallback -> exclusive
+        // Legacy
         var legacy = node.GetProperty<string>("gatewayType");
         if (!string.IsNullOrWhiteSpace(legacy))
-        {
-            _logger.LogDebug("GATEWAY_STRATEGY_FALLBACK_LEGACY Node={NodeId} Kind={Kind}", node.Id, legacy);
             return (legacy!, null);
-        }
 
-        _logger.LogDebug("GATEWAY_STRATEGY_DEFAULT Node={NodeId} Kind=exclusive", node.Id);
         return ("exclusive", null);
     }
 
@@ -142,7 +160,6 @@ public class GatewayEvaluator : INodeExecutor
         IDictionary<string, object> props,
         out object? raw)
     {
-        // Direct, case-insensitive
         raw = null;
         var direct = props
             .FirstOrDefault(kv => kv.Key.Equals("strategy", StringComparison.OrdinalIgnoreCase));
@@ -152,7 +169,6 @@ public class GatewayEvaluator : INodeExecutor
             return true;
         }
 
-        // Fallback scan: any property whose value is object/dictionary with a "kind" key
         foreach (var kv in props)
         {
             if (kv.Value is IDictionary<string, object> dict &&
@@ -207,7 +223,14 @@ public class GatewayEvaluator : INodeExecutor
         return (kind, cfg);
     }
 
-    private string RecordDecision(string currentContextJson, string nodeId, GatewayStrategyDecision decision)
+    #endregion
+
+    #region Context Recording (Enriched History)
+
+    private string RecordDecision(
+        string currentContextJson,
+        string nodeId,
+        GatewayStrategyDecision decision)
     {
         JsonObject root;
         try
@@ -225,16 +248,58 @@ public class GatewayEvaluator : INodeExecutor
             root["_gatewayDecisions"] = decisionsObj;
         }
 
-        decisionsObj[nodeId] = new JsonObject
+        // Gateway decisions stored as array (append-only). Support legacy object -> convert to array.
+        if (decisionsObj[nodeId] is JsonObject legacyObj)
         {
+            var arr = new JsonArray { legacyObj };
+            decisionsObj[nodeId] = arr;
+        }
+
+        if (decisionsObj[nodeId] is not JsonArray history)
+        {
+            history = new JsonArray();
+            decisionsObj[nodeId] = history;
+        }
+
+        var decisionObj = new JsonObject
+        {
+            ["decisionId"] = decision.DecisionId.ToString(),
             ["strategy"] = decision.StrategyKind,
             ["conditionResult"] = decision.ConditionResult,
             ["chosenEdgeIds"] = new JsonArray(decision.ChosenEdgeIds.Select(e => (JsonNode?)e).ToArray()),
+            ["selectedTargets"] = new JsonArray(decision.SelectedTargetNodeIds.Select(t => (JsonNode?)t).ToArray()),
             ["shouldWait"] = decision.ShouldWait,
+            ["elapsedMs"] = decision.ElapsedMs,
             ["notes"] = decision.Notes,
             ["evaluatedAtUtc"] = DateTime.UtcNow.ToString("O")
         };
 
+        if (decision.Diagnostics is { Count: > 0 })
+        {
+            var diag = new JsonObject();
+            foreach (var kv in decision.Diagnostics)
+            {
+                diag[kv.Key] = kv.Value switch
+                {
+                    null => null,
+                    string s => s,
+                    Guid g => g.ToString(),
+                    int i => i,
+                    long l => l,
+                    double d => d,
+                    bool b => b,
+                    IEnumerable<string> list => new JsonArray(list.Select(x => (JsonNode?)x).ToArray()),
+                    IEnumerable<object> objList => new JsonArray(objList.Select(o => JsonValue.Create(o?.ToString())).ToArray()),
+                    _ => JsonValue.Create(kv.Value.ToString())
+                };
+            }
+            decisionObj["diagnostics"] = diag;
+        }
+
+        history.Add(decisionObj);
+
         return root.ToJsonString(new JsonSerializerOptions { WriteIndented = false });
     }
+
+    #endregion
 }

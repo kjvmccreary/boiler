@@ -203,7 +203,7 @@ namespace WorkflowService.Services
             active.Add(node.id);
         }
 
-        private async Task RecordEvent(int instanceId, string type, string name, object data)
+        private Task RecordEvent(int instanceId, string type, string name, object data)
         {
             try
             {
@@ -216,12 +216,12 @@ namespace WorkflowService.Services
                     OccurredAt = DateTime.UtcNow
                 };
                 _db.WorkflowEvents.Add(ev);
-                // Intentionally defer SaveChanges; caller batches
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to record workflow event {Type}:{Name}", type, name);
             }
+            return Task.CompletedTask;
         }
 
         private static HashSet<string> ParseCurrentNodeIds(string raw)

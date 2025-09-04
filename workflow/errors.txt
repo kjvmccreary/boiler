@@ -2,17 +2,27 @@ Building Test Projects
 Starting test discovery for requested test run
 ========== Starting test discovery ==========
 [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.06]   Discovering: WorkflowService.Tests
-[xUnit.net 00:00:00.10]   Discovered:  WorkflowService.Tests
-========== Test discovery finished: 244 Tests found in 671.3 ms ==========
+[xUnit.net 00:00:00.05]   Discovering: WorkflowService.Tests
+[xUnit.net 00:00:00.09]   Discovered:  WorkflowService.Tests
+========== Test discovery finished: 242 Tests found in 800 ms ==========
 ========== Starting test run ==========
 [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
-[xUnit.net 00:00:00.05]   Starting:    WorkflowService.Tests
-[xUnit.net 00:00:00.58]     WorkflowService.Tests.Engine.ParallelGatewayDeclaredStrategyTests.DeclaredParallelGateway_Should_Emit_GatewayEvaluated_With_All_Branches_And_EdgeTraversed_Events [FAIL]
-[xUnit.net 00:00:00.58]       System.InvalidOperationException : Workflow definition must contain a Start node
-[xUnit.net 00:00:00.58]       Stack Trace:
-[xUnit.net 00:00:00.58]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Engine\WorkflowRuntime.cs(84,0): at WorkflowService.Engine.WorkflowRuntime.StartWorkflowAsync(Int32 definitionId, String initialContext, Nullable`1 startedByUserId, CancellationToken cancellationToken, Boolean autoCommit)
-[xUnit.net 00:00:00.58]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\ParallelGatewayDeclaredStrategyTests.cs(142,0): at WorkflowService.Tests.Engine.ParallelGatewayDeclaredStrategyTests.DeclaredParallelGateway_Should_Emit_GatewayEvaluated_With_All_Branches_And_EdgeTraversed_Events()
-[xUnit.net 00:00:00.58]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.59]   Finished:    WorkflowService.Tests
-========== Test run finished: 1 Tests (0 Passed, 1 Failed, 0 Skipped) run in 597 ms ==========
+[xUnit.net 00:00:00.04]   Starting:    WorkflowService.Tests
+[xUnit.net 00:00:03.46]     WorkflowService.Tests.Engine.WorkflowRuntimePhase4OutboxTests.TaskCompletion_ShouldAddTaskCompletedEvent_AndOutbox [FAIL]
+[xUnit.net 00:00:03.47]       System.InvalidOperationException : Sequence contains more than one element
+[xUnit.net 00:00:03.47]       Stack Trace:
+[xUnit.net 00:00:03.47]            at System.Linq.ThrowHelper.ThrowMoreThanOneElementException()
+[xUnit.net 00:00:03.47]            at System.Linq.Enumerable.TryGetSingle[TSource](IEnumerable`1 source, Boolean& found)
+[xUnit.net 00:00:03.47]            at lambda_method814(Closure)
+[xUnit.net 00:00:03.47]            at Microsoft.EntityFrameworkCore.InMemory.Query.Internal.InMemoryQueryExpression.ResultEnumerable.GetEnumerator()
+[xUnit.net 00:00:03.47]            at Microsoft.EntityFrameworkCore.InMemory.Query.Internal.InMemoryShapedQueryCompilingExpressionVisitor.QueryingEnumerable`1.Enumerator.MoveNextHelper()
+[xUnit.net 00:00:03.47]            at Microsoft.EntityFrameworkCore.InMemory.Query.Internal.InMemoryShapedQueryCompilingExpressionVisitor.QueryingEnumerable`1.Enumerator.MoveNext()
+[xUnit.net 00:00:03.47]            at System.Linq.Enumerable.TryGetSingle[TSource](IEnumerable`1 source, Boolean& found)
+[xUnit.net 00:00:03.47]            at lambda_method813(Closure, QueryContext)
+[xUnit.net 00:00:03.47]            at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteCore[TResult](Expression query, Boolean async, CancellationToken cancellationToken)
+[xUnit.net 00:00:03.47]            at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.Execute[TResult](Expression query)
+[xUnit.net 00:00:03.47]            at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryProvider.Execute[TResult](Expression expression)
+[xUnit.net 00:00:03.47]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WorkflowRuntimePhase4OutboxTests.cs(201,0): at WorkflowService.Tests.Engine.WorkflowRuntimePhase4OutboxTests.TaskCompletion_ShouldAddTaskCompletedEvent_AndOutbox()
+[xUnit.net 00:00:03.47]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:03.47]   Finished:    WorkflowService.Tests
+========== Test run finished: 1 Tests (0 Passed, 1 Failed, 0 Skipped) run in 3.5 sec ==========
