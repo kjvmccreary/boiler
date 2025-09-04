@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Nodes; // ADDED for JsonArray
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -16,6 +17,8 @@ using WorkflowService.Engine.Gateways;
 using WorkflowService.Engine.Interfaces;
 using WorkflowService.Services.Interfaces;
 using Xunit;
+using Contracts.Services;
+using WorkflowService.Engine.Pruning; // ADDED
 
 namespace WorkflowService.Tests.Engine;
 
@@ -64,10 +67,25 @@ public class GatewayParallelStrategyTests : TestBase
         IGatewayStrategyRegistry gatewayStrategies = new GatewayStrategyRegistry(
             new IGatewayStrategy[] { new ExclusiveGatewayStrategy(), new ParallelGatewayStrategy() });
 
+        var hasher = new Mock<IDeterministicHasher>();
+        hasher.SetupGet(h => h.Algorithm).Returns("TestHasher");
+        hasher.SetupGet(h => h.Seed).Returns(1UL);
+        hasher.Setup(h => h.Hash(It.IsAny<string?>())).Returns(1234UL);
+        hasher.Setup(h => h.HashComposite(It.IsAny<string?[]>())).Returns(1234UL);
+        hasher.Setup(h => h.ToBucket(It.IsAny<ulong>(), It.IsAny<int>()))
+            .Returns<ulong, int>((val, buckets) => (int)(val % (uint)buckets));
+
+        var pruner = new Mock<IWorkflowContextPruner>();
+        pruner.Setup(p => p.PruneGatewayHistory(It.IsAny<JsonArray>())).Returns(0);
+        var pruneEmitter = new Mock<IGatewayPruningEventEmitter>();
+
         var gatewayExecutor = new GatewayEvaluator(
             condEval.Object,
             _loggerFactory.CreateLogger<GatewayEvaluator>(),
-            gatewayStrategies);
+            gatewayStrategies,
+            hasher.Object,
+            pruner.Object,
+            pruneEmitter.Object);
 
         var executors = new INodeExecutor[]
         {
@@ -132,10 +150,8 @@ public class GatewayParallelStrategyTests : TestBase
 
         var json = BuildParallelGatewayDefinition();
 
-        // Log raw definition JSON
         _loggerFactory.CreateLogger("Test").LogInformation("RAW_DEFINITION_JSON: {Json}", json);
 
-        // (Optional) Quick sanity parse: ensure both e2 & e3 present as raw substring
         json.Contains("\"id\":\"e2\"").Should().BeTrue("definition must contain e2");
         json.Contains("\"id\":\"e3\"").Should().BeTrue("definition must contain e3");
 
@@ -145,11 +161,9 @@ public class GatewayParallelStrategyTests : TestBase
         // Act
         var instance = await runtime.StartWorkflowAsync(defId, "{}", null, CancellationToken.None, autoCommit: true);
 
-        // Reload instance
         DbContext.ChangeTracker.Clear();
         var reloaded = DbContext.WorkflowInstances.First(i => i.Id == instance.Id);
 
-        // Dump all edge traversal events for diagnostics
         var allEdgeEvents = DbContext.WorkflowEvents
             .Where(e => e.WorkflowInstanceId == instance.Id && e.Type == "Edge" && e.Name == "EdgeTraversed")
             .OrderBy(e => e.Id)
@@ -159,7 +173,6 @@ public class GatewayParallelStrategyTests : TestBase
         _loggerFactory.CreateLogger("Test").LogInformation("EDGE_EVENTS ({Count}): {Events}",
             allEdgeEvents.Count, string.Join(" | ", allEdgeEvents));
 
-        // Show gateway evaluation events
         var gwEvents = DbContext.WorkflowEvents
             .Where(e => e.WorkflowInstanceId == instance.Id && e.Type == "Gateway")
             .OrderBy(e => e.Id)
@@ -169,10 +182,9 @@ public class GatewayParallelStrategyTests : TestBase
         _loggerFactory.CreateLogger("Test").LogInformation("GATEWAY_EVENTS ({Count}): {Events}",
             gwEvents.Count, string.Join(" | ", gwEvents));
 
-        // Assert final status (expect workflow completed)
+        // Assert
         reloaded.Status.Should().Be(DTOs.Workflow.Enums.InstanceStatus.Completed);
 
-        // Assertions
         allEdgeEvents.Any(d => d.Contains("\"edgeId\":\"e2\"")).Should().BeTrue("edge e2 (gw->a) should have been traversed");
         allEdgeEvents.Any(d => d.Contains("\"edgeId\":\"e3\"")).Should().BeTrue(
             $"edge e3 (gw->b) should have been traversed. Captured: {string.Join(" | ", allEdgeEvents)}");

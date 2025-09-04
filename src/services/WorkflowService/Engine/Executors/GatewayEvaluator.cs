@@ -1,34 +1,46 @@
 using System.Diagnostics;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using WorkflowService.Domain.Dsl;
 using WorkflowService.Domain.Models;
+using WorkflowService.Engine.Diagnostics;
 using WorkflowService.Engine.Gateways;
 using WorkflowService.Engine.Interfaces;
+using Contracts.Services;
+using WorkflowService.Engine.Pruning;
 
 namespace WorkflowService.Engine.Executors;
 
 /// <summary>
-/// Gateway node executor.
-/// Delegates branch selection to strategies and enriches workflow context with
-/// a detailed, append-only decision history for diagnostics & replay.
+/// Gateway node executor with strategy resolution, decision logging, and
+/// (C2) diagnostics versioning + (C1) pruning of historical decisions per gateway.
 /// </summary>
 public class GatewayEvaluator : INodeExecutor
 {
     private readonly IConditionEvaluator _conditionEvaluator;
     private readonly ILogger<GatewayEvaluator> _logger;
     private readonly IGatewayStrategyRegistry _strategyRegistry;
+    private readonly IDeterministicHasher _hasher;
+    private readonly IWorkflowContextPruner _pruner;
+    private readonly IGatewayPruningEventEmitter _pruneEvents;
 
     public string NodeType => NodeTypes.Gateway;
 
     public GatewayEvaluator(
         IConditionEvaluator conditionEvaluator,
         ILogger<GatewayEvaluator> logger,
-        IGatewayStrategyRegistry strategyRegistry)
+        IGatewayStrategyRegistry strategyRegistry,
+        IDeterministicHasher hasher,
+        IWorkflowContextPruner pruner,
+        IGatewayPruningEventEmitter pruneEvents)
     {
         _conditionEvaluator = conditionEvaluator;
         _logger = logger;
         _strategyRegistry = strategyRegistry;
+        _hasher = hasher;
+        _pruner = pruner;
+        _pruneEvents = pruneEvents;
     }
 
     public bool CanExecute(WorkflowNode node) => node.IsGateway();
@@ -71,13 +83,22 @@ public class GatewayEvaluator : INodeExecutor
             var decision = await strategy.EvaluateAsync(gwCtx);
             sw.Stop();
 
-            // If strategy did not set elapsed we record wrapper time
             if (decision.ElapsedMs <= 0 && decision.Diagnostics is IDictionary<string, object> diag)
             {
                 diag["wrapperElapsedMs"] = sw.Elapsed.TotalMilliseconds;
             }
 
-            var updatedContext = RecordDecision(context, node.Id, decision);
+            var strategyConfigHash = cfgNode != null ? ComputeStrategyConfigHash(cfgNode) : null;
+
+            // (A3) Apply experiment enrollment snapshot (for abTest) BEFORE recording decision history
+            var contextWithSnapshot = ApplyExperimentSnapshot(context, node.Id, decision);
+
+            var updatedContext = RecordDecisionWithPrune(
+                contextWithSnapshot,
+                node.Id,
+                instance,
+                decision,
+                strategyConfigHash);
 
             _logger.LogInformation("GATEWAY_EVAL_DONE Node={NodeId} Strategy={Strategy} Targets=[{Targets}] DecisionId={DecisionId}",
                 node.Id, decision.StrategyKind, string.Join(",", decision.SelectedTargetNodeIds), decision.DecisionId);
@@ -101,7 +122,7 @@ public class GatewayEvaluator : INodeExecutor
         }
     }
 
-    #region Strategy Extraction
+    #region Strategy Extraction (unchanged)
 
     private (string strategyKind, JsonObject? cfg) ExtractStrategy(WorkflowNode node)
     {
@@ -148,7 +169,6 @@ public class GatewayEvaluator : INodeExecutor
             }
         }
 
-        // Legacy
         var legacy = node.GetProperty<string>("gatewayType");
         if (!string.IsNullOrWhiteSpace(legacy))
             return (legacy!, null);
@@ -225,12 +245,14 @@ public class GatewayEvaluator : INodeExecutor
 
     #endregion
 
-    #region Context Recording (Enriched History)
+    #region Decision Recording + Pruning
 
-    private string RecordDecision(
+    private string RecordDecisionWithPrune(
         string currentContextJson,
         string nodeId,
-        GatewayStrategyDecision decision)
+        WorkflowInstance instance,
+        GatewayStrategyDecision decision,
+        string? strategyConfigHash)
     {
         JsonObject root;
         try
@@ -248,11 +270,9 @@ public class GatewayEvaluator : INodeExecutor
             root["_gatewayDecisions"] = decisionsObj;
         }
 
-        // Gateway decisions stored as array (append-only). Support legacy object -> convert to array.
         if (decisionsObj[nodeId] is JsonObject legacyObj)
         {
-            var arr = new JsonArray { legacyObj };
-            decisionsObj[nodeId] = arr;
+            decisionsObj[nodeId] = new JsonArray { legacyObj };
         }
 
         if (decisionsObj[nodeId] is not JsonArray history)
@@ -263,6 +283,7 @@ public class GatewayEvaluator : INodeExecutor
 
         var decisionObj = new JsonObject
         {
+            ["diagnosticsVersion"] = DiagnosticsMetadata.GatewayDecisionDiagnosticsVersion,
             ["decisionId"] = decision.DecisionId.ToString(),
             ["strategy"] = decision.StrategyKind,
             ["conditionResult"] = decision.ConditionResult,
@@ -273,6 +294,9 @@ public class GatewayEvaluator : INodeExecutor
             ["notes"] = decision.Notes,
             ["evaluatedAtUtc"] = DateTime.UtcNow.ToString("O")
         };
+
+        if (!string.IsNullOrWhiteSpace(strategyConfigHash))
+            decisionObj["strategyConfigHash"] = strategyConfigHash;
 
         if (decision.Diagnostics is { Count: > 0 })
         {
@@ -298,8 +322,132 @@ public class GatewayEvaluator : INodeExecutor
 
         history.Add(decisionObj);
 
+        // PRUNING (C1)
+        var removed = _pruner.PruneGatewayHistory(history);
+        if (removed > 0)
+        {
+            _pruneEvents.EmitGatewayDecisionPruned(instance, nodeId, removed, history.Count);
+        }
+
         return root.ToJsonString(new JsonSerializerOptions { WriteIndented = false });
     }
+
+    #endregion
+
+    #region Experiment Snapshot (A3)
+
+    private string ApplyExperimentSnapshot(string currentContextJson, string nodeId, GatewayStrategyDecision decision)
+    {
+        try
+        {
+            if (decision.Diagnostics is not IDictionary<string, object> diag) return currentContextJson;
+            if (!diag.TryGetValue("experimentSnapshot", out var snapObj) || snapObj == null) return currentContextJson;
+
+            JsonObject root;
+            try
+            {
+                root = JsonNode.Parse(currentContextJson) as JsonObject ?? new JsonObject();
+            }
+            catch
+            {
+                root = new JsonObject();
+            }
+
+            if (root["_experiments"] is not JsonObject exps)
+            {
+                exps = new JsonObject();
+                root["_experiments"] = exps;
+            }
+
+            // Do not overwrite existing snapshot (stability guarantee)
+            if (exps[nodeId] is JsonObject) return currentContextJson;
+
+            // Convert snapshot anonymous object to JsonObject
+            var snapJson = JsonSerializer.SerializeToNode(snapObj) as JsonObject;
+            if (snapJson == null) return currentContextJson;
+
+            snapJson["assignedAtUtc"] = DateTime.UtcNow.ToString("O");
+            exps[nodeId] = snapJson;
+
+            return root.ToJsonString(new JsonSerializerOptions { WriteIndented = false });
+        }
+        catch
+        {
+            return currentContextJson; // best-effort, never break main flow
+        }
+    }
+
+    #endregion
+
+    #region Strategy Config Hash
+
+    private string? ComputeStrategyConfigHash(JsonObject cfg)
+    {
+        try
+        {
+            var canonical = CanonicalSerialize(cfg);
+            var hash = _hasher.Hash(canonical);
+            return hash.ToString("X16");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to compute strategyConfigHash");
+            return null;
+        }
+    }
+
+    private string CanonicalSerialize(JsonNode node)
+    {
+        var sb = new StringBuilder();
+        WriteCanonical(node, sb);
+        return sb.ToString();
+    }
+
+    private void WriteCanonical(JsonNode? node, StringBuilder sb)
+    {
+        switch (node)
+        {
+            case null:
+                sb.Append("null");
+                break;
+            case JsonValue v:
+                if (v.TryGetValue<string>(out var s))
+                    sb.Append('"').Append(Escape(s)).Append('"');
+                else if (v.TryGetValue<double>(out var d))
+                    sb.Append(d.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+                else if (v.TryGetValue<long>(out var l))
+                    sb.Append(l);
+                else if (v.TryGetValue<bool>(out var b))
+                    sb.Append(b ? "true" : "false");
+                else
+                    sb.Append('"').Append(Escape(v.ToString())).Append('"');
+                break;
+            case JsonObject o:
+                sb.Append('{');
+                var first = true;
+                foreach (var kv in o.OrderBy(k => k.Key, StringComparer.Ordinal))
+                {
+                    if (!first) sb.Append(',');
+                    first = false;
+                    sb.Append('"').Append(Escape(kv.Key)).Append('"').Append(':');
+                    WriteCanonical(kv.Value, sb);
+                }
+                sb.Append('}');
+                break;
+            case JsonArray a:
+                sb.Append('[');
+                for (int i = 0; i < a.Count; i++)
+                {
+                    if (i > 0) sb.Append(',');
+                    WriteCanonical(a[i], sb);
+                }
+                sb.Append(']');
+                break;
+        }
+    }
+
+    private static string Escape(string s) =>
+        s.Replace("\\", "\\\\").Replace("\"", "\\\"");
 
     #endregion
 }

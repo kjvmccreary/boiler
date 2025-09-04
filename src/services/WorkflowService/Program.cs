@@ -19,30 +19,26 @@ using WorkflowService.Engine.Diagnostics;
 using WorkflowService.Engine.Validation;
 using WorkflowService.Engine.Gateways;
 using WorkflowService.Middleware;
+using Common.Hashing;
+using WorkflowService.Engine.Pruning;
+using WorkflowService.Engine.FeatureFlags;
 
 namespace WorkflowService;
 
 public class Program
 {
-    // Exposed for tests (WebApplicationFactory<Program>)
     public static WebApplication BuildApp(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        // Serilog
         builder.Host.UseSerilog((ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configuration));
 
-        // Controllers & JSON
         builder.Services
             .AddControllers()
-            .AddJsonOptions(o =>
-            {
-                o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-            });
+            .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
         builder.Services.AddEndpointsApiExplorer();
 
-        // Swagger
         builder.Services.AddSwaggerGen(c =>
         {
             c.SwaggerDoc("v1", new OpenApiInfo
@@ -73,24 +69,28 @@ public class Program
             });
         });
 
-        // Common platform services
         builder.Services.AddCommonServices(builder.Configuration);
         builder.Services.AddJwtAuthentication(builder.Configuration);
         builder.Services.AddDynamicAuthorization();
         builder.Services.AddDatabase(builder.Configuration);
 
-        // Workflow DB
+        builder.Services.AddDeterministicHashing(builder.Configuration);
+
         builder.Services.AddDbContext<WorkflowDbContext>(options =>
         {
             var cs = builder.Configuration.GetConnectionString("DefaultConnection");
             options.UseNpgsql(cs, npgsql => npgsql.EnableRetryOnFailure());
         });
 
-        // Engine / runtime
         builder.Services.AddScoped<IConditionEvaluator, JsonLogicConditionEvaluator>();
         builder.Services.AddScoped<IWorkflowRuntime, WorkflowRuntime>();
 
-        // Executors
+        // Pruning (C1)
+        builder.Services.Configure<WorkflowPruningOptions>(
+            builder.Configuration.GetSection("Workflow:Pruning"));
+        builder.Services.AddSingleton<IWorkflowContextPruner, WorkflowContextPruner>();
+        builder.Services.AddScoped<IGatewayPruningEventEmitter, GatewayPruningEventEmitter>();
+
         builder.Services.AddScoped<INodeExecutor, StartEndExecutor>();
         builder.Services.AddScoped<INodeExecutor, HumanTaskExecutor>();
         builder.Services.AddScoped<INodeExecutor, AutomaticExecutor>();
@@ -98,26 +98,20 @@ public class Program
         builder.Services.AddScoped<INodeExecutor, TimerExecutor>();
         builder.Services.AddScoped<INodeExecutor, JoinExecutor>();
 
-        // Diagnostics & Automatic action infra
         builder.Services.AddScoped<IAutomaticActionRegistry, AutomaticActionRegistry>();
         builder.Services.AddScoped<IAutomaticActionExecutor, NoopAutomaticActionExecutor>();
-        builder.Services.AddSingleton<IAutomaticDiagnosticsBuffer>(sp =>
-        {
-            var opts = Microsoft.Extensions.Options.Options.Create(new WorkflowDiagnosticsOptions
-            {
-                EnableAutomaticTrace = false,
-                AutomaticBufferSize = 64
-            });
-            return new AutomaticDiagnosticsBuffer(opts);
-        });
-
+        builder.Services.AddSingleton<IAutomaticDiagnosticsBuffer>(_ =>
+            new AutomaticDiagnosticsBuffer(
+                Microsoft.Extensions.Options.Options.Create(new WorkflowDiagnosticsOptions
+                {
+                    EnableAutomaticTrace = false,
+                    AutomaticBufferSize = 64
+                })));
         // New diagnostics service
         builder.Services.AddScoped<IWorkflowDiagnosticsService, WorkflowDiagnosticsService>();
 
-        // Background workers (timers)
         builder.Services.AddHostedService<TimerWorker>();
 
-        // Security policies
         builder.Services.AddAuthorization(options =>
         {
             options.AddPolicy("workflow.read", p => p.RequireClaim("permission", "workflow.read", "workflow.admin"));
@@ -125,9 +119,14 @@ public class Program
             options.AddPolicy("workflow.admin", p => p.RequireClaim("permission", "workflow.admin"));
         });
 
+        // Register gateway strategies (add abTest)
+        builder.Services.AddScoped<IGatewayStrategy, AbTestGatewayStrategy>();
+        builder.Services.AddScoped<IGatewayStrategy, FeatureFlagGatewayStrategy>(); // NEW A2
+        builder.Services.AddScoped<IFeatureFlagProvider, NoopFeatureFlagProvider>(); // Default provider
+        builder.Services.AddScoped<IFeatureFlagFallbackEmitter, FeatureFlagFallbackEmitter>(); // Fallback event emitter
+
         var app = builder.Build();
 
-        // Middleware
         app.UseSerilogRequestLogging();
         app.UseWorkflowExceptionHandling();
 
@@ -140,9 +139,7 @@ public class Program
         app.UseRouting();
         app.UseAuthentication();
         app.UseAuthorization();
-
         app.MapControllers();
-
         return app;
     }
 

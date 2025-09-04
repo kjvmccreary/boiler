@@ -1,6 +1,6 @@
 PHASE 3 STORY BACKLOG (TRIAGED)
 A. A/B TEST / FEATURE FLAG STRATEGY
-A1. Strategy Kind “abTest” (Deterministic Variant Selection)
+~~A1. Strategy Kind “abTest” (Deterministic Variant Selection)
 •	Intent: Enable a gateway to fan out to one of N target branches based on stable hashing (e.g., userId, tenantId, or custom key in context).
 •	Scope:
 •	New strategy kind: abTest
@@ -13,7 +13,7 @@ A1. Strategy Kind “abTest” (Deterministic Variant Selection)
 •	Decision logged in _gatewayDecisions diagnostics: { strategy:"abTest", variant, weight, key, hash }.
 •	Dependencies: None beyond existing strategy registry.
 •	Risk: Low.
-•	Triage: MVP (Critical).
+•	Triage: MVP (Critical).~~
 A2. External Feature Flag Provider Plug-In
 •	Intent: Allow strategy to ask an injected provider whether a flag is on → pick branch A (flag on) else branch B.
 •	Scope:
@@ -26,14 +26,14 @@ A2. External Feature Flag Provider Plug-In
 •	Dependencies: DI registration.
 •	Risk: Medium (external latency).
 •	Triage: MVP (Useful for progressive rollout).
-A3. Experiment Enrollment Snapshot (Persist Enrollment ID)
+~~A3. Experiment Enrollment Snapshot (Persist Enrollment ID)
 •	Intent: Persist chosen experiment metadata in context to keep consistent if key changes mid-flow.
 •	Scope:
 •	_experiments[gatewayId]: { variant:"A", assignedHash:"...", keyValue:"123" }
 •	On re-evaluation, reuse stored variant (do not recompute).
 •	Acceptance: Changing context key after decision does not alter variant.
 •	Risk: Low.
-•	Triage: MVP (Consistency).
+•	Triage: MVP (Consistency).~~
 A4. Override / Forced Variant via Context
 •	Intent: Permit forced override (e.g., QA or targeted user) with context path _overrides.gateway[gatewayId]="variantName".
 •	Acceptance: Override logged, variant respected even if weight mismatch.
@@ -123,16 +123,8 @@ C2. Unified Strategy Diagnostic Schema Versioning
 •	Acceptance: Version increments on shape change; fallback parsers unaffected.
 •	Risk: Low.
 •	Triage: MVP (Future-proofing).
-C3. Deterministic Hash Utility (Shared)
-•	Intent: Single service IDeterministicHasher (xxHash64 or Murmur) used by abTest and variant flows.
-•	Acceptance: Same inputs always produce same unsigned 64-bit hash across deployments.
-•	Risk: Low.
-•	Triage: MVP (Core building block).
-C4. Strategy Extension Validation
-•	Intent: Validation pass warns if abTest config weights not summing (± tolerance), duplicates, zero-target mismatch.
-•	Acceptance: Validation errors block publish.
-•	Risk: Low.
-•	Triage: MVP (Prevent invalid deployment).
+C3: deterministic hash utility (DONE ✅)
+~~C4: strategy config validation (DONE ✅)~~
 C5. Metrics / Telemetry Hook Points
 •	Intent: Abstract IWorkflowTelemetrySink; emit counters: gateway.strategy.count, join.wait.time.
 •	Acceptance: No-op default; easy to plug Prometheus/App Insights later.
@@ -159,23 +151,22 @@ D4. Timeout Path Test
 D5. Context Prune Test
 •	Populate > max decisions; assert oldest pruned & event emitted.
 •	Triage: MVP.
-D6. Validation Failure Tests (Invalid abTest config)
-•	Triage: MVP.
+D6. Validation Failure Tests (Invalid abTest config) (DONE ✅)
 D7. Expression Mode Safety Tests (malformed expressions)
 •	Triage: Post-MVP.
 ------------------------------------------------------------------
 MVP CUT (RECOMMENDED FOR INITIAL PHASE 3 INCREMENT)
 Critical (ship first):
-•	A1: abTest strategy core
+•	A1: abTest strategy core (DONE ✅)
 •	A2: Feature flag provider (basic on/off)
-•	A3: Enrollment snapshot persistence
+•	A3: Enrollment snapshot persistence (DONE ✅)
 •	B1: quorum join mode
 •	B2: join timeout
-•	C1: context history pruning
-•	C2: diagnostics version tag
-•	C3: deterministic hash utility
-•	C4: strategy config validation
-•	D1, D3, D4, D5, D6 (test coverage)
+•	C1: context history pruning (DONE ✅)
+•	C2: diagnostics version tag (DONE ✅)
+•	C3: deterministic hash utility (DONE ✅)
+•	C4: strategy config validation (DONE ✅)
+•	D1, D3, D4, D5 (pending), D6 (DONE ✅)
 Nice-to-have but deferrable:
 •	Override (A4)
 •	Experiment assigned outbox event (A5)

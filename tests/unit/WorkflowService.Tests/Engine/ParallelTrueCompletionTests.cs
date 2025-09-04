@@ -14,11 +14,12 @@ using WorkflowService.Engine.Gateways;
 using WorkflowService.Engine.Interfaces;
 using Microsoft.Extensions.Options;
 using Moq;
-using WorkflowService.Services.Interfaces;          // For IEventPublisher, ITaskNotificationDispatcher
-using Contracts.Services;                          // ADDED: For IRoleService
+using WorkflowService.Services.Interfaces;          // IEventPublisher, ITaskNotificationDispatcher
+using Contracts.Services;                          // IRoleService, IDeterministicHasher
 using DTOs.Workflow.Enums;
 using WorkflowService.Persistence;
-
+using WorkflowService.Engine.Pruning;              // Pruning interfaces
+using System.Text.Json.Nodes;                      // JsonArray for pruner mock
 // Alias to disambiguate from System.Threading.Tasks.TaskStatus
 using TaskStatusEnum = DTOs.Workflow.Enums.TaskStatus;
 
@@ -72,10 +73,26 @@ public class ParallelTrueCompletionTests : TestBase
         IGatewayStrategyRegistry gatewayStrategies = new GatewayStrategyRegistry(
             new IGatewayStrategy[] { new ExclusiveGatewayStrategy(), new ParallelGatewayStrategy() });
 
+        // Added for new GatewayEvaluator signature
+        var hasher = new Mock<IDeterministicHasher>();
+        hasher.SetupGet(h => h.Algorithm).Returns("TestHasher");
+        hasher.SetupGet(h => h.Seed).Returns(1UL);
+        hasher.Setup(h => h.Hash(It.IsAny<string?>())).Returns(4321UL);
+        hasher.Setup(h => h.HashComposite(It.IsAny<string?[]>())).Returns(4321UL);
+        hasher.Setup(h => h.ToBucket(It.IsAny<ulong>(), It.IsAny<int>()))
+              .Returns<ulong, int>((val, buckets) => (int)(val % (uint)buckets));
+
+        var pruner = new Mock<IWorkflowContextPruner>();
+        pruner.Setup(p => p.PruneGatewayHistory(It.IsAny<JsonArray>())).Returns(0);
+        var pruneEmitter = new Mock<IGatewayPruningEventEmitter>();
+
         var gatewayExecutor = new GatewayEvaluator(
             condEval.Object,
             _loggerFactory.CreateLogger<GatewayEvaluator>(),
-            gatewayStrategies);
+            gatewayStrategies,
+            hasher.Object,
+            pruner.Object,
+            pruneEmitter.Object);
 
         // HumanTaskExecutor requires: ILogger, IRoleService, ITaskNotificationDispatcher, WorkflowDbContext
         var humanExecutor = new HumanTaskExecutor(
