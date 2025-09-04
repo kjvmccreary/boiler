@@ -1,10 +1,40 @@
-  WorkflowService.Tests failed with 7 error(s) (1.3s)
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServicePhase2Tests.cs(23,50): error CS7036: There is no argument given that corresponds to the required parameter 'publishValidator' of 'DefinitionService.DefinitionService(WorkflowDbContext, IMapper, ITenantProvider, IEventPublisher, IGraphValidationService, ILogger<DefinitionService>, IWorkflowPublishValidator)'
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServicePublishTests.cs(28,13): error CS7036: There is no argument given that corresponds to the required parameter 'publishValidator' of 'DefinitionService.DefinitionService(WorkflowDbContext, IMapper, ITenantProvider, IEventPublisher, IGraphValidationService, ILogger<DefinitionService>, IWorkflowPublishValidator)'
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServiceExtendedTests.cs(43,24): error CS7036: There is no argument given that corresponds to the required parameter 'publishValidator' of 'DefinitionService.DefinitionService(WorkflowDbContext, IMapper, ITenantProvider, IEventPublisher, IGraphValidationService, ILogger<DefinitionService>, IWorkflowPublishValidator)'
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServiceTests.cs(43,34): error CS7036: There is no argument given that corresponds to the required parameter 'publishValidator' of 'DefinitionService.DefinitionService(WorkflowDbContext, IMapper, ITenantProvider, IEventPublisher, IGraphValidationService, ILogger<DefinitionService>, IWorkflowPublishValidator)'
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServicePhase2Tests.cs(377,23): error CS7036: There is no argument given that corresponds to the required parameter 'publishValidator' of 'DefinitionService.DefinitionService(WorkflowDbContext, IMapper, ITenantProvider, IEventPublisher, IGraphValidationService, ILogger<DefinitionService>, IWorkflowPublishValidator)'
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServicePhase2Tests.cs(458,23): error CS7036: There is no argument given that corresponds to the required parameter 'publishValidator' of 'DefinitionService.DefinitionService(WorkflowDbContext, IMapper, ITenantProvider, IEventPublisher, IGraphValidationService, ILogger<DefinitionService>, IWorkflowPublishValidator)'
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServicePhase2Tests.cs(488,23): error CS7036: There is no argument given that corresponds to the required parameter 'publishValidator' of 'DefinitionService.DefinitionService(WorkflowDbContext, IMapper, ITenantProvider, IEventPublisher, IGraphValidationService, ILogger<DefinitionService>, IWorkflowPublishValidator)'
-
-Build failed with 7 error(s) and 12 warning(s) in 5.4s
+Building Test Projects
+Starting test discovery for requested test run
+========== Starting test discovery ==========
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
+[xUnit.net 00:00:00.06]   Discovering: WorkflowService.Tests
+[xUnit.net 00:00:00.10]   Discovered:  WorkflowService.Tests
+========== Test discovery finished: 237 Tests found in 723.3 ms ==========
+========== Starting test run ==========
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
+[xUnit.net 00:00:00.06]   Starting:    WorkflowService.Tests
+[xUnit.net 00:00:00.18]     WorkflowService.Tests.Engine.WebhookAutomaticActionExecutorTokenTests.BodyObject_TokenExpansion_NestedPaths [FAIL]
+[xUnit.net 00:00:00.18]       System.ObjectDisposedException : Cannot access a disposed object.
+[xUnit.net 00:00:00.18]       Object name: 'System.Net.Http.StringContent'.
+[xUnit.net 00:00:00.18]       Stack Trace:
+[xUnit.net 00:00:00.18]            at System.Net.Http.HttpContent.ReadAsStringAsync(CancellationToken cancellationToken)
+[xUnit.net 00:00:00.18]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WebhookAutomaticActionExecutorTokenTests.cs(206,0): at WorkflowService.Tests.Engine.WebhookAutomaticActionExecutorTokenTests.BodyObject_TokenExpansion_NestedPaths()
+[xUnit.net 00:00:00.18]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.19]     WorkflowService.Tests.Engine.WebhookAutomaticActionExecutorTokenTests.Context_Array_Index_Path_Supported [FAIL]
+[xUnit.net 00:00:00.19]       System.ObjectDisposedException : Cannot access a disposed object.
+[xUnit.net 00:00:00.19]       Object name: 'System.Net.Http.StringContent'.
+[xUnit.net 00:00:00.19]       Stack Trace:
+[xUnit.net 00:00:00.19]            at System.Net.Http.HttpContent.ReadAsStringAsync(CancellationToken cancellationToken)
+[xUnit.net 00:00:00.19]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WebhookAutomaticActionExecutorTokenTests.cs(244,0): at WorkflowService.Tests.Engine.WebhookAutomaticActionExecutorTokenTests.Context_Array_Index_Path_Supported()
+[xUnit.net 00:00:00.19]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.19]     WorkflowService.Tests.Engine.WebhookAutomaticActionExecutorTokenTests.BodyRaw_TokenExpansion_MultipleTokens [FAIL]
+[xUnit.net 00:00:00.19]       System.ObjectDisposedException : Cannot access a disposed object.
+[xUnit.net 00:00:00.19]       Object name: 'System.Net.Http.StringContent'.
+[xUnit.net 00:00:00.19]       Stack Trace:
+[xUnit.net 00:00:00.19]            at System.Net.Http.HttpContent.ReadAsStringAsync(CancellationToken cancellationToken)
+[xUnit.net 00:00:00.19]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WebhookAutomaticActionExecutorTokenTests.cs(155,0): at WorkflowService.Tests.Engine.WebhookAutomaticActionExecutorTokenTests.BodyRaw_TokenExpansion_MultipleTokens()
+[xUnit.net 00:00:00.19]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.19]     WorkflowService.Tests.Engine.WebhookAutomaticActionExecutorTokenTests.Unknown_Instance_Field_Left_Unchanged [FAIL]
+[xUnit.net 00:00:00.19]       System.ObjectDisposedException : Cannot access a disposed object.
+[xUnit.net 00:00:00.19]       Object name: 'System.Net.Http.StringContent'.
+[xUnit.net 00:00:00.19]       Stack Trace:
+[xUnit.net 00:00:00.19]            at System.Net.Http.HttpContent.ReadAsStringAsync(CancellationToken cancellationToken)
+[xUnit.net 00:00:00.19]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\WebhookAutomaticActionExecutorTokenTests.cs(267,0): at WorkflowService.Tests.Engine.WebhookAutomaticActionExecutorTokenTests.Unknown_Instance_Field_Left_Unchanged()
+[xUnit.net 00:00:00.19]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.19]   Finished:    WorkflowService.Tests
+========== Test run finished: 5 Tests (1 Passed, 4 Failed, 0 Skipped) run in 205 ms ==========

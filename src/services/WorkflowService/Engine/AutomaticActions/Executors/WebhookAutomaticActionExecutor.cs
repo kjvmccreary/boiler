@@ -1,6 +1,9 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
+using WorkflowService.Domain.Models;
 
 namespace WorkflowService.Engine.AutomaticActions.Executors;
 
@@ -16,6 +19,13 @@ namespace WorkflowService.Engine.AutomaticActions.Executors;
 ///   "allowNonSuccess": false,
 ///   "truncateResponseBytes": 1024
 /// }
+///
+/// Token Expansion (Phase 2):
+///   Supported in headers, bodyRaw, and string values within body object:
+///     {{instance.id}}
+///     {{context.someField}}
+///     {{context.order.total}}
+///   Unresolved tokens are left as-is.
 /// </summary>
 public class WebhookAutomaticActionExecutor : IAutomaticActionExecutor
 {
@@ -66,37 +76,65 @@ public class WebhookAutomaticActionExecutor : IAutomaticActionExecutor
             if (root.TryGetProperty("truncateResponseBytes", out var trEl) && trEl.ValueKind == JsonValueKind.Number)
                 truncate = Math.Clamp(trEl.GetInt32(), 128, 8192);
 
+            // Parse workflow context (best-effort)
+            JsonNode? contextNode = null;
+            if (!string.IsNullOrWhiteSpace(ctx.CurrentContextJson))
+            {
+                try { contextNode = JsonNode.Parse(ctx.CurrentContextJson); } catch { /* ignore */ }
+            }
+
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(ctx.CancellationToken);
             cts.CancelAfter(TimeSpan.FromSeconds(timeoutSeconds));
 
             var client = _httpFactory.CreateClient("workflow-webhook");
-            using var req = new HttpRequestMessage(new HttpMethod(method.ToUpperInvariant()), uri);
+            var req = new HttpRequestMessage(new HttpMethod(method.ToUpperInvariant()), uri);
 
-            // Headers
+            // Headers (with token expansion)
             if (root.TryGetProperty("headers", out var headersEl) && headersEl.ValueKind == JsonValueKind.Object)
             {
                 foreach (var prop in headersEl.EnumerateObject())
                 {
-                    if (!string.IsNullOrWhiteSpace(prop.Name) && prop.Value.ValueKind == JsonValueKind.String)
+                    if (prop.Value.ValueKind == JsonValueKind.String)
                     {
-                        req.Headers.TryAddWithoutValidation(prop.Name, prop.Value.GetString());
+                        var rawVal = prop.Value.GetString() ?? string.Empty;
+                        var expanded = ExpandTokens(rawVal, ctx.Instance, contextNode);
+                        if (!string.IsNullOrWhiteSpace(prop.Name))
+                        {
+                            req.Headers.TryAddWithoutValidation(prop.Name, expanded);
+                        }
                     }
                 }
             }
 
-            // Body
+            // Body (bodyRaw OR body)
             if (root.TryGetProperty("bodyRaw", out var bodyRawEl) && bodyRawEl.ValueKind == JsonValueKind.String)
             {
-                req.Content = new StringContent(bodyRawEl.GetString() ?? string.Empty, Encoding.UTF8, "application/json");
+                var expanded = ExpandTokens(bodyRawEl.GetString() ?? string.Empty, ctx.Instance, contextNode);
+                req.Content = new StringContent(expanded, Encoding.UTF8, "application/json");
             }
             else if (root.TryGetProperty("body", out var bodyEl))
             {
-                var json = bodyEl.GetRawText();
-                req.Content = new StringContent(json, Encoding.UTF8, "application/json");
+                // Expand only string leaf nodes
+                JsonNode? bodyNode = null;
+                try
+                {
+                    bodyNode = JsonNode.Parse(bodyEl.GetRawText());
+                }
+                catch
+                {
+                    return AutomaticActionResult.Fail("Invalid body JSON");
+                }
+
+                if (bodyNode != null)
+                {
+                    ExpandJsonStringValues(bodyNode, ctx.Instance, contextNode);
+                    var json = bodyNode.ToJsonString(new JsonSerializerOptions { WriteIndented = false });
+                    req.Content = new StringContent(json, Encoding.UTF8, "application/json");
+                }
             }
             else
             {
-                // default empty JSON body for POST/PUT/PATCH
+                // default empty JSON body for state-changing verbs
                 if (method.Equals("POST", StringComparison.OrdinalIgnoreCase) ||
                     method.Equals("PUT", StringComparison.OrdinalIgnoreCase) ||
                     method.Equals("PATCH", StringComparison.OrdinalIgnoreCase))
@@ -157,4 +195,130 @@ public class WebhookAutomaticActionExecutor : IAutomaticActionExecutor
             return AutomaticActionResult.Fail($"Webhook error: {ex.Message}");
         }
     }
+
+    #region Token Expansion
+
+    private static readonly Regex TokenRegex = new(@"\{\{([^\}]+)\}\}", RegexOptions.Compiled);
+
+    private static string ExpandTokens(string input, WorkflowInstance instance, JsonNode? contextNode)
+    {
+        if (string.IsNullOrEmpty(input)) return input;
+
+        return TokenRegex.Replace(input, m =>
+        {
+            var raw = m.Groups[1].Value.Trim();
+            if (string.IsNullOrEmpty(raw)) return m.Value;
+
+            if (raw.StartsWith("instance.", StringComparison.OrdinalIgnoreCase))
+            {
+                var key = raw.Substring("instance.".Length).ToLowerInvariant();
+                return key switch
+                {
+                    "id" => instance.Id.ToString(),
+                    "definitionid" => instance.WorkflowDefinitionId.ToString(),
+                    "definitionversion" => instance.DefinitionVersion.ToString(),
+                    "status" => instance.Status.ToString(),
+                    _ => m.Value
+                };
+            }
+
+            if (raw.StartsWith("context.", StringComparison.OrdinalIgnoreCase))
+            {
+                var path = raw.Substring("context.".Length);
+                var val = ResolveContextPath(contextNode, path);
+                if (val == null) return m.Value;
+                return val;
+            }
+
+            return m.Value;
+        });
+    }
+
+    private static string? ResolveContextPath(JsonNode? root, string path)
+    {
+        if (root == null || string.IsNullOrWhiteSpace(path)) return null;
+
+        var segments = path.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        JsonNode? current = root;
+
+        foreach (var seg in segments)
+        {
+            if (current == null) return null;
+
+            if (current is JsonObject obj)
+            {
+                if (!obj.TryGetPropertyValue(seg, out current))
+                    return null;
+            }
+            else if (current is JsonArray arr)
+            {
+                if (int.TryParse(seg, out var idx))
+                {
+                    current = idx >= 0 && idx < arr.Count ? arr[idx] : null;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        if (current is null) return null;
+
+        if (current is JsonValue jv)
+        {
+            if (jv.TryGetValue<bool>(out var b)) return b ? "true" : "false";
+            if (jv.TryGetValue<long>(out var l)) return l.ToString();
+            if (jv.TryGetValue<double>(out var d)) return d.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            if (jv.TryGetValue<string>(out var s)) return s;
+            return jv.ToJsonString();
+        }
+
+        return current.ToJsonString();
+    }
+
+    private static void ExpandJsonStringValues(JsonNode node, WorkflowInstance instance, JsonNode? contextNode)
+    {
+        switch (node)
+        {
+            case JsonObject obj:
+                foreach (var prop in obj.ToList())
+                {
+                    if (prop.Value is JsonValue v && v.TryGetValue<string>(out var s))
+                    {
+                        var expanded = ExpandTokens(s, instance, contextNode);
+                        if (!ReferenceEquals(expanded, s))
+                            obj[prop.Key] = expanded;
+                    }
+                    else if (prop.Value != null)
+                    {
+                        ExpandJsonStringValues(prop.Value, instance, contextNode);
+                    }
+                }
+                break;
+
+            case JsonArray arr:
+                for (int i = 0; i < arr.Count; i++)
+                {
+                    var item = arr[i];
+                    if (item is JsonValue v && v.TryGetValue<string>(out var s))
+                    {
+                        var expanded = ExpandTokens(s, instance, contextNode);
+                        if (!ReferenceEquals(expanded, s))
+                            arr[i] = expanded;
+                    }
+                    else if (item != null)
+                    {
+                        ExpandJsonStringValues(item, instance, contextNode);
+                    }
+                }
+                break;
+        }
+    }
+
+    #endregion
 }
