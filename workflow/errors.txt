@@ -2,19 +2,23 @@ Building Test Projects
 ========== Starting test run ==========
 [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
 [xUnit.net 00:00:00.05]   Starting:    WorkflowService.Tests
-[xUnit.net 00:00:00.54]     WorkflowService.Tests.Definitions.UnpublishRuleTests.ForceTerminate_PartialFailure_IsAtomic [FAIL]
-[xUnit.net 00:00:00.55]       Assert.Throws() Failure: Exception type was not an exact match
-[xUnit.net 00:00:00.55]       Expected: typeof(System.Exception)
-[xUnit.net 00:00:00.55]       Actual:   typeof(System.InvalidOperationException)
-[xUnit.net 00:00:00.55]       ---- System.InvalidOperationException : Simulated failure during force cancel event publish
-[xUnit.net 00:00:00.55]       Stack Trace:
-[xUnit.net 00:00:00.55]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\UnpublishRuleTests.cs(130,0): at WorkflowService.Tests.Definitions.UnpublishRuleTests.ForceTerminate_PartialFailure_IsAtomic()
-[xUnit.net 00:00:00.55]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.55]         ----- Inner Stack Trace -----
-[xUnit.net 00:00:00.55]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\TestSupport\Fakes.cs(49,0): at WorkflowService.Tests.TestSupport.FakeEventPublisher.PublishInstanceForceCancelledAsync(WorkflowInstance instance, String reason, CancellationToken cancellationToken)
-[xUnit.net 00:00:00.55]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\DefinitionService.cs(584,0): at WorkflowService.Services.DefinitionService.UnpublishAsync(Int32 definitionId, UnpublishDefinitionRequestDto request, CancellationToken cancellationToken)
-[xUnit.net 00:00:00.55]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\DefinitionService.cs(617,0): at WorkflowService.Services.DefinitionService.UnpublishAsync(Int32 definitionId, UnpublishDefinitionRequestDto request, CancellationToken cancellationToken)
-[xUnit.net 00:00:00.55]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\UnpublishRuleTests.cs(131,0): at WorkflowService.Tests.Definitions.UnpublishRuleTests.<>c__DisplayClass4_0.<<ForceTerminate_PartialFailure_IsAtomic>b__0>d.MoveNext()
-[xUnit.net 00:00:00.55]         --- End of stack trace from previous location ---
+dbug: WorkflowService.Services.DefinitionService[0]
+      UNPUBLISH_REQUEST def=2 force=True tenant=2
+[xUnit.net 00:00:00.54]     WorkflowService.Tests.Services.DefinitionServicePhase2Tests.CreateNewVersion_MalformedJson_ShouldReturnInvalidDefinitionError [FAIL]
+[xUnit.net 00:00:00.54]       Expected resp.Message "Invalid workflow definition" to contain "Invalid JSON" because should surface parse failure coming from validator.
+[xUnit.net 00:00:00.54]       Stack Trace:
+[xUnit.net 00:00:00.54]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
+[xUnit.net 00:00:00.54]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
+[xUnit.net 00:00:00.54]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
+[xUnit.net 00:00:00.54]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.54]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
+[xUnit.net 00:00:00.54]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
+[xUnit.net 00:00:00.54]            at FluentAssertions.Primitives.StringAssertions`1.Contain(String expected, String because, Object[] becauseArgs)
+[xUnit.net 00:00:00.54]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Services\DefinitionServicePhase2Tests.cs(445,0): at WorkflowService.Tests.Services.DefinitionServicePhase2Tests.CreateNewVersion_MalformedJson_ShouldReturnInvalidDefinitionError()
+[xUnit.net 00:00:00.54]         --- End of stack trace from previous location ---
+info: WorkflowService.Services.DefinitionService[0]
+      UNPUBLISH_FORCE_TERMINATE def=2 cancelledCount=1
+info: WorkflowService.Services.DefinitionService[0]
+      UNPUBLISH_SUCCESS def=2 forceTerminate=True
 [xUnit.net 00:00:00.55]   Finished:    WorkflowService.Tests
-========== Test run finished: 2 Tests (1 Passed, 1 Failed, 0 Skipped) run in 563 ms ==========
+========== Test run finished: 2 Tests (1 Passed, 1 Failed, 0 Skipped) run in 562 ms ==========

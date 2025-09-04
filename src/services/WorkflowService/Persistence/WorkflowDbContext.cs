@@ -44,6 +44,15 @@ public class WorkflowDbContext : DbContext
         base.OnModelCreating(modelBuilder);
     }
 
+    private static bool ShouldEnableTenantFiltersInTests()
+    {
+        // Explicit opt-in for tests
+        var flag = Environment.GetEnvironmentVariable("ENABLE_TENANT_FILTERS_IN_TESTS");
+        if (string.Equals(flag, "true", StringComparison.OrdinalIgnoreCase))
+            return true;
+        return false;
+    }
+
     private void ApplyTenantQueryFilters(ModelBuilder modelBuilder)
     {
         var isTestEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
@@ -52,7 +61,9 @@ public class WorkflowDbContext : DbContext
                                    .Any(a => a.FullName?.Contains("xunit") == true ||
                                             a.FullName?.Contains("Microsoft.VisualStudio.TestPlatform") == true);
 
-        if (isTestEnvironment) return;
+        // NEW: allow enabling filters in tests when explicitly requested
+        if (isTestEnvironment && !ShouldEnableTenantFiltersInTests())
+            return;
 
         modelBuilder.Entity<WorkflowDefinition>().HasQueryFilter(wd =>
             EF.Property<int>(wd, "TenantId") == GetCurrentTenantIdFromProvider());
@@ -140,7 +151,7 @@ public class WorkflowDbContext : DbContext
 
             if (!string.Equals(originalJson, currentJson, StringComparison.Ordinal))
             {
-                _logger.LogError("Immutability violation attempt on definition {Id}", entry.Entity.Id);
+                _logger.LogError("IMMUTABILITY_VIOLATION defId={Id}", entry.Entity.Id);
                 throw new InvalidOperationException("Published workflow JSONDefinition is immutable. Create a new version.");
             }
         }

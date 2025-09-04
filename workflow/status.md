@@ -1,108 +1,79 @@
-## Stories for “Definition Immutability Enforcement” (Backend + Frontend + Tests)
-<s>### 1.	Backend: Service-Level Unpublish Rule
-* Add IDefinitionService.UnpublishAsync(definitionId, request) with rule: reject if any WorkflowInstances (Status Running or Suspended) exist for (DefinitionId, Version).
-* Return error with counts (running, suspended, completed).
-* Emit workflow.definition.unpublished outbox event on success.
-* Remove direct DB mutation logic from DefinitionsController.Unpublish and delegate to service.
-* Add UnpublishDefinitionRequestDto { bool ForceTerminateAndUnpublish }.
-* If ForceTerminateAndUnpublish = true: atomically cancel all running/suspended instances (Status → Cancelled, CompletedAt=UtcNow) then unpublish; produce per-instance cancellation events.
+## Summary (Current Coverage) Present:
+### MultiTenantIsolationTests only cover:
+1.  TenantA_Cannot_Unpublish_TenantB_Definition
+2.  ForceTerminate_Does_Not_Cancel_OtherTenant_Instances Missing (re: “cross-tenant tasks / instances are not retrievable”):
+* No tests asserting a tenant cannot read another tenant’s:
+* WorkflowInstances (list/detail)
+* WorkflowTasks (list/my-tasks/claim/complete)
+* Definitions list (another tenant’s definitions filtered out)
+* Events / admin bulk operations
+* No negative tests for cross-tenant StartInstance, ClaimTask, CompleteTask, TerminateInstance.
+* No guard that cross-tenant ID probing returns 404/Forbidden. Important Gap: In WorkflowDbContext, tenant query filters are intentionally DISABLED in test environment (isTestEnvironment short‑circuits). So current tests do NOT validate the real production filter behavior. We need explicit scenarios or a way to re-enable filters for integration tests.
 
-### 2.	Backend: JSONDefinition Mutation Guard (Persistence Layer)
-* In WorkflowDbContext.SaveChangesAsync scan Modified WorkflowDefinition entries where IsPublished was true before modification; reject if JSONDefinition changed.
-* Allow edits to metadata fields (Description, Tags, PublishNotes, VersionNotes, Name?) — clarify scope: enforce only JSONDefinition immutability per requirement.
-* Return a domain exception with a clear message (“Published workflow JSONDefinition is immutable. Create a new version.”).
+## Proposed Story Set: Tenant Audit & Guard Tests
+### Story T1: Re-enable Tenant Filters for Integration Mode
+* Allow an override (e.g., env var TEST_ENABLE_TENANT_FILTERS=true) so integration tests run with real global filters.
+* Add helper to spin context with filters ON vs OFF to prove difference.
+### Story T2: Definition List Isolation
+* Seed tenant 1 & tenant 2 definitions.
+* Under tenant 1 context (controller + auth claims), GET /api/workflow/definitions should not include tenant 2 definitions.
+* Same for tenant 2.
+### Story T3: Instance Retrieval Isolation
+* Seed one instance per tenant using same DefinitionId value (different tenant rows).
+* GET /api/workflow/instances?workflowDefinitionId=… as tenant 1 should only return its own.
+* GET /api/workflow/instances/{id} for other tenant → 404.
+### Story T4: Start Instance Cross-Tenant Guard
+* Attempt StartInstance specifying definition ID belonging to different tenant → 404 or Forbidden (define expected).
+* Confirm success with same-tenant definition.
+### Story T5: Task List + My Tasks Isolation
+* Seed tasks across both tenants.
+* Tenant 1: GET /api/workflow/tasks → only tenant 1 tasks.
+* Tenant 1: GET /api/workflow/tasks/my → only tasks assigned to tenant 1 users.
+* Cross-tenant task ID access → 404.
+### Story T6: Task Mutation Isolation
+* Claim / Complete / Cancel / Reassign using another tenant’s task ID → 404 (or Forbidden).
+* Ensure no row changed in other tenant.
+### Story T7: Admin Operations Isolation
+* Admin bulk cancel endpoint with definitionId from another tenant → 404.
+* MoveInstance / RetryInstance given other tenant instance ID → 404.
+### Story T8: Unpublish + ForceTerminate Isolation (Already Partially Covered)
+* Add retrieval assertions: after tenant 2 force-terminates its own instances, tenant 1 still cannot see tenant 2 cancelled instances by probing IDs.
+### Story T9: Events & Usage Endpoint Isolation
+* /api/workflow/definitions/{id}/usage for other tenant’s definition → 404.
+* Attempt enumeration of events (/api/workflow/admin/events if exists) returns only in-tenant events.
+### Story T10: Direct EF Defensive Unit Tests (Service Layer)
+* Create DefinitionService with tenantProvider returning tenant 1; manually insert tenant 2 rows; service GetAllAsync must exclude tenant 2 when filters enabled (configure context with filters ON).
+* Repeat for InstanceService / TaskService.
+### Story T11 (Optional): Race Condition Guard
+* Simulate rapid alternating tenant contexts (two scoped DbContexts) creating tasks / reading counts; ensure no leakage / cross contamination in aggregate counts.
+### Story T12 (Optional): Fuzzed ID Probing
+* Randomly generate 50 nonexistent IDs (belonging to other tenant) for instances/tasks; all must return 404 and not log unhandled exceptions.
 
-### 3.	Backend: Defensive Validation in UpdateDraftAsync
-* Keep existing “cannot modify published” check.
-* Harden: verify JSONDefinition cannot be null/empty when provided; ensure gateway enrichment only on drafts.
-* Remove ForcePublish semantics (currently allows confusing re‑publish). If retained, enforce: ForcePublish only allowed when JSONDefinition hash unchanged; otherwise require new version.
-
-### 4.	Backend: New Endpoint – GET /api/workflow/definitions/{id}/usage
-* Returns { definitionId, version, activeInstanceCount, runningCount, suspendedCount, completedCount, latestVersion }.
-* Used by UI to decide whether to show/enable Unpublish action.
-
-### 5.	Backend: Extend WorkflowDefinitionDto
-* Add ActiveInstanceCount (running + suspended).
-* Populate in Get / list endpoints via subquery (efficient: projection with correlated COUNT on statuses IN (Running, Suspended)).
-* Frontend uses to badge counts.
-
-### 6.	Backend: New Version Safety
-* On CreateNewVersionAsync ensure ParentDefinitionId set (already) and copy Tags / Description optionally if request omits them.
-* Return header (e.g., X-Workflow-New-Version: vN) for UI hints (optional).
-### 7.	Backend: Events & Outbox
-* Add PublishDefinitionUnpublishedAsync(definition) in EventPublisher.
-* Add events for ForceTerminate path: workflow.instance.forceCancelledReason=“unpublish”.
-* Ensure idempotency key use (already Outbox has IdempotencyKey).
-### 8.	Backend: Migrations (Only if adding new columns)
-* If adding ActiveInstanceCount is purely computed—no migration.
-* No schema change required for immutability enforcement.
-</s>
-### 9.	Frontend: Disable/Inform Unpublish Action
-* Before showing “Unpublish” dialog, call usage endpoint.
-* If activeInstanceCount > 0:
-* Show counts + two options: (a) Cancel, (b) Force terminate & unpublish (checkbox toggles ForceTerminateAndUnpublish).
-* If user lacks workflow.admin (or ManageInstances permission), disable force option.
-## FRONTEND MODS / ENHANCEMENTS
-### 10.	Frontend: Remove Unpublish Option When Already Unpublished
-* Keep Archive distinct (only allowed after unpublish OR still allowed on published? Clarify: normally archive when no longer used; we will require unpublished first for clarity and hide Archive if IsPublished = true).
-### 11.	Frontend: Visual Badge
-* Show chip “Active: N” for published definitions with active instances.
-* Tooltip clarifies unpublish rule.
-## OTHER
-### 12.	Observability: Logging
-* Log warning when an unpublish attempt blocked due to active instances with counts.
-* Log information when ForceTerminate path cancels instances (include count).
-* Log error when immutability violation attempt detected in DbContext.
-### 13.	Error Model Consistency
-* Standardize ApiResponseDto errors for unpublish/immutability to use code = “ImmutabilityViolation” or “ActiveInstancesPresent”.
-### 14.	Documentation Update (context.md + master-remaining.md)
-* After implementation, strike through “Definition Immutability Enforcement” in master-remaining.md.
-* Add section to context.md describing immutability + unpublish lifecycle.
----
-<s>## Test Stories (Unit / Integration)
-### A. DefinitionImmutabilityTests
-1.	Should_UpdateDraft_When_NotPublished
-2.	Should_Fail_UpdateDraft_When_Published
-3.	Should_Throw_On_Attempted_JSONDefinition_Modification_PostPublish (simulate direct EF modification to verify DbContext guard)
-4.	Should_Allow_Metadata_Update_When_Published (Description/Tags only)
-5.	Should_Prevent_ForcePublish_When_JSONDefinition_Changed (if ForcePublish retained)
-### B. PublishAndVersioningTests
-1.	Publish_Sets_IsPublished_And_PublishedAt
-2.	CreateNewVersion_Increments_Version_And_IsDraft
-3.	ExistingInstances_Retain_OriginalVersion_After_NewVersion_Published
-### C. UnpublishRuleTests
-1.	Unpublish_Succeeds_When_No_Running_Or_Suspended_Instances
-2.	Unpublish_Fails_When_RunningInstances_Exist (returns counts)
-3.	ForceTerminateAndUnpublish_Cancels_Running_Then_Unpublishes (instances moved to Cancelled)
-4.	ForceTerminate_PartialFailure_IsAtomic (wrap in transaction; verify rollback on simulated exception)
-5.	Unpublish_After_Instances_Complete_Succeeds
-### D. UsageEndpointTests
-1.	Usage_Returns_Correct_Counts (seed multiple statuses)
-2.	Usage_Reflects_New_Instance_After_Start
-3.	Usage_Reflects_Zero_After_ForceTerminateAndUnpublish
-### E. EventEmissionTests
-1.	Definition_Publish_Emits_Outbox_Event
-2.	Definition_Unpublish_Emits_Outbox_Event
-3.	ForceTerminateAndUnpublish_Emits_InstanceCancellation_Events_CountMatchesRunning
-### F. MultiTenantIsolationTests (overlap)
-1.	TenantA_Cannot_Unpublish_TenantB_Definition
-2.	ForceTerminate_Does_Not_Cancel_OtherTenant_Instances
-### G. Performance / Query Tests (Optional)
-1.	ListDefinitions_Includes_ActiveInstanceCount_With_Single_Query (use interceptor or logging to assert query count)
-### H. ConcurrencyTests (Optional)
-1.	Concurrent_Unpublish_And_NewInstance_Start: Unpublish Should Fail After Instance Start (or instance start fails if definition unpublished mid-flight—define chosen invariant)
-</s>
----
-## Non-Functional Acceptance Criteria
-* No direct controller mutation of WorkflowDefinition publish state (only via service).
-* Attempted post-publish JSON changes rejected with 400 (or 409) and consistent error envelope.
-* Unpublish endpoint latency target: < 1s for up to 500 running instances (bulk cancel done in single transaction).
-* All new tests green; coverage added around immutability branches.
----
-Open Decisions (Clarify Before Coding)
-1.	Allow updating Name/Description/Tags after publish? (Current plan: Yes, content JSON only immutable).
-2.	Keep or remove ForcePublish? (Recommend remove to reduce ambiguity.)
-3.	Archive semantics: require definition to be unpublished first? (Recommend yes.)
-4.	Should starting a new instance race with unpublish? (Define rule: if IsPublished read + start within same transaction; unpublish after start still allowed; race acceptable.)
-Provide answers and I’ll incorporate into implementation files next.
-Let me know if you want the code changes next; once implemented I will return updated master-remaining.md with “Definition Immutability Enforcement” struck through.
+## Support Tasks
+Support S1: Test Utilities Update
+* Add TestTenantContextFactory(enableFilters: bool).
+* Add TenantScopedHttpClient helper that injects X-Tenant-ID header + token.
+Support S2: Assertion Helpers
+* AssertContainsOnlyTenantEntities<T>(IEnumerable<T>, tenantId).
+* AssertNotFound(ActionResult) convenience wrapper.
+Support S3: Seed Enhancements
+* Unified MultiTenantWorkflowSeeder producing:
+* N definitions per tenant
+* M instances referencing each definition
+* K tasks per instance (mix statuses)
+* Distinct user IDs per tenant
+Acceptance Criteria
+* All tenant isolation stories T2–T9 implemented.
+* Each access attempt across tenants returns consistent 404 (not 403) unless security policy dictates otherwise (decide & document).
+* No direct modifications observed in other tenant data after mutation attempts.
+* Global filter ON integration run passes (tracked via a single test toggling the env var).
+* Documentation section added: “Tenant Isolation Guarantees & Test Coverage”.
+Open Decisions (Clarify Before Implementing)
+1.  Expected status code for cross-tenant resource probe: 404 (security through obscurity) vs 403 (explicit denial)?
+2.  Re-enable filters in all tests or only integration suite?
+3.  Do we treat definitions as discoverable names across tenants (shared library) or strictly isolated? (Assumed isolated.)
+4.  Should events endpoint (if any) intentionally allow system/central admin cross-tenant view?
+If you confirm these stories & decisions, I can generate the test scaffolding next (integration + unit variants) and optional context toggle.
+Next Step Suggestion Confirm status code choice (404 vs 403) and whether to add filter re-enable switch. Reply with:
+* “Use 404” or “Use 403”
+* “Enable filters in all integration tests” or “Selective enable” Then I’ll generate code.
