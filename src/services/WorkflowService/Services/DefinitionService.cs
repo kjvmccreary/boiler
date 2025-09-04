@@ -298,17 +298,22 @@ public class DefinitionService : IDefinitionService
         var running = instances.Where(i => i.Status == InstanceStatus.Running).ToList();
         var suspended = instances.Where(i => i.Status == InstanceStatus.Suspended).ToList();
 
-        if ((running.Any() || suspended.Any()) && !request.ForceTerminateAndUnpublish)
+        // NEW: if force is requested, bypass the rejection branch even if active instances exist.
+        if (!request.ForceTerminateAndUnpublish)
         {
-            var errors = new List<ErrorDto>
+            if (running.Any() || suspended.Any())
             {
-                new() { Code = "ActiveInstancesPresent", Message = $"Running={running.Count}, Suspended={suspended.Count}" }
-            };
-            _logger.LogWarning("UNPUBLISH_BLOCKED def={DefinitionId} running={Run} suspended={Susp}",
-                definition.Id, running.Count, suspended.Count);
-            return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Active instances present", errors);
+                var errors = new List<ErrorDto>
+                {
+                    new() { Code = "ActiveInstancesPresent", Message = $"Running={running.Count}, Suspended={suspended.Count}" }
+                };
+                _logger.LogWarning("UNPUBLISH_BLOCKED def={DefinitionId} running={Run} suspended={Susp}",
+                    definition.Id, running.Count, suspended.Count);
+                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Active instances present", errors);
+            }
         }
 
+        // Force path will proceed even if there are active instances
         var cancelTargets = request.ForceTerminateAndUnpublish
             ? running.Concat(suspended).ToList()
             : new List<WorkflowInstance>();
