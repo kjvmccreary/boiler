@@ -1,8 +1,20 @@
-  WorkflowService.Tests failed with 3 error(s) and 2 warning(s) (0.2s)
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\ConcurrencyTests.cs(18,6): error CS9000: Raw string literal delimiter must be on its own line.
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\MultiTenantIsolationTests.cs(18,6): error CS9000: Raw string literal delimiter must be on its own line.
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\GatewayPruningTests.cs(17,34): warning CS1570: XML comment has badly formed XML -- 'Whitespace is not allowed at this location.'
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\QuorumAndTimeoutTests.cs(31,56): warning CS1570: XML comment has badly formed XML -- 'Whitespace is not allowed at this location.'
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\PerformanceShapeTests.cs(21,6): error CS9000: Raw string literal delimiter must be on its own line.
-
-Build failed with 3 error(s) and 2 warning(s) in 1.8s
+Building Test Projects
+========== Starting test run ==========
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
+[xUnit.net 00:00:00.05]   Starting:    WorkflowService.Tests
+[xUnit.net 00:00:00.54]     WorkflowService.Tests.Definitions.UnpublishRuleTests.ForceTerminate_PartialFailure_IsAtomic [FAIL]
+[xUnit.net 00:00:00.55]       Assert.Throws() Failure: Exception type was not an exact match
+[xUnit.net 00:00:00.55]       Expected: typeof(System.Exception)
+[xUnit.net 00:00:00.55]       Actual:   typeof(System.InvalidOperationException)
+[xUnit.net 00:00:00.55]       ---- System.InvalidOperationException : Simulated failure during force cancel event publish
+[xUnit.net 00:00:00.55]       Stack Trace:
+[xUnit.net 00:00:00.55]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\UnpublishRuleTests.cs(130,0): at WorkflowService.Tests.Definitions.UnpublishRuleTests.ForceTerminate_PartialFailure_IsAtomic()
+[xUnit.net 00:00:00.55]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.55]         ----- Inner Stack Trace -----
+[xUnit.net 00:00:00.55]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\TestSupport\Fakes.cs(49,0): at WorkflowService.Tests.TestSupport.FakeEventPublisher.PublishInstanceForceCancelledAsync(WorkflowInstance instance, String reason, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.55]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\DefinitionService.cs(584,0): at WorkflowService.Services.DefinitionService.UnpublishAsync(Int32 definitionId, UnpublishDefinitionRequestDto request, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.55]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\DefinitionService.cs(617,0): at WorkflowService.Services.DefinitionService.UnpublishAsync(Int32 definitionId, UnpublishDefinitionRequestDto request, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.55]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\UnpublishRuleTests.cs(131,0): at WorkflowService.Tests.Definitions.UnpublishRuleTests.<>c__DisplayClass4_0.<<ForceTerminate_PartialFailure_IsAtomic>b__0>d.MoveNext()
+[xUnit.net 00:00:00.55]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.55]   Finished:    WorkflowService.Tests
+========== Test run finished: 2 Tests (1 Passed, 1 Failed, 0 Skipped) run in 563 ms ==========

@@ -59,7 +59,7 @@
 * After implementation, strike through “Definition Immutability Enforcement” in master-remaining.md.
 * Add section to context.md describing immutability + unpublish lifecycle.
 ---
-## Test Stories (Unit / Integration)
+<s>## Test Stories (Unit / Integration)
 ### A. DefinitionImmutabilityTests
 1.	Should_UpdateDraft_When_NotPublished
 2.	Should_Fail_UpdateDraft_When_Published
@@ -91,6 +91,7 @@
 1.	ListDefinitions_Includes_ActiveInstanceCount_With_Single_Query (use interceptor or logging to assert query count)
 ### H. ConcurrencyTests (Optional)
 1.	Concurrent_Unpublish_And_NewInstance_Start: Unpublish Should Fail After Instance Start (or instance start fails if definition unpublished mid-flight—define chosen invariant)
+</s>
 ---
 ## Non-Functional Acceptance Criteria
 * No direct controller mutation of WorkflowDefinition publish state (only via service).

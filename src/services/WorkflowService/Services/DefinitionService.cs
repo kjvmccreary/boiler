@@ -518,43 +518,58 @@ public class DefinitionService : IDefinitionService
 
     public async Task<ApiResponseDto<WorkflowDefinitionDto>> UnpublishAsync(int definitionId, UnpublishDefinitionRequestDto request, CancellationToken cancellationToken = default)
     {
+        var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+        if (!tenantId.HasValue)
+            return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Tenant context required");
+
+        var definition = await _context.WorkflowDefinitions
+            .FirstOrDefaultAsync(d => d.Id == definitionId && d.TenantId == tenantId.Value, cancellationToken);
+
+        if (definition == null)
+            return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Workflow definition not found");
+        if (!definition.IsPublished)
+            return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Definition already unpublished");
+
+        var instances = await _context.WorkflowInstances
+            .Where(i => i.WorkflowDefinitionId == definition.Id && i.DefinitionVersion == definition.Version)
+            .ToListAsync(cancellationToken);
+
+        var running = instances.Where(i => i.Status == InstanceStatus.Running).ToList();
+        var suspended = instances.Where(i => i.Status == InstanceStatus.Suspended).ToList();
+
+        if ((running.Any() || suspended.Any()) && !request.ForceTerminateAndUnpublish)
+        {
+            var errors = new List<ErrorDto>
+            {
+                new() { Code = "ActiveInstancesPresent", Message = $"Running={running.Count}, Suspended={suspended.Count}" }
+            };
+            _logger.LogWarning("Unpublish blocked due to active instances def={DefinitionId} run={Run} susp={Susp}",
+                definition.Id, running.Count, suspended.Count);
+            return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Active instances present", errors);
+        }
+
+        var cancelTargets = new List<WorkflowInstance>();
+        if (request.ForceTerminateAndUnpublish && (running.Any() || suspended.Any()))
+            cancelTargets = running.Concat(suspended).ToList();
+
+        // Snapshot for manual rollback in providers without transactions (InMemory)
+        var snapshot = cancelTargets.Select(i => new
+        {
+            Instance = i,
+            Status = i.Status,
+            CompletedAt = i.CompletedAt,
+            UpdatedAt = i.UpdatedAt
+        }).ToList();
+
+        var providerName = _context.Database.ProviderName ?? string.Empty;
+        var supportsTx = !providerName.Contains("InMemory", StringComparison.OrdinalIgnoreCase);
+
+        using var tx = supportsTx ? await _context.Database.BeginTransactionAsync(cancellationToken) : null;
+
         try
         {
-            var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
-            if (!tenantId.HasValue)
-                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Tenant context required");
-
-            var definition = await _context.WorkflowDefinitions
-                .FirstOrDefaultAsync(d => d.Id == definitionId && d.TenantId == tenantId.Value, cancellationToken);
-
-            if (definition == null)
-                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Workflow definition not found");
-            if (!definition.IsPublished)
-                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Definition already unpublished");
-
-            var instances = await _context.WorkflowInstances
-                .Where(i => i.WorkflowDefinitionId == definition.Id && i.DefinitionVersion == definition.Version)
-                .ToListAsync(cancellationToken);
-
-            var running = instances.Where(i => i.Status == InstanceStatus.Running).ToList();
-            var suspended = instances.Where(i => i.Status == InstanceStatus.Suspended).ToList();
-
-            if ((running.Any() || suspended.Any()) && !request.ForceTerminateAndUnpublish)
+            if (cancelTargets.Any())
             {
-                var errors = new List<ErrorDto>
-                {
-                    new() { Code = "ActiveInstancesPresent", Message = $"Running={running.Count}, Suspended={suspended.Count}" }
-                };
-                _logger.LogWarning("Unpublish blocked due to active instances def={DefinitionId} run={Run} susp={Susp}",
-                    definition.Id, running.Count, suspended.Count);
-                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Active instances present", errors);
-            }
-
-            await using var tx = await _context.Database.BeginTransactionAsync(cancellationToken);
-
-            if (request.ForceTerminateAndUnpublish && (running.Any() || suspended.Any()))
-            {
-                var cancelTargets = running.Concat(suspended).ToList();
                 foreach (var inst in cancelTargets)
                 {
                     inst.Status = InstanceStatus.Cancelled;
@@ -565,6 +580,7 @@ public class DefinitionService : IDefinitionService
 
                 foreach (var inst in cancelTargets)
                 {
+                    // If publisher throws we want rollback behavior
                     await _eventPublisher.PublishInstanceForceCancelledAsync(inst, "unpublish", cancellationToken);
                 }
             }
@@ -574,7 +590,8 @@ public class DefinitionService : IDefinitionService
             await _context.SaveChangesAsync(cancellationToken);
             await _eventPublisher.PublishDefinitionUnpublishedAsync(definition, cancellationToken);
 
-            await tx.CommitAsync(cancellationToken);
+            if (supportsTx && tx != null)
+                await tx.CommitAsync(cancellationToken);
 
             var dto = await MapWithActiveCountAsync(definition, cancellationToken);
             return ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto,
@@ -582,10 +599,22 @@ public class DefinitionService : IDefinitionService
                     ? "Definition unpublished (active instances force cancelled)"
                     : "Definition unpublished");
         }
-        catch (Exception ex)
+        catch
         {
-            _logger.LogError(ex, "Unpublish failed {DefinitionId}", definitionId);
-            return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Failed to unpublish workflow definition");
+            // Manual rollback for InMemory (no real transaction)
+            foreach (var snap in snapshot)
+            {
+                snap.Instance.Status = snap.Status;
+                snap.Instance.CompletedAt = snap.CompletedAt;
+                snap.Instance.UpdatedAt = snap.UpdatedAt;
+            }
+
+            if (supportsTx && tx != null)
+            {
+                try { await tx.RollbackAsync(cancellationToken); } catch { /* ignore */ }
+            }
+            // Rethrow to satisfy atomic failure test expectations
+            throw;
         }
     }
 

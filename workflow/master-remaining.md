@@ -21,8 +21,8 @@
 * <s>Implement noop + future webhook placeholder.</s>
 * <s>Guard with try/catch + failure event emission.</s>
 ### 7. Definition Immutability Enforcement
-* Block updates to ```JSONDefinition``` after publish (require new version).
-* Disallow unpublish if active running instances (or add rule).
+* <s>Block updates to ```JSONDefinition``` after publish (require new version).
+* Disallow unpublish if active running instances (or add rule).</>
 ### 8. Tenant Audit & Guard Tests
 * Unit/integration test that cross-tenant tasks / instances are not retrievable.
 

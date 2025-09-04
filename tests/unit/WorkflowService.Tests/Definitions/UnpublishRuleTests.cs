@@ -13,14 +13,14 @@ namespace WorkflowService.Tests.Definitions;
 public class UnpublishRuleTests
 {
     private const string SimpleJson = """
-    {
-      "nodes":[
-        {"id":"start","type":"start"},
-        {"id":"end","type":"end"}
-      ],
-      "edges":[{"id":"e1","from":"start","to":"end"}]
-    }
-    """;
+{
+  "nodes":[
+    {"id":"start","type":"start"},
+    {"id":"end","type":"end"}
+  ],
+  "edges":[{"id":"e1","from":"start","to":"end"}]
+}
+""";
 
     [Fact]
     public async Task Unpublish_Succeeds_When_No_Running_Or_Suspended_Instances()
@@ -124,18 +124,25 @@ public class UnpublishRuleTests
         });
         await ctx.SaveChangesAsync();
 
-        // Make publisher throw during force cancel event emission (inside transaction)
+        // Simulate failure during event publishing
         b.Publisher.ThrowOnForceCancel = true;
 
-        var ex = await Assert.ThrowsAsync<Exception>(async () =>
+        // Accept either Exception or InvalidOperationException (implementation detail)
+        var ex = await Assert.ThrowsAnyAsync<Exception>(async () =>
             await svc.UnpublishAsync(def.Id, new UnpublishDefinitionRequestDto { ForceTerminateAndUnpublish = true }));
 
-        // After rollback, instance should still be Running and definition still published
+        // Ensure rollback: instance still running, definition still published
         var instance = await ctx.WorkflowInstances.FirstAsync();
         Assert.Equal(InstanceStatus.Running, instance.Status);
 
         var definition = await ctx.WorkflowDefinitions.FirstAsync(d => d.Id == def.Id);
         Assert.True(definition.IsPublished);
+
+        // Ensure cancel events NOT emitted (no partial side-effects)
+        Assert.Equal(0, b.Publisher.ForceCancelledInstances);
+
+        // Exception message sanity (optional)
+        Assert.Contains("failure", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
