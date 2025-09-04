@@ -328,6 +328,46 @@ public class InstanceService : IInstanceService
         }
     }
 
+    public async Task<ApiResponseDto<WorkflowInstanceDto>> SuspendAsync(int instanceId, string reason, CancellationToken ct = default)
+    {
+        try
+        {
+            await _workflowRuntime.SuspendWorkflowAsync(instanceId, reason, null, ct);
+            var instance = await _context.WorkflowInstances
+                .Include(i => i.WorkflowDefinition)
+                .FirstOrDefaultAsync(i => i.Id == instanceId, ct);
+            if (instance == null)
+                return ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Workflow instance not found");
+            var dto = _mapper.Map<WorkflowInstanceDto>(instance);
+            return ApiResponseDto<WorkflowInstanceDto>.SuccessResult(dto, "Instance suspended");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error suspending workflow instance {InstanceId}", instanceId);
+            return ApiResponseDto<WorkflowInstanceDto>.ErrorResult(ex.Message);
+        }
+    }
+
+    public async Task<ApiResponseDto<WorkflowInstanceDto>> ResumeAsync(int instanceId, CancellationToken ct = default)
+    {
+        try
+        {
+            await _workflowRuntime.ResumeWorkflowAsync(instanceId, null, ct);
+            var instance = await _context.WorkflowInstances
+                .Include(i => i.WorkflowDefinition)
+                .FirstOrDefaultAsync(i => i.Id == instanceId, ct);
+            if (instance == null)
+                return ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Workflow instance not found");
+            var dto = _mapper.Map<WorkflowInstanceDto>(instance);
+            return ApiResponseDto<WorkflowInstanceDto>.SuccessResult(dto, "Instance resumed");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error resuming workflow instance {InstanceId}", instanceId);
+            return ApiResponseDto<WorkflowInstanceDto>.ErrorResult(ex.Message);
+        }
+    }
+
     private int? GetCurrentUserId()
     {
         // Placeholder; integrate with user context provider later if needed.

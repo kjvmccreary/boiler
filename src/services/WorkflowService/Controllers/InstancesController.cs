@@ -321,17 +321,13 @@ public class InstancesController : ControllerBase
     /// </summary>
     [HttpPost("{id}/suspend")]
     [RequiresPermission("workflow.manage_instances")]
-    public async Task<ActionResult<ApiResponseDto<WorkflowInstanceDto>>> Suspend(int id)
+    public async Task<ActionResult<ApiResponseDto<WorkflowInstanceDto>>> Suspend(int id, [FromQuery] string reason = "manual-suspend")
     {
-        var inst = await _context.WorkflowInstances.FirstOrDefaultAsync(i => i.Id == id);
-        if (inst == null) return NotFound(ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Not found"));
-        if (inst.Status != InstanceStatus.Running)
-            return BadRequest(ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Only running instances can be suspended"));
-        inst.Status = InstanceStatus.Suspended;
-        inst.UpdatedAt = DateTime.UtcNow;
-        await _context.SaveChangesAsync();
-        return Ok(ApiResponseDto<WorkflowInstanceDto>.SuccessResult(
-            _mapper.Map<WorkflowInstanceDto>(inst), "Suspended"));
+        var result = await _instanceService.SuspendAsync(id, reason);
+        if (result.Success) return Ok(result);
+        if (result.Message?.Contains("not found", StringComparison.OrdinalIgnoreCase) == true)
+            return NotFound(result);
+        return BadRequest(result);
     }
 
     /// <summary>
@@ -341,15 +337,11 @@ public class InstancesController : ControllerBase
     [RequiresPermission("workflow.manage_instances")]
     public async Task<ActionResult<ApiResponseDto<WorkflowInstanceDto>>> Resume(int id)
     {
-        var inst = await _context.WorkflowInstances.FirstOrDefaultAsync(i => i.Id == id);
-        if (inst == null) return NotFound(ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Not found"));
-        if (inst.Status != InstanceStatus.Suspended)
-            return BadRequest(ApiResponseDto<WorkflowInstanceDto>.ErrorResult("Only suspended instances can be resumed"));
-        inst.Status = InstanceStatus.Running;
-        inst.UpdatedAt = DateTime.UtcNow;
-        await _context.SaveChangesAsync();
-        return Ok(ApiResponseDto<WorkflowInstanceDto>.SuccessResult(
-            _mapper.Map<WorkflowInstanceDto>(inst), "Resumed"));
+        var result = await _instanceService.ResumeAsync(id);
+        if (result.Success) return Ok(result);
+        if (result.Message?.Contains("not found", StringComparison.OrdinalIgnoreCase) == true)
+            return NotFound(result);
+        return BadRequest(result);
     }
 
     /// <summary>

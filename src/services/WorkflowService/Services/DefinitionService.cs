@@ -8,6 +8,11 @@ using WorkflowService.Persistence;
 using WorkflowService.Services.Interfaces;
 using Contracts.Services;
 using WorkflowService.Engine;
+using WorkflowService.Engine.Validation; // ADD
+
+// Aliases to ensure we implement the interface with the correct types unambiguously
+using ModelDefinition = WorkflowService.Domain.Models.WorkflowDefinition;
+using DslNode = WorkflowService.Domain.Dsl.WorkflowNode;
 
 namespace WorkflowService.Services;
 
@@ -19,6 +24,7 @@ public class DefinitionService : IDefinitionService
     private readonly IEventPublisher _eventPublisher;
     private readonly IGraphValidationService _graphValidator;
     private readonly ILogger<DefinitionService> _logger;
+    private readonly IWorkflowPublishValidator _publishValidator; // stays non-null internally
 
     public DefinitionService(
         WorkflowDbContext context,
@@ -26,7 +32,8 @@ public class DefinitionService : IDefinitionService
         ITenantProvider tenantProvider,
         IEventPublisher eventPublisher,
         IGraphValidationService graphValidator,
-        ILogger<DefinitionService> logger)
+        ILogger<DefinitionService> logger,
+        IWorkflowPublishValidator? publishValidator = null) // now optional
     {
         _context = context;
         _mapper = mapper;
@@ -34,6 +41,7 @@ public class DefinitionService : IDefinitionService
         _eventPublisher = eventPublisher;
         _graphValidator = graphValidator;
         _logger = logger;
+        _publishValidator = publishValidator ?? NoopWorkflowPublishValidator.Instance;
     }
 
     private bool ApplyGatewayBackfill(WorkflowDefinition definition, bool persistIfChanged)
@@ -190,9 +198,31 @@ public class DefinitionService : IDefinitionService
             if (definition.IsPublished && !request.ForcePublish)
                 return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Already published (immutability enforced)");
 
+            // Structural / graph validation
             var validation = _graphValidator.Validate(definition.JSONDefinition, strict: true);
             if (!validation.IsValid)
-                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult($"Cannot publish invalid definition: {string.Join("; ", validation.Errors)}");
+                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(
+                    $"Cannot publish invalid definition: {string.Join("; ", validation.Errors)}");
+
+            // Parse DSL once for publish-time action validation
+            WorkflowDefinitionJson dsl;
+            try
+            {
+                dsl = BuilderDefinitionAdapter.Parse(definition.JSONDefinition);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to parse workflow JSON during publish validation {DefinitionId}", definitionId);
+                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Invalid workflow JSON");
+            }
+
+            // Publish-time action validation (automatic node policies, webhook rules, etc.)
+            var publishErrors = _publishValidator.Validate(dsl.ToModelStub(definition), dsl.Nodes.Select(n => n.ToModelNode()));
+            if (publishErrors.Count > 0)
+            {
+                return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(
+                    "Publish-time validation failed: " + string.Join("; ", publishErrors));
+            }
 
             definition.IsPublished = true;
             definition.PublishedAt = DateTime.UtcNow;
@@ -435,4 +465,25 @@ public class DefinitionService : IDefinitionService
             return ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Failed to create new version");
         }
     }
+}
+
+// OPTIONAL helper extensions (keep local/private if preferred)
+file static class DefinitionServicePublishValidationAdapters
+{
+    public static WorkflowService.Domain.Models.WorkflowDefinition ToModelStub(
+        this WorkflowDefinitionJson dsl,
+        WorkflowService.Domain.Models.WorkflowDefinition entity) => entity;
+
+    public static WorkflowService.Domain.Dsl.WorkflowNode ToModelNode(
+        this WorkflowService.Domain.Dsl.WorkflowNode node) => node;
+}
+
+// No-op validator used when tests (or legacy code) omit the new dependency.
+file sealed class NoopWorkflowPublishValidator : IWorkflowPublishValidator
+{
+    public static readonly NoopWorkflowPublishValidator Instance = new();
+    private NoopWorkflowPublishValidator() { }
+
+    public IReadOnlyList<string> Validate(ModelDefinition definition, IEnumerable<DslNode> nodes)
+        => Array.Empty<string>();
 }

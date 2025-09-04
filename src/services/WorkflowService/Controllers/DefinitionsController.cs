@@ -152,39 +152,46 @@ public class DefinitionsController : ControllerBase
         return validate.Success ? Ok(validate) : BadRequest(validate);
     }
 
-    // PUBLISH (now validates BEFORE publishing)
+    // PUBLISH (preflight graph validation retained for backward compatibility with tests, then delegate)
     [HttpPost("{id:int}/publish")]
     [RequiresPermission(Permissions.Workflow.PublishDefinitions)]
     public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> Publish(
         int id,
-        [FromBody] PublishDefinitionRequestDto request,
+        [FromBody] PublishDefinitionRequestDto? request,
         CancellationToken ct)
     {
-        // Load current draft/published state first
+        // Some existing tests send null body; create a default so downstream logic doesn’t NRE.
+        request ??= new PublishDefinitionRequestDto();
+
+        // Preflight: load definition (draft or already published) to run graph validation
         var existing = await _definitionService.GetByIdAsync(id, null, ct);
         if (!existing.Success || existing.Data == null)
             return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(existing.Message ?? "Definition not found"));
 
-        // Graph validation (strict publish rules)
-        var dsl = BuilderDefinitionAdapter.Parse(existing.Data.JSONDefinition);
-        var validation = _graphValidator.ValidateForPublish(dsl);
-        if (!validation.IsValid)
+        try
         {
-            return BadRequest(new
+            var dsl = BuilderDefinitionAdapter.Parse(existing.Data.JSONDefinition);
+            var vr = _graphValidator.ValidateForPublish(dsl);
+            if (!vr.IsValid)
             {
-                success = false,
-                message = "Validation failed",
-                errors = validation.Errors,
-                warnings = validation.Warnings
-            });
+                // Mirror legacy response shape expected by tests
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "Validation failed",
+                    errors = vr.Errors,
+                    warnings = vr.Warnings
+                });
+            }
+        }
+        catch
+        {
+            return BadRequest(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Invalid workflow JSON"));
         }
 
-        // Proceed with publish
+        // Delegate to service (which will also validate; duplication tolerated until tests are updated)
         var resp = await _definitionService.PublishAsync(id, request, ct);
-        if (!resp.Success)
-            return BadRequest(resp);
-
-        return Ok(resp);
+        return resp.Success ? Ok(resp) : BadRequest(resp);
     }
 
     // UNPUBLISH

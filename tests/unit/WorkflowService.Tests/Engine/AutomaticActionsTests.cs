@@ -258,4 +258,64 @@ $@"{{
 
         automaticEvents.Should().Contain("AutomaticActionCompleted");
     }
+
+    [Fact]
+    public async Task Automatic_UnknownExecutor_With_SuspendPolicy_Should_Suspend_Instance()
+    {
+        var defJson = BuildDefinition(@"""action"":{""kind"":""missingKind"",""onFailure"":""suspend""}");
+        Preflight(defJson);
+        var defId = AddDefinition(defJson);
+
+        var autoExec = CreateAutomaticExecutor(new[] { new NoopAutomaticActionExecutor() });
+        var runtime = CreateRuntime(autoExec);
+
+        var inst = await runtime.StartWorkflowAsync(defId, "{}", 42, autoCommit: true);
+
+        inst.Status.Should().Be(DTOs.Workflow.Enums.InstanceStatus.Suspended, "suspend policy should pause instance");
+        inst.ErrorMessage.Should().NotBeNullOrEmpty();
+
+        var automaticEvents = DbContext.WorkflowEvents
+            .Where(e => e.WorkflowInstanceId == inst.Id && e.Type == "Automatic")
+            .Select(e => e.Name)
+            .ToList();
+
+        automaticEvents.Should().Contain("AutomaticActionExecutorMissing");
+        automaticEvents.Should().NotContain("AutomaticActionCompleted");
+
+        var instanceEvents = DbContext.WorkflowEvents
+            .Where(e => e.WorkflowInstanceId == inst.Id && e.Type == "Instance")
+            .Select(e => e.Name)
+            .ToList();
+
+        instanceEvents.Should().Contain("Suspended");
+    }
+
+    // NEW: Explicit test verifying Instance Failed event emitted for failInstance/default policy
+    [Fact]
+    public async Task Automatic_UnknownExecutor_Should_Emit_InstanceFailed_Event()
+    {
+        var defJson = BuildDefinition(@"""action"":{""kind"":""notRegistered""}"); // default policy = failInstance
+        Preflight(defJson);
+        var defId = AddDefinition(defJson);
+
+        var autoExec = CreateAutomaticExecutor(new[] { new NoopAutomaticActionExecutor() });
+        var runtime = CreateRuntime(autoExec);
+
+        var inst = await runtime.StartWorkflowAsync(defId, "{}", null, autoCommit: true);
+
+        inst.Status.Should().Be(DTOs.Workflow.Enums.InstanceStatus.Failed);
+
+        var instanceEvents = DbContext.WorkflowEvents
+            .Where(e => e.WorkflowInstanceId == inst.Id && e.Type == "Instance")
+            .Select(e => e.Name)
+            .ToList();
+
+        instanceEvents.Should().Contain("Failed", "a failing automatic action with failInstance policy must emit Instance Failed event");
+
+        var nodeFailEvents = DbContext.WorkflowEvents
+            .Where(e => e.WorkflowInstanceId == inst.Id && e.Type == "Node" && e.Name == "Failed")
+            .ToList();
+
+        nodeFailEvents.Should().HaveCountGreaterThan(0, "node-level failure should also be recorded");
+    }
 }

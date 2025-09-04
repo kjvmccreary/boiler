@@ -75,17 +75,23 @@ public class GraphValidationService : IGraphValidationService
                     errors.Add($"Edge {e.Id} target '{e.EffectiveTarget}' does not exist");
             }
 
-            // Unreachable end nodes (subset of unreachable nodes)
+            // Unreachable end nodes
             var unreachableEnds = ends.Where(e => !reachable.Contains(e.Id)).Select(e => e.Id).ToList();
             if (unreachableEnds.Any())
                 errors.Add($"End nodes unreachable from Start: {string.Join(",", unreachableEnds)}");
 
-            // Optional: isolated islands (nodes neither reachable nor used as an edge endpoint)
-            // Already covered by unreachable if start reachable analysis is strict.
+            // Domain-level validation (draft vs publish)
+            var domainValidation = strict
+                ? wf.ValidateForPublish()
+                : wf.Validate();
 
-            // Gateway quality warnings (existing domain warnings reused)
-            var domainValidation = wf.Validate();
-            warnings.AddRange(domainValidation.Warnings.Where(w => !warnings.Contains(w)));
+            foreach (var e in domainValidation.Errors)
+                if (!errors.Contains(e))
+                    errors.Add(e);
+
+            foreach (var w in domainValidation.Warnings)
+                if (!warnings.Contains(w))
+                    warnings.Add(w);
 
             return new ValidationResultDto
             {
@@ -101,7 +107,8 @@ public class GraphValidationService : IGraphValidationService
                     ["unreachableNodeIds"] = unreachableNodes,
                     ["duplicateNodeIds"] = duplicateNodeIds,
                     ["duplicateEdgeIds"] = duplicateEdgeIds,
-                    ["nodeTypes"] = wf.Nodes.GroupBy(n => n.Type).ToDictionary(g => g.Key, g => g.Count())
+                    ["nodeTypes"] = wf.Nodes.GroupBy(n => n.Type).ToDictionary(g => g.Key, g => g.Count()),
+                    ["strict"] = strict
                 }
             };
         }

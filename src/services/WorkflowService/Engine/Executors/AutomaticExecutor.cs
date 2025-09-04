@@ -1,14 +1,18 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using Microsoft.Extensions.Options;
 using WorkflowService.Domain.Dsl;
 using WorkflowService.Domain.Models;
-using WorkflowService.Engine.Interfaces;
 using WorkflowService.Engine.AutomaticActions;
-using WorkflowService.Services.Interfaces;
-using Microsoft.Extensions.Options;
 using WorkflowService.Engine.Diagnostics;
+using WorkflowService.Engine.Interfaces;
+using WorkflowService.Services.Interfaces;
 
 namespace WorkflowService.Engine.Executors;
 
+/// <summary>
+/// Delegating executor for Automatic nodes with suspend / proceed / fail policies.
+/// </summary>
 public class AutomaticExecutor : INodeExecutor
 {
     private readonly ILogger<AutomaticExecutor> _logger;
@@ -42,12 +46,6 @@ public class AutomaticExecutor : INodeExecutor
         string context,
         CancellationToken cancellationToken = default)
     {
-        using var scope = _logger.BeginScope(new Dictionary<string, object>
-        {
-            ["WorkflowInstanceId"] = instance.Id,
-            ["WorkflowNodeId"] = node.Id
-        });
-
         RecordDiag(new { phase = "enter", instanceId = instance.Id, nodeId = node.Id });
 
         var (kind, actionConfigJson, onFailure) = ExtractAction(node);
@@ -105,71 +103,132 @@ public class AutomaticExecutor : INodeExecutor
         await EmitAsync("AutomaticActionCompleted",
             new { instanceId = instance.Id, nodeId = node.Id, kind }, cancellationToken);
 
+        // Optional: persist output into workflow context
+        var updatedContext = context;
+        if (result.Output is not null)
+        {
+            try
+            {
+                updatedContext = MergeAutomaticOutput(context, node.Id, result.Output);
+                RecordDiag(new
+                {
+                    phase = "output-persisted",
+                    instanceId = instance.Id,
+                    nodeId = node.Id,
+                    hasOutput = true
+                });
+                _logger.LogDebug("WF_AUTO_OUTPUT_PERSISTED Instance={InstanceId} Node={NodeId}", instance.Id, node.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex,
+                    "WF_AUTO_OUTPUT_PERSIST_FAIL Instance={InstanceId} Node={NodeId} - leaving context unchanged",
+                    instance.Id, node.Id);
+                RecordDiag(new
+                {
+                    phase = "output-persist-fail",
+                    instanceId = instance.Id,
+                    nodeId = node.Id,
+                    error = ex.Message
+                });
+            }
+        }
+
         return new NodeExecutionResult
         {
             IsSuccess = true,
             ShouldWait = result.ShouldHaltTraversal,
             NextNodeIds = new List<string>(),
-            UpdatedContext = context
+            UpdatedContext = updatedContext
         };
     }
 
-    private (string kind, string? cfg, string? policy) ExtractAction(WorkflowNode node)
-    {
-        // 1. Direct (preferred) location
-        if (TryExtractActionFromElement(node.Properties, out var direct))
-            return direct;
+    #region Output Persistence
 
-        // 2. Nested legacy "properties" object (defensive)
-        if (node.Properties.TryGetValue("properties", out var nested) && nested is JsonElement propsEl &&
-            propsEl.ValueKind == JsonValueKind.Object)
+    /// <summary>
+    /// Merge an executor's output into the workflow context JSON at _autoOutputs[nodeId].
+    /// If context is invalid/missing, a new root object is created.
+    /// </summary>
+    private static string MergeAutomaticOutput(string contextJson, string nodeId, object output)
+    {
+        JsonObject root;
+
+        // Parse or create root object
+        if (string.IsNullOrWhiteSpace(contextJson))
         {
-            if (TryExtractActionFromObject(propsEl, out var nestedResult))
-                return nestedResult;
+            root = new JsonObject();
+        }
+        else
+        {
+            try
+            {
+                var parsed = JsonNode.Parse(contextJson);
+                root = parsed as JsonObject ?? new JsonObject();
+            }
+            catch
+            {
+                root = new JsonObject();
+            }
         }
 
-        // 3. Legacy flat fields
+        // Ensure _autoOutputs object
+        if (root["_autoOutputs"] is not JsonObject autoOutputsObj)
+        {
+            autoOutputsObj = new JsonObject();
+            root["_autoOutputs"] = autoOutputsObj;
+        }
+
+        // Serialize output to JsonNode
+        JsonNode? outputNode;
+        try
+        {
+            outputNode = JsonSerializer.SerializeToNode(output, output.GetType()) ?? JsonValue.Create((string?)null);
+        }
+        catch
+        {
+            // Fallback: store as string if serialization fails
+            outputNode = JsonValue.Create(output.ToString());
+        }
+
+        autoOutputsObj[nodeId] = outputNode;
+
+        // Return compact JSON (avoid indentation to minimize storage size)
+        return root.ToJsonString(new JsonSerializerOptions
+        {
+            WriteIndented = false,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.Never
+        });
+    }
+
+    #endregion
+
+    #region Action Extraction / Policies
+
+    private (string kind, string? cfg, string? policy) ExtractAction(WorkflowNode node)
+    {
+        if (node.Properties.TryGetValue("action", out var v) &&
+            v is JsonElement el &&
+            el.ValueKind == JsonValueKind.Object)
+        {
+            string kind = "noop";
+            string? cfg = null;
+            string? pol = null;
+
+            if (el.TryGetProperty("kind", out var kEl) && kEl.ValueKind == JsonValueKind.String)
+                kind = kEl.GetString() ?? "noop";
+            if (el.TryGetProperty("config", out var cEl))
+                cfg = cEl.GetRawText();
+            if (el.TryGetProperty("onFailure", out var pEl) && pEl.ValueKind == JsonValueKind.String)
+                pol = pEl.GetString();
+            return (kind, cfg, pol);
+        }
+
         var legacyKind = node.GetProperty<string>("actionType")
                         ?? node.GetProperty<string>("executorType")
                         ?? "noop";
         var legacyCfg = node.GetProperty<string>("configuration");
-        var legacyPol = node.GetProperty<string>("onFailure");
-        return (legacyKind, legacyCfg, legacyPol);
-    }
-
-    private bool TryExtractActionFromElement(
-        IDictionary<string, object> bag,
-        out (string kind, string? cfg, string? policy) result)
-    {
-        result = default;
-        if (!bag.TryGetValue("action", out var raw) || raw is not JsonElement el || el.ValueKind != JsonValueKind.Object)
-            return false;
-
-        if (TryExtractActionFromObject(el, out result))
-            return true;
-
-        return false;
-    }
-
-    private bool TryExtractActionFromObject(
-        JsonElement el,
-        out (string kind, string? cfg, string? policy) result)
-    {
-        string kind = "noop";
-        string? cfg = null;
-        string? pol = null;
-
-        if (el.TryGetProperty("kind", out var kEl) && kEl.ValueKind == JsonValueKind.String)
-            kind = kEl.GetString() ?? "noop";
-
-        if (el.TryGetProperty("config", out var cEl))
-            cfg = cEl.GetRawText();
-
-        if (el.TryGetProperty("onFailure", out var pEl) && pEl.ValueKind == JsonValueKind.String)
-            pol = pEl.GetString();
-
-        result = (kind, cfg, pol);
-        return true;
+        var legacyPolicy = node.GetProperty<string>("onFailure");
+        return (legacyKind, legacyCfg, legacyPolicy);
     }
 
     private static (bool fail, bool suspend, bool proceed) InterpretPolicy(string? policy)
@@ -196,15 +255,25 @@ public class AutomaticExecutor : INodeExecutor
         {
             _logger.LogWarning("WF_AUTO_EXEC_POLICY_PROCEED Node={NodeId} Error={Error}", node.Id, error);
             RecordDiag(new { phase = "policy-proceed", instanceId = instance.Id, nodeId = node.Id, error });
-            return new NodeExecutionResult { IsSuccess = true };
+            return new NodeExecutionResult
+            {
+                IsSuccess = true
+            };
         }
 
         if (suspend)
         {
             _logger.LogWarning("WF_AUTO_EXEC_POLICY_SUSPEND Node={NodeId} Error={Error}", node.Id, error);
             RecordDiag(new { phase = "policy-suspend", instanceId = instance.Id, nodeId = node.Id, error });
+            return new NodeExecutionResult
+            {
+                IsSuccess = false,
+                ErrorMessage = error,
+                FailureAction = NodeFailureAction.SuspendInstance
+            };
         }
 
+        // default fail
         if (fail)
         {
             _logger.LogError("WF_AUTO_EXEC_POLICY_FAIL Node={NodeId} Error={Error}", node.Id, error);
@@ -214,9 +283,14 @@ public class AutomaticExecutor : INodeExecutor
         return new NodeExecutionResult
         {
             IsSuccess = false,
-            ErrorMessage = error
+            ErrorMessage = error,
+            FailureAction = NodeFailureAction.FailInstance
         };
     }
+
+    #endregion
+
+    #region Event + Diagnostics
 
     private async Task EmitAsync(string name, object payload, CancellationToken ct)
     {
@@ -242,4 +316,6 @@ public class AutomaticExecutor : INodeExecutor
         if (_diagOptions.EnableAutomaticTrace)
             _diagBuffer.Record(obj);
     }
+
+    #endregion
 }

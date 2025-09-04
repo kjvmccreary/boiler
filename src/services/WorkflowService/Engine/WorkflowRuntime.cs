@@ -390,6 +390,74 @@ public class WorkflowRuntime : IWorkflowRuntime
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
     }
 
+    public async Task SuspendWorkflowAsync(
+        int instanceId,
+        string reason,
+        int? userId = null,
+        CancellationToken cancellationToken = default,
+        bool autoCommit = true)
+    {
+        var instance = await _context.WorkflowInstances
+            .FirstOrDefaultAsync(i => i.Id == instanceId, cancellationToken)
+            ?? throw new InvalidOperationException($"Workflow instance {instanceId} not found");
+
+        if (!_instanceTenantCache.ContainsKey(instance.Id))
+            _instanceTenantCache[instance.Id] = instance.TenantId;
+
+        if (instance.Status == InstanceStatus.Suspended)
+        {
+            _logger.LogInformation("WF_SUSPEND_NOOP Instance={InstanceId} AlreadySuspended", instance.Id);
+            return;
+        }
+
+        if (instance.Status != InstanceStatus.Running)
+            throw new InvalidOperationException($"Only running instances can be suspended (current={instance.Status})");
+
+        instance.Status = InstanceStatus.Suspended;
+        instance.ErrorMessage ??= reason;
+        MarkDirty();
+
+        await CreateEventAsync(instance.Id, "Instance", "Suspended",
+            JsonSerializer.Serialize(new { reason }), userId);
+        _logger.LogWarning("WF_SUSPENDED Instance={InstanceId} Reason={Reason}", instance.Id, reason);
+
+        if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
+    }
+
+    public async Task ResumeWorkflowAsync(
+        int instanceId,
+        int? userId = null,
+        CancellationToken cancellationToken = default,
+        bool autoCommit = true)
+    {
+        var instance = await _context.WorkflowInstances
+            .FirstOrDefaultAsync(i => i.Id == instanceId, cancellationToken)
+            ?? throw new InvalidOperationException($"Workflow instance {instanceId} not found");
+
+        if (!_instanceTenantCache.ContainsKey(instance.Id))
+            _instanceTenantCache[instance.Id] = instance.TenantId;
+
+        if (instance.Status == InstanceStatus.Running)
+        {
+            _logger.LogInformation("WF_RESUME_NOOP Instance={InstanceId} AlreadyRunning", instance.Id);
+            return;
+        }
+
+        if (instance.Status != InstanceStatus.Suspended)
+            throw new InvalidOperationException($"Only suspended instances can be resumed (current={instance.Status})");
+
+        instance.Status = InstanceStatus.Running;
+        MarkDirty();
+
+        await CreateEventAsync(instance.Id, "Instance", "Resumed",
+            "{\"reason\":\"manual-resume\"}", userId);
+        _logger.LogInformation("WF_RESUMED Instance={InstanceId}", instance.Id);
+
+        await ContinueWorkflowAsync(instance.Id, cancellationToken, autoCommit: false);
+
+        if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
+    }
+
     #endregion
 
     #region Node Execution
@@ -412,6 +480,26 @@ public class WorkflowRuntime : IWorkflowRuntime
 
             if (!result.IsSuccess)
             {
+                // NEW: Suspend policy handling
+                if (result.FailureAction == NodeFailureAction.SuspendInstance)
+                {
+                    instance.Status = InstanceStatus.Suspended;
+                    instance.ErrorMessage = result.ErrorMessage;
+                    MarkDirty();
+
+                    await CreateEventAsync(instance.Id, "Node", "Failed",
+                        $"{{\"nodeId\":\"{node.Id}\",\"error\":\"{result.ErrorMessage}\",\"policy\":\"suspend\"}}", null);
+
+                    await CreateEventAsync(instance.Id, "Instance", "Suspended",
+                        $"{{\"reason\":\"automatic-action-failure\",\"nodeId\":\"{node.Id}\"}}", null);
+
+                    _logger.LogWarning("WF_INSTANCE_SUSPENDED Instance={InstanceId} Node={NodeId} Error={Error}",
+                        instance.Id, node.Id, result.ErrorMessage);
+                    await SaveIfDirtyAsync(cancellationToken);
+                    return;
+                }
+
+                // Default fail instance path
                 _logger.LogError("WF_NODE_EXEC_FAIL Instance={InstanceId} Node={NodeId} Error={Error}",
                     instance.Id, node.Id, result.ErrorMessage);
                 await HandleNodeExecutionFailure(instance, node, result.ErrorMessage);
@@ -554,7 +642,8 @@ public class WorkflowRuntime : IWorkflowRuntime
             {
                 conditionResult = _conditionEvaluator
                     .EvaluateAsync(conditionJson, instance.Context)
-                    .GetAwaiter().GetResult();
+                    .GetAwaiter()
+                    .GetResult();
             }
             catch (Exception ex)
             {
@@ -565,7 +654,6 @@ public class WorkflowRuntime : IWorkflowRuntime
             }
         }
 
-        // Infer labels (unchanged logic)
         foreach (var e in edges)
             e.InferLabelIfMissing();
 
@@ -664,6 +752,7 @@ public class WorkflowRuntime : IWorkflowRuntime
             return;
         }
 
+        // Set next nodes first (may be replaced if end nodes cause completion)
         instance.CurrentNodeIds = JsonSerializer.Serialize(nextNodeIds.ToArray());
         MarkDirty();
 
@@ -672,9 +761,11 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         if (endNodes.Any())
         {
+            // Reaching an End node finalizes the workflow AND clears active nodes.
             CancelOpenTasksAsync(instance, "instance-completed", default).GetAwaiter().GetResult();
             instance.Status = InstanceStatus.Completed;
             instance.CompletedAt = DateTime.UtcNow;
+            instance.CurrentNodeIds = JsonSerializer.Serialize(Array.Empty<string>()); // <== CHANGE
             MarkDirty();
             CreateEventAsync(instance.Id, "Instance", "Completed",
                 JsonSerializer.Serialize(new { endNodes }), null).GetAwaiter().GetResult();
@@ -693,8 +784,13 @@ public class WorkflowRuntime : IWorkflowRuntime
         instance.CompletedAt = DateTime.UtcNow;
         MarkDirty();
 
+        // Node failure event
         await CreateEventAsync(instance.Id, "Node", "Failed",
             $"{{\"nodeId\":\"{node.Id}\",\"error\":\"{errorMessage}\"}}", null);
+
+        // NEW: Instance failure event (was missing)
+        await CreateEventAsync(instance.Id, "Instance", "Failed",
+            JsonSerializer.Serialize(new { nodeId = node.Id, error = errorMessage }), null);
 
         await SaveIfDirtyAsync();
         _logger.LogError("WF_INSTANCE_FAILED Instance={InstanceId} Node={NodeId} Error={Error}",

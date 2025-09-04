@@ -142,6 +142,30 @@ public class InstancesControllerTests : TestBase
         actionResult!.StatusCode.Should().Be(200);
     }
 
+    [Fact]
+    public async Task Suspend_Instance_Should_Call_Service_And_Return_Ok()
+    {
+        _mockInstanceService.Setup(s => s.SuspendAsync(10, It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowInstanceDto>.SuccessResult(new WorkflowInstanceDto { Id = 10, Status = InstanceStatus.Suspended }));
+
+        var result = await _controller.Suspend(10, "test-reason");
+        var ok = result.Result as OkObjectResult;
+        ok.Should().NotBeNull();
+        _mockInstanceService.Verify(s => s.SuspendAsync(10, It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Resume_Instance_Should_Call_Service_And_Return_Ok()
+    {
+        _mockInstanceService.Setup(s => s.ResumeAsync(11, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<WorkflowInstanceDto>.SuccessResult(new WorkflowInstanceDto { Id = 11, Status = InstanceStatus.Running }));
+
+        var result = await _controller.Resume(11);
+        var ok = result.Result as OkObjectResult;
+        ok.Should().NotBeNull();
+        _mockInstanceService.Verify(s => s.ResumeAsync(11, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
     private void SetupControllerContext()
     {
         var claims = new List<Claim>

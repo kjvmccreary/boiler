@@ -18,6 +18,7 @@ using WorkflowService.Services.Validation;
 using WorkflowService.Engine.AutomaticActions;
 using WorkflowService.Engine.AutomaticActions.Executors;
 using WorkflowService.Engine.Diagnostics;
+using WorkflowService.Engine.Validation; // ADD
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -137,6 +138,7 @@ builder.Services.AddWorkflowPolicies();
 // AutoMapper / Validation
 builder.Services.AddAutoMapper(typeof(Program));
 builder.Services.AddFluentValidation();
+builder.Services.AddWorkflowPublishValidation(); // ADD
 
 // CORS
 builder.Services.AddCors(options =>
