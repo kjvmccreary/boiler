@@ -23,6 +23,10 @@ using Common.Hashing;
 using WorkflowService.Engine.Pruning;
 using WorkflowService.Engine.FeatureFlags;
 using WorkflowService.Engine.Timeouts;
+using WorkflowService.Outbox;
+
+// Alias to disambiguate the new dispatcher interface from the legacy one
+using OutboxDispatcherInterface = WorkflowService.Outbox.IOutboxDispatcher;
 
 namespace WorkflowService;
 
@@ -86,7 +90,7 @@ public class Program
         builder.Services.AddScoped<IConditionEvaluator, JsonLogicConditionEvaluator>();
         builder.Services.AddScoped<IWorkflowRuntime, WorkflowRuntime>();
 
-        // NEW: Outbox writer (idempotent enqueue helper)
+        // Outbox writer (idempotent enqueue helper)
         builder.Services.AddScoped<IOutboxWriter, OutboxWriter>();
 
         // Pruning (C1)
@@ -129,6 +133,15 @@ public class Program
         builder.Services.AddScoped<IGatewayStrategy, FeatureFlagGatewayStrategy>();
         builder.Services.AddScoped<IFeatureFlagProvider, NoopFeatureFlagProvider>();
         builder.Services.AddScoped<IFeatureFlagFallbackEmitter, FeatureFlagFallbackEmitter>();
+
+        // Outbox options
+        builder.Services.Configure<OutboxOptions>(
+            builder.Configuration.GetSection("Workflow:Outbox"));
+
+        // O4 Outbox dispatcher services (disambiguated via alias)
+        builder.Services.AddScoped<IOutboxTransport, LoggingOutboxTransport>();
+        builder.Services.AddScoped<OutboxDispatcherInterface, OutboxDispatcher>();
+        builder.Services.AddHostedService<OutboxBackgroundWorker>();
 
         var app = builder.Build();
 

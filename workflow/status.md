@@ -250,7 +250,7 @@ Metrics enabled:
 * OutboxMessage_Defaults_Assigned_OnAdd (IdempotencyKey auto-populated, ProcessedAt null).
 * OutboxMessage_Roundtrip_Persists_Values.
 
-### 🚧 (in progress) O3: Producer Integration
+### ✅ DONE O3: Producer Integration
 ## Tasks:
 * Update all places creating outbox rows (e.g., event publisher):
 * Accept optional idempotency seed parameters.
@@ -258,7 +258,7 @@ Metrics enabled:
 * Overload PublishX methods to accept IdempotencyKey (optional). Tests:
 * PublishDefinition_Event_Uses_Deterministic_IdempotencyKey (two publish attempts produce same key if logically same event).
 * PublishInstanceForceCancelled_Events_Have_UniqueKeys (different instance events differ).
-O4: Dispatcher Enhancements
+### 🚧 (in progress) O4: Dispatcher Enhancements
 Tasks:
 * Modify dispatcher query: SELECT * FROM OutboxMessages WHERE ProcessedAt IS NULL ORDER BY CreatedAt LIMIT N.
 * On success: set ProcessedAt=UtcNow, clear Error.
