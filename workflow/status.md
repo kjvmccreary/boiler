@@ -307,17 +307,17 @@ Tasks:
 * Decide on threshold: if RetryCount >= MaxRetries mark a status (future column) or continue indefinite.
 * Decide if Error length should be truncated (e.g., 2000 chars). Tests:
 * Outbox_Error_Truncated_When_TooLong.
-### 🚧 (in progress) O11: Deterministic Key Strategy (Design)
+### ✅ DONE O11: Deterministic Key Strategy (Design)
 Tasks:
 * Utility: OutboxIdempotency.CreateDeterministicKey(params) → Guid (namespace-based v5 or hash → Guid).
 * Centralize to avoid drift across producers. Tests:
 * DeterministicKey_SameInputs_SameGuid.
 * DeterministicKey_DifferentInputs_DifferentGuid.
-### O12: Concurrency & Isolation Tests
+### 🚧 (in progress) O12: Concurrency & Isolation Tests
 Tasks:
 * Simulate multiple threads adding same idempotent event (Task.WhenAll).
 * Use barrier to align execution and assert single row created. Tests:
-* Concurrency_IdempotentInsert_Race_Produces_SingleRow.
+  * Concurrency_IdempotentInsert_Race_Produces_SingleRow.
 ---
 Test Coverage Matrix (Summary)
 | Story | Unit Tests | Integration Tests | Notes | |-------|------------|-------------------|-------| | O1 | Migration DDL reflection (optional) | Backfill legacy rows | May mock relational provider | | O2 | Entity default assignment | Roundtrip via real DB | | | O3 | Deterministic key generation | Duplicate logical event path | | | O4 | Dispatcher success/failure logic | End-to-end dispatch cycle | Mock transport | | O5 | Duplicate insert handling | Parallel insert scenario | | | O6 | Retry progression logic | Max retry boundary | Delay calc pure unit | | O7 | Metrics helper pure funcs | (Optional) log capture | | | O8 | (If implemented) endpoint query shape | API response filter tests | Optional MVP | | O9 | Legacy row upgrade | Full migration path | | | O10 | Error truncation | — | Optional | | O11 | Key generation determinism | — | Utility only | | O12 | Race handling | High-contention test | Use in-memory or sqlite |

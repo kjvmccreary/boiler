@@ -1,35 +1,22 @@
 using System;
 using System.Security.Cryptography;
 using System.Text;
+using WorkflowService.Outbox;
 
 namespace WorkflowService.Utilities;
 
 /// <summary>
 /// LEGACY deterministic idempotency utilities.
-/// Replaced by DeterministicOutboxKey (WorkflowService.Outbox namespace).
+/// Forwarding to DeterministicOutboxKey; will be removed in a future release.
 /// </summary>
-[Obsolete("OutboxIdempotency is deprecated. Use DeterministicOutboxKey (Instance/Task/Definition/Create) instead. This will be removed in a future release.")]
+[Obsolete("OutboxIdempotency is deprecated. Use DeterministicOutboxKey (Instance/Task/Definition/Custom) instead. This will be removed in a future release.")]
 public static class OutboxIdempotency
 {
     /// <summary>
-    /// Generic deterministic key creator from arbitrary parts (already normalized by caller if desired).
+    /// Generic deterministic key creator from arbitrary parts (normalized).
     /// </summary>
-    public static Guid CreateDeterministicGuid(params string[] parts)
-    {
-        if (parts is null || parts.Length == 0)
-            throw new ArgumentException("At least one part must be supplied", nameof(parts));
-
-        var canonical = string.Join(':', parts.Select(p => p?.Trim().ToLowerInvariant() ?? ""));
-        var bytes = Encoding.UTF8.GetBytes(canonical);
-
-        Span<byte> hash = stackalloc byte[32];
-        SHA256.HashData(bytes, hash);
-
-        Span<byte> guidBytes = stackalloc byte[16];
-        hash[..16].CopyTo(guidBytes);
-
-        return new Guid(guidBytes);
-    }
+    public static Guid CreateDeterministicGuid(params string[] parts) =>
+        DeterministicOutboxKey.Custom(parts ?? Array.Empty<string>());
 
     /// <summary>
     /// Workflow-centric helper (tenant + category + entityId + kind + version + optional correlation).
@@ -43,13 +30,11 @@ public static class OutboxIdempotency
         string kind,
         int version = 0,
         string? correlation = null)
-    {
-        return CreateDeterministicGuid(
-            tenantId.ToString(),
+        => DeterministicOutboxKey.Custom(
+            tenantId,
             category,
-            entityId.ToString(),
+            entityId,
             kind,
-            version.ToString(),
+            version,
             correlation ?? "");
-    }
 }

@@ -7,7 +7,6 @@ using Npgsql;
 
 namespace WorkflowService.Services;
 
-/// <inheritdoc />
 public class OutboxWriter : IOutboxWriter
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
@@ -24,6 +23,7 @@ public class OutboxWriter : IOutboxWriter
     public OutboxMessage Enqueue(int tenantId, string eventType, object payload, Guid? idempotencyKey = null)
     {
         var (json, key) = SerializeAndKey(payload, idempotencyKey);
+        WarnIfMissingDeterministicKey(eventType, idempotencyKey);
         var msg = BuildMessage(tenantId, eventType, json, key);
         _db.OutboxMessages.Add(msg);
         _logger.LogDebug("OUTBOX_ENQUEUE EventType={EventType} Tenant={TenantId} Key={Key}", eventType, tenantId, key);
@@ -38,6 +38,8 @@ public class OutboxWriter : IOutboxWriter
         CancellationToken ct = default)
     {
         var (json, key) = SerializeAndKey(payload, idempotencyKey);
+        WarnIfMissingDeterministicKey(eventType, idempotencyKey);
+
         var msg = BuildMessage(tenantId, eventType, json, key);
 
         _db.OutboxMessages.Add(msg);
@@ -51,7 +53,6 @@ public class OutboxWriter : IOutboxWriter
         }
         catch (DbUpdateException ex) when (IsUniqueViolation(ex))
         {
-            // Clear the just-added entity (it failed uniqueness)
             Detach(msg);
 
             var existing = await _db.OutboxMessages
@@ -92,6 +93,17 @@ public class OutboxWriter : IOutboxWriter
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
+
+    private void WarnIfMissingDeterministicKey(string eventType, Guid? providedKey)
+    {
+        if (providedKey.HasValue && providedKey.Value != Guid.Empty) return;
+
+        // Heuristic: workflow.* events should have deterministic keys from DeterministicOutboxKey
+        if (eventType.StartsWith("workflow.", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogWarning("OUTBOX_IDEMPOTENCY_MISSING eventType={EventType} - producer did not supply a deterministic key", eventType);
+        }
+    }
 
     private bool IsUniqueViolation(DbUpdateException ex)
     {

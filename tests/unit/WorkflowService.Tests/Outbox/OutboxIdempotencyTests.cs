@@ -8,9 +8,9 @@ using WorkflowService.Persistence;
 using WorkflowService.Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Contracts.Services;
-using WorkflowService.Utilities;
 using WorkflowService.Services;
 using WorkflowService.Services.Interfaces;
+using WorkflowService.Outbox; // switched to DeterministicOutboxKey
 
 namespace WorkflowService.Tests.Outbox
 {
@@ -44,16 +44,16 @@ namespace WorkflowService.Tests.Outbox
         [Fact]
         public void DeterministicKey_SameInputs_SameGuid()
         {
-            var g1 = OutboxIdempotency.CreateForWorkflow(1, "instance", 123, "started", 2);
-            var g2 = OutboxIdempotency.CreateForWorkflow(1, "instance", 123, "started", 2);
+            var g1 = DeterministicOutboxKey.Instance(1, 123, "started", 2);
+            var g2 = DeterministicOutboxKey.Instance(1, 123, "Started", 2);
             Assert.Equal(g1, g2);
         }
 
         [Fact]
         public void DeterministicKey_DifferentInputs_DifferentGuid()
         {
-            var g1 = OutboxIdempotency.CreateForWorkflow(1, "instance", 123, "started", 2);
-            var g2 = OutboxIdempotency.CreateForWorkflow(1, "instance", 123, "completed", 2);
+            var g1 = DeterministicOutboxKey.Instance(1, 123, "started", 2);
+            var g2 = DeterministicOutboxKey.Instance(1, 123, "completed", 2);
             Assert.NotEqual(g1, g2);
         }
 
@@ -88,9 +88,8 @@ namespace WorkflowService.Tests.Outbox
             await publisher.PublishInstanceStartedAsync(runtimeInstance);
 
             var outbox = ctx.OutboxMessages.Single(o => o.EventType == "workflow.instance.started");
-            var expected = OutboxIdempotency.CreateForWorkflow(
+            var expected = DeterministicOutboxKey.Instance(
                 runtimeInstance.TenantId,
-                "instance",
                 runtimeInstance.Id,
                 "started",
                 runtimeInstance.DefinitionVersion);

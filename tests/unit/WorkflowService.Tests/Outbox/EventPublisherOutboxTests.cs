@@ -9,7 +9,7 @@ using WorkflowService.Domain.Models;
 using WorkflowService.Persistence;
 using WorkflowService.Services;
 using WorkflowService.Services.Interfaces;
-using WorkflowService.Utilities;
+using WorkflowService.Outbox; // switched to DeterministicOutboxKey
 using Xunit;
 
 namespace WorkflowService.Tests.Outbox;
@@ -20,7 +20,6 @@ public class EventPublisherOutboxTests
 
     private static WorkflowDbContext CreateSqliteContext()
     {
-        // Use SQLite in-memory so unique index constraints are enforced (unlike EF InMemory provider)
         var conn = new SqliteConnection("DataSource=:memory:");
         conn.Open();
 
@@ -143,7 +142,7 @@ public class EventPublisherOutboxTests
         await publisher.PublishInstanceStartedAsync(inst);
 
         var msg = ctx.OutboxMessages.Single();
-        var expected = OutboxIdempotency.CreateForWorkflow(inst.TenantId, "instance", inst.Id, "started", inst.DefinitionVersion);
+        var expected = DeterministicOutboxKey.Instance(inst.TenantId, inst.Id, "started", inst.DefinitionVersion);
 
         Assert.Equal("workflow.instance.started", msg.EventType);
         Assert.Equal(expected, msg.IdempotencyKey);
@@ -157,16 +156,13 @@ public class EventPublisherOutboxTests
         var def = SeedDefinition(ctx);
         var publisher = CreatePublisher(ctx);
 
-        // First publish
         await publisher.PublishDefinitionPublishedAsync(def);
         var first = ctx.OutboxMessages.Single();
-        var expectedKey = OutboxIdempotency.CreateForWorkflow(def.TenantId, "definition", def.Id, "published", def.Version);
+        var expectedKey = DeterministicOutboxKey.DefinitionPublished(def.TenantId, def.Id, def.Version);
         Assert.Equal(expectedKey, first.IdempotencyKey);
 
-        // Second publish (same logical event) – should not create duplicate row
         await publisher.PublishDefinitionPublishedAsync(def);
 
-        // Re-query to ensure only 1 row
         var all = ctx.OutboxMessages.Where(o => o.EventType == "workflow.definition.published").ToList();
         Assert.Single(all);
         Assert.Equal(expectedKey, all[0].IdempotencyKey);
@@ -185,7 +181,7 @@ public class EventPublisherOutboxTests
         await publisher.PublishTaskCreatedAsync(task);
 
         var msg = ctx.OutboxMessages.Single(o => o.EventType == "workflow.task.created");
-        var expected = OutboxIdempotency.CreateForWorkflow(task.TenantId, "task", task.Id, "created");
+        var expected = DeterministicOutboxKey.Task(task.TenantId, task.Id, "created");
         Assert.Equal(expected, msg.IdempotencyKey);
     }
 
@@ -221,14 +217,12 @@ public class EventPublisherOutboxTests
 
         var customKey = Guid.NewGuid();
 
-        // Use extended overload with override
         await publisher.PublishInstanceStartedWithKeyAsync(inst, customKey);
 
         var msg = ctx.OutboxMessages.Single();
         Assert.Equal(customKey, msg.IdempotencyKey);
 
-        // Deterministic would differ
-        var deterministic = OutboxIdempotency.CreateForWorkflow(inst.TenantId, "instance", inst.Id, "started", inst.DefinitionVersion);
+        var deterministic = DeterministicOutboxKey.Instance(inst.TenantId, inst.Id, "started", inst.DefinitionVersion);
         Assert.NotEqual(deterministic, customKey);
     }
 
@@ -246,12 +240,11 @@ public class EventPublisherOutboxTests
         await publisher.PublishInstanceCompletedAsync(inst);
         var key1 = ctx.OutboxMessages.Single().IdempotencyKey;
 
-        // Simulate second attempt (e.g., retry path) — should still be idempotent
         await publisher.PublishInstanceCompletedAsync(inst);
         var rows = ctx.OutboxMessages.Where(o => o.EventType == "workflow.instance.completed").ToList();
 
         Assert.Single(rows);
-        var expected = OutboxIdempotency.CreateForWorkflow(inst.TenantId, "instance", inst.Id, "completed", inst.DefinitionVersion);
+        var expected = DeterministicOutboxKey.Instance(inst.TenantId, inst.Id, "completed", inst.DefinitionVersion);
         Assert.Equal(expected, key1);
         Assert.Equal(expected, rows[0].IdempotencyKey);
     }
