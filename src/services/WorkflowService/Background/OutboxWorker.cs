@@ -8,7 +8,7 @@ namespace WorkflowService.Background;
 
 /// <summary>
 /// Periodically scans OutboxMessages and dispatches them via IOutboxDispatcher.
-/// Simple retry policy (linear/exponential can be added later).
+/// First tranche still uses IsProcessed flag; later tranche will rely solely on ProcessedAt null check.
 /// </summary>
 public class OutboxWorker : BackgroundService
 {
@@ -67,7 +67,7 @@ public class OutboxWorker : BackgroundService
         var db = scope.ServiceProvider.GetRequiredService<WorkflowDbContext>();
         var dispatcher = scope.ServiceProvider.GetRequiredService<IOutboxDispatcher>();
 
-        // Fetch unprocessed messages
+        // Still using IsProcessed for MVP continuity
         var messages = await db.OutboxMessages
             .Where(m => !m.IsProcessed)
             .OrderBy(m => m.CreatedAt)
@@ -94,6 +94,7 @@ public class OutboxWorker : BackgroundService
                     msg.IsProcessed = true;
                     msg.ProcessedAt = DateTime.UtcNow;
                     msg.UpdatedAt = DateTime.UtcNow;
+                    msg.Error = null;
                 }
                 else
                 {
@@ -113,18 +114,17 @@ public class OutboxWorker : BackgroundService
     private void HandleRetry(OutboxMessage msg, bool transient, string? error = null)
     {
         msg.RetryCount++;
-        msg.LastError = error;
+        msg.Error = error;
         msg.UpdatedAt = DateTime.UtcNow;
 
         if (msg.RetryCount >= _maxRetries || !transient)
         {
-            msg.IsProcessed = true;           // Give up
+            msg.IsProcessed = true;
             msg.ProcessedAt = DateTime.UtcNow;
             _logger.LogWarning("OUTBOX_GIVEUP Id={Id} Retries={Retries}", msg.Id, msg.RetryCount);
             return;
         }
 
-        // (Optional) exponential delay – for now we just rely on interval scanning.
         _logger.LogInformation("OUTBOX_RETRY_SCHEDULED Id={Id} NextAttempt=+{Interval}s Retry={Retry}",
             msg.Id, _interval.TotalSeconds, msg.RetryCount);
     }

@@ -165,8 +165,7 @@ public class WorkflowDbContext : DbContext
             switch (entry.Entity)
             {
                 case WorkflowDefinition wd when wd.TenantId == 0:
-                    wd.TenantId = tenantId;
-                    break;
+                    wd.TenantId = tenantId; break;
                 case WorkflowInstance wi when wi.TenantId == 0:
                     wi.TenantId = tenantId; break;
                 case WorkflowTask wt when wt.TenantId == 0:
@@ -302,6 +301,12 @@ public class WorkflowDbContext : DbContext
             entity.HasIndex(e => new { e.EventType, e.IsProcessed });
             entity.HasIndex(e => e.NextRetryAt);
             entity.HasIndex(e => new { e.TenantId, e.IdempotencyKey }).IsUnique();
+
+            // Filtered index for backlog scanning (ProcessedAt IS NULL)
+            entity.HasIndex(nameof(OutboxMessage.TenantId), nameof(OutboxMessage.CreatedAt))
+                  .HasDatabaseName("IDX_Outbox_Unprocessed")
+                  .HasFilter("\"ProcessedAt\" IS NULL");
+
             entity.Property(e => e.EventData);
 
             var isTestEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||

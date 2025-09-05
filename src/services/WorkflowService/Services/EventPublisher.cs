@@ -202,7 +202,6 @@ public class EventPublisher : IEventPublisher
         _logger.LogInformation("Published definition published {DefinitionId}", definition.Id);
     }
 
-    // NEW: definition unpublished
     public async Task PublishDefinitionUnpublishedAsync(WorkflowDefinition definition, CancellationToken ct = default)
     {
         AddOutboxMessage("workflow.definition.unpublished", new
@@ -218,7 +217,6 @@ public class EventPublisher : IEventPublisher
         _logger.LogInformation("Published definition unpublished {DefinitionId}", definition.Id);
     }
 
-    // NEW: instance force cancelled (reason: unpublish)
     public async Task PublishInstanceForceCancelledAsync(WorkflowInstance instance, string reason, CancellationToken ct = default)
     {
         AddWorkflowEvent(instance.Id, instance.TenantId, "Instance", "ForceCancelled", new
@@ -258,6 +256,7 @@ public class EventPublisher : IEventPublisher
         _logger.LogInformation("Published custom event {Event}", normalized);
     }
 
+    // Legacy synchronous processing method (kept; aligns with new Error property)
     public async Task ProcessOutboxMessagesAsync(CancellationToken cancellationToken = default)
     {
         try
@@ -276,12 +275,13 @@ public class EventPublisher : IEventPublisher
                 {
                     message.IsProcessed = true;
                     message.ProcessedAt = DateTime.UtcNow;
+                    message.Error = null;          // clear any prior error
                     message.UpdatedAt = DateTime.UtcNow;
                 }
                 catch (Exception ex)
                 {
                     message.RetryCount++;
-                    message.LastError = ex.Message;
+                    message.Error = ex.Message;    // renamed from LastError
                     message.UpdatedAt = DateTime.UtcNow;
                     if (message.RetryCount >= 5)
                     {
@@ -314,7 +314,7 @@ public class EventPublisher : IEventPublisher
         });
     }
 
-    private void AddOutboxMessage(string eventType, object eventData, int tenantId)
+    private void AddOutboxMessage(String eventType, object eventData, int tenantId)
     {
         _context.OutboxMessages.Add(new OutboxMessage
         {
