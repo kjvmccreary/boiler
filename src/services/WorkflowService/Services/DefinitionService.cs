@@ -566,17 +566,25 @@ public class DefinitionService : IDefinitionService
             foreach (var def in definitions)
                 ApplyGatewayBackfill(def, persistIfChanged: false);
 
-            var defKeys = definitions.Select(d => new { d.Id, d.Version }).ToList();
-            var activeCounts = await _context.WorkflowInstances
-                .Where(i => defKeys.Contains(new { Id = i.WorkflowDefinitionId, Version = i.DefinitionVersion }) &&
+            var definitionIds = definitions.Select(d => d.Id).Distinct().ToList();
+
+            // Pull only necessary rows (translated) then aggregate in memory
+            var instanceRows = await _context.WorkflowInstances
+                .Where(i => definitionIds.Contains(i.WorkflowDefinitionId) &&
                             (i.Status == InstanceStatus.Running || i.Status == InstanceStatus.Suspended))
-                .GroupBy(i => new { i.WorkflowDefinitionId, i.DefinitionVersion })
+                .Select(i => new { i.WorkflowDefinitionId, i.DefinitionVersion })
+                .ToListAsync(cancellationToken);
+
+            // Group in memory (composite key supported in memory)
+            var activeCounts = instanceRows
+                .GroupBy(x => new { x.WorkflowDefinitionId, x.DefinitionVersion })
                 .Select(g => new
                 {
-                    g.Key.WorkflowDefinitionId,
-                    g.Key.DefinitionVersion,
+                    WorkflowDefinitionId = g.Key.WorkflowDefinitionId,
+                    DefinitionVersion = g.Key.DefinitionVersion,
                     Count = g.Count()
-                }).ToListAsync(cancellationToken);
+                })
+                .ToList();
 
             var dtos = new List<WorkflowDefinitionDto>();
             foreach (var def in definitions)

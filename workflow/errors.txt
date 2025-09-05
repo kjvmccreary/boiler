@@ -1,57 +1,102 @@
-PS C:\Users\mccre\dev\boiler> docker logs boiler-workflow
-Unhandled exception. System.AggregateException: Some services are not able to be constructed (Error while validating the service descriptor 'ServiceType: Contracts.Services.IRoleService Lifetime: Scoped ImplementationType: Common.Services.RoleService': Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.) (Error while validating the service descriptor 'ServiceType: WorkflowService.Engine.Interfaces.IWorkflowRuntime Lifetime: Scoped ImplementationType: WorkflowService.Engine.WorkflowRuntime': Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.) (Error while validating the service descriptor 'ServiceType: WorkflowService.Engine.Interfaces.INodeExecutor Lifetime: Scoped ImplementationType: WorkflowService.Engine.Executors.HumanTaskExecutor': Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.)
- ---> System.InvalidOperationException: Error while validating the service descriptor 'ServiceType: Contracts.Services.IRoleService Lifetime: Scoped ImplementationType: Common.Services.RoleService': Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.
- ---> System.InvalidOperationException: Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.GetCallSite(ServiceDescriptor serviceDescriptor, CallSiteChain callSiteChain)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.ValidateService(ServiceDescriptor descriptor)
-   --- End of inner exception stack trace ---
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.ValidateService(ServiceDescriptor descriptor)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider..ctor(ICollection`1 serviceDescriptors, ServiceProviderOptions options)
-   --- End of inner exception stack trace ---
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider..ctor(ICollection`1 serviceDescriptors, ServiceProviderOptions options)
-   at Microsoft.Extensions.DependencyInjection.ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(IServiceCollection services, ServiceProviderOptions options)
-   at Microsoft.Extensions.Hosting.HostApplicationBuilder.Build()
-   at Microsoft.AspNetCore.Builder.WebApplicationBuilder.Build()
-   at WorkflowService.Program.BuildApp(String[] args) in /src/src/services/WorkflowService/Program.cs:line 168
-   at WorkflowService.Program.Main(String[] args) in /src/src/services/WorkflowService/Program.cs:line 194
- ---> (Inner Exception #1) System.InvalidOperationException: Error while validating the service descriptor 'ServiceType: WorkflowService.Engine.Interfaces.IWorkflowRuntime Lifetime: Scoped ImplementationType: WorkflowService.Engine.WorkflowRuntime': Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.
- ---> System.InvalidOperationException: Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateCallSite(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateEnumerable(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateCallSite(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.GetCallSite(ServiceDescriptor serviceDescriptor, CallSiteChain callSiteChain)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.ValidateService(ServiceDescriptor descriptor)
-   --- End of inner exception stack trace ---
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.ValidateService(ServiceDescriptor descriptor)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider..ctor(ICollection`1 serviceDescriptors, ServiceProviderOptions options)<---
-
- ---> (Inner Exception #2) System.InvalidOperationException: Error while validating the service descriptor 'ServiceType: WorkflowService.Engine.Interfaces.INodeExecutor Lifetime: Scoped ImplementationType: WorkflowService.Engine.Executors.HumanTaskExecutor': Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.
- ---> System.InvalidOperationException: Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateCallSite(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
-   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.GetCallSite(ServiceDescriptor serviceDescriptor, CallSiteChain callSiteChain)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.ValidateService(ServiceDescriptor descriptor)
-   --- End of inner exception stack trace ---
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider.ValidateService(ServiceDescriptor descriptor)
-   at Microsoft.Extensions.DependencyInjection.ServiceProvider..ctor(ICollection`1 serviceDescriptors, ServiceProviderOptions options)<---
-
+PS C:\Users\mccre\dev\boiler> docker logs --tail 100 boiler-workflow
+[21:47:53 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[21:47:53 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[21:47:58 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[21:47:58 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[21:48:02 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[21:48:02 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[21:48:03 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[21:48:03 ERR] JoinTimeoutWorker scan failure {"SourceContext": "WorkflowService.Engine.Timeouts.JoinTimeoutWorker"}
+System.InvalidOperationException: Nullable object must have a value.
+   at lambda_method141(Closure, QueryContext)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteCore[TResult](Expression query, Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at WorkflowService.Engine.Timeouts.JoinTimeoutWorker.ScanAsync(CancellationToken ct) in /src/src/services/WorkflowService/Engine/Timeouts/JoinTimeoutWorker.cs:line 68
+   at WorkflowService.Engine.Timeouts.JoinTimeoutWorker.ExecuteAsync(CancellationToken stoppingToken) in /src/src/services/WorkflowService/Engine/Timeouts/JoinTimeoutWorker.cs:line 47
+[21:48:03 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[21:48:03 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[21:48:07 INF] HTTP GET /swagger responded 301 in 0.3580 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[21:48:07 INF] HTTP GET /swagger/index.html responded 200 in 25.1280 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[21:48:07 INF] HTTP GET /swagger/index.css responded 200 in 0.3679 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[21:48:07 INF] HTTP GET /swagger/index.js responded 200 in 0.5076 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[21:48:07 INF] HTTP GET /swagger/swagger-ui.css responded 200 in 8.8190 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[21:48:07 INF] HTTP GET /swagger/swagger-ui-standalone-preset.js responded 200 in 3.9973 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[21:48:07 INF] HTTP GET /swagger/swagger-ui-bundle.js responded 200 in 9.9517 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[21:48:08 INF] HTTP GET /swagger/favicon-32x32.png responded 200 in 0.1758 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[21:48:08 INF] HTTP GET /swagger/v1/swagger.json responded 200 in 98.3357 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[21:48:08 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[21:48:08 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[21:48:08 WRN] Failed to resolve tenant ID from any source {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "outbox", "RequestId": "0HNFCOL2JDHH6:00000001", "RequestPath": "/health", "ConnectionId": "0HNFCOL2JDHH6"}
+[21:48:08 INF] HTTP GET /health responded 200 in 4.3820 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[21:48:13 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[21:48:13 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[21:48:18 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[21:48:18 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[21:48:23 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[21:48:23 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[21:48:24 ERR] GetAll failed {"SourceContext": "WorkflowService.Services.DefinitionService", "ActionId": "a5f58a07-fab9-412f-8ee6-2d2dca048458", "ActionName": "WorkflowService.Controllers.DefinitionsController.GetAll (WorkflowService)", "RequestId": "0HNFCOL2JDHH5:00000013", "RequestPath": "/api/workflow/definitions", "ConnectionId": "0HNFCOL2JDHH5"}
+System.InvalidOperationException: The LINQ expression '__defKeys_0
+    .Contains(new {
+        Id = StructuralTypeShaperExpression(
+            StructuralType: WorkflowService.Domain.Models.WorkflowInstance
+            ValueBufferExpression: ProjectionBindingExpression: EmptyProjectionMember
+            IsNullable: False).WorkflowDefinitionId,
+        Version = StructuralTypeShaperExpression(
+            StructuralType: WorkflowService.Domain.Models.WorkflowInstance
+            ValueBufferExpression: ProjectionBindingExpression: EmptyProjectionMember
+            IsNullable: False).DefinitionVersion
+     })' could not be translated. Either rewrite the query in a form that can be translated, or switch to client evaluation explicitly by inserting a call to 'AsEnumerable', 'AsAsyncEnumerable', 'ToList', or 'ToListAsync'. See https://go.microsoft.com/fwlink/?linkid=2101038 for more information.
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.Translate(Expression expression)
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.TranslateSubquery(Expression expression)
+   at Microsoft.EntityFrameworkCore.Query.RelationalSqlTranslatingExpressionVisitor.<VisitMethodCall>g__TranslateAsSubquery|33_0(Expression expression, <>c__DisplayClass33_0&)
+   at Microsoft.EntityFrameworkCore.Query.RelationalSqlTranslatingExpressionVisitor.VisitMethodCall(MethodCallExpression methodCallExpression)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Query.Internal.NpgsqlSqlTranslatingExpressionVisitor.VisitMethodCall(MethodCallExpression methodCallExpression)
+   at Microsoft.EntityFrameworkCore.Query.RelationalSqlTranslatingExpressionVisitor.VisitBinary(BinaryExpression binaryExpression)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Query.Internal.NpgsqlSqlTranslatingExpressionVisitor.VisitBinary(BinaryExpression binaryExpression)
+   at Microsoft.EntityFrameworkCore.Query.RelationalSqlTranslatingExpressionVisitor.TranslateInternal(Expression expression, Boolean applyDefaultTypeMapping)
+   at Microsoft.EntityFrameworkCore.Query.RelationalSqlTranslatingExpressionVisitor.Translate(Expression expression, Boolean applyDefaultTypeMapping)
+   at Microsoft.EntityFrameworkCore.Query.RelationalQueryableMethodTranslatingExpressionVisitor.TranslateExpression(Expression expression, Boolean applyDefaultTypeMapping)
+   at Microsoft.EntityFrameworkCore.Query.RelationalQueryableMethodTranslatingExpressionVisitor.TranslateLambdaExpression(ShapedQueryExpression shapedQueryExpression, LambdaExpression lambdaExpression)
+   at Microsoft.EntityFrameworkCore.Query.RelationalQueryableMethodTranslatingExpressionVisitor.TranslateWhere(ShapedQueryExpression source, LambdaExpression predicate)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Query.Internal.NpgsqlQueryableMethodTranslatingExpressionVisitor.TranslateWhere(ShapedQueryExpression source, LambdaExpression predicate)
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.VisitMethodCall(MethodCallExpression methodCallExpression)
+   at Microsoft.EntityFrameworkCore.Query.RelationalQueryableMethodTranslatingExpressionVisitor.VisitMethodCall(MethodCallExpression methodCallExpression)
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.VisitMethodCall(MethodCallExpression methodCallExpression)
+   at Microsoft.EntityFrameworkCore.Query.RelationalQueryableMethodTranslatingExpressionVisitor.VisitMethodCall(MethodCallExpression methodCallExpression)
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.VisitMethodCall(MethodCallExpression methodCallExpression)
+   at Microsoft.EntityFrameworkCore.Query.RelationalQueryableMethodTranslatingExpressionVisitor.VisitMethodCall(MethodCallExpression methodCallExpression)
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.Translate(Expression expression)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutorExpression[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutor[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Storage.Database.CompileQuery[TResult](Expression query, Boolean async)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.CompileQueryCore[TResult](IDatabase database, Expression query, IModel model, Boolean async)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.<>c__DisplayClass11_0`1.<ExecuteCore>b__0()
+   at Microsoft.EntityFrameworkCore.Query.Internal.CompiledQueryCache.GetOrAddQuery[TResult](Object cacheKey, Func`1 compiler)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteCore[TResult](Expression query, Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at WorkflowService.Services.DefinitionService.GetAllAsync(GetWorkflowDefinitionsRequestDto request, CancellationToken cancellationToken) in /src/src/services/WorkflowService/Services/DefinitionService.cs:line 570
+[21:48:24 ERR] HTTP GET /api/workflow/definitions responded 500 in 116.6140 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[21:48:28 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[21:48:28 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[21:48:32 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[21:48:32 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[21:48:33 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[21:48:33 ERR] JoinTimeoutWorker scan failure {"SourceContext": "WorkflowService.Engine.Timeouts.JoinTimeoutWorker"}
+System.InvalidOperationException: Nullable object must have a value.
+   at lambda_method141(Closure, QueryContext)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteCore[TResult](Expression query, Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at WorkflowService.Engine.Timeouts.JoinTimeoutWorker.ScanAsync(CancellationToken ct) in /src/src/services/WorkflowService/Engine/Timeouts/JoinTimeoutWorker.cs:line 68
+   at WorkflowService.Engine.Timeouts.JoinTimeoutWorker.ExecuteAsync(CancellationToken stoppingToken) in /src/src/services/WorkflowService/Engine/Timeouts/JoinTimeoutWorker.cs:line 47
+[21:48:33 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[21:48:33 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[21:48:38 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[21:48:38 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[21:48:38 WRN] Failed to resolve tenant ID from any source {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "outbox", "RequestId": "0HNFCOL2JDHH7:00000001", "RequestPath": "/health", "ConnectionId": "0HNFCOL2JDHH7"}
+[21:48:38 INF] HTTP GET /health responded 200 in 6.3300 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[21:48:43 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[21:48:43 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
 PS C:\Users\mccre\dev\boiler>

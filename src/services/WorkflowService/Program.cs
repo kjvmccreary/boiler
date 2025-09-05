@@ -29,10 +29,11 @@ using OutboxDispatcherInterface = WorkflowService.Outbox.IOutboxDispatcher;
 using OutboxDispatcherImpl = WorkflowService.Outbox.OutboxDispatcher;
 using Microsoft.AspNetCore.Authorization;
 using Common.Configuration;
-using Contracts.Repositories;                // ADDED
-using Common.Repositories;                  // ADDED
+using Contracts.Repositories;
+using Common.Repositories;
 using Contracts.Services;
 using Common.Services;
+using WorkflowService.Services.Validation;
 
 namespace WorkflowService;
 
@@ -41,7 +42,6 @@ public class Program
     public static WebApplication BuildApp(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-
         builder.Host.UseSerilog((ctx, cfg) => cfg.ReadFrom.Configuration(ctx.Configuration));
 
         builder.Services
@@ -51,12 +51,14 @@ public class Program
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
         {
-            c.SwaggerDoc("v1", new OpenApiInfo { Title = "WorkflowService API", Version = "v1", Description = "Workflow Engine Service" });
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "WorkflowService API", Version = "1.0" });
             c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
-                Description = "JWT Authorization header using Bearer scheme.",
-                Name = "Authorization", In = ParameterLocation.Header,
-                Type = SecuritySchemeType.ApiKey, Scheme = "Bearer"
+                Description = "JWT Authorization header. Example: Bearer {token}",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.ApiKey,
+                Scheme = "Bearer"
             });
             c.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
@@ -64,7 +66,6 @@ public class Program
             });
         });
 
-        // Common / tenancy basics
         builder.Services.AddHttpContextAccessor();
         builder.Services.Configure<TenantSettings>(builder.Configuration.GetSection("Tenancy"));
         builder.Services.AddSingleton(sp => sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<TenantSettings>>().Value);
@@ -74,29 +75,34 @@ public class Program
 
         builder.Services.AddJwtAuthentication(builder.Configuration);
         builder.Services.AddDynamicAuthorization();
-
         builder.Services.AddDeterministicHashing(builder.Configuration);
 
         var cs = builder.Configuration.GetConnectionString("DefaultConnection");
+        builder.Services.AddDbContext<WorkflowDbContext>(o => o.UseNpgsql(cs, npgsql => npgsql.EnableRetryOnFailure()));
+        builder.Services.AddDbContext<ApplicationDbContext>(o => o.UseNpgsql(cs, npgsql => npgsql.EnableRetryOnFailure()));
 
-        // Workflow DB
-        builder.Services.AddDbContext<WorkflowDbContext>(o =>
-            o.UseNpgsql(cs, npgsql => npgsql.EnableRetryOnFailure()));
+        // RBAC
+        builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+        builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
+        builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();
+        builder.Services.AddScoped<IRoleService, RoleService>();
+        builder.Services.AddScoped<IPermissionService, PermissionService>();
 
-        // Shared application (auth / roles) DB
-        var appCs = builder.Configuration.GetConnectionString("DefaultConnection");
-        builder.Services.AddDbContext<ApplicationDbContext>(o =>
-            o.UseNpgsql(appCs, npgsql => npgsql.EnableRetryOnFailure()));
+        // Core workflow app services
+        builder.Services.AddScoped<IUserContext, UserContext>();
+        builder.Services.AddScoped<ITaskService, TaskService>();
+        builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+        builder.Services.AddAutoMapper(typeof(Program));
 
-        // --- RBAC Repository + Service Wiring (fixes docker DI failure) ---
-        // These repositories live in Common.Repositories and implement Contracts.Repositories.*
-        builder.Services.AddScoped<IRoleRepository, RoleRepository>();                 // ADDED
-        builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();     // ADDED
-        builder.Services.AddScoped<IUserRoleRepository, UserRoleRepository>();         // ADDED
-        builder.Services.AddScoped<IRoleService, RoleService>();                       // ADDED
-        builder.Services.AddScoped<IPermissionService, PermissionService>();           // If required elsewhere
+        // ADDED DEFINITIONS & INSTANCES
+        builder.Services.AddScoped<IDefinitionService, DefinitionService>();          // ADDED DEFINITIONS
+        builder.Services.AddScoped<IInstanceService, InstanceService>();              // ADDED DEFINITIONS (instances page)
+        builder.Services.AddScoped<IWorkflowGraphValidator, WorkflowGraphValidator>(); // ADDED DEFINITIONS
+        builder.Services.AddScoped<IGraphValidationService, GraphValidationService>(); // ADDED DEFINITIONS
+        builder.Services.AddScoped<IWorkflowPublishValidator, WorkflowPublishValidator>(); // ADDED (if you have a real one)
+        // If you only have NoopWorkflowPublishValidator inside DefinitionService, you can omit the previous line.
 
-        // Engine services
+        // Engine runtime
         builder.Services.AddScoped<IWorkflowRuntime, WorkflowRuntime>();
         builder.Services.AddScoped<IConditionEvaluator, JsonLogicConditionEvaluator>();
 
@@ -108,7 +114,7 @@ public class Program
         builder.Services.AddScoped<INodeExecutor, TimerExecutor>();
         builder.Services.AddScoped<INodeExecutor, JoinExecutor>();
 
-        // Automatic actions + diagnostics
+        // Automatic actions / diagnostics
         builder.Services.AddScoped<IAutomaticActionRegistry, AutomaticActionRegistry>();
         builder.Services.AddScoped<IAutomaticActionExecutor, NoopAutomaticActionExecutor>();
         builder.Services.AddSingleton<IAutomaticDiagnosticsBuffer>(_ =>
@@ -147,14 +153,12 @@ public class Program
         builder.Services.Configure<JoinTimeoutOptions>(builder.Configuration.GetSection("Workflow:JoinTimeouts"));
         builder.Services.AddHostedService<JoinTimeoutWorker>();
 
-        // Task notifications
         builder.Services.AddSignalR();
         builder.Services.AddSingleton<ITaskNotificationDispatcher, TaskNotificationDispatcher>();
 
-        // Authorization policies
         builder.Services.AddAuthorization(options =>
         {
-            options.AddPolicy("workflow.read", p => p.RequireClaim("permission", "workflow.read", "workflow.admin"));
+            options.AddPolicy("workflow.read",  p => p.RequireClaim("permission", "workflow.read",  "workflow.admin"));
             options.AddPolicy("workflow.write", p => p.RequireClaim("permission", "workflow.write", "workflow.admin"));
             options.AddPolicy("workflow.admin", p => p.RequireClaim("permission", "workflow.admin"));
         });
@@ -177,7 +181,6 @@ public class Program
         app.MapHealthChecks("/health");
         app.MapHub<TaskNotificationsHub>("/hubs/tasks");
         app.MapHub<TaskNotificationsHub>("/api/workflow/hubs/tasks");
-
         app.MapControllers();
         return app;
     }
