@@ -1,2 +1,20 @@
-  C:\Users\mccre\dev\boiler\src\services\WorkflowService\Program.cs(140,36): error CS0104: 'IOutboxDispatcher' is an ambiguous reference between 'WorkflowService.Services.Interfaces.IOutboxDispatcher' and 'WorkflowService.Outbox.IOutboxDispatcher'
-    C:\Users\mccre\dev\boiler\src\services\WorkflowService\Program.cs(140,26): error CS0311: The type 'WorkflowService.Outbox.OutboxDispatcher' cannot be used as type parameter 'TImplementation' in the generic type or method 'ServiceCollectionServiceExtensions.AddScoped<TService, TImplementation>(IServiceCollection)'. There is no implicit reference conversion from 'WorkflowService.Outbox.OutboxDispatcher' to 'WorkflowService.Services.Interfaces.IOutboxDispatcher'.
+Building Test Projects
+========== Starting test run ==========
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
+[xUnit.net 00:00:00.05]   Starting:    WorkflowService.Tests
+[xUnit.net 00:00:00.76]     WorkflowService.Tests.Outbox.OutboxWriterIdempotentTests.TryAddOutbox_Parallel_Inserts_SameKey_SingleRow [FAIL]
+[xUnit.net 00:00:00.77]       System.IO.IOException : The process cannot access the file 'C:\Users\mccre\AppData\Local\Temp\tmppqqrcd.tmp' because it is being used by another process.
+[xUnit.net 00:00:00.77]       Stack Trace:
+[xUnit.net 00:00:00.77]            at System.IO.FileSystem.DeleteFile(String fullPath)
+[xUnit.net 00:00:00.77]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\OutboxWriterIdempotentTests.cs(111,0): at WorkflowService.Tests.Outbox.OutboxWriterIdempotentTests.TryAddOutbox_Parallel_Inserts_SameKey_SingleRow()
+[xUnit.net 00:00:00.77]            at WorkflowService.Tests.Outbox.OutboxWriterIdempotentTests.TryAddOutbox_Parallel_Inserts_SameKey_SingleRow()
+[xUnit.net 00:00:00.77]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.79]     WorkflowService.Tests.Outbox.OutboxWriterIdempotentTests.TryAddOutbox_Twice_SameKey_SingleRowExists [FAIL]
+[xUnit.net 00:00:00.79]       System.IO.IOException : The process cannot access the file 'C:\Users\mccre\AppData\Local\Temp\tmpbclcky.tmp' because it is being used by another process.
+[xUnit.net 00:00:00.79]       Stack Trace:
+[xUnit.net 00:00:00.79]            at System.IO.FileSystem.DeleteFile(String fullPath)
+[xUnit.net 00:00:00.79]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\OutboxWriterIdempotentTests.cs(76,0): at WorkflowService.Tests.Outbox.OutboxWriterIdempotentTests.TryAddOutbox_Twice_SameKey_SingleRowExists()
+[xUnit.net 00:00:00.79]            at WorkflowService.Tests.Outbox.OutboxWriterIdempotentTests.TryAddOutbox_Twice_SameKey_SingleRowExists()
+[xUnit.net 00:00:00.79]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.79]   Finished:    WorkflowService.Tests
+========== Test run finished: 2 Tests (0 Passed, 2 Failed, 0 Skipped) run in 804 ms ==========

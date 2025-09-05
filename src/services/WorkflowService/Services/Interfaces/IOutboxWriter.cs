@@ -4,21 +4,34 @@ namespace WorkflowService.Services.Interfaces;
 
 /// <summary>
 /// Helper responsible for preparing (tenant-scoped, idempotent) Outbox messages.
-/// Does NOT call SaveChanges; caller batches persistence with other domain changes
-/// so the Outbox pattern stays in the same transaction.
 /// </summary>
 public interface IOutboxWriter
 {
     /// <summary>
-    /// Enqueue a new OutboxMessage with a (possibly deterministic) IdempotencyKey.
-    /// The entity is added to the DbContext but not yet saved.
+    /// Enqueue a new OutboxMessage with a (possibly deterministic) IdempotencyKey
+    /// WITHOUT saving (legacy method – caller will SaveChanges and must handle uniqueness).
+    /// </summary>
+    OutboxMessage Enqueue(int tenantId, string eventType, object payload, Guid? idempotencyKey = null);
+
+    /// <summary>
+    /// Tries to insert an OutboxMessage idempotently (saves immediately).
+    /// On unique violation (TenantId, IdempotencyKey) it loads the existing row
+    /// and returns (AlreadyExisted = true).
     /// </summary>
     /// <param name="tenantId">Tenant scope</param>
-    /// <param name="eventType">Normalized event type (e.g., workflow.instance.started)</param>
-    /// <param name="payload">Arbitrary object (serialized to jsonb)</param>
-    /// <param name="idempotencyKey">
-    /// Optional deterministic key. If null a random Guid is used.
-    /// </param>
-    /// <returns>The (tracked) OutboxMessage instance.</returns>
-    OutboxMessage Enqueue(int tenantId, string eventType, object payload, Guid? idempotencyKey = null);
+    /// <param name="eventType">Normalized event type</param>
+    /// <param name="payload">Serializable object or raw JSON string</param>
+    /// <param name="idempotencyKey">Deterministic key (if null a new Guid is generated)</param>
+    /// <returns>Result with created or existing message and AlreadyExisted flag</returns>
+    Task<OutboxEnqueueResult> TryAddAsync(
+        int tenantId,
+        string eventType,
+        object payload,
+        Guid? idempotencyKey = null,
+        CancellationToken ct = default);
 }
+
+/// <summary>
+/// Result of an idempotent Outbox insert attempt.
+/// </summary>
+public sealed record OutboxEnqueueResult(OutboxMessage Message, bool AlreadyExisted);

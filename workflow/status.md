@@ -258,7 +258,7 @@ Metrics enabled:
 * Overload PublishX methods to accept IdempotencyKey (optional). Tests:
 * PublishDefinition_Event_Uses_Deterministic_IdempotencyKey (two publish attempts produce same key if logically same event).
 * PublishInstanceForceCancelled_Events_Have_UniqueKeys (different instance events differ).
-### 🚧 (in progress) O4: Dispatcher Enhancements
+### ✅ DONE O4: Dispatcher Enhancements
 Tasks:
 * Modify dispatcher query: SELECT * FROM OutboxMessages WHERE ProcessedAt IS NULL ORDER BY CreatedAt LIMIT N.
 * On success: set ProcessedAt=UtcNow, clear Error.
@@ -267,13 +267,13 @@ Tasks:
 * Dispatcher_Sets_ProcessedAt_OnSuccess.
 * Dispatcher_Sets_Error_And_Increments_Retry_OnFailure (mock transport throw).
 * Dispatcher_Skips_AlreadyProcessed.
-O5: Idempotent Insert Handling
+### ✅ DONE O5 Idempotent Insert Handling
 Tasks:
 * Wrap outbox write in try/catch; if uniqueness violation on (TenantId, IdempotencyKey), treat as idempotent success (return existing row or ignore).
 * Provide helper TryAddOutboxAsync(TenantId, key, factory) that re-queries on conflict. Tests:
 * TryAddOutbox_Twice_SameKey_SingleRowExists.
 * TryAddOutbox_Parallel_Inserts_SingleRow (multi-thread simulation / race).
-O6: Retry / Backoff Policy
+### 🚧 (in progress) 06 Retry / Backoff Policy
 Tasks:
 * Add configuration: MaxRetries, BaseDelay, Jitter.
 * Implement backoff evaluation (e.g., exponential for next attempt).

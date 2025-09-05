@@ -140,7 +140,7 @@ public class EventPublisher : IEventPublisher
 
     #endregion
 
-    #region Internal Implementations
+    #region Internal Implementations (Refactored for centralized idempotent insert)
 
     private async Task PublishCustomEventInternalAsync(
         string eventType,
@@ -153,10 +153,22 @@ public class EventPublisher : IEventPublisher
         CancellationToken ct)
     {
         var normalized = $"workflow.{eventType.ToLowerInvariant()}.{eventName.ToLowerInvariant()}";
-        AddWorkflowEvent(workflowInstanceId ?? 0, tenantId, eventType, eventName, eventData, userId);
-        _outboxWriter.Enqueue(tenantId, normalized, eventData, keyOverride);
-        await CommitWithIdempotentProtectionAsync(normalized, tenantId, keyOverride, ct);
-        _logger.LogInformation("Published custom event {Event}", normalized);
+
+        // Random (or supplied) key; custom events usually not deterministic unless forced.
+        var result = await _outboxWriter.TryAddAsync(
+            tenantId,
+            normalized,
+            eventData,
+            keyOverride,
+            ct);
+
+        if (!result.AlreadyExisted)
+        {
+            AddWorkflowEvent(workflowInstanceId ?? 0, tenantId, eventType, Capitalize(eventName), eventData, userId);
+            await _context.SaveChangesAsync(ct);
+        }
+
+        _logger.LogInformation("Published custom event {Event} duplicate={Dup}", normalized, result.AlreadyExisted);
     }
 
     private async Task PublishInstanceLifecycleAsync(
@@ -166,36 +178,43 @@ public class EventPublisher : IEventPublisher
         CancellationToken ct)
     {
         var tenantId = instance.TenantId;
+        var deterministic = OutboxIdempotency.CreateForWorkflow(
+            tenantId, "instance", instance.Id, phase, instance.DefinitionVersion);
+        var key = keyOverride ?? deterministic;
 
-        AddWorkflowEvent(instance.Id, tenantId, "Instance", Capitalize(phase), new
+        var outboxPayload = new
         {
             InstanceId = instance.Id,
             instance.WorkflowDefinitionId,
-            instance.DefinitionVersion,
+            TenantId = tenantId,
             instance.StartedAt,
-            instance.CompletedAt,
-            Status = phase
-        }, instance.StartedByUserId);
+            instance.CompletedAt
+        };
 
-        var deterministic = OutboxIdempotency.CreateForWorkflow(
-            tenantId, "instance", instance.Id, phase, instance.DefinitionVersion);
-
-        var finalKey = keyOverride ?? deterministic;
-
-        _outboxWriter.Enqueue(tenantId,
+        var result = await _outboxWriter.TryAddAsync(
+            tenantId,
             $"workflow.instance.{phase}",
-            new
+            outboxPayload,
+            key,
+            ct);
+
+        if (!result.AlreadyExisted)
+        {
+            var wfPayload = new
             {
                 InstanceId = instance.Id,
                 instance.WorkflowDefinitionId,
-                TenantId = tenantId,
+                instance.DefinitionVersion,
                 instance.StartedAt,
-                instance.CompletedAt
-            },
-            finalKey);
+                instance.CompletedAt,
+                Status = phase
+            };
+            AddWorkflowEvent(instance.Id, tenantId, "Instance", Capitalize(phase), wfPayload, instance.StartedByUserId);
+            await _context.SaveChangesAsync(ct);
+        }
 
-        await CommitWithIdempotentProtectionAsync($"workflow.instance.{phase}", tenantId, finalKey, ct);
-        _logger.LogInformation("Published instance {Phase} {InstanceId}", phase, instance.Id);
+        _logger.LogInformation("Published instance {Phase} instanceId={Id} duplicate={Dup}",
+            phase, instance.Id, result.AlreadyExisted);
     }
 
     private async Task PublishInstanceFailureAsync(
@@ -204,34 +223,43 @@ public class EventPublisher : IEventPublisher
         Guid? keyOverride,
         CancellationToken ct)
     {
-        var failedAt = DateTime.UtcNow;
-
-        AddWorkflowEvent(instance.Id, instance.TenantId, "Instance", "Failed", new
-        {
-            InstanceId = instance.Id,
-            instance.WorkflowDefinitionId,
-            ErrorMessage = errorMessage,
-            FailedAt = failedAt,
-            DurationMinutes = (failedAt - instance.StartedAt).TotalMinutes
-        }, null);
-
         var deterministic = OutboxIdempotency.CreateForWorkflow(
             instance.TenantId, "instance", instance.Id, "failed", instance.DefinitionVersion);
 
-        _outboxWriter.Enqueue(instance.TenantId,
+        var key = keyOverride ?? deterministic;
+
+        var outboxPayload = new
+        {
+            InstanceId = instance.Id,
+            instance.WorkflowDefinitionId,
+            instance.TenantId,
+            ErrorMessage = errorMessage,
+            FailedAt = DateTime.UtcNow
+        };
+
+        var result = await _outboxWriter.TryAddAsync(
+            instance.TenantId,
             "workflow.instance.failed",
-            new
+            outboxPayload,
+            key,
+            ct);
+
+        if (!result.AlreadyExisted)
+        {
+            var failedAt = outboxPayload.FailedAt;
+            AddWorkflowEvent(instance.Id, instance.TenantId, "Instance", "Failed", new
             {
                 InstanceId = instance.Id,
                 instance.WorkflowDefinitionId,
-                instance.TenantId,
                 ErrorMessage = errorMessage,
-                FailedAt = failedAt
-            },
-            keyOverride ?? deterministic);
+                FailedAt = failedAt,
+                DurationMinutes = (failedAt - instance.StartedAt).TotalMinutes
+            }, null);
+            await _context.SaveChangesAsync(ct);
+        }
 
-        await CommitWithIdempotentProtectionAsync("workflow.instance.failed", instance.TenantId, keyOverride ?? deterministic, ct);
-        _logger.LogWarning("Published instance failed {InstanceId}", instance.Id);
+        _logger.LogWarning("Published instance failed instanceId={Id} duplicate={Dup}",
+            instance.Id, result.AlreadyExisted);
     }
 
     private async Task PublishInstanceForceCancelledInternalAsync(
@@ -240,30 +268,37 @@ public class EventPublisher : IEventPublisher
         Guid? keyOverride,
         CancellationToken ct)
     {
-        AddWorkflowEvent(instance.Id, instance.TenantId, "Instance", "ForceCancelled", new
+        var deterministic = OutboxIdempotency.CreateForWorkflow(
+            instance.TenantId, "instance", instance.Id, "force_cancelled", instance.DefinitionVersion);
+        var key = keyOverride ?? deterministic;
+
+        var outboxPayload = new
         {
             InstanceId = instance.Id,
             instance.WorkflowDefinitionId,
-            instance.DefinitionVersion,
-            CancelledAt = DateTime.UtcNow,
+            instance.TenantId,
             Reason = reason
-        }, null);
+        };
 
-        var deterministic = OutboxIdempotency.CreateForWorkflow(
-            instance.TenantId, "instance", instance.Id, "force_cancelled", instance.DefinitionVersion);
-
-        _outboxWriter.Enqueue(instance.TenantId,
+        var result = await _outboxWriter.TryAddAsync(
+            instance.TenantId,
             "workflow.instance.force_cancelled",
-            new
+            outboxPayload,
+            key,
+            ct);
+
+        if (!result.AlreadyExisted)
+        {
+            AddWorkflowEvent(instance.Id, instance.TenantId, "Instance", "ForceCancelled", new
             {
                 InstanceId = instance.Id,
                 instance.WorkflowDefinitionId,
-                instance.TenantId,
+                instance.DefinitionVersion,
+                CancelledAt = DateTime.UtcNow,
                 Reason = reason
-            },
-            keyOverride ?? deterministic);
-
-        await CommitWithIdempotentProtectionAsync("workflow.instance.force_cancelled", instance.TenantId, keyOverride ?? deterministic, ct);
+            }, null);
+            await _context.SaveChangesAsync(ct);
+        }
     }
 
     private async Task PublishTaskEventAsync(
@@ -274,37 +309,49 @@ public class EventPublisher : IEventPublisher
     {
         var tenantId = GetTenantIdFromTask(task);
 
-        AddWorkflowEvent(task.WorkflowInstanceId, tenantId, "Task", Capitalize(phase), new
+        Guid? deterministic = phase == "created"
+            ? OutboxIdempotency.CreateForWorkflow(tenantId, "task", task.Id, "created")
+            : phase == "completed"
+                ? OutboxIdempotency.CreateForWorkflow(tenantId, "task", task.Id, "completed")
+                : null;
+
+        var key = keyOverride ?? deterministic;
+
+        var outboxPayload = new
         {
             TaskId = task.Id,
             task.WorkflowInstanceId,
-            task.NodeId,
+            TenantId = tenantId,
             task.TaskName,
             task.AssignedToUserId,
-            task.AssignedToRole,
-            task.DueDate,
-            CreatedAt = task.CreatedAt
-        }, null);
+            task.AssignedToRole
+        };
 
-        Guid? deterministic = phase == "created"
-            ? OutboxIdempotency.CreateForWorkflow(tenantId, "task", task.Id, "created")
-            : null;
-
-        _outboxWriter.Enqueue(tenantId,
+        var result = await _outboxWriter.TryAddAsync(
+            tenantId,
             $"workflow.task.{phase}",
-            new
+            outboxPayload,
+            key,
+            ct);
+
+        if (!result.AlreadyExisted)
+        {
+            AddWorkflowEvent(task.WorkflowInstanceId, tenantId, "Task", Capitalize(phase), new
             {
                 TaskId = task.Id,
                 task.WorkflowInstanceId,
-                TenantId = tenantId,
+                task.NodeId,
                 task.TaskName,
                 task.AssignedToUserId,
-                task.AssignedToRole
-            },
-            keyOverride ?? deterministic);
+                task.AssignedToRole,
+                task.DueDate,
+                CreatedAt = task.CreatedAt
+            }, null);
+            await _context.SaveChangesAsync(ct);
+        }
 
-        await CommitWithIdempotentProtectionAsync($"workflow.task.{phase}", tenantId, keyOverride ?? deterministic, ct);
-        _logger.LogInformation("Published task {Phase} {TaskId}", phase, task.Id);
+        _logger.LogInformation("Published task {Phase} taskId={TaskId} duplicate={Dup}",
+            phase, task.Id, result.AlreadyExisted);
     }
 
     private async Task PublishTaskCompletedInternalAsync(
@@ -314,38 +361,48 @@ public class EventPublisher : IEventPublisher
         CancellationToken ct)
     {
         var tenantId = GetTenantIdFromTask(task);
-        var duration = task.CompletedAt.HasValue
-            ? (task.CompletedAt.Value - task.CreatedAt).TotalMinutes
-            : 0;
+        var deterministic = OutboxIdempotency.CreateForWorkflow(tenantId, "task", task.Id, "completed");
+        var key = keyOverride ?? deterministic;
 
-        AddWorkflowEvent(task.WorkflowInstanceId, tenantId, "Task", "Completed", new
+        var outboxPayload = new
         {
             TaskId = task.Id,
             task.WorkflowInstanceId,
-            task.NodeId,
-            task.TaskName,
+            TenantId = tenantId,
             CompletedByUserId = completedByUserId,
-            task.CompletedAt,
-            DurationMinutes = duration,
-            task.CompletionData
-        }, completedByUserId);
+            task.CompletedAt
+        };
 
-        var deterministic = OutboxIdempotency.CreateForWorkflow(tenantId, "task", task.Id, "completed");
-
-        _outboxWriter.Enqueue(tenantId,
+        var result = await _outboxWriter.TryAddAsync(
+            tenantId,
             "workflow.task.completed",
-            new
+            outboxPayload,
+            key,
+            ct);
+
+        if (!result.AlreadyExisted)
+        {
+            var duration = task.CompletedAt.HasValue
+                ? (task.CompletedAt.Value - task.CreatedAt).TotalMinutes
+                : 0;
+
+            AddWorkflowEvent(task.WorkflowInstanceId, tenantId, "Task", "Completed", new
             {
                 TaskId = task.Id,
                 task.WorkflowInstanceId,
-                TenantId = tenantId,
+                task.NodeId,
+                task.TaskName,
                 CompletedByUserId = completedByUserId,
-                task.CompletedAt
-            },
-            keyOverride ?? deterministic);
+                task.CompletedAt,
+                DurationMinutes = duration,
+                task.CompletionData
+            }, completedByUserId);
 
-        await CommitWithIdempotentProtectionAsync("workflow.task.completed", tenantId, keyOverride ?? deterministic, ct);
-        _logger.LogInformation("Published task completed {TaskId}", task.Id);
+            await _context.SaveChangesAsync(ct);
+        }
+
+        _logger.LogInformation("Published task completed taskId={TaskId} duplicate={Dup}",
+            task.Id, result.AlreadyExisted);
     }
 
     private async Task PublishTaskAssignedInternalAsync(
@@ -356,30 +413,39 @@ public class EventPublisher : IEventPublisher
     {
         var tenantId = GetTenantIdFromTask(task);
 
-        AddWorkflowEvent(task.WorkflowInstanceId, tenantId, "Task", "Assigned", new
+        // Assignment events intentionally not deterministic unless override provided
+        var outboxPayload = new
         {
             TaskId = task.Id,
             task.WorkflowInstanceId,
-            task.NodeId,
-            task.TaskName,
+            TenantId = tenantId,
             AssignedToUserId = assignedToUserId,
-            AssignedAt = DateTime.UtcNow
-        }, null);
+            task.TaskName
+        };
 
-        _outboxWriter.Enqueue(tenantId,
+        var result = await _outboxWriter.TryAddAsync(
+            tenantId,
             "workflow.task.assigned",
-            new
+            outboxPayload,
+            keyOverride,
+            ct);
+
+        if (!result.AlreadyExisted)
+        {
+            AddWorkflowEvent(task.WorkflowInstanceId, tenantId, "Task", "Assigned", new
             {
                 TaskId = task.Id,
                 task.WorkflowInstanceId,
-                TenantId = tenantId,
+                task.NodeId,
+                task.TaskName,
                 AssignedToUserId = assignedToUserId,
-                task.TaskName
-            },
-            keyOverride);
+                AssignedAt = DateTime.UtcNow
+            }, null);
+            await _context.SaveChangesAsync(ct);
+        }
 
-        await CommitWithIdempotentProtectionAsync("workflow.task.assigned", tenantId, keyOverride, ct);
-        _logger.LogInformation("Published task assigned {TaskId}", task.Id);
+        _logger.LogInformation("Published task assigned taskId={TaskId} duplicate={Dup}",
+            task.Id, result.AlreadyExisted);
     }
 
     private async Task PublishDefinitionLifecycleAsync(
@@ -390,26 +456,32 @@ public class EventPublisher : IEventPublisher
     {
         var deterministic = OutboxIdempotency.CreateForWorkflow(
             definition.TenantId, "definition", definition.Id, phase, definition.Version);
+        var key = keyOverride ?? deterministic;
 
-        _outboxWriter.Enqueue(definition.TenantId,
+        var outboxPayload = new
+        {
+            DefinitionId = definition.Id,
+            definition.Name,
+            definition.Version,
+            definition.TenantId,
+            Timestamp = DateTime.UtcNow
+        };
+
+        var result = await _outboxWriter.TryAddAsync(
+            definition.TenantId,
             $"workflow.definition.{phase}",
-            new
-            {
-                DefinitionId = definition.Id,
-                definition.Name,
-                definition.Version,
-                definition.TenantId,
-                Timestamp = DateTime.UtcNow
-            },
-            keyOverride ?? deterministic);
+            outboxPayload,
+            key,
+            ct);
 
-        await CommitWithIdempotentProtectionAsync($"workflow.definition.{phase}", definition.TenantId, keyOverride ?? deterministic, ct);
-        _logger.LogInformation("Published definition {Phase} {DefinitionId}", phase, definition.Id);
+        // (Previous design: no internal WorkflowEvent for publish/unpublish; preserve that.)
+        _logger.LogInformation("Published definition {Phase} defId={Id} duplicate={Dup}",
+            phase, definition.Id, result.AlreadyExisted);
     }
 
     #endregion
 
-    #region Persistence Helpers
+    #region Helpers
 
     private string Capitalize(string s) => string.IsNullOrEmpty(s) ? s : char.ToUpperInvariant(s[0]) + s[1..];
 
@@ -433,62 +505,6 @@ public class EventPublisher : IEventPublisher
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         });
-    }
-
-    private async Task CommitWithIdempotentProtectionAsync(
-        string eventType,
-        int tenantId,
-        Guid? idempotencyKey,
-        CancellationToken ct)
-    {
-        try
-        {
-            await _context.SaveChangesAsync(ct);
-        }
-        catch (DbUpdateException ex) when (IsUniqueViolation(ex) && idempotencyKey.HasValue)
-        {
-            var existing = await _context.OutboxMessages
-                .AsNoTracking()
-                .Where(o => o.TenantId == tenantId && o.IdempotencyKey == idempotencyKey.Value)
-                .FirstOrDefaultAsync(ct);
-
-            if (existing != null)
-            {
-                _logger.LogInformation(
-                    "OUTBOX_IDEMPOTENT_DUPLICATE Tenant={TenantId} Key={Key} EventType={EventType}",
-                    tenantId, idempotencyKey, eventType);
-
-                _context.ChangeTracker.Clear();
-                return;
-            }
-
-            _logger.LogWarning(ex,
-                "OUTBOX_DUPLICATE_UNEXPECTED Tenant={TenantId} Key={Key}",
-                tenantId, idempotencyKey);
-            throw;
-        }
-    }
-
-    private bool IsUniqueViolation(DbUpdateException ex)
-    {
-        // PostgreSQL
-        if (ex.InnerException is PostgresException pg && pg.SqlState == PostgresErrorCodes.UniqueViolation)
-            return true;
-
-        // SQLite (reflection; no compile-time dependency required)
-        var inner = ex.InnerException;
-        if (inner != null && inner.GetType().FullName == "Microsoft.Data.Sqlite.SqliteException")
-        {
-            var codeProp = inner.GetType().GetProperty("SqliteErrorCode");
-            if (codeProp != null)
-            {
-                var codeVal = (int)codeProp.GetValue(inner)!;
-                if (codeVal == 19 && inner.Message.IndexOf("UNIQUE", StringComparison.OrdinalIgnoreCase) >= 0)
-                    return true;
-            }
-        }
-
-        return false;
     }
 
     private int GetTenantIdFromTask(WorkflowTask task)
