@@ -14,7 +14,9 @@ using Xunit;
 
 namespace WorkflowService.Tests.Engine;
 
-/// Covers D5 Context Prune Test & diagnosticsVersion presence (C2)
+/// <summary>
+/// Tests gateway pruning logic.
+/// </summary>
 public class GatewayPruningTests : TestBase
 {
     [Fact]

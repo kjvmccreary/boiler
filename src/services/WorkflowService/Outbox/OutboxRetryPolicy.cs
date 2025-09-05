@@ -1,13 +1,12 @@
 namespace WorkflowService.Outbox;
 
-// Made public so test project (WorkflowService.Tests) can access ComputeDelay
+// Public so tests can access ComputeDelay
 public static class OutboxRetryPolicy
 {
     private static readonly Random _rng = new();
 
     /// <summary>
-    /// Computes the retry delay for the given (1-based) retry attempt.
-    /// Applies either fixed or exponential backoff and optional +/- jitter.
+    /// Computes the retry delay (1-based attempt index) applying fixed or exponential backoff and optional +/- jitter.
     /// </summary>
     public static TimeSpan ComputeDelay(int currentRetryCount, OutboxOptions options)
     {

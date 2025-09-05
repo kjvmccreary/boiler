@@ -27,6 +27,9 @@ using Xunit;
 
 namespace WorkflowService.Tests.Engine;
 
+/// <summary>
+/// Tests quorum + timeout coordination behavior.
+/// </summary>
 /// Covers:
 /// - D3 Quorum join behavior (below / exact threshold & late arrivals)
 /// - D4 Timeout path (force | route | fail)

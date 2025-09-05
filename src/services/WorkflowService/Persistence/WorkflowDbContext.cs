@@ -294,6 +294,7 @@ public class WorkflowDbContext : DbContext
             entity.HasIndex(e => new { e.EventType, e.IsProcessed });
             entity.HasIndex(e => e.NextRetryAt);
             entity.HasIndex(e => new { e.TenantId, e.IdempotencyKey }).IsUnique();
+            entity.HasIndex(e => new { e.DeadLetter, e.CreatedAt }); // NEW: quick filter for dead-letter review
 
             entity.HasIndex(nameof(OutboxMessage.TenantId), nameof(OutboxMessage.CreatedAt))
                   .HasDatabaseName("IDX_Outbox_Unprocessed")

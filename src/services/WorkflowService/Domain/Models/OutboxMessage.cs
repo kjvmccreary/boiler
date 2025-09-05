@@ -29,4 +29,6 @@ public class OutboxMessage : BaseEntity
 
     // Idempotency – eagerly assigned so Guid.Empty never persisted
     public Guid IdempotencyKey { get; set; } = Guid.NewGuid();
+
+    public bool DeadLetter { get; set; }   // NEW
 }

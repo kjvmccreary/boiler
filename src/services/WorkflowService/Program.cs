@@ -138,6 +138,11 @@ public class Program
         builder.Services.Configure<OutboxOptions>(
             builder.Configuration.GetSection("Workflow:Outbox"));
 
+        builder.Services.AddDbContextFactory<WorkflowDbContext>();
+        builder.Services.AddSingleton<IOutboxMetricsProvider, OutboxMetricsProvider>();
+        builder.Services.AddHealthChecks()
+            .AddCheck<OutboxHealthCheck>("outbox");
+
         // O4 Outbox dispatcher services (disambiguated via alias)
         builder.Services.AddScoped<IOutboxTransport, LoggingOutboxTransport>();
         builder.Services.AddScoped<OutboxDispatcherInterface, OutboxDispatcher>();

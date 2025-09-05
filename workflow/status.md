@@ -338,3 +338,18 @@ Rollout / Deployment Notes
 * Always sets IdempotencyKey for new messages.
 * Skips processing when ProcessedAt != null.
 3.	After verifying backlog stable, optionally add NOT NULL constraint to IdempotencyKey in later hardening migration.
+
+
+Effort comparison (assuming you just paste code I generate; your “manual” time is review/integration only):
+
+| Aspect | Option 2 (Minimal Completion) | Option 3 (Full Expansion incl. Prometheus) | 
+|--------|------------------------------|--------------------------------------------| 
+| Scope | Snapshot + FailureRatio + Throughput, HealthCheck endpoint (/health) + /api/.../metrics JSON | Everything in Option 2 plus Prometheus /metrics exposition, rolling window stats, optional counters/gauges, (maybe) dead-letter ready hooks | 
+| New Classes | +1 HealthCheck, +1 Controller (Metrics), small extension of existing MetricsProvider | + HealthCheck + Controller + PrometheusExporter (or adapter), RollingWindowAggregator, MetricFormatter | 
+| Code Size (approx LOC) | 250–320 | 550–750 (nearly 2–2.5x) | 
+| Test Additions | 3–4 tests (health OK/Degraded/Unhealthy, snapshot fields) | 6–9 tests (those + Prometheus format, rolling throughput, counters increment correctness) | 
+| Config Additions | Health thresholds section | Same plus optional Prometheus enable flag & rolling window length | 
+| Operational Impact | Basic readiness / liveness monitoring + simple JSON metrics (good enough for dashboards via scraper adapter) | First-class integration with Prometheus/Grafana; lower future rework if observability maturity is desired | 
+| Risk / Complexity | Low (all synchronous, no streaming) | Moderate (format correctness, potential cardinality concerns, concurrency in rolling stats) | 
+| Extensibility Later | Can still add Prometheus later with minimal refactor (wrap existing provider) | Already “done” – future changes are incremental | 
+| Added Dependencies | None (stick to built-in HealthChecks) | Optional prometheus-net (if chosen) or custom plain-text writer (no external dep) |
