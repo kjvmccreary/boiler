@@ -96,29 +96,23 @@ public class WorkflowDbContext : DbContext
     {
         EnforceDefinitionJsonImmutability();
 
+        // NEW: auto-assign missing OutboxMessage IdempotencyKeys (legacy safety)
+        AssignMissingOutboxIdempotencyKeys();
+
+        _logger.LogInformation("🔍 WorkflowDbContext: SaveChangesAsync starting");
         var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
 
-        // If no tenant ID, proceed (some tests seed without explicit tenant context)
         if (!tenantId.HasValue)
         {
+            _logger.LogWarning("No tenant ID – proceeding (may fail on constraints).");
             UpdateTimestamps();
             return await base.SaveChangesAsync(cancellationToken);
         }
 
-        // For non-Postgres providers (SQLite/InMemory) skip session variable logic
-        if (!IsPostgresProvider)
-        {
-            SetTenantIdForNewEntities(tenantId.Value);
-            UpdateTimestamps();
-            return await base.SaveChangesAsync(cancellationToken);
-        }
-
-        // Postgres path with session variable + transaction
         try
         {
             var connection = Database.GetDbConnection();
             var strategy = Database.CreateExecutionStrategy();
-
             return await strategy.ExecuteAsync(async () =>
             {
                 if (connection.State != ConnectionState.Open)
@@ -126,10 +120,12 @@ public class WorkflowDbContext : DbContext
 
                 await using var tx = await Database.BeginTransactionAsync(cancellationToken);
 
-                // Postgres-specific session tenant context
-                await Database.ExecuteSqlRawAsync(
-                    "SELECT set_config('app.tenant_id', {0}, true)",
-                    tenantId.Value.ToString());
+                if (IsPostgresProvider)
+                {
+                    await Database.ExecuteSqlRawAsync(
+                        "SELECT set_config('app.tenant_id', {0}, true)",
+                        tenantId.Value.ToString());
+                }
 
                 SetTenantIdForNewEntities(tenantId.Value);
                 UpdateTimestamps();
@@ -141,7 +137,6 @@ public class WorkflowDbContext : DbContext
         }
         catch (InvalidOperationException)
         {
-            // Fallback if execution strategy / connection not available
             SetTenantIdForNewEntities(tenantId.Value);
             UpdateTimestamps();
             return await base.SaveChangesAsync(cancellationToken);
@@ -316,4 +311,18 @@ public class WorkflowDbContext : DbContext
         AppDomain.CurrentDomain.GetAssemblies()
             .Any(a => a.FullName?.Contains("xunit") == true ||
                       a.FullName?.Contains("Microsoft.VisualStudio.TestPlatform") == true);
+
+    private void AssignMissingOutboxIdempotencyKeys()
+    {
+        foreach (var entry in ChangeTracker.Entries<OutboxMessage>())
+        {
+            if (entry.State is EntityState.Added or EntityState.Modified)
+            {
+                if (entry.Entity.IdempotencyKey == Guid.Empty)
+                {
+                    entry.Entity.IdempotencyKey = Guid.NewGuid();
+                }
+            }
+        }
+    }
 }

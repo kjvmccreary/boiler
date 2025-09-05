@@ -296,13 +296,13 @@ Tasks:
 * Support pagination, filtering by EventType. Tests:
 * Outbox_Admin_List_Pending.
 * Outbox_Admin_Filter_By_Status.
-### 🚧 (in progress) O9: Backfill Script Safety (Deployment)
+### ✅ DONE O9: Backfill Script Safety (Deployment)
 Tasks:
 * Ensure migration is additive & backward compatible.
 * Confirm dispatcher code tolerant to NULL IdempotencyKey until post-migration (guard generation before use).
 * Document zero-downtime rollout steps. Tests:
 * LegacyRow_Backfill_Adds_Generated_IdempotencyKey (integration using manual insert without key).
-O10: Failure Scenarios & Poison Handling (Deferred if not MVP)
+### 🚧 (in progress) O10: Failure Scenarios & Poison Handling (Deferred if not MVP)
 Tasks:
 * Decide on threshold: if RetryCount >= MaxRetries mark a status (future column) or continue indefinite.
 * Decide if Error length should be truncated (e.g., 2000 chars). Tests:

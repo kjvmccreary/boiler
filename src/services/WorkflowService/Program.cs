@@ -153,6 +153,9 @@ public class Program
 
         // Metrics provider (optional, controlled by options)
         builder.Services.AddSingleton<IOutboxMetricsProvider, OutboxMetricsProvider>();
+        builder.Services.Configure<OutboxBackfillOptions>(
+            builder.Configuration.GetSection("Workflow:Outbox:Backfill"));
+        builder.Services.AddHostedService<OutboxIdempotencyBackfillWorker>();
 
         var app = builder.Build();
 
