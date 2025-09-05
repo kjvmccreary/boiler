@@ -50,10 +50,11 @@ public class OutboxDeadLetterAndLogsTests
     private sealed class TestLogger<T> : ILogger<T>, IDisposable
     {
         public ConcurrentQueue<string> Lines { get; } = new();
-        public IDisposable BeginScope<TState>(TState state) => this;
+        public IDisposable BeginScope<TState>(TState state) where TState : notnull => this;
         public void Dispose() { }
         public bool IsEnabled(LogLevel logLevel) => true;
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+            Func<TState, Exception?, string> formatter) where TState : notnull
         {
             Lines.Enqueue(formatter(state, exception));
         }

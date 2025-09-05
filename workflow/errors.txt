@@ -1,6 +1,11 @@
- WorkflowService.Tests failed with 3 error(s) and 2 warning(s) (0.3s)
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\GatewayPruningTests.cs(17,34): warning CS1570: XML comment has badly formed XML -- 'Whitespace is not allowed at this location.'
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\QuorumAndTimeoutTests.cs(31,56): warning CS1570: XML comment has badly formed XML -- 'Whitespace is not allowed at this location.'
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\OutboxRetryAndMetricsTests.cs(157,18): error CS0122: 'OutboxRetryPolicy' is inaccessible due to its protection level
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\OutboxRetryAndMetricsTests.cs(158,18): error CS0122: 'OutboxRetryPolicy' is inaccessible due to its protection level
-    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\OutboxRetryAndMetricsTests.cs(159,18): error CS0122: 'OutboxRetryPolicy' is inaccessible due to its protection level
+ AuthService.Tests succeeded (0.2s) → tests\unit\AuthService.Tests\bin\Debug\net9.0\AuthService.Tests.dll
+  WorkflowService.Tests failed with 4 error(s) and 2 warning(s) (0.4s)
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\QuorumAndTimeoutTests.cs(34,56): warning CS1570: XML comment has badly formed XML -- 'Whitespace is not allowed at this location.'
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\OutboxDeadLetterAndLogsTests.cs(53,28): warning CS8633: Nullability in constraints for type parameter 'TState' of method 'OutboxDeadLetterAndLogsTests.TestLogger<T>.BeginScope<TState>(TState)' doesn't match the constraints for type parameter 'TState' of interface method 'ILogger.BeginScope<TState>(TState)'. Consider using an explicit interface implementation instead.
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\OutboxAdminEndpointTests.cs(154,13): error CS8858: The receiver type 'OutboxMessage' is not a valid record type and is not a struct type.
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\OutboxAdminEndpointTests.cs(155,13): error CS8858: The receiver type 'OutboxMessage' is not a valid record type and is not a struct type.
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\OutboxAdminEndpointTests.cs(156,13): error CS8858: The receiver type 'OutboxMessage' is not a valid record type and is not a struct type.
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\OutboxAdminEndpointTests.cs(206,19): error CS8858: The receiver type 'OutboxMessage' is not a valid record type and is not a struct type.
+  WorkflowService.SmokeTests succeeded (0.3s) → tests\integration\WorkflowService.SmokeTests\bin\Debug\net9.0\WorkflowService.SmokeTests.dll
+
+Build failed with 4 error(s) and 19 warning(s) in 2.1s

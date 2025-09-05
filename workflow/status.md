@@ -280,7 +280,7 @@ Tasks:
 * Dispatcher respects next-attempt time (optional: add NextAttemptAt column later; for MVP simple constant delay). Tests:
 * Dispatcher_Retry_Until_MaxRetries_Reached.
 * Dispatcher_NoRetry_After_MaxRetries (still unprocessed but flagged).
-### 🚧 (in progress) O7 Observability & Metrics
+### ✅ DONE O7 Observability & Metrics
 Tasks:
 * Add log lines:
 * OUTBOX_WORKER_FETCH count=X
@@ -290,13 +290,13 @@ Tasks:
 * Add health/diagnostics endpoint or log summary every N cycles. Tests:
 * (Log Assertion) Outbox_Dispatch_Emits_Success_Log (optional).
 * Metrics_Snapshot_Computation (unit of helper).
-O8: API / Admin Visibility (Optional)
+### ✅ DONE O8: API / Admin Visibility (Optional)
 Tasks:
 * Add admin endpoint GET /api/workflow/outbox?status=pending|failed|processed for observability.
 * Support pagination, filtering by EventType. Tests:
 * Outbox_Admin_List_Pending.
 * Outbox_Admin_Filter_By_Status.
-O9: Backfill Script Safety (Deployment)
+### 🚧 (in progress) O9: Backfill Script Safety (Deployment)
 Tasks:
 * Ensure migration is additive & backward compatible.
 * Confirm dispatcher code tolerant to NULL IdempotencyKey until post-migration (guard generation before use).
