@@ -302,18 +302,18 @@ Tasks:
 * Confirm dispatcher code tolerant to NULL IdempotencyKey until post-migration (guard generation before use).
 * Document zero-downtime rollout steps. Tests:
 * LegacyRow_Backfill_Adds_Generated_IdempotencyKey (integration using manual insert without key).
-### 🚧 (in progress) O10: Failure Scenarios & Poison Handling (Deferred if not MVP)
+### ✅ DONE O10: Failure Scenarios & Poison Handling (Deferred if not MVP)
 Tasks:
 * Decide on threshold: if RetryCount >= MaxRetries mark a status (future column) or continue indefinite.
 * Decide if Error length should be truncated (e.g., 2000 chars). Tests:
 * Outbox_Error_Truncated_When_TooLong.
-O11: Deterministic Key Strategy (Design)
+### 🚧 (in progress) O11: Deterministic Key Strategy (Design)
 Tasks:
 * Utility: OutboxIdempotency.CreateDeterministicKey(params) → Guid (namespace-based v5 or hash → Guid).
 * Centralize to avoid drift across producers. Tests:
 * DeterministicKey_SameInputs_SameGuid.
 * DeterministicKey_DifferentInputs_DifferentGuid.
-O12: Concurrency & Isolation Tests
+### O12: Concurrency & Isolation Tests
 Tasks:
 * Simulate multiple threads adding same idempotent event (Task.WhenAll).
 * Use barrier to align execution and assert single row created. Tests:

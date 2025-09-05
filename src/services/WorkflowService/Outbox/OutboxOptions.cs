@@ -14,10 +14,12 @@ public class OutboxOptions
     public bool EnablePrometheus { get; set; } = true;
     public int RollingWindowMinutes { get; set; } = 5;
 
-    // NEW: Emit terminal failures as DeadLetter instead of “give up” normal processed.
     public bool UseDeadLetterOnGiveUp { get; set; } = true;
 
     public OutboxHealthThresholds Health { get; set; } = new();
+
+    // NEW: Poison / failure classification tuning
+    public OutboxPoisonOptions Poison { get; set; } = new();
 }
 
 public class OutboxHealthThresholds
@@ -28,4 +30,29 @@ public class OutboxHealthThresholds
     public double FailedPendingRatioUnhealthy { get; set; } = 0.50;
     public int OldestAgeWarnSeconds { get; set; } = 300;
     public int OldestAgeUnhealthySeconds { get; set; } = 900;
+}
+
+// NEW
+public class OutboxPoisonOptions
+{
+    // Optional early dead-letter threshold (if set < MaxRetries). 0 = disabled
+    public int EarlyDeadLetterRetries { get; set; } = 0;
+
+    // Regex patterns (substring match for simplicity) that mark message as non‑transient (dead-letter immediately)
+    public string[] NonTransientErrorMarkers { get; set; } = new[]
+    {
+        "validation", "schema", "deserializ", "permission", "unauthorized"
+    };
+
+    // Patterns that should stay transient (never early dead-letter) – evaluated before non-transient
+    public string[] AlwaysTransientMarkers { get; set; } = new[]
+    {
+        "timeout", "temporar", "rate limit", "connection", "unavailable"
+    };
+
+    // If true, any exception WITHOUT a marker but reaching MaxRetries becomes dead-letter (same as current)
+    public bool DeadLetterOnMaxRetries { get; set; } = true;
+
+    // If true, truncate errors strictly at MaxErrorTextLength, else soft (only if > length*2)
+    public bool StrictErrorTruncation { get; set; } = true;
 }

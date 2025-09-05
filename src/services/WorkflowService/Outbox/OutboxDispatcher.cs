@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WorkflowService.Persistence;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
+using WorkflowService.Domain.Models;
 
 namespace WorkflowService.Outbox;
 
@@ -87,36 +88,35 @@ public class OutboxDispatcher : IOutboxDispatcher
             }
             catch (Exception ex)
             {
+                var rawError = ex.Message;
+                msg.Error = TruncateError(rawError);
                 msg.RetryCount += 1;
-                msg.Error = TruncateError(ex.Message);
                 msg.UpdatedAt = DateTime.UtcNow;
 
-                var terminal = msg.RetryCount >= _options.MaxRetries;
+                var poisonCfg = _options.Poison;
+                var earlyDeadLetter = ShouldEarlyDeadLetter(msg, rawError);
+                var maxRetryTerminal = poisonCfg.DeadLetterOnMaxRetries && msg.RetryCount >= _options.MaxRetries;
+                var terminal = earlyDeadLetter || maxRetryTerminal;
 
                 if (terminal)
                 {
-                    if (_options.UseDeadLetterOnGiveUp)
+                    msg.ProcessedAt = DateTime.UtcNow;
+                    msg.IsProcessed = true;
+                    msg.NextRetryAt = null;
+                    msg.DeadLetter = _options.UseDeadLetterOnGiveUp; // reuse existing behavior flag
+                    if (msg.DeadLetter)
                     {
-                        msg.DeadLetter = true;
-                        msg.ProcessedAt = DateTime.UtcNow; // mark terminal timestamp
-                        msg.IsProcessed = true;
-                        msg.NextRetryAt = null;
-                        deadLetter++;
                         _logger.LogWarning(
-                            "OUTBOX_WORKER_DEADLETTER id={Id} key={Key} retry={Retry} max={Max} error=\"{Err}\"",
-                            msg.Id, msg.IdempotencyKey, msg.RetryCount, _options.MaxRetries, msg.Error);
-                        msgActivity?.AddTag("outbox.status", "deadletter");
+                            earlyDeadLetter
+                                ? "OUTBOX_WORKER_DEADLETTER_EARLY id={Id} key={Key} retry={Retry} err=\"{Err}\""
+                                : "OUTBOX_WORKER_DEADLETTER id={Id} key={Key} retry={Retry} err=\"{Err}\"",
+                            msg.Id, msg.IdempotencyKey, msg.RetryCount, msg.Error);
                     }
                     else
                     {
-                        msg.ProcessedAt = DateTime.UtcNow;
-                        msg.IsProcessed = true;
-                        msg.NextRetryAt = null;
-                        giveUp++;
                         _logger.LogWarning(
-                            "OUTBOX_WORKER_GIVEUP id={Id} key={Key} retry={Retry} max={Max} error=\"{Err}\"",
-                            msg.Id, msg.IdempotencyKey, msg.RetryCount, _options.MaxRetries, msg.Error);
-                        msgActivity?.AddTag("outbox.status", "giveup");
+                            "OUTBOX_WORKER_GIVEUP id={Id} key={Key} retry={Retry} err=\"{Err}\"",
+                            msg.Id, msg.IdempotencyKey, msg.RetryCount, msg.Error);
                     }
                 }
                 else
@@ -127,10 +127,8 @@ public class OutboxDispatcher : IOutboxDispatcher
                         "OUTBOX_WORKER_DISPATCH_FAIL id={Id} key={Key} retry={Retry} max={Max} nextRetryAt={Next:o} delaySeconds={Delay} error=\"{Err}\"",
                         msg.Id, msg.IdempotencyKey, msg.RetryCount, _options.MaxRetries,
                         msg.NextRetryAt, (int)delay.TotalSeconds, msg.Error);
-                    msgActivity?.AddTag("outbox.status", "retry");
                     failed++;
                 }
-
                 await _db.SaveChangesAsync(ct);
             }
         }
@@ -164,10 +162,54 @@ public class OutboxDispatcher : IOutboxDispatcher
         return (processed, failed);
     }
 
+    private bool IsAlwaysTransient(string err)
+    {
+        if (string.IsNullOrEmpty(err)) return false;
+        foreach (var marker in _options.Poison.AlwaysTransientMarkers)
+            if (!string.IsNullOrWhiteSpace(marker) &&
+                err.Contains(marker, StringComparison.OrdinalIgnoreCase))
+                return true;
+        return false;
+    }
+
+    private bool IsNonTransient(string err)
+    {
+        if (string.IsNullOrEmpty(err)) return false;
+        foreach (var marker in _options.Poison.NonTransientErrorMarkers)
+            if (!string.IsNullOrWhiteSpace(marker) &&
+                err.Contains(marker, StringComparison.OrdinalIgnoreCase))
+                return true;
+        return false;
+    }
+
+    private bool ShouldEarlyDeadLetter(OutboxMessage msg, string error)
+    {
+        var poisonCfg = _options.Poison;
+        if (IsAlwaysTransient(error)) return false;
+
+        // Non-transient marker -> immediate DL
+        if (IsNonTransient(error)) return true;
+
+        // Early threshold
+        if (poisonCfg.EarlyDeadLetterRetries > 0 &&
+            msg.RetryCount >= poisonCfg.EarlyDeadLetterRetries)
+            return true;
+
+        return false;
+    }
+
     private string? TruncateError(string? err)
     {
         if (err == null) return null;
-        if (err.Length <= _options.MaxErrorTextLength) return err;
-        return err.Substring(0, _options.MaxErrorTextLength);
+        var max = _options.MaxErrorTextLength;
+        if (max <= 0) return err;
+
+        if (_options.Poison.StrictErrorTruncation)
+            return err.Length <= max ? err : err.Substring(0, max);
+
+        // Soft mode: only truncate if extremely large (2x)
+        if (err.Length > max * 2)
+            return err.Substring(0, max);
+        return err;
     }
 }
