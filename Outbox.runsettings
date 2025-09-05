@@ -1,0 +1,9 @@
+<RunSettings>
+  <RunConfiguration>
+    <ResultsDirectory>TestResults</ResultsDirectory>
+    <LogConsoleOutput>true</LogConsoleOutput>
+    <TargetFrameworkVersion>.NETCoreApp,Version=v9.0</TargetFrameworkVersion>
+    <!-- Optional: increase verbosity picked up by adapters -->
+    <Verbosity>minimal</Verbosity>
+  </RunConfiguration>
+   </RunSettings>

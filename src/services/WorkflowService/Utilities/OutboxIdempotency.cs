@@ -1,13 +1,14 @@
+using System;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace WorkflowService.Utilities;
 
 /// <summary>
-/// Utilities for producing deterministic idempotency GUIDs for outbox messages.
-/// Strategy: canonical lower-case string joined by ':' → SHA-256 → first 16 bytes → Guid.
-/// Stable across runs; changes in any component yield a different Guid.
+/// LEGACY deterministic idempotency utilities.
+/// Replaced by DeterministicOutboxKey (WorkflowService.Outbox namespace).
 /// </summary>
+[Obsolete("OutboxIdempotency is deprecated. Use DeterministicOutboxKey (Instance/Task/Definition/Create) instead. This will be removed in a future release.")]
 public static class OutboxIdempotency
 {
     /// <summary>

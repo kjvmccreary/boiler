@@ -13,6 +13,7 @@ public class WorkflowDbContext : DbContext
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ITenantProvider _tenantProvider;
     private readonly ILogger<WorkflowDbContext> _logger;
+    private readonly int? _tenantFilter;
 
     public WorkflowDbContext(
         DbContextOptions<WorkflowDbContext> options,
@@ -23,6 +24,7 @@ public class WorkflowDbContext : DbContext
         _httpContextAccessor = httpContextAccessor;
         _tenantProvider = tenantProvider;
         _logger = logger;
+        _tenantFilter = _tenantProvider.GetCurrentTenantIdAsync().GetAwaiter().GetResult();
     }
 
     public DbSet<WorkflowDefinition> WorkflowDefinitions { get; set; } = default!;
@@ -42,6 +44,21 @@ public class WorkflowDbContext : DbContext
         ConfigureOutboxMessage(modelBuilder);
 
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<WorkflowInstance>()
+            .HasQueryFilter(e => !_tenantFilter.HasValue || e.TenantId == _tenantFilter.Value);
+
+        modelBuilder.Entity<WorkflowTask>()
+            .HasQueryFilter(e => !_tenantFilter.HasValue || e.TenantId == _tenantFilter.Value);
+
+        modelBuilder.Entity<WorkflowDefinition>()
+            .HasQueryFilter(e => !_tenantFilter.HasValue || e.TenantId == _tenantFilter.Value);
+
+        // (Optional – if you also want Outbox / Events isolation uncomment)
+        // modelBuilder.Entity<OutboxMessage>()
+        //     .HasQueryFilter(e => !_tenantFilter.HasValue || e.TenantId == _tenantFilter.Value);
+        // modelBuilder.Entity<WorkflowEvent>()
+        //     .HasQueryFilter(e => !_tenantFilter.HasValue || e.TenantId == _tenantFilter.Value);
     }
 
     private static bool ShouldEnableTenantFiltersInTests()

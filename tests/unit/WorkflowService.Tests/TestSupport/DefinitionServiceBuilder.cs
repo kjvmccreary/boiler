@@ -7,23 +7,28 @@ using WorkflowService.Persistence;
 using Contracts.Services;
 using WorkflowService.Engine.Validation;
 using WorkflowService.Domain.Models;
+using Xunit.Abstractions;
 
 namespace WorkflowService.Tests.TestSupport;
 
 public class DefinitionServiceBuilder
 {
-    private readonly WorkflowDbContext _ctx;
+    private readonly string _dbName;
+    private WorkflowDbContext _ctx;
     private readonly FakeEventPublisher _publisher = new();
     private readonly Mock<ITenantProvider> _tenant = new();
-    private readonly IGraphValidationService _graph = new FakeGraphValidationService();
+    private IGraphValidationService _graph = new FakeGraphValidationService();
     private readonly IWorkflowPublishValidator _publishValidator = new FakeWorkflowPublishValidator();
     private readonly IMapper _mapper;
-    private readonly ILogger<DefinitionService> _logger;
+    private ILoggerFactory _loggerFactory;
+    private ILogger<DefinitionService> _logger;
     private int _tenantId = 1;
 
     public DefinitionServiceBuilder(string dbName)
     {
-        _ctx = TestDbContextFactory.Create(dbName);
+        _dbName = dbName;
+        _ctx = TestDbContextFactory.Create(dbName, _tenantId);
+
         _tenant.Setup(t => t.GetCurrentTenantIdAsync()).ReturnsAsync(() => _tenantId);
 
         var cfg = new MapperConfiguration(c =>
@@ -31,13 +36,29 @@ public class DefinitionServiceBuilder
             c.CreateMap<WorkflowDefinition, DTOs.Workflow.WorkflowDefinitionDto>();
         });
         _mapper = cfg.CreateMapper();
-        _logger = LoggerFactory.Create(b => b.AddConsole().SetMinimumLevel(LogLevel.Debug))
-            .CreateLogger<DefinitionService>();
+
+        _loggerFactory = LoggerFactory.Create(b => b.AddConsole().SetMinimumLevel(LogLevel.Debug));
+        _logger = _loggerFactory.CreateLogger<DefinitionService>();
     }
 
     public DefinitionServiceBuilder WithTenant(int tenantId)
     {
         _tenantId = tenantId;
+        _tenant.Setup(t => t.GetCurrentTenantIdAsync()).ReturnsAsync(() => _tenantId);
+        _ctx = TestDbContextFactory.Create(_dbName, _tenantId);
+        return this;
+    }
+
+    public DefinitionServiceBuilder WithOutput(ITestOutputHelper output)
+    {
+        _loggerFactory.Dispose();
+        _loggerFactory = LoggerFactory.Create(b =>
+        {
+            b.ClearProviders();
+            b.SetMinimumLevel(LogLevel.Debug);
+            b.AddProvider(new XunitOutputLoggerProvider(output));
+        });
+        _logger = _loggerFactory.CreateLogger<DefinitionService>();
         return this;
     }
 

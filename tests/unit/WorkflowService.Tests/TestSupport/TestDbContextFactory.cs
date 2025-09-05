@@ -9,7 +9,7 @@ namespace WorkflowService.Tests.TestSupport;
 
 public static class TestDbContextFactory
 {
-    public static WorkflowDbContext Create(string dbName)
+    public static WorkflowDbContext Create(string dbName, int tenantId)
     {
         var options = new DbContextOptionsBuilder<WorkflowDbContext>()
             .UseInMemoryDatabase(dbName)
@@ -19,10 +19,9 @@ public static class TestDbContextFactory
         var http = new Mock<IHttpContextAccessor>();
         var tenantProvider = new Mock<ITenantProvider>();
         tenantProvider.Setup(t => t.GetCurrentTenantIdAsync())
-            .ReturnsAsync(1);
+            .ReturnsAsync(tenantId);
 
         var logger = new LoggerFactory().CreateLogger<WorkflowDbContext>();
-
         return new WorkflowDbContext(options, http.Object, tenantProvider.Object, logger);
     }
 }

@@ -5,6 +5,7 @@ using WorkflowService.Services.Interfaces;
 using System.Text.Json;
 using WorkflowService.Utilities;
 using Npgsql;
+using WorkflowService.Outbox;
 
 namespace WorkflowService.Services;
 
@@ -178,8 +179,8 @@ public class EventPublisher : IEventPublisher
         CancellationToken ct)
     {
         var tenantId = instance.TenantId;
-        var deterministic = OutboxIdempotency.CreateForWorkflow(
-            tenantId, "instance", instance.Id, phase, instance.DefinitionVersion);
+        var deterministic = DeterministicOutboxKey.Instance(
+            tenantId, instance.Id, phase, instance.DefinitionVersion);
         var key = keyOverride ?? deterministic;
 
         var outboxPayload = new
@@ -223,8 +224,8 @@ public class EventPublisher : IEventPublisher
         Guid? keyOverride,
         CancellationToken ct)
     {
-        var deterministic = OutboxIdempotency.CreateForWorkflow(
-            instance.TenantId, "instance", instance.Id, "failed", instance.DefinitionVersion);
+        var deterministic = DeterministicOutboxKey.Instance(
+            instance.TenantId, instance.Id, "failed", instance.DefinitionVersion);
 
         var key = keyOverride ?? deterministic;
 
@@ -268,8 +269,8 @@ public class EventPublisher : IEventPublisher
         Guid? keyOverride,
         CancellationToken ct)
     {
-        var deterministic = OutboxIdempotency.CreateForWorkflow(
-            instance.TenantId, "instance", instance.Id, "force_cancelled", instance.DefinitionVersion);
+        var deterministic = DeterministicOutboxKey.Instance(
+            instance.TenantId, instance.Id, "force_cancelled", instance.DefinitionVersion);
         var key = keyOverride ?? deterministic;
 
         var outboxPayload = new
@@ -310,9 +311,9 @@ public class EventPublisher : IEventPublisher
         var tenantId = GetTenantIdFromTask(task);
 
         Guid? deterministic = phase == "created"
-            ? OutboxIdempotency.CreateForWorkflow(tenantId, "task", task.Id, "created")
+            ? DeterministicOutboxKey.Task(tenantId, task.Id, "created")
             : phase == "completed"
-                ? OutboxIdempotency.CreateForWorkflow(tenantId, "task", task.Id, "completed")
+                ? DeterministicOutboxKey.Task(tenantId, task.Id, "completed")
                 : null;
 
         var key = keyOverride ?? deterministic;
@@ -361,7 +362,7 @@ public class EventPublisher : IEventPublisher
         CancellationToken ct)
     {
         var tenantId = GetTenantIdFromTask(task);
-        var deterministic = OutboxIdempotency.CreateForWorkflow(tenantId, "task", task.Id, "completed");
+        var deterministic = DeterministicOutboxKey.Task(tenantId, task.Id, "completed");
         var key = keyOverride ?? deterministic;
 
         var outboxPayload = new
@@ -454,8 +455,8 @@ public class EventPublisher : IEventPublisher
         Guid? keyOverride,
         CancellationToken ct)
     {
-        var deterministic = OutboxIdempotency.CreateForWorkflow(
-            definition.TenantId, "definition", definition.Id, phase, definition.Version);
+        var deterministic = DeterministicOutboxKey.Definition(
+            definition.TenantId, definition.Id, phase, definition.Version);
         var key = keyOverride ?? deterministic;
 
         var outboxPayload = new

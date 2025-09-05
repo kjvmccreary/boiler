@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="c88ed45e-be89-4337-b7d0-2020e12c7a5f" name="mccre@MACDADDYARM 2025-09-05 13:48:18" runUser="MACDADDYARM\mccre" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2025-09-05T13:48:18.1223226-05:00" queuing="2025-09-05T13:48:18.1223227-05:00" start="2025-09-05T13:48:17.1225248-05:00" finish="2025-09-05T13:48:18.1321675-05:00" />
+  <TestSettings name="default" id="43d25952-622c-48fc-ad4c-6c8b1ff84b0e">
+    <Deployment runDeploymentRoot="mccre_MACDADDYARM_2025-09-05_13_48_18" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="3cad6424-9bdf-4f0c-ab6d-4893446c7860" testId="ccceaf7c-8667-5eb0-8abb-24d9af7332f7" testName="WorkflowService.Tests.Definitions.MultiTenantIsolationTests.ForceTerminate_Does_Not_Cancel_OtherTenant_Instances" computerName="MACDADDYARM" duration="00:00:00.5159390" startTime="2025-09-05T13:48:18.0453061-05:00" endTime="2025-09-05T13:48:18.0453156-05:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3cad6424-9bdf-4f0c-ab6d-4893446c7860">
+      <Output>
+        <StdOut>PUBLISH1 success=True msg='Definition published' errors=[]&#xD;
+PUBLISH2 success=False msg='Workflow definition not found' errors=[]</StdOut>
+        <ErrorInfo>
+          <Message>Publish tenant2 failed</Message>
+          <StackTrace>   at WorkflowService.Tests.Definitions.MultiTenantIsolationTests.ForceTerminate_Does_Not_Cancel_OtherTenant_Instances() in C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\MultiTenantIsolationTests.cs:line 76&#xD;
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="WorkflowService.Tests.Definitions.MultiTenantIsolationTests.ForceTerminate_Does_Not_Cancel_OtherTenant_Instances" storage="c:\users\mccre\dev\boiler\tests\unit\workflowservice.tests\bin\debug\net9.0\workflowservice.tests.dll" id="ccceaf7c-8667-5eb0-8abb-24d9af7332f7">
+      <Execution id="3cad6424-9bdf-4f0c-ab6d-4893446c7860" />
+      <TestMethod codeBase="C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner2/netcoreapp" className="WorkflowService.Tests.Definitions.MultiTenantIsolationTests" name="ForceTerminate_Does_Not_Cancel_OtherTenant_Instances" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="ccceaf7c-8667-5eb0-8abb-24d9af7332f7" executionId="3cad6424-9bdf-4f0c-ab6d-4893446c7860" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.6+bf9b858c26 (64-bit .NET 9.0.7)&#xD;
+[xUnit.net 00:00:00.06]   Discovering: WorkflowService.Tests&#xD;
+[xUnit.net 00:00:00.11]   Discovered:  WorkflowService.Tests&#xD;
+[xUnit.net 00:00:00.11]   Starting:    WorkflowService.Tests&#xD;
+[xUnit.net 00:00:00.65]       Publish tenant2 failed&#xD;
+[xUnit.net 00:00:00.65]       Stack Trace:&#xD;
+[xUnit.net 00:00:00.65]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\MultiTenantIsolationTests.cs(76,0): at WorkflowService.Tests.Definitions.MultiTenantIsolationTests.ForceTerminate_Does_Not_Cancel_OtherTenant_Instances()&#xD;
+[xUnit.net 00:00:00.65]         --- End of stack trace from previous location ---&#xD;
+[xUnit.net 00:00:00.65]       Output:&#xD;
+[xUnit.net 00:00:00.65]         PUBLISH1 success=True msg='Definition published' errors=[]&#xD;
+[xUnit.net 00:00:00.65]         PUBLISH2 success=False msg='Workflow definition not found' errors=[]&#xD;
+[xUnit.net 00:00:00.66]   Finished:    WorkflowService.Tests&#xD;
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="MACDADDYARM" outcome="Error" timestamp="2025-09-05T13:48:18.0442025-05:00">
+        <Text>[xUnit.net 00:00:00.65]     WorkflowService.Tests.Definitions.MultiTenantIsolationTests.ForceTerminate_Does_Not_Cancel_OtherTenant_Instances [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>
