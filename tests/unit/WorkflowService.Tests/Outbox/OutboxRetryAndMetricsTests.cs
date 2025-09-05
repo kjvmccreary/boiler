@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -10,6 +11,7 @@ using Xunit;
 using Contracts.Services;
 using Microsoft.AspNetCore.Http;
 using WorkflowService.Domain.Models;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace WorkflowService.Tests.Outbox;
 
@@ -54,13 +56,13 @@ public class OutboxRetryAndMetricsTests
 
     private class FailingTransport : IOutboxTransport
     {
-        public Task DeliverAsync(OutboxMessage message, System.Threading.CancellationToken ct)
+        public Task DeliverAsync(OutboxMessage message, CancellationToken ct)
             => throw new InvalidOperationException("boom");
     }
 
     private class SuccessTransport : IOutboxTransport
     {
-        public Task DeliverAsync(OutboxMessage message, System.Threading.CancellationToken ct) => Task.CompletedTask;
+        public Task DeliverAsync(OutboxMessage message, CancellationToken ct) => Task.CompletedTask;
     }
 
     private OutboxDispatcher CreateDispatcher(
@@ -180,7 +182,7 @@ public class OutboxRetryAndMetricsTests
             RollingWindowMinutes = 1
         });
 
-        var metrics = new OutboxMetricsProvider(new DummyFactory(ctx), opts);
+        var metrics = new OutboxMetricsProvider(new DummyScopeFactory(ctx), opts);
 
         var dispatcher = CreateDispatcher(ctx, new SuccessTransport(), metrics: metrics);
 
@@ -192,13 +194,26 @@ public class OutboxRetryAndMetricsTests
         Assert.True(snap.ProcessedTotal >= snap.ProcessedLastCycle);
     }
 
-    // Minimal factory to satisfy IDbContextFactory<T> for tests
-    private class DummyFactory : IDbContextFactory<WorkflowDbContext>
+    // IServiceScopeFactory stub supplying our in-memory context
+    private sealed class DummyScopeFactory : IServiceScopeFactory
     {
         private readonly WorkflowDbContext _ctx;
-        public DummyFactory(WorkflowDbContext ctx) => _ctx = ctx;
-        public WorkflowDbContext CreateDbContext() => _ctx;
-        public Task<WorkflowDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult(_ctx);
+        public DummyScopeFactory(WorkflowDbContext ctx) => _ctx = ctx;
+        public IServiceScope CreateScope() => new DummyScope(_ctx);
+
+        private sealed class DummyScope : IServiceScope
+        {
+            public IServiceProvider ServiceProvider { get; }
+            public DummyScope(WorkflowDbContext ctx) => ServiceProvider = new DummyProvider(ctx);
+            public void Dispose() { }
+        }
+
+        private sealed class DummyProvider : IServiceProvider
+        {
+            private readonly WorkflowDbContext _ctx;
+            public DummyProvider(WorkflowDbContext ctx) => _ctx = ctx;
+            public object? GetService(Type serviceType) =>
+                serviceType == typeof(WorkflowDbContext) ? _ctx : null;
+        }
     }
 }

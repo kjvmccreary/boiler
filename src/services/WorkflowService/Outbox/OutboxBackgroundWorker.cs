@@ -4,16 +4,16 @@ namespace WorkflowService.Outbox;
 
 public class OutboxBackgroundWorker : BackgroundService
 {
-    private readonly IOutboxDispatcher _dispatcher;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly OutboxOptions _options;
     private readonly ILogger<OutboxBackgroundWorker> _logger;
 
     public OutboxBackgroundWorker(
-        IOutboxDispatcher dispatcher,
+        IServiceScopeFactory scopeFactory,
         IOptions<OutboxOptions> options,
         ILogger<OutboxBackgroundWorker> logger)
     {
-        _dispatcher = dispatcher;
+        _scopeFactory = scopeFactory;
         _options = options.Value;
         _logger = logger;
     }
@@ -27,7 +27,9 @@ public class OutboxBackgroundWorker : BackgroundService
         {
             try
             {
-                await _dispatcher.ProcessBatchAsync(stoppingToken);
+                using var scope = _scopeFactory.CreateScope();
+                var dispatcher = scope.ServiceProvider.GetRequiredService<IOutboxDispatcher>();
+                await dispatcher.ProcessBatchAsync(stoppingToken);
             }
             catch (Exception ex)
             {

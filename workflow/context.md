@@ -1,155 +1,78 @@
-WORKFLOW PLATFORM CONTEXT (CONDENSED – FEED THIS TO START A SESSION)
-
-Purpose
-Multi-tenant workflow execution service (.NET 9) with:
-- Versioned workflow definitions (graph-based JSON DSL)
-- Runtime engine (nodes, gateways, joins, timers, human & automatic tasks)
-- Event + Outbox persistence for external integration (idempotency upgrade pending)
-- Strong RBAC + per-tenant data isolation
-- Background workers (current: join timeout; upcoming: timer auto-advance, outbox dispatcher)
-
-Core Domain Objects
-WorkflowDefinition
-- Fields: Id, TenantId, Name, Version, JSONDefinition, IsPublished, IsArchived, PublishedAt, ArchivedAt, UpdatedAt
-- Immutability: JSONDefinition cannot change after publish (enforced at DbContext SaveChanges)
-- New versions created via CreateNewVersion → Version++ (draft)
-
-WorkflowInstance
-- Fields: Id, TenantId, WorkflowDefinitionId, DefinitionVersion, Status (Running, Suspended, Completed, Failed, Cancelled), Context (JSON), CurrentNodeIds (JSON array), StartedAt/UpdatedAt/CompletedAt/ErrorMessage
-- Progress orchestrated by WorkflowRuntime
-
-WorkflowTask
-- Human or timer tasks represent execution wait states
-- Fields: Status (Created, Assigned, Claimed, InProgress, Completed, Cancelled), NodeType (human/timer), DueDate (timer), AssignedToUserId
-- Timer tasks currently require manual completion (TimerWorker still pending)
-
-OutboxMessage
-- Mirrors WorkflowEvents for external dispatch (Outbox Dispatcher MVP exists; idempotent enhancements planned: IdempotencyKey, ProcessedAt, Error, unique (TenantId, IdempotencyKey))
-
-WorkflowEvent
-- Fine-grained trace: instance lifecycle, node execution, gateway decisions, joins (arrive/satisfy/timeout), task events, experiment assignment, feature flag fallback, pruning
-
-Node Types
-- start, end, humanTask, timer, automatic, gateway, join
-- Gateways: exclusive, parallel, abTest, featureFlag
-- Joins: all|any|count|quorum|expression (quorum + timeout implemented)
-
-Gateway Strategies
-abTest
-- Deterministic assignment via hash(seed: keyPath value + gatewayId + definitionVersion)
-- Weighted variants (weights sum ~100)
-- Snapshot stored to preserve stability if context changes
-- Overrides via _overrides.gateway[gatewayId]
-featureFlag
-- Uses IFeatureFlagProvider (default false)
-- required=true + provider failure → fallback event + offTarget route
-
-Join Enhancements
-- Quorum join satisfaction based on thresholdCount or thresholdPercent
-- Timeout metadata (force|route|fail) handled by JoinTimeoutWorker (background)
-- Human task completion triggers join arrival update
-
-Diagnostics / Context Structures (JSON inside WorkflowInstance.Context)
-- _gatewayDecisions: gateway decision history (bounded & pruned)
-- _experiments: abTest snapshot assignments
-- _parallelGroups: branch bookkeeping + join metadata
-- Timeout fields: timeoutSeconds, timeoutAtUtc, timeoutTriggered
-
-Validation
-Graph / Publish Validation:
-- Single start, ≥1 end, all nodes reachable from start, no unreachable end nodes, no duplicate IDs, no isolated islands
-Strategy validation:
-- abTest: ≥2 variants, valid weights, keyPath required
-- Automatic actions (action.kind presence & (future) webhook URL checks)
-Immutability:
-- JSONDefinition change post-publish → InvalidOperationException (guarded in DbContext)
-
-Security & RBAC
-- Per-tenant isolation (query filters optionally enabled in tests via ENABLE_TENANT_FILTERS_IN_TESTS)
-- Permissions: workflow.view_tasks, claim_tasks, complete_tasks, admin, view_instances, start_instances (seed audited)
-- Cross-tenant access returns 404 (not 403) by design
-
-Background Workers
-Implemented:
-- JoinTimeoutWorker (join timeout actions)
-Pending / Partial:
-- TimerWorker (auto-complete due timer tasks → advance runtime)
-- OutboxDispatcher (poll unprocessed messages, apply retries + idempotency once enhanced)
-
-Testing (High Coverage Areas)
-- Gateway strategies: abTest (assignment stability, override), featureFlag (on/off)
-- Quorum joins & timeout actions
-- Definition immutability rules (update, unpublish with/without force)
-- Multi-tenant isolation:
-  * Definition list / instance retrieval / task operations / admin operations
-  * Force terminate isolation (ensures tenant 2 unpublish doesn’t affect tenant 1)
-- Validation: negative publish scenarios, multiple start detection, gateway branching
-- Context pruning (diagnosticsVersion, bounded decision history)
-- UoW batching (SaveChanges count assertions for task operations)
-Gaps / Remaining Tests (Optional):
-- Feature flag provider outage fallback
-- Statistical abTest distribution (optional)
-- Join expression mode edge cases
-- Timer automation end-to-end (post TimerWorker)
-- Outbox idempotency & duplicate handling (upcoming)
-- Race / fuzz ID probing (optional hardening)
-- Dead-letter / retry exhaustion (future)
-
-Observability & Logging
-Prefixes / Patterns:
-- UNPUBLISH_BLOCKED / UNPUBLISH_FORCE_TERMINATE / UNPUBLISH_SUCCESS
-- IMMUTABILITY_VIOLATION (DbContext guard)
-- Gateway + automatic executor structured logs
-Planned:
-- TIMER_WORKER / OUTBOX_WORKER structured logs + metrics snapshot
-Metrics Targets (post-refactor):
-- SaveChanges per claim/complete: 1
-- Timer cycle latency: <60s configurable
-- Outbox processing lag: <2 min
-- Validation errors surfaced with clear actionable list
-
-Remaining Priority Work (High-Level)
-1. TimerWorker Implementation (auto-fire due timer tasks)
-2. Outbox Idempotency & Dispatcher upgrade (IdempotencyKey, ProcessedAt, Error)
-3. Graph Validation depth expansion (already largely implemented—confirm completeness)
-4. Documentation additions (developer onboarding, external workflow trigger guide)
-5. TaskService / InstanceService deeper isolation race tests (optional)
-6. Optional: Admin observability endpoints (outbox status, backlog metrics)
-7. Future: Webhook automatic executor + retry policies
-
-Outbox Idempotency Upgrade (Planned)
-Add:
-- IdempotencyKey (Guid) + unique (TenantId, IdempotencyKey)
-- ProcessedAt (Nullable timestamp)
-- Error (text)
-Behavior:
-- Producers supply deterministic keys when logical duplicates possible
-- Dispatcher sets ProcessedAt on success; increments RetryCount + sets Error on failure
-- Duplicate insert (same TenantId + IdempotencyKey) → treat as idempotent success (no throw)
-- Metrics: backlog size, oldest unprocessed age, failure ratio
-
-Design Conventions
-- JSONDefinition normalized (gateway edge enrichment) when saving drafts
-- Context mutated minimally; large diagnostics trimmed by pruning
-- Return shape: ApiResponseDto<T> with Success / Message / Errors[] (Code + Message)
-- 404 for cross-tenant resource probes; avoid leaking existence
-- EF InMemory nuances handled with GUID-suffixed DB names in tests to avoid bleed
-- SaveChanges batching: controllers commit via deferred UoW when runtime invoked
-
-Key Risks / Watchpoints
-- Missing TimerWorker delays SLA-timer progression
-- Outbox without idempotency risks duplicate external emissions when dispatcher introduced
-- Graph validation regressions could allow unreachable nodes → runtime dead paths
-- Multi-tenant filter toggle: ensure production always enables filters; test toggles scoped
-- Concurrent unpublish + start edge cases (acceptable race; design allows instance start if observed published state earlier)
-
-Quick Start Mental Model
-Definitions (immutable JSON after publish) → Instances (progress through engine) → Tasks (wait states) → Events (persist) → Outbox (external integration) → Background workers (advance timeouts & timers, dispatch outbox).
-
-Use This Document To
-- Rehydrate architectural understanding quickly
-- Prioritize remaining MVP blockers (TimerWorker, Outbox Idempotency)
-- Identify untested or partially tested edge cases to solidify before expansion
-- Drive next sprint scoping and test story creation
-
-End of condensed context.
+Project overview
+•	Tech stack: C# 13, .NET 9, EF Core, Visual Studio 2022.
+•	Domain: WorkflowService with multi-tenant workflow definitions, instances, tasks, and events.
+•	Key goals: Strong tenant isolation, immutable published definitions, reliable eventing via Outbox pattern with deterministic idempotency keys.
+Core projects and components
+•	WorkflowService (primary service)
+•	Domain models: WorkflowDefinition, WorkflowInstance, WorkflowTask, WorkflowEvent, OutboxMessage.
+•	Services:
+•	DefinitionService: create/update/publish/unpublish definitions; enforces immutability; emits lifecycle events.
+•	EventPublisher: raises domain events via the Outbox; uses deterministic keys for idempotency.
+•	OutboxWriter/OutboxDispatcher: durable enqueue + async dispatch, retries, error tracking.
+•	Validation:
+•	GraphValidationService.Validate(json, strict): parses DSL (WorkflowDefinitionJson), checks start/end nodes, reachability, duplicates, orphaned edges; draft vs publish modes.
+•	Deterministic idempotency
+•	DeterministicOutboxKey (canonical source): SHA-256 over normalized, colon-joined parts → first 16 bytes as Guid.
+•	Instance(tenantId, instanceId, phase, definitionVersion)
+•	Task(tenantId, taskId, phase)
+•	Definition(tenantId, definitionId, phase, version)
+•	DefinitionPublished/Unpublished, Custom(...)
+•	OutboxIdempotency: Obsolete; forwards to DeterministicOutboxKey for compatibility.
+Persistence and tenancy
+•	WorkflowDbContext
+•	Tenant scoping: global query filters per-entity (TenantId == current), with test-aware toggles.
+•	SaveChanges:
+•	SetTenantIdForNewEntities: stamps TenantId only when 0.
+•	UpdateTimestamps: CreatedAt/UpdatedAt.
+•	EnforceDefinitionJsonImmutability: throws if JSONDefinition mutates once published.
+•	Provider-specific constraints (non-test): jsonb types, CHECK constraints aligning TenantId with current_setting('app.tenant_id') for Postgres.
+Definition lifecycle and immutability
+•	Draft creation/updating validates DSL (draft rules), applies edge backfill for gateways.
+•	PublishAsync:
+•	Validates DSL (strict), publish-time validation hooks, sets IsPublished.
+•	ForcePublish (already published):
+•	Idempotent success only if JSONDefinition unchanged.
+•	If JSONDefinition changed, returns error “Force publish blocked: definition JSONDefinition was modified after publish”.
+•	UnpublishAsync:
+•	Optionally force-cancels active instances, emits events.
+•	Strict tenant filtering across all queries.
+Outbox pattern
+•	Schema: OutboxMessage has TenantId, EventType, EventData, IdempotencyKey (unique with TenantId), ProcessedAt, RetryCount, Error, DeadLetter (flag).
+•	OutboxWriter.TryAddAsync:
+•	Inserts with provided key (deterministic) or logs warning if missing for workflow.* events.
+•	On unique key conflict: re-queries and returns (AlreadyExisted=true).
+•	OutboxDispatcher:
+•	Polls unprocessed rows, delivers, sets ProcessedAt on success.
+•	Retries with backoff options; truncates error; optional dead-lettering via options.
+•	Logs: OUTBOX_WORKER_FETCH/DISPATCH_SUCCESS/DISPATCH_FAIL/DEADLETTER.
+Events and keys (examples)
+•	workflow.instance.started/completed/failed/force_cancelled → DeterministicOutboxKey.Instance(...)
+•	workflow.task.created/completed/assigned → DeterministicOutboxKey.Task(...)
+•	workflow.definition.published/unpublished → DeterministicOutboxKey.DefinitionPublished/Unpublished(...)
+Diagnostics and logging
+•	DefinitionService diagnostics (opt-in): set WF_ISO_DIAG=1 to emit ISO:… logs.
+•	Test-readable diagnostics: DefinitionService.IsolationDiag (ConcurrentQueue<string>) mirrors ISO lines.
+•	Visual Studio test output: use xUnit ITestOutputHelper via custom XunitOutputLoggerProvider and (optionally) Outbox.runsettings with LogConsoleOutput=true.
+Testing conventions
+•	DefinitionServiceBuilder:
+•	Recreates DbContext per tenant (TestDbContextFactory.Create(dbName, tenantId)) to align tenant filters and persistence.
+•	WithOutput(_output) to bridge logs to xUnit.
+•	Isolation tests:
+•	Multi-tenant unpublish force-cancel only touches same-tenant instances (confirmed via diagnostics).
+•	Outbox tests:
+•	Deterministic key stability and differentiation now assert DeterministicOutboxKey outputs.
+•	Concurrency/isolation (O12): SQLite-backed tests ensure (TenantId, IdempotencyKey) uniqueness and cross-tenant independence.
+Recent work (complete)
+•	O11 Deterministic Key Strategy:
+•	Implemented DeterministicOutboxKey; migrated producers/tests; legacy helper forwards; writer warns if keys missing.
+•	O12 Concurrency & Isolation:
+•	Parallel idempotent insert test (single row under contention).
+•	Cross-tenant same logical event → separate rows confirmed.
+Key environment and settings
+•	WF_ISO_DIAG=1: enable ISO diagnostics in DefinitionService.
+•	Outbox.runsettings: <LogConsoleOutput>true</LogConsoleOutput> to surface console logs during tests.
+•	ENABLE_TENANT_FILTERS_IN_TESTS: can control tenant filters in test contexts (DbContext also caches tenant id at construction).
+Known guarantees and constraints
+•	Tenant isolation enforced everywhere (queries, outbox uniqueness).
+•	Published workflows’ JSONDefinition immutable (service-level guard + DbContext runtime check).
+•	Deterministic keys are stable across restarts; normalization is lowercase + trimmed + colon-delimited; SHA-256 first 16 bytes.

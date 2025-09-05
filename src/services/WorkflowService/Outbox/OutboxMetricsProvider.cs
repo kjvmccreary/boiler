@@ -6,7 +6,7 @@ namespace WorkflowService.Outbox;
 
 public class OutboxMetricsProvider : IOutboxMetricsProvider
 {
-    private readonly IDbContextFactory<WorkflowDbContext> _dbFactory;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly OutboxOptions _options;
 
     private long _processedTotal;
@@ -24,10 +24,10 @@ public class OutboxMetricsProvider : IOutboxMetricsProvider
     private readonly RollingWindowAggregator _window;
 
     public OutboxMetricsProvider(
-        IDbContextFactory<WorkflowDbContext> dbFactory,
+        IServiceScopeFactory scopeFactory,
         IOptions<OutboxOptions> options)
     {
-        _dbFactory = dbFactory;
+        _scopeFactory = scopeFactory;
         _options = options.Value;
         _window = new RollingWindowAggregator(TimeSpan.FromMinutes(
             Math.Clamp(_options.RollingWindowMinutes <= 0 ? 5 : _options.RollingWindowMinutes, 1, 120)));
@@ -54,9 +54,10 @@ public class OutboxMetricsProvider : IOutboxMetricsProvider
     public async Task<OutboxMetricsSnapshot> GetSnapshotAsync(CancellationToken ct = default)
     {
         var now = DateTime.UtcNow;
-        await using var db = await _dbFactory.CreateDbContextAsync(ct);
+        using var scope = _scopeFactory.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<WorkflowDbContext>();
 
-        var backlogQuery = db.OutboxMessages.Where(m => m.ProcessedAt == null);
+        var backlogQuery = db.OutboxMessages.AsQueryable().Where(m => m.ProcessedAt == null);
         var backlogSize = await backlogQuery.CountAsync(ct);
         var failedPending = await backlogQuery.Where(m => m.RetryCount > 0 && !m.DeadLetter).CountAsync(ct);
         var deadLetterUnprocessed = await backlogQuery.Where(m => m.DeadLetter).CountAsync(ct);
@@ -67,7 +68,6 @@ public class OutboxMetricsProvider : IOutboxMetricsProvider
             .FirstOrDefaultAsync(ct);
 
         double? oldestAge = oldest == default ? null : (now - oldest).TotalSeconds;
-
         double failureRatioLast = _fetchedLast == 0 ? 0 : (double)_failedLast / _fetchedLast;
 
         var (pWin, fWin, gWin, fetchedWin, minutesWin) = _window.Snapshot();

@@ -1,87 +1,57 @@
-[9/5/2025 2:16:32.010 PM]  Interrupt: Enqueueing RunStatesOperation
-[9/5/2025 2:16:32.010 PM]  Enqueue operation 'RunStatesOperation', hashcode:61253814 
-[9/5/2025 2:16:32.010 PM]  Operation left in the the queue: 1
-[9/5/2025 2:16:32.010 PM]  	'RunStatesOperation', hashcode:61253814
-[9/5/2025 2:16:32.010 PM]  
+PS C:\Users\mccre\dev\boiler> docker logs boiler-workflow
+Unhandled exception. System.AggregateException: Some services are not able to be constructed (Error while validating the service descriptor 'ServiceType: Contracts.Services.IRoleService Lifetime: Scoped ImplementationType: Common.Services.RoleService': Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.) (Error while validating the service descriptor 'ServiceType: WorkflowService.Engine.Interfaces.IWorkflowRuntime Lifetime: Scoped ImplementationType: WorkflowService.Engine.WorkflowRuntime': Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.) (Error while validating the service descriptor 'ServiceType: WorkflowService.Engine.Interfaces.INodeExecutor Lifetime: Scoped ImplementationType: WorkflowService.Engine.Executors.HumanTaskExecutor': Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.)
+ ---> System.InvalidOperationException: Error while validating the service descriptor 'ServiceType: Contracts.Services.IRoleService Lifetime: Scoped ImplementationType: Common.Services.RoleService': Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.
+ ---> System.InvalidOperationException: Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.GetCallSite(ServiceDescriptor serviceDescriptor, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.ValidateService(ServiceDescriptor descriptor)
+   --- End of inner exception stack trace ---
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.ValidateService(ServiceDescriptor descriptor)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider..ctor(ICollection`1 serviceDescriptors, ServiceProviderOptions options)
+   --- End of inner exception stack trace ---
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider..ctor(ICollection`1 serviceDescriptors, ServiceProviderOptions options)
+   at Microsoft.Extensions.DependencyInjection.ServiceCollectionContainerBuilderExtensions.BuildServiceProvider(IServiceCollection services, ServiceProviderOptions options)
+   at Microsoft.Extensions.Hosting.HostApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.WebApplicationBuilder.Build()
+   at WorkflowService.Program.BuildApp(String[] args) in /src/src/services/WorkflowService/Program.cs:line 168
+   at WorkflowService.Program.Main(String[] args) in /src/src/services/WorkflowService/Program.cs:line 194
+ ---> (Inner Exception #1) System.InvalidOperationException: Error while validating the service descriptor 'ServiceType: WorkflowService.Engine.Interfaces.IWorkflowRuntime Lifetime: Scoped ImplementationType: WorkflowService.Engine.WorkflowRuntime': Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.
+ ---> System.InvalidOperationException: Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateCallSite(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateEnumerable(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateCallSite(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.GetCallSite(ServiceDescriptor serviceDescriptor, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.ValidateService(ServiceDescriptor descriptor)
+   --- End of inner exception stack trace ---
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.ValidateService(ServiceDescriptor descriptor)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider..ctor(ICollection`1 serviceDescriptors, ServiceProviderOptions options)<---
 
-[9/5/2025 2:16:32.011 PM]  Operation Dequeue : 'RunStatesOperation'
-[9/5/2025 2:16:32.516 PM]  Update Test run progress to 0/100.
-[9/5/2025 2:16:32.523 PM]  Building Test Projects
-[9/5/2025 2:16:32.719 PM]  Start building 2 containers.
-[9/5/2025 2:16:32.719 PM]  Skipping build for IProjectBasedTestContainers since no solution is open.
-[9/5/2025 2:16:32.719 PM]  No IBuildableTestContainers were found.
-[9/5/2025 2:16:32.719 PM]  Completed building containers.
-[9/5/2025 2:16:32.719 PM]  Start updating 2 containers.
-[9/5/2025 2:16:32.719 PM]  Updating container C:\Users\mccre\dev\boiler\tests\unit\ApiGateway.Tests\bin\Debug\net9.0\ApiGateway.Tests.dll.
-[9/5/2025 2:16:32.722 PM]  Updating container C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll.
-[9/5/2025 2:16:32.761 PM]  Completed updating containers.
-[9/5/2025 2:16:32.761 PM]  DiscoveryOperation<RunStatesOperation> Changed container count is 0
-[9/5/2025 2:16:32.763 PM]  Test run animation has started.
-[9/5/2025 2:16:32.765 PM]  Test run progress has started.
-[9/5/2025 2:16:32.786 PM]  Using runsettings file C:\Users\mccre\dev\boiler\Outbox.runsettings for C:\Users\mccre\dev\boiler\tests\unit\ApiGateway.Tests\bin\Debug\net9.0\ApiGateway.Tests.dll,
-C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll
-[9/5/2025 2:16:33.099 PM]  Using runsettings file C:\Users\mccre\dev\boiler\Outbox.runsettings for C:\Users\mccre\dev\boiler\tests\unit\ApiGateway.Tests\bin\Debug\net9.0\ApiGateway.Tests.dll,
-C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll
-[9/5/2025 2:16:33.102 PM]  ========== Starting test run ==========
-[9/5/2025 2:16:33.104 PM]  Tests run settings for C:\Users\mccre\dev\boiler\tests\unit\ApiGateway.Tests\bin\Debug\net9.0\ApiGateway.Tests.dll,C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll:
- <RunSettings>
-  <RunConfiguration>
-    <ResultsDirectory>C:\Users\mccre\dev\boiler\TestResults</ResultsDirectory>
-    <LogConsoleOutput>true</LogConsoleOutput>
-    <TargetFrameworkVersion>.NETCoreApp,Version=v9.0</TargetFrameworkVersion>
-    <!-- Optional: increase verbosity picked up by adapters -->
-    <Verbosity>minimal</Verbosity>
-    <SolutionDirectory>C:\Users\mccre\dev\boiler\</SolutionDirectory>
-    <CollectSourceInformation>False</CollectSourceInformation>
-  </RunConfiguration>
-</RunSettings>.
-[9/5/2025 2:16:33.333 PM]  Logging TestHost Diagnostics in file: C:\Users\mccre\AppData\Local\Temp\TestPlatformLogs\2025_09_05_13_30_48_27088\logs.host.25-09-05_14-16-33_12948_45.txt
-[9/5/2025 2:16:33.401 PM]  [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 9.0.7)
-[9/5/2025 2:16:33.436 PM]  [xUnit.net 00:00:00.03]   Starting:    ApiGateway.Tests
-[9/5/2025 2:16:34.225 PM]  [xUnit.net 00:00:00.82]   Finished:    ApiGateway.Tests
-[9/5/2025 2:16:34.318 PM]  Update Test run progress to 16/100.
-[9/5/2025 2:16:34.479 PM]  Logging TestHost Diagnostics in file: C:\Users\mccre\AppData\Local\Temp\TestPlatformLogs\2025_09_05_13_30_48_27088\logs.host.25-09-05_14-16-34_29224_45.txt
-[9/5/2025 2:16:34.538 PM]  [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.6+bf9b858c26 (64-bit .NET 9.0.7)
-[9/5/2025 2:16:34.591 PM]  [xUnit.net 00:00:00.05]   Starting:    WorkflowService.Tests
-[9/5/2025 2:16:35.094 PM] [Error] [xUnit.net 00:00:00.55]     WorkflowService.Tests.Outbox.OutboxIdempotencyTests.PublishInstanceStarted_AssignsDeterministicKey [FAIL]
-[9/5/2025 2:16:35.101 PM]  [xUnit.net 00:00:00.55]       Assert.Equal() Failure: Values differ
-[9/5/2025 2:16:35.102 PM]  [xUnit.net 00:00:00.55]       Expected: f9d1f053-c404-c8c7-3676-e7dfa1d4e7e9
-[9/5/2025 2:16:35.102 PM]  [xUnit.net 00:00:00.55]       Actual:   7445cee3-1887-b301-2dda-22e850cd9915
-[9/5/2025 2:16:35.105 PM]  [xUnit.net 00:00:00.56]       Stack Trace:
-[9/5/2025 2:16:35.106 PM]  [xUnit.net 00:00:00.56]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\OutboxIdempotencyTests.cs(98,0): at WorkflowService.Tests.Outbox.OutboxIdempotencyTests.PublishInstanceStarted_AssignsDeterministicKey()
-[9/5/2025 2:16:35.108 PM]  [xUnit.net 00:00:00.56]         --- End of stack trace from previous location ---
-[9/5/2025 2:16:35.127 PM] [Error] [xUnit.net 00:00:00.59]     WorkflowService.Tests.Outbox.EventPublisherOutboxTests.InstanceStarted_Should_Create_Outbox_With_Deterministic_Key [FAIL]
-[9/5/2025 2:16:35.129 PM]  [xUnit.net 00:00:00.59]       Assert.Equal() Failure: Values differ
-[9/5/2025 2:16:35.130 PM]  [xUnit.net 00:00:00.59]       Expected: cd7629b5-53b1-17e6-6b78-cc225abf1b29
-[9/5/2025 2:16:35.133 PM]  [xUnit.net 00:00:00.59]       Actual:   264eb910-507b-6d7d-7d1f-67958c8e714c
-[9/5/2025 2:16:35.135 PM]  [xUnit.net 00:00:00.59]       Stack Trace:
-[9/5/2025 2:16:35.137 PM]  [xUnit.net 00:00:00.59]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\EventPublisherOutboxTests.cs(149,0): at WorkflowService.Tests.Outbox.EventPublisherOutboxTests.InstanceStarted_Should_Create_Outbox_With_Deterministic_Key()
-[9/5/2025 2:16:35.138 PM]  [xUnit.net 00:00:00.59]         --- End of stack trace from previous location ---
-[9/5/2025 2:16:35.189 PM] [Error] [xUnit.net 00:00:00.65]     WorkflowService.Tests.Outbox.EventPublisherOutboxTests.TaskCreated_Should_Use_Deterministic_Key [FAIL]
-[9/5/2025 2:16:35.190 PM]  [xUnit.net 00:00:00.65]       Assert.Equal() Failure: Values differ
-[9/5/2025 2:16:35.198 PM]  [xUnit.net 00:00:00.65]       Expected: 5c3646fa-5309-94cb-c99d-2536b90b7622
-[9/5/2025 2:16:35.202 PM]  [xUnit.net 00:00:00.65]       Actual:   09917877-5562-6c00-36cf-b999785ca460
-[9/5/2025 2:16:35.203 PM]  [xUnit.net 00:00:00.65]       Stack Trace:
-[9/5/2025 2:16:35.205 PM]  [xUnit.net 00:00:00.65]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\EventPublisherOutboxTests.cs(189,0): at WorkflowService.Tests.Outbox.EventPublisherOutboxTests.TaskCreated_Should_Use_Deterministic_Key()
-[9/5/2025 2:16:35.207 PM]  [xUnit.net 00:00:00.65]         --- End of stack trace from previous location ---
-[9/5/2025 2:16:35.265 PM] [Error] [xUnit.net 00:00:00.72]     WorkflowService.Tests.Outbox.EventPublisherOutboxTests.InstanceCompleted_Deterministic_Key_Stable [FAIL]
-[9/5/2025 2:16:35.273 PM]  [xUnit.net 00:00:00.72]       Assert.Equal() Failure: Values differ
-[9/5/2025 2:16:35.275 PM]  [xUnit.net 00:00:00.72]       Expected: 6d64509e-2a9f-ad24-ab63-03a2fc5829ff
-[9/5/2025 2:16:35.276 PM]  [xUnit.net 00:00:00.72]       Actual:   20466ab5-523d-9a54-2161-e023dc637e2a
-[9/5/2025 2:16:35.277 PM]  [xUnit.net 00:00:00.72]       Stack Trace:
-[9/5/2025 2:16:35.277 PM]  [xUnit.net 00:00:00.72]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\EventPublisherOutboxTests.cs(255,0): at WorkflowService.Tests.Outbox.EventPublisherOutboxTests.InstanceCompleted_Deterministic_Key_Stable()
-[9/5/2025 2:16:35.278 PM]  [xUnit.net 00:00:00.72]         --- End of stack trace from previous location ---
-[9/5/2025 2:16:35.278 PM] [Error] [xUnit.net 00:00:00.73]     WorkflowService.Tests.Outbox.EventPublisherOutboxTests.DefinitionPublished_Twice_Should_Remain_Single_Row_Idempotent [FAIL]
-[9/5/2025 2:16:35.278 PM]  [xUnit.net 00:00:00.73]       Assert.Equal() Failure: Values differ
-[9/5/2025 2:16:35.280 PM]  [xUnit.net 00:00:00.73]       Expected: 36c0f5cc-702c-e017-8b04-9054ecc3af44
-[9/5/2025 2:16:35.281 PM]  [xUnit.net 00:00:00.73]       Actual:   d4db6088-b02c-c365-ed81-d722308889fe
-[9/5/2025 2:16:35.283 PM]  [xUnit.net 00:00:00.73]       Stack Trace:
-[9/5/2025 2:16:35.286 PM]  [xUnit.net 00:00:00.74]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\EventPublisherOutboxTests.cs(164,0): at WorkflowService.Tests.Outbox.EventPublisherOutboxTests.DefinitionPublished_Twice_Should_Remain_Single_Row_Idempotent()
-[9/5/2025 2:16:35.287 PM]  [xUnit.net 00:00:00.74]         --- End of stack trace from previous location ---
-[9/5/2025 2:16:35.289 PM]  [xUnit.net 00:00:00.74]   Finished:    WorkflowService.Tests
-[9/5/2025 2:16:35.340 PM]  Attachments processing not needed
-[9/5/2025 2:16:35.345 PM]  ========== Test run finished: 6 Tests (1 Passed, 5 Failed, 0 Skipped) run in 829 ms ==========
-[9/5/2025 2:16:35.395 PM]  Update Test run progress to 85/100.
-[9/5/2025 2:16:35.426 PM]  Update Test run progress to 100/100.
-[9/5/2025 2:16:35.428 PM]  Test run animation has stopped.
-[9/5/2025 2:16:35.430 PM]  Test run progress has stopped.
+ ---> (Inner Exception #2) System.InvalidOperationException: Error while validating the service descriptor 'ServiceType: WorkflowService.Engine.Interfaces.INodeExecutor Lifetime: Scoped ImplementationType: WorkflowService.Engine.Executors.HumanTaskExecutor': Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.
+ ---> System.InvalidOperationException: Unable to resolve service for type 'Contracts.Repositories.IRoleRepository' while attempting to activate 'Common.Services.RoleService'.
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateCallSite(ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateArgumentCallSites(ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain, ParameterInfo[] parameters, Boolean throwIfCallSiteNotFound)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.CreateConstructorCallSite(ResultCache lifetime, ServiceIdentifier serviceIdentifier, Type implementationType, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.TryCreateExact(ServiceDescriptor descriptor, ServiceIdentifier serviceIdentifier, CallSiteChain callSiteChain, Int32 slot)
+   at Microsoft.Extensions.DependencyInjection.ServiceLookup.CallSiteFactory.GetCallSite(ServiceDescriptor serviceDescriptor, CallSiteChain callSiteChain)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.ValidateService(ServiceDescriptor descriptor)
+   --- End of inner exception stack trace ---
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider.ValidateService(ServiceDescriptor descriptor)
+   at Microsoft.Extensions.DependencyInjection.ServiceProvider..ctor(ICollection`1 serviceDescriptors, ServiceProviderOptions options)<---
+
+PS C:\Users\mccre\dev\boiler>

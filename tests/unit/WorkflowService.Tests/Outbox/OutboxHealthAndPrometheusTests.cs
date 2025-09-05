@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -9,6 +10,7 @@ using Xunit;
 using Contracts.Services;
 using Microsoft.AspNetCore.Http;
 using WorkflowService.Domain.Models;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace WorkflowService.Tests.Outbox;
 
@@ -42,7 +44,6 @@ public class OutboxHealthAndPrometheusTests
     public async Task PrometheusFormatter_Contains_CoreMetrics()
     {
         using var ctx = CreateContext();
-        // seed one pending
         ctx.OutboxMessages.Add(new OutboxMessage
         {
             TenantId = 1,
@@ -55,7 +56,7 @@ public class OutboxHealthAndPrometheusTests
         ctx.SaveChanges();
 
         var opts = Options.Create(new OutboxOptions { EnableMetrics = true, EnablePrometheus = true });
-        var provider = new OutboxMetricsProvider(new DummyFactory(ctx), opts);
+        var provider = new OutboxMetricsProvider(new DummyScopeFactory(ctx), opts);
         provider.RecordCycle(1, 0, 1, 0);
 
         var snap = await provider.GetSnapshotAsync();
@@ -95,10 +96,11 @@ public class OutboxHealthAndPrometheusTests
                 FailedPendingRatioUnhealthy = 0.2,
                 OldestAgeWarnSeconds = 60,
                 OldestAgeUnhealthySeconds = 120
-            }
+            },
+            EnableMetrics = true
         });
 
-        var metrics = new OutboxMetricsProvider(new DummyFactory(ctx), opts);
+        var metrics = new OutboxMetricsProvider(new DummyScopeFactory(ctx), opts);
         metrics.RecordCycle(10, 0, 2, 0);
 
         var hc = new OutboxHealthCheck(metrics, opts);
@@ -107,12 +109,25 @@ public class OutboxHealthAndPrometheusTests
         Assert.Equal(Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Unhealthy, result.Status);
     }
 
-    private class DummyFactory : IDbContextFactory<WorkflowDbContext>
+    private sealed class DummyScopeFactory : IServiceScopeFactory
     {
         private readonly WorkflowDbContext _ctx;
-        public DummyFactory(WorkflowDbContext ctx) => _ctx = ctx;
-        public WorkflowDbContext CreateDbContext() => _ctx;
-        public Task<WorkflowDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult(_ctx);
+        public DummyScopeFactory(WorkflowDbContext ctx) => _ctx = ctx;
+        public IServiceScope CreateScope() => new DummyScope(_ctx);
+
+        private sealed class DummyScope : IServiceScope
+        {
+            public IServiceProvider ServiceProvider { get; }
+            public DummyScope(WorkflowDbContext ctx) => ServiceProvider = new DummyProvider(ctx);
+            public void Dispose() { }
+        }
+
+        private sealed class DummyProvider : IServiceProvider
+        {
+            private readonly WorkflowDbContext _ctx;
+            public DummyProvider(WorkflowDbContext ctx) => _ctx = ctx;
+            public object? GetService(Type serviceType) =>
+                serviceType == typeof(WorkflowDbContext) ? _ctx : null;
+        }
     }
 }
