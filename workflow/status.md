@@ -249,8 +249,9 @@ Metrics enabled:
 * Ensure SaveChanges interceptor or repository assigns IdempotencyKey if default(Guid). Tests:
 * OutboxMessage_Defaults_Assigned_OnAdd (IdempotencyKey auto-populated, ProcessedAt null).
 * OutboxMessage_Roundtrip_Persists_Values.
-O3: Producer Integration
-Tasks:
+
+### 🚧 (in progress) O3: Producer Integration
+## Tasks:
 * Update all places creating outbox rows (e.g., event publisher):
 * Accept optional idempotency seed parameters.
 * Provide deterministic key where logical duplication risk exists (e.g., publish definition published event multiple times).

@@ -2,56 +2,59 @@ Building Test Projects
 ========== Starting test run ==========
 [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.8.2+699d445a1a (64-bit .NET 9.0.7)
 [xUnit.net 00:00:00.05]   Starting:    WorkflowService.Tests
-dbug: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_REQUEST def=1 force=False tenant=1
-info: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_SUCCESS def=1 forceTerminate=False
-dbug: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_REQUEST def=1 force=False tenant=2
-dbug: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_REQUEST def=1 force=True tenant=1
-dbug: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_REQUEST def=1 force=False tenant=1
-warn: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_BLOCKED def=1 running=1 suspended=0
-info: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_FORCE_TERMINATE def=1 cancelledCount=1
-info: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_SUCCESS def=1 forceTerminate=True
-dbug: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_REQUEST def=1 force=True tenant=1
-dbug: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_REQUEST def=1 force=True tenant=1
-info: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_FORCE_TERMINATE def=1 cancelledCount=2
-info: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_FORCE_TERMINATE def=1 cancelledCount=2
-info: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_SUCCESS def=1 forceTerminate=True
-info: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_SUCCESS def=1 forceTerminate=True
-dbug: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_REQUEST def=1 force=False tenant=1
-info: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_SUCCESS def=1 forceTerminate=False
-dbug: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_REQUEST def=2 force=True tenant=2
-dbug: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_REQUEST def=1 force=False tenant=1
-warn: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_BLOCKED def=1 running=1 suspended=0
-dbug: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_REQUEST def=1 force=False tenant=1
-info: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_SUCCESS def=1 forceTerminate=False
-dbug: WorkflowService.Services.DefinitionService[0]
-      UNPUBLISH_REQUEST def=1 force=True tenant=1
-[xUnit.net 00:00:00.65]     WorkflowService.Tests.Definitions.MultiTenantIsolationTests.ForceTerminate_Does_Not_Cancel_OtherTenant_Instances [FAIL]
-[xUnit.net 00:00:00.65]       System.InvalidOperationException : Published workflow JSONDefinition is immutable. Create a new version.
-[xUnit.net 00:00:00.65]       Stack Trace:
-[xUnit.net 00:00:00.65]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Persistence\WorkflowDbContext.cs(155,0): at WorkflowService.Persistence.WorkflowDbContext.EnforceDefinitionJsonImmutability()
-[xUnit.net 00:00:00.65]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Persistence\WorkflowDbContext.cs(95,0): at WorkflowService.Persistence.WorkflowDbContext.SaveChangesAsync(CancellationToken cancellationToken)
-[xUnit.net 00:00:00.65]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\MultiTenantIsolationTests.cs(97,0): at WorkflowService.Tests.Definitions.MultiTenantIsolationTests.ForceTerminate_Does_Not_Cancel_OtherTenant_Instances()
-[xUnit.net 00:00:00.65]         --- End of stack trace from previous location ---
-[xUnit.net 00:00:00.65]   Finished:    WorkflowService.Tests
-========== Test run finished: 23 Tests (22 Passed, 1 Failed, 0 Skipped) run in 662 ms ==========
+[xUnit.net 00:00:00.72]     WorkflowService.Tests.Outbox.EventPublisherOutboxTests.InstanceCompleted_Deterministic_Key_Stable [FAIL]
+[xUnit.net 00:00:00.72]       Microsoft.EntityFrameworkCore.DbUpdateException : An error occurred while saving the entity changes. See the inner exception for details.
+[xUnit.net 00:00:00.72]       ---- Microsoft.Data.Sqlite.SqliteException : SQLite Error 19: 'UNIQUE constraint failed: OutboxMessages.TenantId, OutboxMessages.IdempotencyKey'.
+[xUnit.net 00:00:00.72]       Stack Trace:
+[xUnit.net 00:00:00.72]            at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.72]            at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.72]            at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.72]            at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.72]            at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.72]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.72]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.72]            at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.72]            at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.72]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Persistence\WorkflowDbContext.cs(113,0): at WorkflowService.Persistence.WorkflowDbContext.SaveChangesAsync(CancellationToken cancellationToken)
+[xUnit.net 00:00:00.72]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\EventPublisher.cs(455,0): at WorkflowService.Services.EventPublisher.CommitWithIdempotentProtectionAsync(String eventType, Int32 tenantId, Nullable`1 idempotencyKey, CancellationToken ct)
+[xUnit.net 00:00:00.72]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\EventPublisher.cs(206,0): at WorkflowService.Services.EventPublisher.PublishInstanceLifecycleAsync(WorkflowInstance instance, String phase, Nullable`1 keyOverride, CancellationToken ct)
+[xUnit.net 00:00:00.72]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\EventPublisherOutboxTests.cs(250,0): at WorkflowService.Tests.Outbox.EventPublisherOutboxTests.InstanceCompleted_Deterministic_Key_Stable()
+[xUnit.net 00:00:00.72]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.72]         ----- Inner Stack Trace -----
+[xUnit.net 00:00:00.72]            at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+[xUnit.net 00:00:00.72]            at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+[xUnit.net 00:00:00.72]            at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+[xUnit.net 00:00:00.72]            at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.72]            at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.72]            at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.72]            at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.72]            at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.75]     WorkflowService.Tests.Outbox.EventPublisherOutboxTests.DefinitionPublished_Twice_Should_Remain_Single_Row_Idempotent [FAIL]
+[xUnit.net 00:00:00.75]       Microsoft.EntityFrameworkCore.DbUpdateException : An error occurred while saving the entity changes. See the inner exception for details.
+[xUnit.net 00:00:00.75]       ---- Microsoft.Data.Sqlite.SqliteException : SQLite Error 19: 'UNIQUE constraint failed: OutboxMessages.TenantId, OutboxMessages.IdempotencyKey'.
+[xUnit.net 00:00:00.75]       Stack Trace:
+[xUnit.net 00:00:00.75]            at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.75]            at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.75]            at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.75]            at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.75]            at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.75]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.75]            at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.75]            at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.75]            at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.75]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Persistence\WorkflowDbContext.cs(113,0): at WorkflowService.Persistence.WorkflowDbContext.SaveChangesAsync(CancellationToken cancellationToken)
+[xUnit.net 00:00:00.75]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\EventPublisher.cs(455,0): at WorkflowService.Services.EventPublisher.CommitWithIdempotentProtectionAsync(String eventType, Int32 tenantId, Nullable`1 idempotencyKey, CancellationToken ct)
+[xUnit.net 00:00:00.75]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Services\EventPublisher.cs(415,0): at WorkflowService.Services.EventPublisher.PublishDefinitionLifecycleAsync(WorkflowDefinition definition, String phase, Nullable`1 keyOverride, CancellationToken ct)
+[xUnit.net 00:00:00.75]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Outbox\EventPublisherOutboxTests.cs(167,0): at WorkflowService.Tests.Outbox.EventPublisherOutboxTests.DefinitionPublished_Twice_Should_Remain_Single_Row_Idempotent()
+[xUnit.net 00:00:00.75]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.75]         ----- Inner Stack Trace -----
+[xUnit.net 00:00:00.75]            at Microsoft.Data.Sqlite.SqliteException.ThrowExceptionForRC(Int32 rc, sqlite3 db)
+[xUnit.net 00:00:00.75]            at Microsoft.Data.Sqlite.SqliteDataReader.NextResult()
+[xUnit.net 00:00:00.75]            at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReader(CommandBehavior behavior)
+[xUnit.net 00:00:00.75]            at Microsoft.Data.Sqlite.SqliteCommand.ExecuteReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.75]            at Microsoft.Data.Sqlite.SqliteCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.75]            at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.75]            at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.75]            at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+[xUnit.net 00:00:00.75]   Finished:    WorkflowService.Tests
+========== Test run finished: 2 Tests (0 Passed, 2 Failed, 0 Skipped) run in 762 ms ==========

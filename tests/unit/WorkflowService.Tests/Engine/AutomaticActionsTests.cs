@@ -3,6 +3,8 @@ using System.Net.Http;
 using FluentAssertions;
 using Moq;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using WorkflowService.Domain.Models;
 using WorkflowService.Engine;
 using WorkflowService.Engine.AutomaticActions;
@@ -104,9 +106,11 @@ $@"{{
         var registry = new AutomaticActionRegistry(actionExecutors);
         var loggerAuto = CreateMockLogger<AutomaticExecutor>();
         var publisherLogger = CreateMockLogger<EventPublisher>();
-        IEventPublisher publisher = new EventPublisher(DbContext, publisherLogger.Object);
 
-        // Diagnostics dependencies (new constructor params)
+        // Real OutboxWriter so events queue properly (no assertions needed on outbox here)
+        IOutboxWriter outboxWriter = new OutboxWriter(DbContext, new NullLogger<OutboxWriter>());
+        IEventPublisher publisher = new EventPublisher(DbContext, publisherLogger.Object, outboxWriter);
+
         var opts = Options.Create(new WorkflowDiagnosticsOptions
         {
             EnableAutomaticTrace = trace,
@@ -290,11 +294,10 @@ $@"{{
         instanceEvents.Should().Contain("Suspended");
     }
 
-    // NEW: Explicit test verifying Instance Failed event emitted for failInstance/default policy
     [Fact]
     public async Task Automatic_UnknownExecutor_Should_Emit_InstanceFailed_Event()
     {
-        var defJson = BuildDefinition(@"""action"":{""kind"":""notRegistered""}"); // default policy = failInstance
+        var defJson = BuildDefinition(@"""action"":{""kind"":""notRegistered""}");
         Preflight(defJson);
         var defId = AddDefinition(defJson);
 

@@ -86,6 +86,9 @@ public class Program
         builder.Services.AddScoped<IConditionEvaluator, JsonLogicConditionEvaluator>();
         builder.Services.AddScoped<IWorkflowRuntime, WorkflowRuntime>();
 
+        // NEW: Outbox writer (idempotent enqueue helper)
+        builder.Services.AddScoped<IOutboxWriter, OutboxWriter>();
+
         // Pruning (C1)
         builder.Services.Configure<WorkflowPruningOptions>(
             builder.Configuration.GetSection("Workflow:Pruning"));
@@ -109,11 +112,9 @@ public class Program
                     EnableAutomaticTrace = false,
                     AutomaticBufferSize = 64
                 })));
-        // New diagnostics service
         builder.Services.AddScoped<IWorkflowDiagnosticsService, WorkflowDiagnosticsService>();
 
         builder.Services.AddHostedService<TimerWorker>();
-        // B2: Join timeout scanner
         builder.Services.Configure<JoinTimeoutOptions>(builder.Configuration.GetSection("Workflow:JoinTimeouts"));
         builder.Services.AddHostedService<JoinTimeoutWorker>();
 
@@ -124,11 +125,10 @@ public class Program
             options.AddPolicy("workflow.admin", p => p.RequireClaim("permission", "workflow.admin"));
         });
 
-        // Register gateway strategies (add abTest)
-        builder.Services.AddScoped<IGatewayStrategy, AbTestGatewayStrategy>(); // NEW
-        builder.Services.AddScoped<IGatewayStrategy, FeatureFlagGatewayStrategy>(); // NEW A2
-        builder.Services.AddScoped<IFeatureFlagProvider, NoopFeatureFlagProvider>(); // Default provider
-        builder.Services.AddScoped<IFeatureFlagFallbackEmitter, FeatureFlagFallbackEmitter>(); // Fallback event emitter
+        builder.Services.AddScoped<IGatewayStrategy, AbTestGatewayStrategy>();
+        builder.Services.AddScoped<IGatewayStrategy, FeatureFlagGatewayStrategy>();
+        builder.Services.AddScoped<IFeatureFlagProvider, NoopFeatureFlagProvider>();
+        builder.Services.AddScoped<IFeatureFlagFallbackEmitter, FeatureFlagFallbackEmitter>();
 
         var app = builder.Build();
 

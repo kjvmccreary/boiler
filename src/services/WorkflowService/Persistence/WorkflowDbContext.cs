@@ -25,11 +25,11 @@ public class WorkflowDbContext : DbContext
         _logger = logger;
     }
 
-    public DbSet<WorkflowDefinition> WorkflowDefinitions { get; set; }
-    public DbSet<WorkflowInstance> WorkflowInstances { get; set; }
-    public DbSet<WorkflowTask> WorkflowTasks { get; set; }
-    public DbSet<WorkflowEvent> WorkflowEvents { get; set; }
-    public DbSet<OutboxMessage> OutboxMessages { get; set; }
+    public DbSet<WorkflowDefinition> WorkflowDefinitions { get; set; } = default!;
+    public DbSet<WorkflowInstance> WorkflowInstances { get; set; } = default!;
+    public DbSet<WorkflowTask> WorkflowTasks { get; set; } = default!;
+    public DbSet<WorkflowEvent> WorkflowEvents { get; set; } = default!;
+    public DbSet<OutboxMessage> OutboxMessages { get; set; } = default!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -46,22 +46,19 @@ public class WorkflowDbContext : DbContext
 
     private static bool ShouldEnableTenantFiltersInTests()
     {
-        // Explicit opt-in for tests
         var flag = Environment.GetEnvironmentVariable("ENABLE_TENANT_FILTERS_IN_TESTS");
-        if (string.Equals(flag, "true", StringComparison.OrdinalIgnoreCase))
-            return true;
-        return false;
+        return string.Equals(flag, "true", StringComparison.OrdinalIgnoreCase);
     }
 
     private void ApplyTenantQueryFilters(ModelBuilder modelBuilder)
     {
-        var isTestEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
-                               Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Testing" ||
-                               AppDomain.CurrentDomain.GetAssemblies()
-                                   .Any(a => a.FullName?.Contains("xunit") == true ||
-                                            a.FullName?.Contains("Microsoft.VisualStudio.TestPlatform") == true);
+        var isTestEnvironment =
+            Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
+            Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Testing" ||
+            AppDomain.CurrentDomain.GetAssemblies()
+                .Any(a => a.FullName?.Contains("xunit") == true ||
+                          a.FullName?.Contains("Microsoft.VisualStudio.TestPlatform") == true);
 
-        // NEW: allow enabling filters in tests when explicitly requested
         if (isTestEnvironment && !ShouldEnableTenantFiltersInTests())
             return;
 
@@ -86,28 +83,42 @@ public class WorkflowDbContext : DbContext
             if (task.IsCompleted) return task.Result;
             return null;
         }
-        catch { return null; }
+        catch
+        {
+            return null;
+        }
     }
+
+    private bool IsPostgresProvider =>
+        Database.ProviderName?.IndexOf("Npgsql", StringComparison.OrdinalIgnoreCase) >= 0;
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        // Immutability guard BEFORE transaction commit
         EnforceDefinitionJsonImmutability();
 
-        _logger.LogInformation("🔍 WorkflowDbContext: SaveChangesAsync starting");
         var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
 
+        // If no tenant ID, proceed (some tests seed without explicit tenant context)
         if (!tenantId.HasValue)
         {
-            _logger.LogWarning("No tenant ID – proceeding (may fail on constraints).");
             UpdateTimestamps();
             return await base.SaveChangesAsync(cancellationToken);
         }
 
+        // For non-Postgres providers (SQLite/InMemory) skip session variable logic
+        if (!IsPostgresProvider)
+        {
+            SetTenantIdForNewEntities(tenantId.Value);
+            UpdateTimestamps();
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+
+        // Postgres path with session variable + transaction
         try
         {
             var connection = Database.GetDbConnection();
             var strategy = Database.CreateExecutionStrategy();
+
             return await strategy.ExecuteAsync(async () =>
             {
                 if (connection.State != ConnectionState.Open)
@@ -115,6 +126,7 @@ public class WorkflowDbContext : DbContext
 
                 await using var tx = await Database.BeginTransactionAsync(cancellationToken);
 
+                // Postgres-specific session tenant context
                 await Database.ExecuteSqlRawAsync(
                     "SELECT set_config('app.tenant_id', {0}, true)",
                     tenantId.Value.ToString());
@@ -129,6 +141,7 @@ public class WorkflowDbContext : DbContext
         }
         catch (InvalidOperationException)
         {
+            // Fallback if execution strategy / connection not available
             SetTenantIdForNewEntities(tenantId.Value);
             UpdateTimestamps();
             return await base.SaveChangesAsync(cancellationToken);
@@ -204,13 +217,8 @@ public class WorkflowDbContext : DbContext
             entity.HasIndex(e => new { e.TenantId, e.IsPublished });
             entity.Property(e => e.JSONDefinition).IsRequired();
 
-            var isTestEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
-                                   Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Testing" ||
-                                   AppDomain.CurrentDomain.GetAssemblies()
-                                       .Any(a => a.FullName?.Contains("xunit") == true ||
-                                                a.FullName?.Contains("Microsoft.VisualStudio.TestPlatform") == true);
-
-            if (!isTestEnvironment)
+            var isTest = IsTestEnvironment();
+            if (!isTest)
             {
                 entity.Property(e => e.JSONDefinition).HasColumnType("jsonb");
                 entity.ToTable(t => t.HasCheckConstraint("CK_WorkflowDefinition_TenantId",
@@ -229,13 +237,8 @@ public class WorkflowDbContext : DbContext
             entity.Property(e => e.CurrentNodeIds);
             entity.Property(e => e.Context);
 
-            var isTestEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
-                                   Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Testing" ||
-                                   AppDomain.CurrentDomain.GetAssemblies()
-                                       .Any(a => a.FullName?.Contains("xunit") == true ||
-                                                a.FullName?.Contains("Microsoft.VisualStudio.TestPlatform") == true);
-
-            if (!isTestEnvironment)
+            var isTest = IsTestEnvironment();
+            if (!isTest)
             {
                 entity.Property(e => e.CurrentNodeIds).HasColumnType("jsonb");
                 entity.Property(e => e.Context).HasColumnType("jsonb");
@@ -254,13 +257,8 @@ public class WorkflowDbContext : DbContext
             entity.HasIndex(e => new { e.TenantId, e.DueDate });
             entity.Property(e => e.Data);
 
-            var isTestEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
-                                   Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Testing" ||
-                                   AppDomain.CurrentDomain.GetAssemblies()
-                                       .Any(a => a.FullName?.Contains("xunit") == true ||
-                                                a.FullName?.Contains("Microsoft.VisualStudio.TestPlatform") == true);
-
-            if (!isTestEnvironment)
+            var isTest = IsTestEnvironment();
+            if (!isTest)
             {
                 entity.Property(e => e.Data).HasColumnType("jsonb");
                 entity.ToTable(t => t.HasCheckConstraint("CK_WorkflowTask_TenantId",
@@ -277,13 +275,8 @@ public class WorkflowDbContext : DbContext
             entity.HasIndex(e => new { e.TenantId, e.Type, e.OccurredAt });
             entity.Property(e => e.Data);
 
-            var isTestEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
-                                   Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Testing" ||
-                                   AppDomain.CurrentDomain.GetAssemblies()
-                                       .Any(a => a.FullName?.Contains("xunit") == true ||
-                                                a.FullName?.Contains("Microsoft.VisualStudio.TestPlatform") == true);
-
-            if (!isTestEnvironment)
+            var isTest = IsTestEnvironment();
+            if (!isTest)
             {
                 entity.Property(e => e.Data).HasColumnType("jsonb");
                 entity.ToTable(t => t.HasCheckConstraint("CK_WorkflowEvent_TenantId",
@@ -302,23 +295,24 @@ public class WorkflowDbContext : DbContext
             entity.HasIndex(e => e.NextRetryAt);
             entity.HasIndex(e => new { e.TenantId, e.IdempotencyKey }).IsUnique();
 
-            // Filtered index for backlog scanning (ProcessedAt IS NULL)
             entity.HasIndex(nameof(OutboxMessage.TenantId), nameof(OutboxMessage.CreatedAt))
                   .HasDatabaseName("IDX_Outbox_Unprocessed")
                   .HasFilter("\"ProcessedAt\" IS NULL");
 
             entity.Property(e => e.EventData);
 
-            var isTestEnvironment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
-                                   Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Testing" ||
-                                   AppDomain.CurrentDomain.GetAssemblies()
-                                       .Any(a => a.FullName?.Contains("xunit") == true ||
-                                                a.FullName?.Contains("Microsoft.VisualStudio.TestPlatform") == true);
-
-            if (!isTestEnvironment)
+            var isTest = IsTestEnvironment();
+            if (!isTest)
             {
                 entity.Property(e => e.EventData).HasColumnType("jsonb");
             }
         });
     }
+
+    private bool IsTestEnvironment() =>
+        Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Testing" ||
+        Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT") == "Testing" ||
+        AppDomain.CurrentDomain.GetAssemblies()
+            .Any(a => a.FullName?.Contains("xunit") == true ||
+                      a.FullName?.Contains("Microsoft.VisualStudio.TestPlatform") == true);
 }
