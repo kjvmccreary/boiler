@@ -7,5 +7,7 @@ public class OutboxOptions
     public int MaxRetries { get; set; } = 5;
     public int BaseRetryDelaySeconds { get; set; } = 10;
     public bool UseExponentialBackoff { get; set; } = false;
+    public double JitterRatio { get; set; } = 0.20; // 20% jitter
     public int MaxErrorTextLength { get; set; } = 2000;
+    public bool EnableMetrics { get; set; } = true;
 }

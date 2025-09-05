@@ -273,14 +273,14 @@ Tasks:
 * Provide helper TryAddOutboxAsync(TenantId, key, factory) that re-queries on conflict. Tests:
 * TryAddOutbox_Twice_SameKey_SingleRowExists.
 * TryAddOutbox_Parallel_Inserts_SingleRow (multi-thread simulation / race).
-### 🚧 (in progress) 06 Retry / Backoff Policy
+### ✅ DONE 06 Retry / Backoff Policy
 Tasks:
 * Add configuration: MaxRetries, BaseDelay, Jitter.
 * Implement backoff evaluation (e.g., exponential for next attempt).
 * Dispatcher respects next-attempt time (optional: add NextAttemptAt column later; for MVP simple constant delay). Tests:
 * Dispatcher_Retry_Until_MaxRetries_Reached.
 * Dispatcher_NoRetry_After_MaxRetries (still unprocessed but flagged).
-O7: Observability & Metrics
+### 🚧 (in progress) O7 Observability & Metrics
 Tasks:
 * Add log lines:
 * OUTBOX_WORKER_FETCH count=X

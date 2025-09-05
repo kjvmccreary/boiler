@@ -143,6 +143,12 @@ public class Program
         builder.Services.AddScoped<OutboxDispatcherInterface, OutboxDispatcher>();
         builder.Services.AddHostedService<OutboxBackgroundWorker>();
 
+        // Add DbContext factory for metrics (no extra pool for now)
+        builder.Services.AddDbContextFactory<WorkflowDbContext>();
+
+        // Metrics provider (optional, controlled by options)
+        builder.Services.AddSingleton<IOutboxMetricsProvider, OutboxMetricsProvider>();
+
         var app = builder.Build();
 
         app.UseSerilogRequestLogging();
