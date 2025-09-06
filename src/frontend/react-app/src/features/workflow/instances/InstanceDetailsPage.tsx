@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import type { ReactElement } from 'react';
 import {
   Box,
   Typography,
@@ -27,6 +28,8 @@ import {
   Visibility as ViewIcon,
   Assignment as TaskIcon,
   Timeline as TimelineIcon,
+  Done as DoneIcon,
+  HowToReg as ClaimIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { workflowService } from '@/services/workflow.service';
@@ -54,14 +57,17 @@ export function InstanceDetailsPage() {
   const [eventsLoading] = useState(false);
   const [tasksLoading] = useState(false);
 
+  const [claimingTaskId, setClaimingTaskId] = useState<number | null>(null);
+  const [completingTaskId, setCompletingTaskId] = useState<number | null>(null);
+
   const navigate = useNavigate();
   const { currentTenant } = useTenant();
 
-  const loadSnapshot = async () => {
+  const loadSnapshot = useCallback(async () => {
     if (!id) return;
     try {
       setLoading(true);
-      const snapshot: InstanceRuntimeSnapshotDto = await workflowService.getRuntimeSnapshot(parseInt(id));
+      const snapshot: InstanceRuntimeSnapshotDto = await workflowService.getRuntimeSnapshot(parseInt(id, 10));
       setInstance(snapshot.instance);
       setTasks(snapshot.tasks);
       setEvents(snapshot.events);
@@ -74,11 +80,22 @@ export function InstanceDetailsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     if (currentTenant && id) loadSnapshot();
-  }, [currentTenant, id]);
+  }, [currentTenant, id, loadSnapshot]);
+
+  // Refresh when window regains focus (helps after completing a task in another tab / page)
+  useEffect(() => {
+    const onFocus = () => {
+      if (instance?.status === 'Running') {
+        loadSnapshot();
+      }
+    };
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [instance?.status, loadSnapshot]);
 
   const handleRefresh = () => loadSnapshot();
 
@@ -112,6 +129,32 @@ export function InstanceDetailsPage() {
       loadSnapshot();
     } catch {
       toast.error('Failed to resume workflow instance');
+    }
+  };
+
+  const handleClaimTask = async (taskId: number) => {
+    try {
+      setClaimingTaskId(taskId);
+      await workflowService.claimTask(taskId, {});
+      toast.success(`Task ${taskId} claimed`);
+      await loadSnapshot();
+    } catch {
+      toast.error('Failed to claim task');
+    } finally {
+      setClaimingTaskId(null);
+    }
+  };
+
+  const handleCompleteTask = async (taskId: number) => {
+    try {
+      setCompletingTaskId(taskId);
+      await workflowService.completeTask(taskId, { completionData: 'Completed via Instance Details' });
+      toast.success(`Task ${taskId} completed`);
+      await loadSnapshot();
+    } catch {
+      toast.error('Failed to complete task');
+    } finally {
+      setCompletingTaskId(null);
     }
   };
 
@@ -188,15 +231,49 @@ export function InstanceDetailsPage() {
       field: 'actions',
       type: 'actions',
       headerName: 'Actions',
-      width: 100,
-      getActions: (params: GridRowParams) => [
-        <GridActionsCellItem
-          key="view"
-          icon={<ViewIcon />}
-          label="View Task"
-          onClick={() => navigate(`/app/workflow/tasks/${params.id}`)}
-        />
-      ]
+      width: 140,
+      getActions: (params: GridRowParams) => {
+        const row = params.row as TaskSummaryDto;
+        // Start with base view action (let inference handle element typing)
+        const actions = [
+          <GridActionsCellItem
+            key="view"
+            icon={<ViewIcon />}
+            label="View Task"
+            onClick={() => navigate(`/app/workflow/tasks/${params.id}`)}
+            showInMenu={false}
+          />
+        ];
+
+        if (instance?.status === 'Running') {
+          if (['Created', 'Assigned'].includes(row.status) && claimingTaskId !== row.id) {
+            actions.push(
+              <GridActionsCellItem
+                key="claim"
+                icon={<ClaimIcon />}
+                label="Claim"
+                disabled={claimingTaskId === row.id || completingTaskId === row.id}
+                onClick={() => handleClaimTask(row.id)}
+                showInMenu={false}
+              />
+            );
+          }
+          if (['Claimed', 'InProgress'].includes(row.status) && completingTaskId !== row.id) {
+            actions.push(
+              <GridActionsCellItem
+                key="complete"
+                icon={<DoneIcon />}
+                label="Complete"
+                disabled={completingTaskId === row.id || claimingTaskId === row.id}
+                onClick={() => handleCompleteTask(row.id)}
+                showInMenu={false}
+              />
+            );
+          }
+        }
+
+        return actions;
+      }
     }
   ];
 
@@ -357,21 +434,21 @@ export function InstanceDetailsPage() {
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
             Visual overlay of active, completed, overdue and traversed path.
           </Typography>
-          <DefinitionDiagram
-            jsonDefinition={definitionJson}
-            currentNodeIds={currentNodeIds}
-            tasks={tasks
-              .map(t => ({
-                nodeId: t.nodeId || '',
-                status: t.status as string,
-                dueDate: t.dueDate
-              }))
-              .filter(t => t.nodeId)}
-            traversedEdgeIds={traversedEdgeIds}
-            visitedNodeIds={visitedNodeIds}
-            instanceStatus={instance.status}
-            dueSoonMinutes={15}
-          />
+            <DefinitionDiagram
+              jsonDefinition={definitionJson}
+              currentNodeIds={currentNodeIds}
+              tasks={tasks
+                .map(t => ({
+                  nodeId: t.nodeId || '',
+                  status: t.status as string,
+                  dueDate: t.dueDate
+                }))
+                .filter(t => t.nodeId)}
+              traversedEdgeIds={traversedEdgeIds}
+              visitedNodeIds={visitedNodeIds}
+              instanceStatus={instance.status}
+              dueSoonMinutes={15}
+            />
         </CardContent>
       </Card>
 
