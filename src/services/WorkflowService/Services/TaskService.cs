@@ -192,7 +192,19 @@ public class TaskService : ITaskService
             if (!currentUserId.HasValue)
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("User context required");
 
-            await _workflowRuntime.CompleteTaskAsync(taskId, request.CompletionData ?? "{}", currentUserId.Value, cancellationToken, autoCommit: false);
+            // Let runtime perform task + progression (no auto-commit so we persist here)
+            await _workflowRuntime.CompleteTaskAsync(
+                taskId,
+                request.CompletionData ?? "{}",
+                currentUserId.Value,
+                cancellationToken,
+                autoCommit: false);
+
+            // Persist any status / event / outbox changes made by runtime
+            if (_context.ChangeTracker.HasChanges())
+                await _context.SaveChangesAsync(cancellationToken);
+            else
+                _logger.LogDebug("WF_TASK_COMPLETE_NO_CHANGES TaskId={TaskId}", taskId);
 
             var task = await _context.WorkflowTasks
                 .Include(t => t.WorkflowInstance)
@@ -201,12 +213,14 @@ public class TaskService : ITaskService
             if (task == null)
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task not found");
 
-            // Notify user + tenant (completion affects counts & available tasks downstream)
             await SafeNotifyUser(task.TenantId, currentUserId.Value, cancellationToken);
             await SafeNotifyTenant(task.TenantId, cancellationToken);
 
             var dto = _mapper.Map<WorkflowTaskDto>(task);
-            _logger.LogInformation("User {UserId} completed task {TaskId}", currentUserId.Value, taskId);
+            _logger.LogInformation(
+                "User {UserId} completed task {TaskId} InstanceStatus={InstanceStatus}",
+                currentUserId.Value, taskId, task.WorkflowInstance.Status);
+
             return ApiResponseDto<WorkflowTaskDto>.SuccessResult(dto, "Task completed successfully");
         }
         catch (Exception ex)

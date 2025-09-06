@@ -964,6 +964,13 @@ public class WorkflowRuntime : IWorkflowRuntime
     {
         if (instance.Status != InstanceStatus.Running) return;
 
+        // FIX: Flush pending changes (e.g. a task just marked Completed) so DB queries
+        // like CancelOpenTasksAsync see the updated state and do not "re-cancel" it.
+        if (_dirty)
+        {
+            await SaveIfDirtyAsync(); // persists task.Status = Completed, events, etc.
+        }
+
         await CancelOpenTasksAsync(instance, "instance-completed", default);
         instance.Status = InstanceStatus.Completed;
         instance.CompletedAt = DateTime.UtcNow;
@@ -1104,17 +1111,61 @@ public class WorkflowRuntime : IWorkflowRuntime
         try
         {
             var context = JsonSerializer.Deserialize<Dictionary<string, object>>(instance.Context) ?? new();
-            var completion = string.IsNullOrWhiteSpace(completionData)
-                ? new Dictionary<string, object>()
-                : JsonSerializer.Deserialize<Dictionary<string, object>>(completionData) ?? new();
+            object valueToStore;
 
-            context[$"task_{nodeId}"] = completion;
+            if (string.IsNullOrWhiteSpace(completionData))
+                valueToStore = new Dictionary<string, object>();
+            else if (IsLikelyJson(completionData) && TryDeserializeDictionary(completionData, out var parsed))
+                valueToStore = parsed!;
+            else
+                valueToStore = new Dictionary<string, object> { ["raw"] = completionData };
+
+            context[$"task_{nodeId}"] = valueToStore;
+
+            // (Optional) version tracking placeholder removed (previous meta variable was unused)
+
             instance.Context = JsonSerializer.Serialize(context);
             MarkDirty();
+
+            // Emit normalized context update event
+            _ = CreateEventAsync(instance.Id,
+                "Task",
+                "Context_Updated",
+                JsonSerializer.Serialize(new {
+                    taskNodeId = nodeId,
+                    taskKey = $"task_{nodeId}",
+                    appliedAtUtc = DateTime.UtcNow,
+                    dataShape = valueToStore is Dictionary<string, object> dict && dict.ContainsKey("raw") ? "wrapped" : "json",
+                    keys = (valueToStore as Dictionary<string, object>)?.Keys
+                }),
+                null);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "WF_CONTEXT_UPDATE_FAIL Instance={InstanceId} Node={NodeId}", instance.Id, nodeId);
+        }
+    }
+
+    private static bool IsLikelyJson(string s)
+    {
+        s = s.Trim();
+        if (s.Length < 2) return false;
+        if ((s.StartsWith("{") && s.EndsWith("}")) || (s.StartsWith("[") && s.EndsWith("]")))
+            return true;
+        return false;
+    }
+
+    private static bool TryDeserializeDictionary(string json, out Dictionary<string, object>? dict)
+    {
+        try
+        {
+            dict = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
+            return dict != null;
+        }
+        catch
+        {
+            dict = null;
+            return false;
         }
     }
 
