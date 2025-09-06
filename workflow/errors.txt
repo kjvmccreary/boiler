@@ -1,484 +1,102 @@
-[9/6/2025 12:42:32.266 PM]  Interrupt: Enqueueing RunStatesOperation
-[9/6/2025 12:42:32.267 PM]  Enqueue operation 'RunStatesOperation', hashcode:17995065 
-[9/6/2025 12:42:32.267 PM]  Operation left in the the queue: 1
-[9/6/2025 12:42:32.267 PM]  	'RunStatesOperation', hashcode:17995065
-[9/6/2025 12:42:32.267 PM]  
-
-[9/6/2025 12:42:32.267 PM]  Operation Dequeue : 'RunStatesOperation'
-[9/6/2025 12:42:32.550 PM]  Update Test run progress to 0/100.
-[9/6/2025 12:42:32.623 PM]  Building Test Projects
-[9/6/2025 12:42:32.848 PM]  Start building 2 containers.
-[9/6/2025 12:42:32.849 PM]  Skipping build for IProjectBasedTestContainers since no solution is open.
-[9/6/2025 12:42:32.849 PM]  No IBuildableTestContainers were found.
-[9/6/2025 12:42:32.849 PM]  Completed building containers.
-[9/6/2025 12:42:32.849 PM]  Start updating 2 containers.
-[9/6/2025 12:42:32.849 PM]  Updating container C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\bin\Debug\net9.0\UserService.IntegrationTests.dll.
-[9/6/2025 12:42:32.856 PM]  Updating container C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll.
-[9/6/2025 12:42:32.907 PM]  Completed updating containers.
-[9/6/2025 12:42:32.908 PM]  DiscoveryOperation<RunStatesOperation> Changed container count is 0
-[9/6/2025 12:42:32.927 PM]  Test run animation has started.
-[9/6/2025 12:42:33.204 PM]  Test run progress has started.
-[9/6/2025 12:42:33.832 PM]  ========== Starting test run ==========
-[9/6/2025 12:42:33.834 PM]  Tests run settings for C:\Users\mccre\dev\boiler\tests\integration\UserService.IntegrationTests\bin\Debug\net9.0\UserService.IntegrationTests.dll,C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll:
- <RunSettings>
-  <RunConfiguration>
-    <ResultsDirectory>C:\Users\mccre\dev\boiler\TestResults</ResultsDirectory>
-    <SolutionDirectory>C:\Users\mccre\dev\boiler\</SolutionDirectory>
-    <CollectSourceInformation>False</CollectSourceInformation>
-  </RunConfiguration>
-</RunSettings>.
-[9/6/2025 12:42:34.049 PM]  Logging TestHost Diagnostics in file: C:\Users\mccre\AppData\Local\Temp\TestPlatformLogs\2025_09_06_09_14_38_15756\logs.host.25-09-06_12-42-33_86421_27.txt
-[9/6/2025 12:42:34.104 PM]  [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.3.1+6b60a9e56a (64-bit .NET 9.0.7)
-[9/6/2025 12:42:34.155 PM]  [xUnit.net 00:00:00.05]   Starting:    UserService.IntegrationTests
-[9/6/2025 12:42:34.239 PM]  === UserService Startup Diagnostics ===
-[9/6/2025 12:42:34.241 PM]  Environment: Testing
-[9/6/2025 12:42:34.242 PM]  Application Name: UserService
-[9/6/2025 12:42:34.247 PM]  Content Root: C:\Users\mccre\dev\boiler\src\services\UserService
-[9/6/2025 12:42:34.252 PM]  Running in Container: 
-[9/6/2025 12:42:34.254 PM]  [Startup] Monitoring:Enabled raw config value = 'False'
-[9/6/2025 12:42:34.256 PM]  ?? Registering base services...
-[9/6/2025 12:42:34.258 PM]  ? Base services registered
-[9/6/2025 12:42:34.258 PM]  ?? Configuring Swagger...
-[9/6/2025 12:42:34.259 PM]  ? Swagger configured
-[9/6/2025 12:42:34.259 PM]  ?? Registering common services...
-[9/6/2025 12:42:34.261 PM]  ? Common services registered
-[9/6/2025 12:42:34.261 PM]  ?? Configuring Redis...
-[9/6/2025 12:42:34.263 PM]  ?? Redis connection string resolved to: localhost:6379
-[9/6/2025 12:42:34.263 PM]  ?? Performance/Testing environment: True
-[9/6/2025 12:42:34.264 PM]  ? Using in-memory cache services (Performance/Testing mode)
-[9/6/2025 12:42:34.265 PM]  ? Cache services configured
-[9/6/2025 12:42:34.265 PM]  ?? Registering database services...
-[9/6/2025 12:42:34.265 PM]  ? Database services registered
-[9/6/2025 12:42:34.267 PM]  ?? Registering user services...
-[9/6/2025 12:42:34.267 PM]  ? User services registered
-[9/6/2025 12:42:34.268 PM]  ?? Registering Enhanced Security and Monitoring services...
-[9/6/2025 12:42:34.268 PM]  ? Enhanced Security and Monitoring services registered successfully
-[9/6/2025 12:42:34.268 PM]  ?? Registering Compliance and Alert services...
-[9/6/2025 12:42:34.269 PM]  ? Compliance and Alert services registered successfully
-[9/6/2025 12:42:34.269 PM]  ?? Registering Enhanced Health Checks...
-[9/6/2025 12:42:34.273 PM]  ? Enhanced Health Checks registered
-[9/6/2025 12:42:34.273 PM]  ?? Configuring authorization policies...
-[9/6/2025 12:42:34.275 PM]  ? Authorization policies configured
-[9/6/2025 12:42:34.275 PM]  ?? Configuring CORS...
-[9/6/2025 12:42:34.277 PM]  ? CORS configured
-[9/6/2025 12:42:34.279 PM]  ?? Registering additional services...
-[9/6/2025 12:42:34.281 PM]  ? Additional services registered
-[9/6/2025 12:42:34.282 PM]  ??? Building application...
-[9/6/2025 12:42:34.423 PM]  ? Application built successfully
-[9/6/2025 12:42:34.425 PM]  ?? Configuring middleware pipeline...
-[9/6/2025 12:42:34.425 PM]  ?? Configuring Enhanced Security middleware...
-[9/6/2025 12:42:34.429 PM]  [12:42:34 INF] Configuring Enhanced Security middleware {}
-[9/6/2025 12:42:34.443 PM]  [12:42:34 INF] ?? Enhanced security middleware DISABLED in testing environment {"SourceContext": "SecurityExtensions"}
-[9/6/2025 12:42:34.444 PM]  ? Enhanced Security middleware configured successfully
-[9/6/2025 12:42:34.445 PM]  [12:42:34 INF] Enhanced Security middleware configured successfully {}
-[9/6/2025 12:42:34.487 PM]  ? Middleware pipeline configured
-[9/6/2025 12:42:34.489 PM]  ?? Mapping Enhanced Health Check endpoints...
-[9/6/2025 12:42:34.492 PM]  ? Enhanced Health Check endpoints mapped
-[9/6/2025 12:42:34.493 PM]  [12:42:34 INF] Starting UserService with Phase 11 Enhanced Security & Monitoring {}
-[9/6/2025 12:42:34.493 PM]  === UserService Starting with Phase 11 Enhanced Security & Monitoring ===
-[9/6/2025 12:42:34.493 PM]  ?? Testing cache connection...
-[9/6/2025 12:42:34.494 PM]  ? In-memory cache configured (Performance/Testing mode)
-[9/6/2025 12:42:34.494 PM]  [12:42:34 INF] In-memory cache configured for Performance/Testing environment {}
-[9/6/2025 12:42:34.494 PM]  ?? Seeding database...
-[9/6/2025 12:42:34.714 PM]  [12:42:34 WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development. {"EventId": {"Id": 10400, "Name": "Microsoft.EntityFrameworkCore.Infrastructure.SensitiveDataLoggingEnabledWarning"}, "SourceContext": "Microsoft.EntityFrameworkCore.Model.Validation"}
-[9/6/2025 12:42:34.919 PM]  ? Database seeded
-[9/6/2025 12:42:34.920 PM]  ?? Seeding monitoring user...
-[9/6/2025 12:42:34.921 PM]  [12:42:34 INF] Monitoring.Enabled = 'false' (evaluated false); skipping seeding. {"SourceContext": "MonitoringUserSeeder"}
-[9/6/2025 12:42:34.926 PM]  ? Monitoring user seeded (monitor@local / ChangeMe123!)
-[9/6/2025 12:42:34.929 PM]  ?? Starting application...
-[9/6/2025 12:42:34.968 PM]  ?? Enhanced Health Check endpoints available:
-[9/6/2025 12:42:34.982 PM]    - GET /health (comprehensive overview)
-[9/6/2025 12:42:34.983 PM]    - GET /health/critical (database + Redis status)
-[9/6/2025 12:42:34.984 PM]    - GET /health/enhanced (Phase 11 enhanced monitoring)
-[9/6/2025 12:42:34.984 PM]    - GET /health/performance (cache and performance metrics)
-[9/6/2025 12:42:34.985 PM]    - GET /health/system (overall system health score)
-[9/6/2025 12:42:34.985 PM]    - GET /health/ready (Kubernetes readiness)
-[9/6/2025 12:42:34.986 PM]    - GET /health/live (Kubernetes liveness)
-[9/6/2025 12:42:34.986 PM]  ?? Enhanced Security & Monitoring features:
-[9/6/2025 12:42:34.986 PM]    - Rate limiting with tenant awareness
-[9/6/2025 12:42:34.987 PM]    - Security event detection and logging
-[9/6/2025 12:42:34.987 PM]    - Performance metrics collection with Redis storage
-[9/6/2025 12:42:34.987 PM]    - Enhanced audit trail for all actions
-[9/6/2025 12:42:34.989 PM]    - Comprehensive health monitoring with performance scoring
-[9/6/2025 12:42:34.989 PM]    - Real-time system metrics and alerts
-[9/6/2025 12:42:34.990 PM]  [12:42:34 INF] Enhanced Security & Monitoring (Phase 11) configured and operational {}
-[9/6/2025 12:42:34.990 PM]  ?? Ensuring clean database state...
-[9/6/2025 12:42:34.990 PM]  ? Database recreated with clean state
-[9/6/2025 12:42:34.991 PM]  ?? TestDataSeeder: Starting test data seeding
-[9/6/2025 12:42:34.991 PM]  ?? Creating tenants...
-[9/6/2025 12:42:34.991 PM]  ? Created 2 tenants
-[9/6/2025 12:42:34.992 PM]  ?? Creating permissions...
-[9/6/2025 12:42:34.992 PM]  ?? Creating 74 permissions from actual business requirements
-[9/6/2025 12:42:34.993 PM]     - billing.manage (Billing)
-[9/6/2025 12:42:34.996 PM]     - billing.process_payments (Billing)
-[9/6/2025 12:42:34.998 PM]     - billing.view (Billing)
-[9/6/2025 12:42:34.999 PM]     - billing.view_invoices (Billing)
-[9/6/2025 12:42:35.001 PM]     - compliance.export_reports (Compliance)
-[9/6/2025 12:42:35.004 PM]     - compliance.generate_reports (Compliance)
-[9/6/2025 12:42:35.006 PM]     - compliance.manage_alerts (Compliance)
-[9/6/2025 12:42:35.007 PM]     - compliance.view_reports (Compliance)
-[9/6/2025 12:42:35.010 PM]     - permissions.create (Permissions)
-[9/6/2025 12:42:35.012 PM]     - permissions.delete (Permissions)
-[9/6/2025 12:42:35.013 PM]     - permissions.edit (Permissions)
-[9/6/2025 12:42:35.015 PM]     - permissions.manage (Permissions)
-[9/6/2025 12:42:35.016 PM]     - permissions.view (Permissions)
-[9/6/2025 12:42:35.018 PM]     - reports.create (Reports)
-[9/6/2025 12:42:35.019 PM]     - reports.export (Reports)
-[9/6/2025 12:42:35.021 PM]     - reports.schedule (Reports)
-[9/6/2025 12:42:35.021 PM]     - reports.view (Reports)
-[9/6/2025 12:42:35.022 PM]     - roles.assign_users (Roles)
-[9/6/2025 12:42:35.024 PM]     - roles.create (Roles)
-[9/6/2025 12:42:35.025 PM]     - roles.delete (Roles)
-[9/6/2025 12:42:35.027 PM]     - roles.edit (Roles)
-[9/6/2025 12:42:35.029 PM]     - roles.manage_permissions (Roles)
-[9/6/2025 12:42:35.030 PM]     - roles.view (Roles)
-[9/6/2025 12:42:35.032 PM]     - security.manage_alert_config (Security)
-[9/6/2025 12:42:35.034 PM]     - security.manage_alerts (Security)
-[9/6/2025 12:42:35.036 PM]     - security.test_alerts (Security)
-[9/6/2025 12:42:35.037 PM]     - security.view_alert_config (Security)
-[9/6/2025 12:42:35.038 PM]     - security.view_alerts (Security)
-[9/6/2025 12:42:35.040 PM]     - system.manage (System)
-[9/6/2025 12:42:35.042 PM]     - system.manage_backups (System)
-[9/6/2025 12:42:35.043 PM]     - system.manage_settings (System)
-[9/6/2025 12:42:35.044 PM]     - system.monitor (System)
-[9/6/2025 12:42:35.046 PM]     - system.view_logs (System)
-[9/6/2025 12:42:35.048 PM]     - system.view_metrics (System)
-[9/6/2025 12:42:35.049 PM]     - tenants.create (Tenants)
-[9/6/2025 12:42:35.050 PM]     - tenants.delete (Tenants)
-[9/6/2025 12:42:35.051 PM]     - tenants.edit (Tenants)
-[9/6/2025 12:42:35.052 PM]     - tenants.initialize (Tenants)
-[9/6/2025 12:42:35.054 PM]     - tenants.manage_settings (Tenants)
-[9/6/2025 12:42:35.056 PM]     - tenants.view (Tenants)
-[9/6/2025 12:42:35.057 PM]     - tenants.view_all (Tenants)
-[9/6/2025 12:42:35.058 PM]     - users.create (Users)
-[9/6/2025 12:42:35.060 PM]     - users.delete (Users)
-[9/6/2025 12:42:35.060 PM]     - users.edit (Users)
-[9/6/2025 12:42:35.063 PM]     - users.manage_roles (Users)
-[9/6/2025 12:42:35.064 PM]     - users.view (Users)
-[9/6/2025 12:42:35.066 PM]     - users.view_all (Users)
-[9/6/2025 12:42:35.067 PM]     - workflow.admin (Workflow)
-[9/6/2025 12:42:35.069 PM]     - workflow.admin_operations (Workflow)
-[9/6/2025 12:42:35.070 PM]     - workflow.bulk_operations (Workflow)
-[9/6/2025 12:42:35.071 PM]     - workflow.claim_tasks (Workflow)
-[9/6/2025 12:42:35.073 PM]     - workflow.complete_tasks (Workflow)
-[9/6/2025 12:42:35.075 PM]     - workflow.create_definitions (Workflow)
-[9/6/2025 12:42:35.076 PM]     - workflow.delete_definitions (Workflow)
-[9/6/2025 12:42:35.077 PM]     - workflow.edit_definitions (Workflow)
-[9/6/2025 12:42:35.079 PM]     - workflow.manage_instances (Workflow)
-[9/6/2025 12:42:35.082 PM]     - workflow.move_instances (Workflow)
-[9/6/2025 12:42:35.083 PM]     - workflow.publish_definitions (Workflow)
-[9/6/2025 12:42:35.084 PM]     - workflow.read (Workflow)
-[9/6/2025 12:42:35.087 PM]     - workflow.reassign_tasks (Workflow)
-[9/6/2025 12:42:35.087 PM]     - workflow.retry_instances (Workflow)
-[9/6/2025 12:42:35.089 PM]     - workflow.signal_instances (Workflow)
-[9/6/2025 12:42:35.090 PM]     - workflow.start_instances (Workflow)
-[9/6/2025 12:42:35.091 PM]     - workflow.terminate_instances (Workflow)
-[9/6/2025 12:42:35.093 PM]     - workflow.view_all_tasks (Workflow)
-[9/6/2025 12:42:35.095 PM]     - workflow.view_analytics (Workflow)
-[9/6/2025 12:42:35.097 PM]     - workflow.view_audit_trail (Workflow)
-[9/6/2025 12:42:35.098 PM]     - workflow.view_definitions (Workflow)
-[9/6/2025 12:42:35.099 PM]     - workflow.view_events (Workflow)
-[9/6/2025 12:42:35.100 PM]     - workflow.view_instances (Workflow)
-[9/6/2025 12:42:35.102 PM]     - workflow.view_metrics (Workflow)
-[9/6/2025 12:42:35.105 PM]     - workflow.view_system_health (Workflow)
-[9/6/2025 12:42:35.108 PM]     - workflow.view_tasks (Workflow)
-[9/6/2025 12:42:35.111 PM]     - workflow.write (Workflow)
-[9/6/2025 12:42:35.114 PM]  ? Created 74 permissions
-[9/6/2025 12:42:35.116 PM]  ?? Creating roles...
-[9/6/2025 12:42:35.118 PM]  ?? CreateRoles DEBUG:
-[9/6/2025 12:42:35.119 PM]     - tenant1.Id = 1
-[9/6/2025 12:42:35.120 PM]     - tenant2.Id = 2
-[9/6/2025 12:42:35.121 PM]  ?? Roles to be created (8):
-[9/6/2025 12:42:35.123 PM]     1. SuperAdmin (TenantId: )
-[9/6/2025 12:42:35.124 PM]     2. Admin (TenantId: 1)
-[9/6/2025 12:42:35.125 PM]     3. User (TenantId: 1)
-[9/6/2025 12:42:35.126 PM]     4. Manager (TenantId: 1)
-[9/6/2025 12:42:35.128 PM]     5. Viewer (TenantId: 1)
-[9/6/2025 12:42:35.130 PM]     6. Editor (TenantId: 1)
-[9/6/2025 12:42:35.131 PM]     7. Admin (TenantId: 2)
-[9/6/2025 12:42:35.154 PM]     8. User (TenantId: 2)
-[9/6/2025 12:42:35.155 PM]  ? Created 8 roles
-[9/6/2025 12:42:35.155 PM]  ?? Verification - Created roles:
-[9/6/2025 12:42:35.156 PM]     - ID=8, Name='User', TenantId=2
-[9/6/2025 12:42:35.156 PM]     - ID=7, Name='Admin', TenantId=2
-[9/6/2025 12:42:35.156 PM]     - ID=6, Name='Editor', TenantId=1
-[9/6/2025 12:42:35.158 PM]     - ID=5, Name='Viewer', TenantId=1
-[9/6/2025 12:42:35.158 PM]     - ID=4, Name='Manager', TenantId=1
-[9/6/2025 12:42:35.158 PM]     - ID=3, Name='User', TenantId=1
-[9/6/2025 12:42:35.159 PM]     - ID=2, Name='Admin', TenantId=1
-[9/6/2025 12:42:35.159 PM]     - ID=1, Name='SuperAdmin', TenantId=
-[9/6/2025 12:42:35.160 PM]  ? Successfully created all 8 roles including 2 Tenant 2 roles
-[9/6/2025 12:42:35.160 PM]  ?? Creating role permissions...
-[9/6/2025 12:42:35.160 PM]  ?? Found 74 permissions and 8 roles
-[9/6/2025 12:42:35.160 PM]  ?? ALL LOADED ROLES:
-[9/6/2025 12:42:35.161 PM]     - ID=8, Name='User', TenantId=2
-[9/6/2025 12:42:35.161 PM]     - ID=7, Name='Admin', TenantId=2
-[9/6/2025 12:42:35.161 PM]     - ID=6, Name='Editor', TenantId=1
-[9/6/2025 12:42:35.162 PM]     - ID=5, Name='Viewer', TenantId=1
-[9/6/2025 12:42:35.163 PM]     - ID=4, Name='Manager', TenantId=1
-[9/6/2025 12:42:35.163 PM]     - ID=3, Name='User', TenantId=1
-[9/6/2025 12:42:35.163 PM]     - ID=2, Name='Admin', TenantId=1
-[9/6/2025 12:42:35.164 PM]     - ID=1, Name='SuperAdmin', TenantId=
-[9/6/2025 12:42:35.165 PM]  ? Assigned 74 permissions to SuperAdmin
-[9/6/2025 12:42:35.165 PM]  ? Assigned 28 permissions to Tenant1 Admin
-[9/6/2025 12:42:35.166 PM]  ? Assigned 3 permissions to Tenant1 User
-[9/6/2025 12:42:35.168 PM]  ? Assigned 6 permissions to Tenant1 Manager
-[9/6/2025 12:42:35.170 PM]  ? Assigned 3 permissions to Viewer
-[9/6/2025 12:42:35.171 PM]  ? Assigned 0 permissions to Editor (intentionally for testing)
-[9/6/2025 12:42:35.172 PM]  ?? TENANT 2 ADMIN DEBUG:
-[9/6/2025 12:42:35.174 PM]     - tenant2.Id = 2
-[9/6/2025 12:42:35.175 PM]     - All roles count: 8
-[9/6/2025 12:42:35.176 PM]     - Roles with TenantId = 2: 2
-[9/6/2025 12:42:35.178 PM]     - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
-[9/6/2025 12:42:35.178 PM]     - tenant2AdminRole found: True
-[9/6/2025 12:42:35.180 PM]     - tenant2AdminRole.Id = 7
-[9/6/2025 12:42:35.182 PM]  ?? DEBUG: Found 28 permissions for Tenant2 Admin
-[9/6/2025 12:42:35.183 PM]  ? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
-[9/6/2025 12:42:35.185 PM]  ? Assigned 3 permissions to Tenant2 User
-[9/6/2025 12:42:35.186 PM]  ? Created 145 role permissions using only actual business-defined permissions
-[9/6/2025 12:42:35.187 PM]  ?? Creating users...
-[9/6/2025 12:42:35.188 PM]  ?? Adding 7 users to main context
-[9/6/2025 12:42:35.190 PM]  ? All users created successfully
-[9/6/2025 12:42:35.191 PM]  ? Final user count: 7
-[9/6/2025 12:42:35.192 PM]  ? Verified required user exists: admin@tenant1.com (ID:  1)
-[9/6/2025 12:42:35.193 PM]  ? Verified required user exists: user@tenant1.com (ID:  2)
-[9/6/2025 12:42:35.195 PM]  ? Verified required user exists: admin@tenant2.com (ID:  6)
-[9/6/2025 12:42:35.196 PM]  ? Verified required user exists: user@tenant2.com (ID:  7)
-[9/6/2025 12:42:35.198 PM]  ?? All users created and verified successfully!
-[9/6/2025 12:42:35.199 PM]  ?? Creating user role assignments...
-[9/6/2025 12:42:35.200 PM]  ?? Found 7 users and 8 roles for assignment
-[9/6/2025 12:42:35.202 PM]  ?? Adding 7 user role assignments...
-[9/6/2025 12:42:35.203 PM]  ? Created 7 user role assignments
-[9/6/2025 12:42:35.205 PM]  ?? Creating legacy tenant users...
-[9/6/2025 12:42:35.206 PM]  ? Created 7 legacy tenant users
-[9/6/2025 12:42:35.207 PM]  ?? Verifying test data...
-[9/6/2025 12:42:35.208 PM]  ?? Temporarily disabling query filters for verification...
-[9/6/2025 12:42:35.209 PM]  ?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=74, UserRoles=7, RolePermissions=145
-[9/6/2025 12:42:35.211 PM]  ? Verified user: admin@tenant1.com (ID: 1)
-[9/6/2025 12:42:35.212 PM]  ? Verified user: user@tenant1.com (ID: 2)
-[9/6/2025 12:42:35.213 PM]  ? Verified user: admin@tenant2.com (ID: 6)
-[9/6/2025 12:42:35.214 PM]  ? admin@tenant1.com has 1 role assignments
-[9/6/2025 12:42:35.216 PM]  ? TestDataSeeder: Test data seeding completed successfully
-[9/6/2025 12:42:35.217 PM]  [12:42:35 INF] ?? Test Data Status: Tenants=2, Users=7, Roles=8, Permissions=74, UserRoles=7, RolePermissions=145 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.218 PM]  [12:42:35 INF] ?? Tenant IDs: Tenant1=1, Tenant2=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.220 PM]  [12:42:35 INF] ?? User IDs: Admin=1, User=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.221 PM]  [12:42:35 INF] ?? Admin user analysis: {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.223 PM]  [12:42:35 INF]    - Email: admin@tenant1.com {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.224 PM]  [12:42:35 INF]    - UserRoles count: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.225 PM]  [12:42:35 INF]    - Active UserRoles: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.226 PM]  [12:42:35 INF]    - Permissions: 28 [users.view, users.edit, users.create, users.delete, users.view_all, users.manage_roles, roles.view, roles.create, roles.edit, roles.delete, roles.assign_users, roles.manage_permissions, tenants.view, tenants.create, tenants.edit, tenants.delete, tenants.initialize, tenants.view_all, tenants.manage_settings, reports.view, reports.create, reports.export, reports.schedule, permissions.view, permissions.create, permissions.edit, permissions.delete, permissions.manage] {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.228 PM]  [12:42:35 INF]    - Tenant: Test Tenant 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.231 PM]  ?? MOCKING two-phase flow for admin@tenant1.com  Tenant 1
-[9/6/2025 12:42:35.234 PM]  ? Phase 1 simulated: User admin@tenant1.com authenticated (mocked)
-[9/6/2025 12:42:35.237 PM]  ? Phase 2 simulated: Tenant access verified for tenant 1
-[9/6/2025 12:42:35.299 PM]  [12:42:35 WRN] Failed to determine the https port for redirect. {"EventId": {"Id": 3, "Name": "FailedToDeterminePort"}, "SourceContext": "Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware", "RequestId": "0HNFDDJ1RRIEL", "RequestPath": "/api/roles"}
-[9/6/2025 12:42:35.351 PM]  [12:42:35 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNFDDJ1RRIEL", "RequestPath": "/api/roles"}
-[9/6/2025 12:42:35.354 PM]  [12:42:35 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNFDDJ1RRIEL", "RequestPath": "/api/roles"}
-[9/6/2025 12:42:35.392 PM]  [12:42:35 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNFDDJ1RRIEL", "RequestPath": "/api/roles"}
-[9/6/2025 12:42:35.455 PM]  [12:42:35 INF] HTTP GET /api/roles responded 200 in 155.2159 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[9/6/2025 12:42:35.470 PM]  [12:42:35 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNFDDJ1RRIEM", "RequestPath": "/api/roles"}
-[9/6/2025 12:42:35.473 PM]  [12:42:35 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNFDDJ1RRIEM", "RequestPath": "/api/roles"}
-[9/6/2025 12:42:35.475 PM]  [12:42:35 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNFDDJ1RRIEM", "RequestPath": "/api/roles"}
-[9/6/2025 12:42:35.477 PM]  [12:42:35 INF] HTTP GET /api/roles responded 200 in 8.2451 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[9/6/2025 12:42:35.481 PM]  [12:42:35 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNFDDJ1RRIEN", "RequestPath": "/api/roles"}
-[9/6/2025 12:42:35.482 PM]  [12:42:35 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNFDDJ1RRIEN", "RequestPath": "/api/roles"}
-[9/6/2025 12:42:35.483 PM]  [12:42:35 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNFDDJ1RRIEN", "RequestPath": "/api/roles"}
-[9/6/2025 12:42:35.488 PM]  [12:42:35 INF] HTTP GET /api/roles responded 200 in 8.9635 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[9/6/2025 12:42:35.489 PM]  [12:42:35 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNFDDJ1RRIEO", "RequestPath": "/api/roles"}
-[9/6/2025 12:42:35.490 PM]  [12:42:35 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNFDDJ1RRIEO", "RequestPath": "/api/roles"}
-[9/6/2025 12:42:35.491 PM]  [12:42:35 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNFDDJ1RRIEO", "RequestPath": "/api/roles"}
-[9/6/2025 12:42:35.503 PM]  [12:42:35 INF] HTTP GET /api/roles responded 200 in 14.9613 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[9/6/2025 12:42:35.506 PM]  [12:42:35 INF] Pagination performance: 5 items: 191ms, 10 items: 10ms, 20 items: 9ms, 50 items: 15ms {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.511 PM]  ?? Ensuring clean database state...
-[9/6/2025 12:42:35.514 PM]  ? Database recreated with clean state
-[9/6/2025 12:42:35.515 PM]  ?? TestDataSeeder: Starting test data seeding
-[9/6/2025 12:42:35.516 PM]  ?? Creating tenants...
-[9/6/2025 12:42:35.519 PM]  ? Created 2 tenants
-[9/6/2025 12:42:35.519 PM]  ?? Creating permissions...
-[9/6/2025 12:42:35.520 PM]  ?? Creating 74 permissions from actual business requirements
-[9/6/2025 12:42:35.521 PM]     - billing.manage (Billing)
-[9/6/2025 12:42:35.522 PM]     - billing.process_payments (Billing)
-[9/6/2025 12:42:35.523 PM]     - billing.view (Billing)
-[9/6/2025 12:42:35.525 PM]     - billing.view_invoices (Billing)
-[9/6/2025 12:42:35.526 PM]     - compliance.export_reports (Compliance)
-[9/6/2025 12:42:35.527 PM]     - compliance.generate_reports (Compliance)
-[9/6/2025 12:42:35.529 PM]     - compliance.manage_alerts (Compliance)
-[9/6/2025 12:42:35.531 PM]     - compliance.view_reports (Compliance)
-[9/6/2025 12:42:35.532 PM]     - permissions.create (Permissions)
-[9/6/2025 12:42:35.533 PM]     - permissions.delete (Permissions)
-[9/6/2025 12:42:35.534 PM]     - permissions.edit (Permissions)
-[9/6/2025 12:42:35.536 PM]     - permissions.manage (Permissions)
-[9/6/2025 12:42:35.538 PM]     - permissions.view (Permissions)
-[9/6/2025 12:42:35.539 PM]     - reports.create (Reports)
-[9/6/2025 12:42:35.540 PM]     - reports.export (Reports)
-[9/6/2025 12:42:35.542 PM]     - reports.schedule (Reports)
-[9/6/2025 12:42:35.542 PM]     - reports.view (Reports)
-[9/6/2025 12:42:35.543 PM]     - roles.assign_users (Roles)
-[9/6/2025 12:42:35.545 PM]     - roles.create (Roles)
-[9/6/2025 12:42:35.547 PM]     - roles.delete (Roles)
-[9/6/2025 12:42:35.549 PM]     - roles.edit (Roles)
-[9/6/2025 12:42:35.550 PM]     - roles.manage_permissions (Roles)
-[9/6/2025 12:42:35.551 PM]     - roles.view (Roles)
-[9/6/2025 12:42:35.553 PM]     - security.manage_alert_config (Security)
-[9/6/2025 12:42:35.554 PM]     - security.manage_alerts (Security)
-[9/6/2025 12:42:35.554 PM]     - security.test_alerts (Security)
-[9/6/2025 12:42:35.556 PM]     - security.view_alert_config (Security)
-[9/6/2025 12:42:35.557 PM]     - security.view_alerts (Security)
-[9/6/2025 12:42:35.559 PM]     - system.manage (System)
-[9/6/2025 12:42:35.560 PM]     - system.manage_backups (System)
-[9/6/2025 12:42:35.561 PM]     - system.manage_settings (System)
-[9/6/2025 12:42:35.564 PM]     - system.monitor (System)
-[9/6/2025 12:42:35.564 PM]     - system.view_logs (System)
-[9/6/2025 12:42:35.566 PM]     - system.view_metrics (System)
-[9/6/2025 12:42:35.567 PM]     - tenants.create (Tenants)
-[9/6/2025 12:42:35.568 PM]     - tenants.delete (Tenants)
-[9/6/2025 12:42:35.569 PM]     - tenants.edit (Tenants)
-[9/6/2025 12:42:35.570 PM]     - tenants.initialize (Tenants)
-[9/6/2025 12:42:35.570 PM]     - tenants.manage_settings (Tenants)
-[9/6/2025 12:42:35.572 PM]     - tenants.view (Tenants)
-[9/6/2025 12:42:35.573 PM]     - tenants.view_all (Tenants)
-[9/6/2025 12:42:35.573 PM]     - users.create (Users)
-[9/6/2025 12:42:35.576 PM]     - users.delete (Users)
-[9/6/2025 12:42:35.576 PM]     - users.edit (Users)
-[9/6/2025 12:42:35.579 PM]     - users.manage_roles (Users)
-[9/6/2025 12:42:35.580 PM]     - users.view (Users)
-[9/6/2025 12:42:35.581 PM]     - users.view_all (Users)
-[9/6/2025 12:42:35.582 PM]     - workflow.admin (Workflow)
-[9/6/2025 12:42:35.583 PM]     - workflow.admin_operations (Workflow)
-[9/6/2025 12:42:35.585 PM]     - workflow.bulk_operations (Workflow)
-[9/6/2025 12:42:35.587 PM]     - workflow.claim_tasks (Workflow)
-[9/6/2025 12:42:35.587 PM]     - workflow.complete_tasks (Workflow)
-[9/6/2025 12:42:35.589 PM]     - workflow.create_definitions (Workflow)
-[9/6/2025 12:42:35.589 PM]     - workflow.delete_definitions (Workflow)
-[9/6/2025 12:42:35.589 PM]     - workflow.edit_definitions (Workflow)
-[9/6/2025 12:42:35.592 PM]     - workflow.manage_instances (Workflow)
-[9/6/2025 12:42:35.592 PM]     - workflow.move_instances (Workflow)
-[9/6/2025 12:42:35.593 PM]     - workflow.publish_definitions (Workflow)
-[9/6/2025 12:42:35.597 PM]     - workflow.read (Workflow)
-[9/6/2025 12:42:35.598 PM]     - workflow.reassign_tasks (Workflow)
-[9/6/2025 12:42:35.600 PM]     - workflow.retry_instances (Workflow)
-[9/6/2025 12:42:35.603 PM]     - workflow.signal_instances (Workflow)
-[9/6/2025 12:42:35.605 PM]     - workflow.start_instances (Workflow)
-[9/6/2025 12:42:35.605 PM]     - workflow.terminate_instances (Workflow)
-[9/6/2025 12:42:35.608 PM]     - workflow.view_all_tasks (Workflow)
-[9/6/2025 12:42:35.609 PM]     - workflow.view_analytics (Workflow)
-[9/6/2025 12:42:35.611 PM]     - workflow.view_audit_trail (Workflow)
-[9/6/2025 12:42:35.612 PM]     - workflow.view_definitions (Workflow)
-[9/6/2025 12:42:35.615 PM]     - workflow.view_events (Workflow)
-[9/6/2025 12:42:35.616 PM]     - workflow.view_instances (Workflow)
-[9/6/2025 12:42:35.617 PM]     - workflow.view_metrics (Workflow)
-[9/6/2025 12:42:35.619 PM]     - workflow.view_system_health (Workflow)
-[9/6/2025 12:42:35.620 PM]     - workflow.view_tasks (Workflow)
-[9/6/2025 12:42:35.621 PM]     - workflow.write (Workflow)
-[9/6/2025 12:42:35.623 PM]  ? Created 74 permissions
-[9/6/2025 12:42:35.627 PM]  Update Test run progress to 33/100.
-[9/6/2025 12:42:35.628 PM]  ?? Creating roles...
-[9/6/2025 12:42:35.629 PM]  ?? CreateRoles DEBUG:
-[9/6/2025 12:42:35.631 PM]     - tenant1.Id = 1
-[9/6/2025 12:42:35.633 PM]     - tenant2.Id = 2
-[9/6/2025 12:42:35.633 PM]  ?? Roles to be created (8):
-[9/6/2025 12:42:35.635 PM]     1. SuperAdmin (TenantId: )
-[9/6/2025 12:42:35.636 PM]     2. Admin (TenantId: 1)
-[9/6/2025 12:42:35.638 PM]     3. User (TenantId: 1)
-[9/6/2025 12:42:35.640 PM]     4. Manager (TenantId: 1)
-[9/6/2025 12:42:35.641 PM]     5. Viewer (TenantId: 1)
-[9/6/2025 12:42:35.643 PM]     6. Editor (TenantId: 1)
-[9/6/2025 12:42:35.644 PM]     7. Admin (TenantId: 2)
-[9/6/2025 12:42:35.646 PM]     8. User (TenantId: 2)
-[9/6/2025 12:42:35.647 PM]  ? Created 8 roles
-[9/6/2025 12:42:35.648 PM]  ?? Verification - Created roles:
-[9/6/2025 12:42:35.650 PM]     - ID=8, Name='User', TenantId=2
-[9/6/2025 12:42:35.651 PM]     - ID=7, Name='Admin', TenantId=2
-[9/6/2025 12:42:35.653 PM]     - ID=6, Name='Editor', TenantId=1
-[9/6/2025 12:42:35.655 PM]     - ID=5, Name='Viewer', TenantId=1
-[9/6/2025 12:42:35.655 PM]     - ID=4, Name='Manager', TenantId=1
-[9/6/2025 12:42:35.657 PM]     - ID=3, Name='User', TenantId=1
-[9/6/2025 12:42:35.657 PM]     - ID=2, Name='Admin', TenantId=1
-[9/6/2025 12:42:35.659 PM]     - ID=1, Name='SuperAdmin', TenantId=
-[9/6/2025 12:42:35.661 PM]  ? Successfully created all 8 roles including 2 Tenant 2 roles
-[9/6/2025 12:42:35.662 PM]  ?? Creating role permissions...
-[9/6/2025 12:42:35.663 PM]  ?? Found 74 permissions and 8 roles
-[9/6/2025 12:42:35.664 PM]  ?? ALL LOADED ROLES:
-[9/6/2025 12:42:35.665 PM]     - ID=8, Name='User', TenantId=2
-[9/6/2025 12:42:35.667 PM]     - ID=7, Name='Admin', TenantId=2
-[9/6/2025 12:42:35.669 PM]     - ID=6, Name='Editor', TenantId=1
-[9/6/2025 12:42:35.670 PM]     - ID=5, Name='Viewer', TenantId=1
-[9/6/2025 12:42:35.671 PM]     - ID=4, Name='Manager', TenantId=1
-[9/6/2025 12:42:35.673 PM]     - ID=3, Name='User', TenantId=1
-[9/6/2025 12:42:35.674 PM]     - ID=2, Name='Admin', TenantId=1
-[9/6/2025 12:42:35.675 PM]     - ID=1, Name='SuperAdmin', TenantId=
-[9/6/2025 12:42:35.677 PM]  ? Assigned 74 permissions to SuperAdmin
-[9/6/2025 12:42:35.679 PM]  ? Assigned 28 permissions to Tenant1 Admin
-[9/6/2025 12:42:35.680 PM]  ? Assigned 3 permissions to Tenant1 User
-[9/6/2025 12:42:35.681 PM]  ? Assigned 6 permissions to Tenant1 Manager
-[9/6/2025 12:42:35.681 PM]  ? Assigned 3 permissions to Viewer
-[9/6/2025 12:42:35.684 PM]  ? Assigned 0 permissions to Editor (intentionally for testing)
-[9/6/2025 12:42:35.685 PM]  ?? TENANT 2 ADMIN DEBUG:
-[9/6/2025 12:42:35.686 PM]     - tenant2.Id = 2
-[9/6/2025 12:42:35.687 PM]     - All roles count: 8
-[9/6/2025 12:42:35.689 PM]     - Roles with TenantId = 2: 2
-[9/6/2025 12:42:35.690 PM]     - Admin roles: ID=7, TenantId=2, ID=2, TenantId=1
-[9/6/2025 12:42:35.691 PM]     - tenant2AdminRole found: True
-[9/6/2025 12:42:35.692 PM]  [xUnit.net 00:00:01.58]   Finished:    UserService.IntegrationTests
-[9/6/2025 12:42:35.694 PM]     - tenant2AdminRole.Id = 7
-[9/6/2025 12:42:35.696 PM]  ?? DEBUG: Found 28 permissions for Tenant2 Admin
-[9/6/2025 12:42:35.698 PM]  ? Assigned 28 permissions to Tenant2 Admin (Expected: 23+)
-[9/6/2025 12:42:35.700 PM]  ? Assigned 3 permissions to Tenant2 User
-[9/6/2025 12:42:35.701 PM]  ? Created 145 role permissions using only actual business-defined permissions
-[9/6/2025 12:42:35.703 PM]  ?? Creating users...
-[9/6/2025 12:42:35.706 PM]  ?? Adding 7 users to main context
-[9/6/2025 12:42:35.709 PM]  ? All users created successfully
-[9/6/2025 12:42:35.709 PM]  ? Final user count: 7
-[9/6/2025 12:42:35.710 PM]  ? Verified required user exists: admin@tenant1.com (ID:  1)
-[9/6/2025 12:42:35.712 PM]  ? Verified required user exists: user@tenant1.com (ID:  2)
-[9/6/2025 12:42:35.715 PM]  ? Verified required user exists: admin@tenant2.com (ID:  6)
-[9/6/2025 12:42:35.716 PM]  ? Verified required user exists: user@tenant2.com (ID:  7)
-[9/6/2025 12:42:35.717 PM]  ?? All users created and verified successfully!
-[9/6/2025 12:42:35.718 PM]  ?? Creating user role assignments...
-[9/6/2025 12:42:35.719 PM]  ?? Found 7 users and 8 roles for assignment
-[9/6/2025 12:42:35.720 PM]  ?? Adding 7 user role assignments...
-[9/6/2025 12:42:35.722 PM]  ? Created 7 user role assignments
-[9/6/2025 12:42:35.725 PM]  ?? Creating legacy tenant users...
-[9/6/2025 12:42:35.728 PM]  ? Created 7 legacy tenant users
-[9/6/2025 12:42:35.731 PM]  ?? Verifying test data...
-[9/6/2025 12:42:35.734 PM]  ?? Temporarily disabling query filters for verification...
-[9/6/2025 12:42:35.736 PM]  ?? Final counts: Tenants=2, Users=7, Roles=8, Permissions=74, UserRoles=7, RolePermissions=145
-[9/6/2025 12:42:35.738 PM]  ? Verified user: admin@tenant1.com (ID: 1)
-[9/6/2025 12:42:35.738 PM]  ? Verified user: user@tenant1.com (ID: 2)
-[9/6/2025 12:42:35.739 PM]  ? Verified user: admin@tenant2.com (ID: 6)
-[9/6/2025 12:42:35.741 PM]  ? admin@tenant1.com has 1 role assignments
-[9/6/2025 12:42:35.742 PM]  ? TestDataSeeder: Test data seeding completed successfully
-[9/6/2025 12:42:35.748 PM]  [12:42:35 INF] ?? Test Data Status: Tenants=2, Users=7, Roles=8, Permissions=74, UserRoles=7, RolePermissions=145 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.748 PM]  Update Test run progress to 66/100.
-[9/6/2025 12:42:35.750 PM]  [12:42:35 INF] ?? Tenant IDs: Tenant1=1, Tenant2=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.752 PM]  [12:42:35 INF] ?? User IDs: Admin=1, User=2 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.753 PM]  [12:42:35 INF] ?? Admin user analysis: {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.755 PM]  [12:42:35 INF]    - Email: admin@tenant1.com {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.757 PM]  [12:42:35 INF]    - UserRoles count: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.763 PM]  [12:42:35 INF]    - Active UserRoles: 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.766 PM]  [12:42:35 INF]    - Permissions: 28 [users.view, users.edit, users.create, users.delete, users.view_all, users.manage_roles, roles.view, roles.create, roles.edit, roles.delete, roles.assign_users, roles.manage_permissions, tenants.view, tenants.create, tenants.edit, tenants.delete, tenants.initialize, tenants.view_all, tenants.manage_settings, reports.view, reports.create, reports.export, reports.schedule, permissions.view, permissions.create, permissions.edit, permissions.delete, permissions.manage] {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.768 PM]  [12:42:35 INF]    - Tenant: Test Tenant 1 {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.770 PM]  ?? MOCKING two-phase flow for admin@tenant1.com  Tenant 1
-[9/6/2025 12:42:35.772 PM]  ? Phase 1 simulated: User admin@tenant1.com authenticated (mocked)
-[9/6/2025 12:42:35.774 PM]  ? Phase 2 simulated: Tenant access verified for tenant 1
-[9/6/2025 12:42:35.775 PM]  [12:42:35 DBG] Successfully validated the token. {"EventId": {"Id": 2, "Name": "TokenValidationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNFDDJ1RRIEP", "RequestPath": "/api/roles"}
-[9/6/2025 12:42:35.776 PM]  [12:42:35 DBG] AuthenticationScheme: Bearer was successfully authenticated. {"EventId": {"Id": 8, "Name": "AuthenticationSchemeAuthenticated"}, "SourceContext": "Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerHandler", "RequestId": "0HNFDDJ1RRIEP", "RequestPath": "/api/roles"}
-[9/6/2025 12:42:35.778 PM]  [12:42:35 DBG] Authorization was successful. {"EventId": {"Id": 1, "Name": "UserAuthorizationSucceeded"}, "SourceContext": "Microsoft.AspNetCore.Authorization.DefaultAuthorizationService", "RequestId": "0HNFDDJ1RRIEP", "RequestPath": "/api/roles"}
-[9/6/2025 12:42:35.780 PM]  [12:42:35 INF] HTTP GET /api/roles responded 200 in 43.9524 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
-[9/6/2025 12:42:35.782 PM]  [12:42:35 INF] User count query completed in 44ms for 6 roles {"SourceContext": "UserService.IntegrationTests.TestBase"}
-[9/6/2025 12:42:35.937 PM]  Logging TestHost Diagnostics in file: C:\Users\mccre\AppData\Local\Temp\TestPlatformLogs\2025_09_06_09_14_38_15756\logs.host.25-09-06_12-42-35_76050_30.txt
-[9/6/2025 12:42:36.008 PM]  [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.6+bf9b858c26 (64-bit .NET 9.0.7)
-[9/6/2025 12:42:36.070 PM]  [xUnit.net 00:00:00.06]   Starting:    WorkflowService.Tests
-[9/6/2025 12:42:36.706 PM] [Error] [xUnit.net 00:00:00.70]     WorkflowService.Tests.Integration.InstanceCompletionIntegrationTests.HumanTask_Completion_Completes_Instance_And_Emits_Events_And_Outbox [FAIL]
-[9/6/2025 12:42:36.711 PM]  [xUnit.net 00:00:00.70]       System.InvalidOperationException : Task 1 not in completable state: Created
-[9/6/2025 12:42:36.711 PM]  [xUnit.net 00:00:00.70]       Stack Trace:
-[9/6/2025 12:42:36.714 PM]  [xUnit.net 00:00:00.70]         C:\Users\mccre\dev\boiler\src\services\WorkflowService\Engine\WorkflowRuntime.cs(294,0): at WorkflowService.Engine.WorkflowRuntime.CompleteTaskAsync(Int32 taskId, String completionData, Int32 completedByUserId, CancellationToken cancellationToken, Boolean autoCommit)
-[9/6/2025 12:42:36.717 PM]  [xUnit.net 00:00:00.70]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Integration\InstanceCompletionIntegrationTests.cs(99,0): at WorkflowService.Tests.Integration.InstanceCompletionIntegrationTests.HumanTask_Completion_Completes_Instance_And_Emits_Events_And_Outbox()
-[9/6/2025 12:42:36.719 PM]  [xUnit.net 00:00:00.70]         --- End of stack trace from previous location ---
-[9/6/2025 12:42:36.722 PM]  [xUnit.net 00:00:00.70]   Finished:    WorkflowService.Tests
-[9/6/2025 12:42:36.773 PM]  Attachments processing not needed
-[9/6/2025 12:42:36.775 PM]  ========== Test run finished: 3 Tests (2 Passed, 1 Failed, 0 Skipped) run in 1.6 sec ==========
-[9/6/2025 12:42:36.793 PM]  Update Test run progress to 75/100.
-[9/6/2025 12:42:36.793 PM]  Update Test run progress to 100/100.
-[9/6/2025 12:42:36.794 PM]  Test run animation has stopped.
-[9/6/2025 12:42:36.795 PM]  Test run progress has stopped.
+PS C:\Users\mccre\dev\boiler> docker logs --tail 100 boiler-workflow
+[20:31:39 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:31:44 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:31:44 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[20:31:44 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:31:44 ERR] JoinTimeoutWorker scan failure {"SourceContext": "WorkflowService.Engine.Timeouts.JoinTimeoutWorker"}
+System.InvalidOperationException: Nullable object must have a value.
+   at lambda_method141(Closure, QueryContext)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteCore[TResult](Expression query, Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at WorkflowService.Engine.Timeouts.JoinTimeoutWorker.ScanAsync(CancellationToken ct) in /src/src/services/WorkflowService/Engine/Timeouts/JoinTimeoutWorker.cs:line 68
+   at WorkflowService.Engine.Timeouts.JoinTimeoutWorker.ExecuteAsync(CancellationToken stoppingToken) in /src/src/services/WorkflowService/Engine/Timeouts/JoinTimeoutWorker.cs:line 47
+[20:31:44 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:31:44 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:31:49 WRN] Failed to resolve tenant ID from any source {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "outbox", "RequestId": "0HNFDGFL35GU5:00000001", "RequestPath": "/health", "ConnectionId": "0HNFDGFL35GU5"}
+[20:31:49 INF] HTTP GET /health responded 200 in 8.2170 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:31:49 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:31:49 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:31:54 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:31:54 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:31:59 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:31:59 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:32:04 INF] HTTP GET /api/workflow/tasks/mine/summary responded 200 in 13.6888 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:04 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:32:04 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:32:09 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:32:09 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:32:14 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:32:14 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[20:32:14 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:32:14 ERR] JoinTimeoutWorker scan failure {"SourceContext": "WorkflowService.Engine.Timeouts.JoinTimeoutWorker"}
+System.InvalidOperationException: Nullable object must have a value.
+   at lambda_method141(Closure, QueryContext)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteCore[TResult](Expression query, Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at WorkflowService.Engine.Timeouts.JoinTimeoutWorker.ScanAsync(CancellationToken ct) in /src/src/services/WorkflowService/Engine/Timeouts/JoinTimeoutWorker.cs:line 68
+   at WorkflowService.Engine.Timeouts.JoinTimeoutWorker.ExecuteAsync(CancellationToken stoppingToken) in /src/src/services/WorkflowService/Engine/Timeouts/JoinTimeoutWorker.cs:line 47
+[20:32:14 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:32:14 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:32:19 WRN] Failed to resolve tenant ID from any source {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "outbox", "RequestId": "0HNFDGFL35GU7:00000001", "RequestPath": "/health", "ConnectionId": "0HNFDGFL35GU7"}
+[20:32:19 INF] HTTP GET /health responded 200 in 4.6702 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:19 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:32:19 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:32:24 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:32:24 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:32:29 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:32:29 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:32:34 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:32:34 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:32:38 INF] HTTP GET /api/workflow/tasks/mine/summary responded 200 in 4.2174 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:39 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:32:39 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:32:40 INF] HTTP GET /api/workflow/definitions responded 200 in 7.8253 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:43 INF] HTTP GET /api/workflow/instances responded 200 in 6.5306 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:44 INF] HTTP GET /api/workflow/instances/44/status responded 200 in 4.3136 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:44 INF] HTTP GET /api/workflow/instances/40/status responded 200 in 4.8737 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:44 INF] HTTP GET /api/workflow/instances/39/status responded 200 in 10.2348 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:44 INF] HTTP GET /api/workflow/instances/23/status responded 200 in 4.1668 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:44 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:32:44 DBG] TIMER_WORKER_NO_DUE {"SourceContext": "WorkflowService.Background.TimerWorker"}
+[20:32:44 INF] HTTP GET /api/workflow/instances/39/status responded 200 in 6.5308 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:44 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:32:44 ERR] JoinTimeoutWorker scan failure {"SourceContext": "WorkflowService.Engine.Timeouts.JoinTimeoutWorker"}
+System.InvalidOperationException: Nullable object must have a value.
+   at lambda_method141(Closure, QueryContext)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteCore[TResult](Expression query, Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at WorkflowService.Engine.Timeouts.JoinTimeoutWorker.ScanAsync(CancellationToken ct) in /src/src/services/WorkflowService/Engine/Timeouts/JoinTimeoutWorker.cs:line 68
+   at WorkflowService.Engine.Timeouts.JoinTimeoutWorker.ExecuteAsync(CancellationToken stoppingToken) in /src/src/services/WorkflowService/Engine/Timeouts/JoinTimeoutWorker.cs:line 47
+[20:32:44 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:32:44 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:32:49 INF] HTTP GET /api/workflow/instances/43/status responded 200 in 9.0814 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:49 INF] HTTP GET /api/workflow/instances/40/status responded 200 in 12.9657 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:49 INF] HTTP GET /api/workflow/instances/37/status responded 200 in 7.0593 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:49 INF] HTTP GET /api/workflow/instances/24/status responded 200 in 4.6369 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:49 INF] HTTP GET /api/workflow/instances/24/status responded 200 in 4.1220 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:49 WRN] Failed to resolve tenant ID from any source {"SourceContext": "Common.Services.TenantProvider", "HealthCheckName": "outbox", "RequestId": "0HNFDGFL35GUL:00000001", "RequestPath": "/health", "ConnectionId": "0HNFDGFL35GUL"}
+[20:32:49 INF] HTTP GET /health responded 200 in 7.2431 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:49 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:32:49 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:32:54 INF] HTTP GET /api/workflow/instances/42/status responded 200 in 17.9428 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:54 INF] HTTP GET /api/workflow/instances/38/status responded 200 in 7.6992 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:54 INF] HTTP GET /api/workflow/instances/30/status responded 200 in 6.2586 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:54 INF] HTTP GET /api/workflow/instances/30/status responded 200 in 5.1087 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:54 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:32:54 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:32:59 INF] HTTP GET /api/workflow/instances/41/status responded 200 in 10.5056 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:59 INF] HTTP GET /api/workflow/instances/35/status responded 200 in 6.5307 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:59 INF] HTTP GET /api/workflow/instances/32/status responded 200 in 5.0560 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:59 INF] HTTP GET /api/workflow/instances/26/status responded 200 in 4.6466 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:59 INF] HTTP GET /api/workflow/instances/26/status responded 200 in 4.0991 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:32:59 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:32:59 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+[20:33:04 INF] HTTP GET /api/workflow/instances/40/status responded 200 in 30.1631 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:33:04 INF] HTTP GET /api/workflow/instances/31/status responded 200 in 14.3816 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:33:04 INF] HTTP GET /api/workflow/instances/31/status responded 200 in 4.3293 ms {"SourceContext": "Serilog.AspNetCore.RequestLoggingMiddleware"}
+[20:33:04 WRN] No HTTP context and no default tenant ID configured {"SourceContext": "Common.Services.TenantProvider"}
+[20:33:04 DBG] OUTBOX_WORKER_FETCH count=0 {"SourceContext": "WorkflowService.Outbox.OutboxDispatcher"}
+PS C:\Users\mccre\dev\boiler>

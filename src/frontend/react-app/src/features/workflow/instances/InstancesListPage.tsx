@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -7,6 +7,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Chip
 } from '@mui/material';
 import {
   DataGridPremium,
@@ -29,6 +30,22 @@ import type { WorkflowInstanceDto, InstanceStatus } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import { InstanceStatusBadge } from './components/InstanceStatusBadge';
+import { useTaskHub } from './hooks/useTaskHub';
+import { useInstanceHub } from './hooks/useInstanceHub';
+import type { InstanceUpdatedEvent } from '@/services/workflowNotifications';
+
+const TERMINAL: InstanceStatus[] = ['Completed', 'Cancelled', 'Failed'];
+
+function staticStatusChip(status: InstanceStatus) {
+  switch (status) {
+    case 'Running': return <Chip label="Running" color="primary" size="small" />;
+    case 'Completed': return <Chip label="Completed" color="success" size="small" />;
+    case 'Failed': return <Chip label="Failed" color="error" size="small" />;
+    case 'Cancelled': return <Chip label="Cancelled" size="small" />;
+    case 'Suspended': return <Chip label="Suspended" color="warning" size="small" />;
+    default: return <Chip label={status} size="small" />;
+  }
+}
 
 export function InstancesListPage() {
   const [instances, setInstances] = useState<WorkflowInstanceDto[]>([]);
@@ -39,23 +56,57 @@ export function InstancesListPage() {
   const navigate = useNavigate();
   const { currentTenant } = useTenant();
 
-  useEffect(() => {
-    if (currentTenant) {
-      loadInstances();
-    }
-  }, [currentTenant]);
-
-  const loadInstances = async () => {
+  const loadInstances = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
-      const items = await workflowService.getInstances(); // unwrapped array
+      if (!silent) setLoading(true);
+      const items = await workflowService.getInstances();
       setInstances(items);
     } catch {
-      toast.error('Failed to load workflow instances');
+      if (!silent) toast.error('Failed to load workflow instances');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    if (currentTenant) {
+      void loadInstances();
+    }
+  }, [currentTenant, loadInstances]);
+
+  // SignalR: refresh list on tasks changed events (throttled)
+  useTaskHub(() => {
+    // Only refresh if at least one row is non-terminal (benefit)
+    if (instances.some(i => i.status === 'Running' || i.status === 'Suspended')) {
+      void loadInstances(true);
+    }
+  }, 1000);
+
+  const mergeInstancePush = (evt: InstanceUpdatedEvent) => {
+    setInstances(prev => {
+      const idx = prev.findIndex(p => p.id === evt.instanceId);
+      if (idx === -1) return prev;
+      const next = [...prev];
+      const row = { ...next[idx] };
+      row.status = evt.status as any;
+      row.completedAt = evt.completedAt || row.completedAt;
+      row.errorMessage = evt.errorMessage ?? row.errorMessage;
+      // currentNodeIds normalization (backend may send JSON array string or csv)
+      if (evt.currentNodeIds) row.currentNodeIds = evt.currentNodeIds;
+      next[idx] = row;
+      return next;
+    });
   };
+
+  useInstanceHub({
+    onInstanceUpdated: mergeInstancePush,
+    onInstancesChanged: () => {
+      // Silent refresh only if any non-terminal present (avoid hammering backend)
+      if (instances.some(i => i.status === 'Running' || i.status === 'Suspended')) {
+        void loadInstances(true);
+      }
+    }
+  });
 
   const handleView = (id: GridRowId) => {
     navigate(`/app/workflow/instances/${id}`);
@@ -65,9 +116,8 @@ export function InstancesListPage() {
     try {
       await workflowService.suspendInstance(instance.id);
       toast.success('Workflow instance suspended');
-      loadInstances();
-    } catch (error) {
-      console.error('Failed to suspend instance:', error);
+      void loadInstances(true);
+    } catch {
       toast.error('Failed to suspend workflow instance');
     }
   };
@@ -76,9 +126,8 @@ export function InstancesListPage() {
     try {
       await workflowService.resumeInstance(instance.id);
       toast.success('Workflow instance resumed');
-      loadInstances();
-    } catch (error) {
-      console.error('Failed to resume instance:', error);
+      void loadInstances(true);
+    } catch {
       toast.error('Failed to resume workflow instance');
     }
   };
@@ -93,9 +142,8 @@ export function InstancesListPage() {
     try {
       await workflowService.terminateInstance(instanceToTerminate.id);
       toast.success('Workflow instance terminated');
-      loadInstances();
-    } catch (error) {
-      console.error('Failed to terminate instance:', error);
+      void loadInstances(true);
+    } catch {
       toast.error('Failed to terminate workflow instance');
     } finally {
       setTerminateDialogOpen(false);
@@ -139,13 +187,18 @@ export function InstancesListPage() {
     {
       field: 'status',
       headerName: 'Status',
-      width: 140,
+      width: 150,
       renderCell: (params) => {
-        const instance = params.row as WorkflowInstanceDto;
+        const inst = params.row as WorkflowInstanceDto;
+        if (TERMINAL.includes(inst.status as InstanceStatus)) {
+          return staticStatusChip(inst.status as InstanceStatus);
+        }
         return (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <InstanceStatusBadge instanceId={instance.id} compact />
-          </Box>
+          <InstanceStatusBadge
+            instanceId={inst.id}
+            compact
+            existingStatus={inst.status as InstanceStatus}
+          />
         );
       },
       sortable: true
@@ -256,7 +309,7 @@ export function InstancesListPage() {
         <Button
           variant="outlined"
           startIcon={<RefreshIcon />}
-          onClick={loadInstances}
+          onClick={() => void loadInstances()}
           disabled={loading}
         >
           Refresh

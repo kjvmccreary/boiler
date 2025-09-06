@@ -94,13 +94,11 @@ public class Program
         builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
         builder.Services.AddAutoMapper(typeof(Program));
 
-        // ADDED DEFINITIONS & INSTANCES
-        builder.Services.AddScoped<IDefinitionService, DefinitionService>();          // ADDED DEFINITIONS
-        builder.Services.AddScoped<IInstanceService, InstanceService>();              // ADDED DEFINITIONS (instances page)
-        builder.Services.AddScoped<IWorkflowGraphValidator, WorkflowGraphValidator>(); // ADDED DEFINITIONS
-        builder.Services.AddScoped<IGraphValidationService, GraphValidationService>(); // ADDED DEFINITIONS
-        builder.Services.AddScoped<IWorkflowPublishValidator, WorkflowPublishValidator>(); // ADDED (if you have a real one)
-        // If you only have NoopWorkflowPublishValidator inside DefinitionService, you can omit the previous line.
+        builder.Services.AddScoped<IDefinitionService, DefinitionService>();
+        builder.Services.AddScoped<IInstanceService, InstanceService>();
+        builder.Services.AddScoped<IWorkflowGraphValidator, WorkflowGraphValidator>();
+        builder.Services.AddScoped<IGraphValidationService, GraphValidationService>();
+        builder.Services.AddScoped<IWorkflowPublishValidator, WorkflowPublishValidator>();
 
         // Engine runtime
         builder.Services.AddScoped<IWorkflowRuntime, WorkflowRuntime>();
@@ -154,7 +152,10 @@ public class Program
         builder.Services.AddHostedService<JoinTimeoutWorker>();
 
         builder.Services.AddSignalR();
+
+        // Notifications
         builder.Services.AddSingleton<ITaskNotificationDispatcher, TaskNotificationDispatcher>();
+        builder.Services.AddScoped<IWorkflowNotificationDispatcher, WorkflowNotificationDispatcher>(); // NEW
 
         builder.Services.AddAuthorization(options =>
         {
@@ -179,8 +180,15 @@ public class Program
         app.UseAuthorization();
 
         app.MapHealthChecks("/health");
+
+        // Existing hubs
         app.MapHub<TaskNotificationsHub>("/hubs/tasks");
         app.MapHub<TaskNotificationsHub>("/api/workflow/hubs/tasks");
+
+        // NEW instance hub mappings
+        app.MapHub<WorkflowNotificationsHub>("/hubs/instances");
+        app.MapHub<WorkflowNotificationsHub>("/api/workflow/hubs/instances");
+
         app.MapControllers();
         return app;
     }

@@ -20,6 +20,7 @@ public class WorkflowRuntime : IWorkflowRuntime
     private readonly ITenantProvider _tenantProvider;
     private readonly IConditionEvaluator _conditionEvaluator;
     private readonly ITaskNotificationDispatcher _taskNotifier;
+    private readonly IWorkflowNotificationDispatcher _instanceNotifier; // NEW
 
     private readonly Dictionary<int, int> _instanceTenantCache = new();
     private bool _dirty;
@@ -30,7 +31,8 @@ public class WorkflowRuntime : IWorkflowRuntime
         ITenantProvider tenantProvider,
         IConditionEvaluator conditionEvaluator,
         ITaskNotificationDispatcher taskNotifier,
-        ILogger<WorkflowRuntime> logger)
+        ILogger<WorkflowRuntime> logger,
+        IWorkflowNotificationDispatcher? instanceNotifier = null) // optional new param (non-breaking)
     {
         _context = context;
         _executors = executors;
@@ -38,6 +40,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         _conditionEvaluator = conditionEvaluator;
         _taskNotifier = taskNotifier;
         _logger = logger;
+        _instanceNotifier = instanceNotifier ?? new NullWorkflowNotificationDispatcher();
     }
 
     #region Public API
@@ -106,6 +109,9 @@ public class WorkflowRuntime : IWorkflowRuntime
         await ContinueWorkflowAsync(instance.Id, cancellationToken);
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
 
+        // Notify after persisted start (even if auto-completed)
+        await SafeNotifyInstanceAndListAsync(instance);
+
         return instance;
     }
 
@@ -130,7 +136,6 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         var workflowDef = BuilderDefinitionAdapter.Parse(instance.WorkflowDefinition.JSONDefinition);
 
-        // Loop until no immediate progress can be made
         var safetyCounter = 0;
         while (instance.Status == InstanceStatus.Running)
         {
@@ -148,7 +153,6 @@ public class WorkflowRuntime : IWorkflowRuntime
                 break;
             }
 
-            // Snapshot to iterate (may change during execution)
             var iteration = activeNodes.ToArray();
             var madeProgress = false;
 
@@ -156,7 +160,6 @@ public class WorkflowRuntime : IWorkflowRuntime
             {
                 if (instance.Status != InstanceStatus.Running) break;
 
-                // Node might have been removed already
                 var currentActive = DeserializeActive(instance);
                 if (!currentActive.Contains(nodeId, StringComparer.OrdinalIgnoreCase))
                     continue;
@@ -172,7 +175,6 @@ public class WorkflowRuntime : IWorkflowRuntime
                     continue;
                 }
 
-                // If node is a human (or timer) waiting task with an open, skip for now
                 if (await HasOpenWaitingTaskAsync(instance.Id, node, cancellationToken))
                 {
                     _logger.LogTrace("WF_SKIP_WAITING Instance={InstanceId} Node={NodeId}", instance.Id, node.Id);
@@ -187,10 +189,7 @@ public class WorkflowRuntime : IWorkflowRuntime
             }
 
             if (!madeProgress)
-            {
-                // No immediate auto nodes left; exit loop
                 break;
-            }
         }
 
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
@@ -216,6 +215,9 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         await ContinueWorkflowAsync(instance.Id, cancellationToken);
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
+
+        if (autoCommit)
+            await SafeNotifyInstanceAndListAsync(instance);
     }
 
     public async Task CompleteTaskAsync(
@@ -273,6 +275,8 @@ public class WorkflowRuntime : IWorkflowRuntime
                 if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
                 _logger.LogDebug("WF_LATE_TASK_CANCELLATION Instance={InstanceId} TaskId={TaskId} Status={InstanceStatus}",
                     instance.Id, task.Id, instance.Status);
+
+                if (autoCommit) await SafeNotifyInstanceAndListAsync(instance);
                 return;
             }
 
@@ -332,9 +336,7 @@ public class WorkflowRuntime : IWorkflowRuntime
                 }), null);
         }
 
-        // --- JOIN ARRIVAL HANDLING (fix for quorum / join satisfaction on human & timer completion) ---
-        // Automatic branches use ExecuteNodeInternalAsync which already invokes HandleJoinCandidateArrival.
-        // Task completions (human/timer) previously skipped join arrival logic, preventing quorum joins from satisfying.
+        // JOIN arrival handling
         var joinReady = new List<string>();
         foreach (var candidate in nextNodeIds)
         {
@@ -346,7 +348,6 @@ public class WorkflowRuntime : IWorkflowRuntime
                 var arrival = HandleJoinCandidateArrival(instance, workflowDef, node, candidate);
                 if (arrival.Satisfied && arrival.AddedToActive)
                     joinReady.Add(candidate);
-                // If not satisfied yet, DO NOT activate join node (it will activate when threshold met)
             }
             else
             {
@@ -355,7 +356,6 @@ public class WorkflowRuntime : IWorkflowRuntime
         }
 
         AddActiveNodes(instance, joinReady);
-        // -------------------------------------------------------------------------
 
         if (!nextNodeIds.Any())
             UpdateParallelBranchProgress(instance, node.Id);
@@ -376,8 +376,14 @@ public class WorkflowRuntime : IWorkflowRuntime
                     await _taskNotifier.NotifyUserAsync(tenantId, task.AssignedToUserId.Value, cancellationToken);
                 await _taskNotifier.NotifyTenantAsync(tenantId, cancellationToken);
             }
-            catch { }
+            catch
+            {
+                // ignore
+            }
         }
+
+        if (autoCommit)
+            await SafeNotifyInstanceAndListAsync(instance);
     }
 
     public async Task CancelWorkflowAsync(
@@ -405,6 +411,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         _logger.LogWarning("WF_CANCEL Instance={InstanceId} Reason={Reason}", instance.Id, reason);
 
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
+        if (autoCommit) await SafeNotifyInstanceAndListAsync(instance);
     }
 
     public async Task RetryWorkflowAsync(
@@ -439,6 +446,7 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         await ContinueWorkflowAsync(instance.Id, cancellationToken);
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
+        if (autoCommit) await SafeNotifyInstanceAndListAsync(instance);
     }
 
     public async Task SuspendWorkflowAsync(
@@ -473,6 +481,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         _logger.LogWarning("WF_SUSPENDED Instance={InstanceId} Reason={Reason}", instance.Id, reason);
 
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
+        if (autoCommit) await SafeNotifyInstanceAndListAsync(instance);
     }
 
     public async Task ResumeWorkflowAsync(
@@ -507,6 +516,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         await ContinueWorkflowAsync(instance.Id, cancellationToken, autoCommit: false);
 
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
+        if (autoCommit) await SafeNotifyInstanceAndListAsync(instance);
     }
 
     #endregion
@@ -564,6 +574,7 @@ public class WorkflowRuntime : IWorkflowRuntime
                     _logger.LogWarning("WF_INSTANCE_SUSPENDED Instance={InstanceId} Node={NodeId} Error={Error}",
                         instance.Id, node.Id, result.ErrorMessage);
                     await SaveIfDirtyAsync(cancellationToken);
+                    await SafeNotifyInstanceAndListAsync(instance);
                     return;
                 }
 
@@ -579,7 +590,6 @@ public class WorkflowRuntime : IWorkflowRuntime
                 MarkDirty();
             }
 
-            // FIX TASK DUP: Add new task only if no LOCAL or DB open task already exists; persist immediately so next loop sees it.
             if (result.CreatedTask != null)
             {
                 if (!HasLocalOpenTask(instance.Id, node.Id))
@@ -599,7 +609,7 @@ public class WorkflowRuntime : IWorkflowRuntime
                     {
                         _context.WorkflowTasks.Add(result.CreatedTask);
                         MarkDirty();
-                        await SaveIfDirtyAsync(cancellationToken); // flush so subsequent HasOpenWaitingTask sees it
+                        await SaveIfDirtyAsync(cancellationToken);
 
                         await CreateEventAsync(instance.Id, "Node", "NodeActivated",
                             JsonSerializer.Serialize(new
@@ -779,13 +789,11 @@ public class WorkflowRuntime : IWorkflowRuntime
 
             JsonElement decisionEl;
 
-            // New format: array of decision objects (append-only history)
             if (nodeEntry.ValueKind == JsonValueKind.Array)
             {
                 if (nodeEntry.GetArrayLength() == 0) return (null, Array.Empty<string>(), 0);
-                decisionEl = nodeEntry[nodeEntry.GetArrayLength() - 1]; // last decision
+                decisionEl = nodeEntry[nodeEntry.GetArrayLength() - 1];
             }
-            // Legacy single object
             else if (nodeEntry.ValueKind == JsonValueKind.Object)
             {
                 decisionEl = nodeEntry;
@@ -836,7 +844,6 @@ public class WorkflowRuntime : IWorkflowRuntime
 
     private string ExtractGatewayKindFallback(WorkflowNode node)
     {
-        // strategy (string)
         if (node.Properties.TryGetValue("strategy", out var sVal))
         {
             if (sVal is string sStr && !string.IsNullOrWhiteSpace(sStr))
@@ -855,7 +862,6 @@ public class WorkflowRuntime : IWorkflowRuntime
                 }
             }
         }
-        // object with kind
         foreach (var kv in node.Properties)
         {
             if (kv.Value is JsonElement jel && jel.ValueKind == JsonValueKind.Object &&
@@ -865,7 +871,6 @@ public class WorkflowRuntime : IWorkflowRuntime
                 if (!string.IsNullOrWhiteSpace(ks)) return ks.Trim();
             }
         }
-        // gatewayType legacy
         var gt = node.GetProperty<string>("gatewayType");
         if (!string.IsNullOrWhiteSpace(gt)) return gt.Trim();
         return "exclusive";
@@ -964,11 +969,9 @@ public class WorkflowRuntime : IWorkflowRuntime
     {
         if (instance.Status != InstanceStatus.Running) return;
 
-        // FIX: Flush pending changes (e.g. a task just marked Completed) so DB queries
-        // like CancelOpenTasksAsync see the updated state and do not "re-cancel" it.
         if (_dirty)
         {
-            await SaveIfDirtyAsync(); // persists task.Status = Completed, events, etc.
+            await SaveIfDirtyAsync();
         }
 
         await CancelOpenTasksAsync(instance, "instance-completed", default);
@@ -979,6 +982,9 @@ public class WorkflowRuntime : IWorkflowRuntime
         await CreateEventAsync(instance.Id, "Instance", "Completed",
             JsonSerializer.Serialize(new { reason }), null);
         _logger.LogInformation("WF_INSTANCE_COMPLETE Instance={InstanceId} Reason={Reason}", instance.Id, reason);
+
+        await SaveIfDirtyAsync();
+        await SafeNotifyInstanceAndListAsync(instance);
     }
 
     private void CreateOrUpdateParallelGroup(WorkflowInstance instance, string gatewayNodeId, List<string> branches)
@@ -1099,6 +1105,7 @@ public class WorkflowRuntime : IWorkflowRuntime
             JsonSerializer.Serialize(new { nodeId = node.Id, error = errorMessage }), null);
 
         await SaveIfDirtyAsync();
+        await SafeNotifyInstanceAndListAsync(instance);
         _logger.LogError("WF_INSTANCE_FAILED Instance={InstanceId} Node={NodeId} Error={Error}",
             instance.Id, node.Id, errorMessage);
     }
@@ -1121,17 +1128,14 @@ public class WorkflowRuntime : IWorkflowRuntime
                 valueToStore = new Dictionary<string, object> { ["raw"] = completionData };
 
             context[$"task_{nodeId}"] = valueToStore;
-
-            // (Optional) version tracking placeholder removed (previous meta variable was unused)
-
             instance.Context = JsonSerializer.Serialize(context);
             MarkDirty();
 
-            // Emit normalized context update event
             _ = CreateEventAsync(instance.Id,
                 "Task",
                 "Context_Updated",
-                JsonSerializer.Serialize(new {
+                JsonSerializer.Serialize(new
+                {
                     taskNodeId = nodeId,
                     taskKey = $"task_{nodeId}",
                     appliedAtUtc = DateTime.UtcNow,
@@ -1150,9 +1154,7 @@ public class WorkflowRuntime : IWorkflowRuntime
     {
         s = s.Trim();
         if (s.Length < 2) return false;
-        if ((s.StartsWith("{") && s.EndsWith("}")) || (s.StartsWith("[") && s.EndsWith("]")))
-            return true;
-        return false;
+        return (s.StartsWith("{") && s.EndsWith("}")) || (s.StartsWith("[") && s.EndsWith("]"));
     }
 
     private static bool TryDeserializeDictionary(string json, out Dictionary<string, object>? dict)
@@ -1587,7 +1589,8 @@ public class WorkflowRuntime : IWorkflowRuntime
     }
     #endregion
 
-    // NEW: open status set & local task helper
+    #region Local Task Helpers / Open Set
+
     private static readonly WorkflowTaskStatus[] OpenStatuses =
     {
         WorkflowTaskStatus.Created,
@@ -1604,15 +1607,32 @@ public class WorkflowRuntime : IWorkflowRuntime
 
     private async Task<bool> HasOpenWaitingTaskAsync(int instanceId, WorkflowNode node, CancellationToken ct)
     {
-        // Local (unsaved) first
         if (HasLocalOpenTask(instanceId, node.Id))
             return true;
 
-        // Persisted
         return await _context.WorkflowTasks
             .Where(t => t.WorkflowInstanceId == instanceId
                         && t.NodeId == node.Id
                         && OpenStatuses.Contains(t.Status))
             .AnyAsync(ct);
     }
+
+    #endregion
+
+    #region Notification Helper
+
+    private async Task SafeNotifyInstanceAndListAsync(WorkflowInstance instance)
+    {
+        try
+        {
+            await _instanceNotifier.NotifyInstanceAsync(instance);
+            await _instanceNotifier.NotifyInstancesChangedAsync(instance.TenantId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "WF_NOTIFY_FAIL Instance={InstanceId}", instance.Id);
+        }
+    }
+
+    #endregion
 }

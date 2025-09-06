@@ -31,7 +31,7 @@ import {
   HowToReg as ClaimIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { workflowService, type InstanceStatusDto } from '@/services/workflow.service';
+import { workflowService } from '@/services/workflow.service';
 import type {
   WorkflowInstanceDto,
   WorkflowEventDto,
@@ -42,14 +42,9 @@ import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import DefinitionDiagram from '@/features/workflow/definitions/DefinitionDiagram';
 import { InstanceStatusBadge } from './components/InstanceStatusBadge';
-
-interface LightweightState {
-  status?: string;
-  currentNodeIds?: string[];
-  progressPercentage?: number;
-  activeTasksCount?: number;
-  lastUpdated?: string;
-}
+import { useTaskHub } from './hooks/useTaskHub';
+import { useInstanceHub } from './hooks/useInstanceHub';
+import type { InstanceUpdatedEvent } from '@/services/workflowNotifications';
 
 export function InstanceDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -72,16 +67,6 @@ export function InstanceDetailsPage() {
   const navigate = useNavigate();
   const { currentTenant } = useTenant();
 
-  const lightStateRef = useRef<LightweightState>({});
-  const pollingRef = useRef<number | null>(null);
-
-  const clearPoll = () => {
-    if (pollingRef.current) {
-      window.clearInterval(pollingRef.current);
-      pollingRef.current = null;
-    }
-  };
-
   const loadSnapshot = useCallback(async (silent = false) => {
     if (!instanceId) return;
     try {
@@ -94,99 +79,34 @@ export function InstanceDetailsPage() {
       setTraversedEdgeIds(snapshot.traversedEdgeIds || []);
       setVisitedNodeIds(snapshot.visitedNodeIds || []);
       setCurrentNodeIds(snapshot.currentNodeIds || []);
-
-      // Seed lightweight cache to avoid immediate redundant full refresh
-      lightStateRef.current = {
-        status: snapshot.instance.status,
-        currentNodeIds: snapshot.currentNodeIds,
-        progressPercentage: undefined, // Not supplied in snapshot status; reserved for future
-        activeTasksCount: snapshot.tasks.filter(t => !['Completed', 'Cancelled', 'Failed'].includes(t.status)).length,
-        lastUpdated: new Date().toISOString()
-      };
     } catch {
-      toast.error('Failed to load runtime snapshot');
+      if (!silent) toast.error('Failed to load runtime snapshot');
     } finally {
       if (!silent) setLoading(false);
     }
   }, [instanceId]);
 
-  const shouldFullRefresh = (prior: LightweightState, next: InstanceStatusDto): boolean => {
-    if (!instance) return true; // first-time or lost state
-    if (prior.status !== next.status) return true;
-    // Compare active node list changes (stringify small array safe)
-    const prevNodes = (prior.currentNodeIds || []).join(',');
-    const nextNodes = (next.currentNodeIds || '').replace(/\s/g, '');
-    if (prevNodes !== nextNodes) return true;
-    // Could also trigger on activeTasksCount change if status DTO exposes it (we have next.activeTasksCount)
-    if (typeof next.activeTasksCount === 'number' && prior.activeTasksCount !== next.activeTasksCount) return true;
-    return false;
-  };
-
-  const lightweightPoll = useCallback(async () => {
-    if (!instanceId) return;
-    try {
-      const statusDto = await workflowService.getInstanceStatus(instanceId);
-      const prior = lightStateRef.current;
-
-      const fullNeeded = shouldFullRefresh(prior, statusDto);
-      // Update light cache
-      lightStateRef.current = {
-        status: String(statusDto.status),
-        currentNodeIds: statusDto.currentNodeIds?.split(',').map(s => s.trim()).filter(Boolean) || prior.currentNodeIds || [],
-        progressPercentage: statusDto.progressPercentage,
-        activeTasksCount: statusDto.activeTasksCount,
-        lastUpdated: statusDto.lastUpdated?.toString()
-      };
-
-      if (fullNeeded) {
-        // silent (no spinner) full refresh
-        await loadSnapshot(true);
-      } else {
-        // Apply light deltas without full snapshot
-        setInstance(prev =>
-          prev
-            ? { ...prev, status: statusDto.status as any, updatedAt: statusDto.lastUpdated || prev.updatedAt }
-            : prev
-        );
-        if (statusDto.currentNodeIds) {
-          setCurrentNodeIds(
-            statusDto.currentNodeIds
-              .split(',')
-              .map(s => s.trim())
-              .filter(Boolean)
-          );
-        }
-      }
-
-      // Stop polling if terminal
-      if (['Completed', 'Cancelled', 'Failed'].includes(String(statusDto.status))) {
-        clearPoll();
-      }
-    } catch {
-      // Swallow errors (transient). Could add retry backoff later.
-    }
-  }, [instanceId, loadSnapshot]);
-
   useEffect(() => {
     if (currentTenant && instanceId) {
-      void loadSnapshot().then(() => {
-        clearPoll();
-        pollingRef.current = window.setInterval(() => {
-          void lightweightPoll();
-        }, 5000);
-      });
+      void loadSnapshot();
     }
-    return () => clearPoll();
-  }, [currentTenant, instanceId, loadSnapshot, lightweightPoll]);
+  }, [currentTenant, instanceId, loadSnapshot]);
 
-  const handleRefresh = () => loadSnapshot();
+  // SignalR: when tasks change for tenant, refresh if instance still active
+  useTaskHub(() => {
+    if (instance && (instance.status === 'Running' || instance.status === 'Suspended')) {
+      void loadSnapshot(true);
+    }
+  }, 1200);
+
+  const handleRefresh = () => void loadSnapshot();
 
   const handleTerminateInstance = async () => {
     if (!instance) return;
     try {
       await workflowService.terminateInstance(instance.id);
       toast.success('Workflow instance terminated');
-      await loadSnapshot();
+      await loadSnapshot(true);
     } catch {
       toast.error('Failed to terminate workflow instance');
     }
@@ -197,7 +117,7 @@ export function InstanceDetailsPage() {
     try {
       await workflowService.suspendInstance(instance.id);
       toast.success('Workflow instance suspended');
-      await loadSnapshot();
+      await loadSnapshot(true);
     } catch {
       toast.error('Failed to suspend workflow instance');
     }
@@ -208,7 +128,7 @@ export function InstanceDetailsPage() {
     try {
       await workflowService.resumeInstance(instance.id);
       toast.success('Workflow instance resumed');
-      await loadSnapshot();
+      await loadSnapshot(true);
     } catch {
       toast.error('Failed to resume workflow instance');
     }
@@ -345,6 +265,35 @@ export function InstanceDetailsPage() {
     }
   ];
 
+  const handleInstancePush = useCallback((evt: InstanceUpdatedEvent) => {
+    if (!instance || evt.instanceId !== instance.id) return;
+    const statusChanged = instance.status !== evt.status;
+    const nodesChanged = evt.currentNodeIds && evt.currentNodeIds !== instance.currentNodeIds;
+    // Cheap merge
+    setInstance(prev => prev ? ({
+      ...prev,
+      status: evt.status as any,
+      completedAt: evt.completedAt || prev.completedAt,
+      errorMessage: evt.errorMessage ?? prev.errorMessage,
+      currentNodeIds: evt.currentNodeIds || prev.currentNodeIds
+    }) : prev);
+
+    if (statusChanged || nodesChanged) {
+      // Silent snapshot refresh (will update tasks/events if needed)
+      void loadSnapshot(true);
+    }
+  }, [instance, loadSnapshot]);
+
+  useInstanceHub({
+    onInstanceUpdated: handleInstancePush,
+    onInstancesChanged: () => {
+      // InstancesChanged is coarse; if still running, do a light refresh
+      if (instance && (instance.status === 'Running' || instance.status === 'Suspended')) {
+        void loadSnapshot(true);
+      }
+    }
+  });
+
   if (!currentTenant) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
@@ -388,7 +337,7 @@ export function InstanceDetailsPage() {
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          <InstanceStatusBadge instanceId={instance.id} compact /> {/* Live badge */}
+          <InstanceStatusBadge instanceId={instance.id} compact existingStatus={instance.status as any} /> {/* Live badge */}
           <Tooltip title="Refresh (full snapshot)">
             <IconButton onClick={handleRefresh}>
               <RefreshIcon />
@@ -427,7 +376,7 @@ export function InstanceDetailsPage() {
             <Box>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" color="text.secondary">Status (live)</Typography>
-                <InstanceStatusBadge instanceId={instance.id} />{/* full badge with label */}
+                <InstanceStatusBadge instanceId={instance.id} existingStatus={instance.status as any} />{/* full badge with label */}
               </Box>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" color="text.secondary">Workflow Definition</Typography>
