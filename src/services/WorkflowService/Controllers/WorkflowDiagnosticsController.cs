@@ -4,14 +4,15 @@ using Microsoft.Extensions.Options;
 using WorkflowService.Engine.AutomaticActions;
 using WorkflowService.Engine.Diagnostics;
 // If you have a custom permission attribute, keep it; otherwise remove the RequiresPermission line.
-using Common.Authorization; // Remove if not present
+using Common.Authorization;
+using Common.Constants;
 
 namespace WorkflowService.Controllers;
 
 [ApiController]
 [Route("api/workflow/admin/diagnostics")]
 [Authorize]
-[RequiresPermission("workflow.admin")] // Remove if your auth system doesn’t define this yet
+[RequiresPermission(Permissions.Workflow.Admin)]
 public class WorkflowDiagnosticsController : ControllerBase
 {
     private readonly IAutomaticDiagnosticsBuffer _buffer;

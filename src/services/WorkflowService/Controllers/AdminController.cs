@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Common.Authorization;
+using Common.Constants;
 using DTOs.Common;
 using DTOs.Workflow;
 using DTOs.Workflow.Enums;
@@ -18,7 +19,7 @@ namespace WorkflowService.Controllers;
 [ApiController]
 [Route("api/workflow/[controller]")]
 [Authorize]
-[RequiresPermission("workflow.admin")]
+[RequiresPermission(Permissions.Workflow.Admin)]
 public class AdminController : ControllerBase
 {
     private readonly WorkflowDbContext _context;
@@ -515,7 +516,7 @@ public class AdminController : ControllerBase
 
     private int GetCurrentUserId()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         return int.TryParse(userIdClaim, out var userId) ? userId : 0;
     }
 }

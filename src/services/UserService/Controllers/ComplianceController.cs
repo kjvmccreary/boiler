@@ -4,6 +4,7 @@ using Common.Services;
 using Common.Authorization;
 using DTOs.Compliance;
 using DTOs.Common;
+using Common.Constants;
 
 namespace UserService.Controllers;
 
@@ -34,7 +35,7 @@ public class ComplianceController : ControllerBase
     /// Generate an access compliance report
     /// </summary>
     [HttpPost("reports/access")]
-    [RequiresPermission("compliance.generate_reports")]
+    [RequiresPermission(Permissions.Compliance.GenerateReports)]
     public async Task<IActionResult> GenerateAccessReport([FromBody] GenerateReportRequest request)
     {
         try
@@ -66,7 +67,7 @@ public class ComplianceController : ControllerBase
     /// Generate a permission usage compliance report
     /// </summary>
     [HttpPost("reports/permissions")]
-    [RequiresPermission("compliance.generate_reports")]
+    [RequiresPermission(Permissions.Compliance.GenerateReports)]
     public async Task<IActionResult> GeneratePermissionUsageReport([FromBody] GenerateReportRequest request)
     {
         try
@@ -98,7 +99,7 @@ public class ComplianceController : ControllerBase
     /// Generate a security audit compliance report
     /// </summary>
     [HttpPost("reports/security")]
-    [RequiresPermission("compliance.generate_reports")]
+    [RequiresPermission(Permissions.Compliance.GenerateReports)]
     public async Task<IActionResult> GenerateSecurityAuditReport([FromBody] GenerateReportRequest request)
     {
         try
@@ -130,7 +131,7 @@ public class ComplianceController : ControllerBase
     /// Generate a data retention compliance report
     /// </summary>
     [HttpPost("reports/retention")]
-    [RequiresPermission("compliance.generate_reports")]
+    [RequiresPermission(Permissions.Compliance.GenerateReports)]
     public async Task<IActionResult> GenerateDataRetentionReport([FromQuery] int? tenantId = null)
     {
         try
@@ -159,7 +160,7 @@ public class ComplianceController : ControllerBase
     /// Get list of generated compliance reports
     /// </summary>
     [HttpGet("reports")]
-    [RequiresPermission("compliance.view_reports")]
+    [RequiresPermission(Permissions.Compliance.ViewReports)]
     public async Task<IActionResult> GetReports([FromQuery] int? tenantId = null, [FromQuery] int pageSize = 50)
     {
         try
@@ -188,7 +189,7 @@ public class ComplianceController : ControllerBase
     /// Export a compliance report to various formats
     /// </summary>
     [HttpGet("reports/{reportId}/export")]
-    [RequiresPermission("compliance.export_reports")]
+    [RequiresPermission(Permissions.Compliance.ExportReports)]
     public async Task<IActionResult> ExportReport(Guid reportId, [FromQuery] string format = "pdf")
     {
         try
@@ -252,7 +253,7 @@ public class ComplianceController : ControllerBase
     /// Get active security alerts
     /// </summary>
     [HttpGet("alerts")]
-    [RequiresPermission("security.view_alerts")]
+    [RequiresPermission(Permissions.Security.ViewAlerts)]
     public async Task<IActionResult> GetActiveAlerts([FromQuery] int? tenantId = null)
     {
         try
@@ -281,7 +282,7 @@ public class ComplianceController : ControllerBase
     /// Resolve a security alert
     /// </summary>
     [HttpPost("alerts/{alertId}/resolve")]
-    [RequiresPermission("security.manage_alerts")]
+    [RequiresPermission(Permissions.Security.ManageAlerts)]
     public async Task<IActionResult> ResolveAlert(Guid alertId, [FromBody] ResolveAlertRequest request)
     {
         try
@@ -309,7 +310,7 @@ public class ComplianceController : ControllerBase
     /// Get alert configuration for current tenant
     /// </summary>
     [HttpGet("alerts/configuration")]
-    [RequiresPermission("security.view_alert_config")]
+    [RequiresPermission(Permissions.Security.ViewAlertConfig)]
     public async Task<IActionResult> GetAlertConfiguration()
     {
         try
@@ -340,7 +341,7 @@ public class ComplianceController : ControllerBase
     /// Update alert configuration for current tenant
     /// </summary>
     [HttpPut("alerts/configuration")]
-    [RequiresPermission("security.manage_alert_config")]
+    [RequiresPermission(Permissions.Security.ManageAlertConfig)]
     public async Task<IActionResult> UpdateAlertConfiguration([FromBody] AlertConfiguration configuration)
     {
         try
@@ -370,7 +371,7 @@ public class ComplianceController : ControllerBase
     /// Test alert notification system
     /// </summary>
     [HttpPost("alerts/test")]
-    [RequiresPermission("security.test_alerts")]
+    [RequiresPermission(Permissions.Security.TestAlerts)]
     public async Task<IActionResult> TestAlert([FromBody] TestAlertRequest request)
     {
         try

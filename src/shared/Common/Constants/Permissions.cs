@@ -74,6 +74,29 @@ public static class Permissions
     }
 
     /// <summary>
+    /// Compliance / security reporting permissions
+    /// </summary>
+    public static class Compliance
+    {
+        public const string GenerateReports = "compliance.generate_reports";
+        public const string ViewReports     = "compliance.view_reports";
+        public const string ManageAlerts    = "compliance.manage_alerts";
+        public const string ExportReports   = "compliance.export_reports";
+    }
+
+    /// <summary>
+    /// Security / alerting permissions (split from Compliance for clarity)
+    /// </summary>
+    public static class Security
+    {
+        public const string ViewAlerts       = "security.view_alerts";
+        public const string ManageAlerts     = "security.manage_alerts";
+        public const string ViewAlertConfig  = "security.view_alert_config";
+        public const string ManageAlertConfig= "security.manage_alert_config";
+        public const string TestAlerts       = "security.test_alerts";
+    }
+
+    /// <summary>
     /// Billing and subscription management
     /// </summary>
     public static class Billing

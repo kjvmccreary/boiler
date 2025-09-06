@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Common.Authorization;
+using Common.Constants;
 using DTOs.Common;
 using DTOs.Workflow;
 using WorkflowService.Services;
@@ -34,7 +35,7 @@ public class RoleUsageController : ControllerBase
     /// Check if a role is used in workflow definitions
     /// </summary>
     [HttpPost("check-usage")]
-    [RequiresPermission("roles.view")]
+    [RequiresPermission(Permissions.Roles.View)]
     public async Task<ActionResult<ApiResponseDto<RoleUsageInWorkflowsDto>>> CheckRoleUsage([FromBody] CheckRoleUsageRequestDto request)
     {
         try

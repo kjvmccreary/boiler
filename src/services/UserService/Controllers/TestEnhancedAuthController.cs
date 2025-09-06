@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Common.Authorization;
 using Common.Services;
 using DTOs.Monitoring;
+using Common.Constants;
 
 namespace UserService.Controllers;
 
@@ -31,7 +32,7 @@ public class TestEnhancedAuthController : ControllerBase
     /// This will trigger the Enhanced Permission Authorization Handler
     /// </summary>
     [HttpGet("test-users-view")]
-    [RequiresPermission("users.view")]
+    [RequiresPermission(Permissions.Users.View)]
     public IActionResult TestUsersView() // 🔧 FIX: Remove async since no await is used
     {
         try
@@ -57,7 +58,7 @@ public class TestEnhancedAuthController : ControllerBase
     /// Test endpoint that requires users.edit permission
     /// </summary>
     [HttpPost("test-users-edit")]
-    [RequiresPermission("users.edit")]
+    [RequiresPermission(Permissions.Users.Edit)]
     public IActionResult TestUsersEdit() // 🔧 FIX: Remove async since no await is used
     {
         try
@@ -83,7 +84,7 @@ public class TestEnhancedAuthController : ControllerBase
     /// Test endpoint that requires admin-only permissions
     /// </summary>
     [HttpDelete("test-admin-only")]
-    [RequiresPermission("users.delete")]
+    [RequiresPermission(Permissions.Users.Delete)]
     public IActionResult TestAdminOnly() // 🔧 FIX: Remove async since no await is used
     {
         try
@@ -165,7 +166,7 @@ public class TestEnhancedAuthController : ControllerBase
     /// Test multiple permission checks rapidly to test caching
     /// </summary>
     [HttpGet("test-cache-performance")]
-    [RequiresPermission("users.view")]
+    [RequiresPermission(Permissions.Users.View)]
     public IActionResult TestCachePerformance() // 🔧 FIX: Remove async since no real async work is done
     {
         try

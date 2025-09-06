@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Common.Services;
 using Common.Authorization;
+using Common.Constants;
 using DTOs.Monitoring; // 🔧 ADD: Import the correct namespace for SystemMetrics
 
 namespace UserService.Controllers;
@@ -28,7 +29,7 @@ public class MonitoringController : ControllerBase
     /// Get system metrics for the last 24 hours
     /// </summary>
     [HttpGet("metrics")]
-    [RequiresPermission("system.monitor")]
+    [RequiresPermission(Permissions.System.Monitor)]
     public async Task<IActionResult> GetSystemMetrics([FromQuery] int hours = 24)
     {
         try
@@ -55,7 +56,7 @@ public class MonitoringController : ControllerBase
     /// Get active performance alerts
     /// </summary>
     [HttpGet("alerts")]
-    [RequiresPermission("system.monitor")]
+    [RequiresPermission(Permissions.System.Monitor)]
     public async Task<IActionResult> GetActiveAlerts()
     {
         try
@@ -156,7 +157,7 @@ public class MonitoringController : ControllerBase
     /// Reset monitoring metrics (for testing/development)
     /// </summary>
     [HttpPost("reset-metrics")]
-    [RequiresPermission("system.manage")]
+    [RequiresPermission(Permissions.System.Manage)]
     public IActionResult ResetMetrics() // 🔧 FIX: Remove async since no await is used
     {
         try

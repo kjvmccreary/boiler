@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Common.Authorization;
+using Common.Constants;
 using DTOs.Common;
 using DTOs.Workflow;
 using DTOs.Workflow.Enums;
@@ -35,7 +36,7 @@ public class TasksController : ControllerBase
     }
 
     [HttpGet]
-    [RequiresPermission("workflow.view_tasks")]
+    [RequiresPermission(Permissions.Workflow.ViewTasks)]
     public async Task<ActionResult<ApiResponseDto<List<WorkflowTaskDto>>>> GetTasks(
         [FromQuery] WorkflowTaskStatus? status = null,
         [FromQuery] int? workflowInstanceId = null,
@@ -103,7 +104,7 @@ public class TasksController : ControllerBase
     }
 
     [HttpGet("mine")]
-    [RequiresPermission("workflow.view_tasks")]
+    [RequiresPermission(Permissions.Workflow.ViewTasks)]
     public async Task<ActionResult<ApiResponseDto<List<TaskSummaryDto>>>> GetMyTasks(
         [FromQuery] WorkflowTaskStatus? status = null,
         [FromQuery] bool includeRoleTasks = true,
@@ -119,7 +120,7 @@ public class TasksController : ControllerBase
     }
 
     [HttpGet("mine/summary")]
-    [RequiresPermission("workflow.view_tasks")]
+    [RequiresPermission(Permissions.Workflow.ViewTasks)]
     public async Task<ActionResult<ApiResponseDto<TaskCountsDto>>> GetMyTaskSummary(CancellationToken ct)
     {
         var result = await _taskService.GetMyTaskCountsAsync(ct);
@@ -128,7 +129,7 @@ public class TasksController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [RequiresPermission("workflow.view_tasks")]
+    [RequiresPermission(Permissions.Workflow.ViewTasks)]
     public async Task<ActionResult<ApiResponseDto<WorkflowTaskDto>>> GetTask(int id)
     {
         var result = await _taskService.GetTaskByIdAsync(id);
@@ -137,7 +138,7 @@ public class TasksController : ControllerBase
     }
 
     [HttpPost("{id}/claim")]
-    [RequiresPermission("workflow.claim_tasks")]
+    [RequiresPermission(Permissions.Workflow.ClaimTasks)]
     public async Task<ActionResult<ApiResponseDto<WorkflowTaskDto>>> ClaimTask(int id)
     {
         var result = await _taskService.ClaimTaskAsync(id);
@@ -147,7 +148,7 @@ public class TasksController : ControllerBase
     }
 
     [HttpPost("{id}/complete")]
-    [RequiresPermission("workflow.complete_tasks")]
+    [RequiresPermission(Permissions.Workflow.CompleteTasks)]
     public async Task<ActionResult<ApiResponseDto<WorkflowTaskDto>>> CompleteTask(int id, [FromBody] CompleteTaskRequestDto request)
     {
         var result = await _taskService.CompleteTaskAsync(id, request);
@@ -157,7 +158,7 @@ public class TasksController : ControllerBase
     }
 
     [HttpPost("{id}/assign")]
-    [RequiresPermission("workflow.admin")]
+    [RequiresPermission(Permissions.Workflow.Admin)]
     public async Task<ActionResult<ApiResponseDto<WorkflowTaskDto>>> AssignTask(int id, [FromBody] AssignTaskRequestDto request)
     {
         var userId = GetCurrentUserId();
@@ -168,7 +169,7 @@ public class TasksController : ControllerBase
     }
 
     [HttpPost("{id}/cancel")]
-    [RequiresPermission("workflow.admin")]
+    [RequiresPermission(Permissions.Workflow.Admin)]
     public async Task<ActionResult<ApiResponseDto<WorkflowTaskDto>>> CancelTask(int id)
     {
         var userId = GetCurrentUserId();
@@ -179,7 +180,7 @@ public class TasksController : ControllerBase
     }
 
     [HttpPost("{id}/release")]
-    [RequiresPermission("workflow.claim_tasks")]
+    [RequiresPermission(Permissions.Workflow.ClaimTasks)]
     public async Task<ActionResult<ApiResponseDto<WorkflowTaskDto>>> ReleaseTask(int id)
     {
         var result = await _taskService.ReleaseTaskAsync(id);
@@ -190,7 +191,7 @@ public class TasksController : ControllerBase
 
     private int GetCurrentUserId()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         return int.TryParse(userIdClaim, out var userId) ? userId : 0;
     }
 }

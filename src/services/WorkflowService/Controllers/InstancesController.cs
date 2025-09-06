@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Common.Authorization;
+using Common.Constants;
 using DTOs.Common;
 using DTOs.Workflow;
 using DTOs.Workflow.Enums;
@@ -44,7 +45,7 @@ public class InstancesController : ControllerBase
     /// Get all workflow instances for the current tenant
     /// </summary>
     [HttpGet]
-    [RequiresPermission("workflow.view_instances")]
+    [RequiresPermission(Permissions.Workflow.ViewInstances)]
     public async Task<ActionResult<ApiResponseDto<PagedResultDto<WorkflowInstanceDto>>>> GetInstances(
         [FromQuery] InstanceStatus? status = null,
         [FromQuery] int? workflowDefinitionId = null,
@@ -84,7 +85,7 @@ public class InstancesController : ControllerBase
     /// Get all workflow instances for the current tenant (flat list)
     /// </summary>
     [HttpGet("flat")]
-    [RequiresPermission("workflow.view_instances")]
+    [RequiresPermission(Permissions.Workflow.ViewInstances)]
     public async Task<ActionResult<PagedResultDto<WorkflowInstanceDto>>> GetInstancesFlat(
         [FromQuery] InstanceStatus? status = null,
         [FromQuery] int? workflowDefinitionId = null,
@@ -112,7 +113,7 @@ public class InstancesController : ControllerBase
     /// Get a specific workflow instance by ID
     /// </summary>
     [HttpGet("{id}")]
-    [RequiresPermission("workflow.view_instances")]
+    [RequiresPermission(Permissions.Workflow.ViewInstances)]
     public async Task<ActionResult<ApiResponseDto<WorkflowInstanceDto>>> GetInstance(int id)
     {
         try
@@ -143,7 +144,7 @@ public class InstancesController : ControllerBase
     /// Start a new workflow instance
     /// </summary>
     [HttpPost]
-    [RequiresPermission("workflow.start_instances")]
+    [RequiresPermission(Permissions.Workflow.StartInstances)]
     public async Task<ActionResult<ApiResponseDto<WorkflowInstanceDto>>> StartInstance(
         [FromBody] StartInstanceRequestDto request)
     {
@@ -183,7 +184,7 @@ public class InstancesController : ControllerBase
     /// Send a signal to a workflow instance
     /// </summary>
     [HttpPost("{id}/signal")]
-    [RequiresPermission("workflow.manage_instances")]
+    [RequiresPermission(Permissions.Workflow.ManageInstances)]
     public async Task<ActionResult<ApiResponseDto<WorkflowInstanceDto>>> SignalInstance(
         int id,
         [FromBody] SignalInstanceRequestDto request)
@@ -219,7 +220,7 @@ public class InstancesController : ControllerBase
     /// Terminate a workflow instance
     /// </summary>
     [HttpDelete("{id}")]
-    [RequiresPermission("workflow.manage_instances")]
+    [RequiresPermission(Permissions.Workflow.ManageInstances)]
     public async Task<ActionResult<ApiResponseDto<bool>>> TerminateInstance(int id)
     {
         try
@@ -258,7 +259,7 @@ public class InstancesController : ControllerBase
     /// Get workflow instance execution history
     /// </summary>
     [HttpGet("{id}/history")]
-    [RequiresPermission("workflow.view_instances")]
+    [RequiresPermission(Permissions.Workflow.ViewInstances)]
     public async Task<ActionResult<ApiResponseDto<List<WorkflowEventDto>>>> GetInstanceHistory(int id)
     {
         try
@@ -289,7 +290,7 @@ public class InstancesController : ControllerBase
     /// Get workflow instance status
     /// </summary>
     [HttpGet("{id}/status")]
-    [RequiresPermission("workflow.view_instances")]
+    [RequiresPermission(Permissions.Workflow.ViewInstances)]
     public async Task<ActionResult<ApiResponseDto<InstanceStatusDto>>> GetInstanceStatus(int id)
     {
         try
@@ -320,7 +321,7 @@ public class InstancesController : ControllerBase
     /// Suspend a running workflow instance
     /// </summary>
     [HttpPost("{id}/suspend")]
-    [RequiresPermission("workflow.manage_instances")]
+    [RequiresPermission(Permissions.Workflow.ManageInstances)]
     public async Task<ActionResult<ApiResponseDto<WorkflowInstanceDto>>> Suspend(int id, [FromQuery] string reason = "manual-suspend")
     {
         var result = await _instanceService.SuspendAsync(id, reason);
@@ -334,7 +335,7 @@ public class InstancesController : ControllerBase
     /// Resume a suspended workflow instance
     /// </summary>
     [HttpPost("{id}/resume")]
-    [RequiresPermission("workflow.manage_instances")]
+    [RequiresPermission(Permissions.Workflow.ManageInstances)]
     public async Task<ActionResult<ApiResponseDto<WorkflowInstanceDto>>> Resume(int id)
     {
         var result = await _instanceService.ResumeAsync(id);
@@ -348,7 +349,7 @@ public class InstancesController : ControllerBase
     /// Get a consolidated runtime snapshot (instance + definition JSON + tasks + events + derived path)
     /// </summary>
     [HttpGet("{id}/runtime-snapshot")]
-    [RequiresPermission("workflow.view_instances")]
+    [RequiresPermission(Permissions.Workflow.ViewInstances)]
     public async Task<ActionResult<ApiResponseDto<InstanceRuntimeSnapshotDto>>> GetRuntimeSnapshot(int id)
     {
         try
@@ -526,7 +527,7 @@ public class InstancesController : ControllerBase
 
     private int GetCurrentUserId()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         return int.TryParse(userIdClaim, out var userId) ? userId : 0;
     }
 }
