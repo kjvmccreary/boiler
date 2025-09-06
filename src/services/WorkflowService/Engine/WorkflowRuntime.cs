@@ -20,7 +20,7 @@ public class WorkflowRuntime : IWorkflowRuntime
     private readonly ITenantProvider _tenantProvider;
     private readonly IConditionEvaluator _conditionEvaluator;
     private readonly ITaskNotificationDispatcher _taskNotifier;
-    private readonly IWorkflowNotificationDispatcher _instanceNotifier; // NEW
+    private readonly IWorkflowNotificationDispatcher _instanceNotifier;
 
     private readonly Dictionary<int, int> _instanceTenantCache = new();
     private bool _dirty;
@@ -32,7 +32,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         IConditionEvaluator conditionEvaluator,
         ITaskNotificationDispatcher taskNotifier,
         ILogger<WorkflowRuntime> logger,
-        IWorkflowNotificationDispatcher? instanceNotifier = null) // optional new param (non-breaking)
+        IWorkflowNotificationDispatcher? instanceNotifier = null)
     {
         _context = context;
         _executors = executors;
@@ -97,7 +97,6 @@ public class WorkflowRuntime : IWorkflowRuntime
         _context.WorkflowInstances.Add(instance);
         await _context.SaveChangesAsync(cancellationToken);
         _dirty = false;
-
         _instanceTenantCache[instance.Id] = tenantId.Value;
 
         _logger.LogInformation("WF_START Instance={InstanceId} Def={DefinitionId} Version={Version} StartNode={StartNode}",
@@ -106,12 +105,16 @@ public class WorkflowRuntime : IWorkflowRuntime
         await CreateEventAsync(instance.Id, "Instance", "Started",
             $"{{\"startNodeId\":\"{startNode.Id}\"}}", startedByUserId);
 
+        // Mark start node visited (not counted in denominator but ensures deterministic context)
+        MarkNodeVisitedInContext(instance, startNode.Id);
+
         await ContinueWorkflowAsync(instance.Id, cancellationToken);
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
 
-        // Notify after persisted start (even if auto-completed)
-        await SafeNotifyInstanceAndListAsync(instance);
+        // Initial progress emission (force so UI can show 0% quickly)
+        await ComputeAndMaybeEmitProgressAsync(instance, workflowDef, force: true, cancellationToken);
 
+        await SafeNotifyInstanceAndListAsync(instance);
         return instance;
     }
 
@@ -193,6 +196,9 @@ public class WorkflowRuntime : IWorkflowRuntime
         }
 
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
+
+        if (instance.Status == InstanceStatus.Running)
+            await ComputeAndMaybeEmitProgressAsync(instance, workflowDef, force: false, cancellationToken);
     }
 
     public async Task SignalWorkflowAsync(
@@ -217,7 +223,11 @@ public class WorkflowRuntime : IWorkflowRuntime
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
 
         if (autoCommit)
+        {
+            var def = BuilderDefinitionAdapter.Parse(instance.WorkflowDefinition.JSONDefinition);
+            await ComputeAndMaybeEmitProgressAsync(instance, def, force: false, cancellationToken);
             await SafeNotifyInstanceAndListAsync(instance);
+        }
     }
 
     public async Task CompleteTaskAsync(
@@ -318,6 +328,9 @@ public class WorkflowRuntime : IWorkflowRuntime
                 system = isTimer && completedByUserId == 0
             }), completedByUserId == 0 ? null : completedByUserId);
 
+        // Mark human/timer node as visited upon successful completion
+        MarkNodeVisitedInContext(instance, node.Id);
+
         RemoveActiveNode(instance, node.Id);
 
         var nextNodeIds = GetOutgoingTargetsForAdvance(workflowDef, node);
@@ -367,6 +380,13 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
 
+        // Emit progress (force if instance just completed)
+        await ComputeAndMaybeEmitProgressAsync(
+            instance,
+            workflowDef,
+            force: instance.Status != InstanceStatus.Running,
+            cancellationToken);
+
         if (!isTimer)
         {
             try
@@ -376,10 +396,7 @@ public class WorkflowRuntime : IWorkflowRuntime
                     await _taskNotifier.NotifyUserAsync(tenantId, task.AssignedToUserId.Value, cancellationToken);
                 await _taskNotifier.NotifyTenantAsync(tenantId, cancellationToken);
             }
-            catch
-            {
-                // ignore
-            }
+            catch { /* ignore notifier errors */ }
         }
 
         if (autoCommit)
@@ -411,6 +428,11 @@ public class WorkflowRuntime : IWorkflowRuntime
         _logger.LogWarning("WF_CANCEL Instance={InstanceId} Reason={Reason}", instance.Id, reason);
 
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
+
+        // Progress emission (force to capture final % even if partial)
+        var def = BuilderDefinitionAdapter.Parse(instance.WorkflowDefinition.JSONDefinition);
+        await ComputeAndMaybeEmitProgressAsync(instance, def, force: true, cancellationToken);
+
         if (autoCommit) await SafeNotifyInstanceAndListAsync(instance);
     }
 
@@ -446,6 +468,10 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         await ContinueWorkflowAsync(instance.Id, cancellationToken);
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
+
+        var def = BuilderDefinitionAdapter.Parse(instance.WorkflowDefinition.JSONDefinition);
+        await ComputeAndMaybeEmitProgressAsync(instance, def, force: true, cancellationToken);
+
         if (autoCommit) await SafeNotifyInstanceAndListAsync(instance);
     }
 
@@ -481,6 +507,10 @@ public class WorkflowRuntime : IWorkflowRuntime
         _logger.LogWarning("WF_SUSPENDED Instance={InstanceId} Reason={Reason}", instance.Id, reason);
 
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
+
+        var def = BuilderDefinitionAdapter.Parse(instance.WorkflowDefinition.JSONDefinition);
+        await ComputeAndMaybeEmitProgressAsync(instance, def, force: false, cancellationToken);
+
         if (autoCommit) await SafeNotifyInstanceAndListAsync(instance);
     }
 
@@ -516,6 +546,10 @@ public class WorkflowRuntime : IWorkflowRuntime
         await ContinueWorkflowAsync(instance.Id, cancellationToken, autoCommit: false);
 
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
+
+        var def = BuilderDefinitionAdapter.Parse(instance.WorkflowDefinition.JSONDefinition);
+        await ComputeAndMaybeEmitProgressAsync(instance, def, force: false, cancellationToken);
+
         if (autoCommit) await SafeNotifyInstanceAndListAsync(instance);
     }
 
@@ -537,6 +571,7 @@ public class WorkflowRuntime : IWorkflowRuntime
                 if (node.IsEnd())
                 {
                     RemoveActiveNode(instance, node.Id);
+                    MarkNodeVisitedInContext(instance, node.Id);
                     await CreateEventAsync(instance.Id, "Node", "Executed",
                         JsonSerializer.Serialize(new
                         {
@@ -547,6 +582,8 @@ public class WorkflowRuntime : IWorkflowRuntime
                             fallback = "implicit-end"
                         }), null);
                     await TryCompleteIfNoActiveAsync(instance);
+                    if (instance.Status == InstanceStatus.Completed)
+                        await ComputeAndMaybeEmitProgressAsync(instance, workflowDef, force: true, cancellationToken);
                     return;
                 }
                 throw new InvalidOperationException($"No executor for node type {node.Type}");
@@ -641,6 +678,7 @@ public class WorkflowRuntime : IWorkflowRuntime
             }
 
             RemoveActiveNode(instance, node.Id);
+            MarkNodeVisitedInContext(instance, node.Id);
 
             List<string> next;
 
@@ -755,6 +793,15 @@ public class WorkflowRuntime : IWorkflowRuntime
                 }), null);
 
             await TryCompleteIfNoActiveAsync(instance);
+
+            if (instance.Status == InstanceStatus.Completed)
+            {
+                await ComputeAndMaybeEmitProgressAsync(instance, workflowDef, force: true, cancellationToken);
+            }
+            else
+            {
+                await ComputeAndMaybeEmitProgressAsync(instance, workflowDef, force: false, cancellationToken);
+            }
         }
         catch (Exception ex)
         {
@@ -767,6 +814,121 @@ public class WorkflowRuntime : IWorkflowRuntime
     {
         try { return exec.CanExecute(node); }
         catch { return false; }
+    }
+
+    #endregion
+
+    #region Progress Helpers
+
+    private static bool ShouldCountForProgress(WorkflowNode node) => !node.IsStart();
+
+    private void MarkNodeVisitedInContext(WorkflowInstance instance, string nodeId)
+    {
+        try
+        {
+            var root = SafeParseContext(instance);
+            if (root["_visited"] is not JsonArray visited)
+            {
+                visited = new JsonArray();
+                root["_visited"] = visited;
+            }
+
+            if (!visited.Any(v => v?.GetValue<string>()?.Equals(nodeId, StringComparison.OrdinalIgnoreCase) == true))
+            {
+                visited.Add(nodeId);
+                instance.Context = root.ToJsonString();
+                MarkDirty();
+            }
+        }
+        catch { /* non-critical */ }
+    }
+
+    private async Task ComputeAndMaybeEmitProgressAsync(
+        WorkflowInstance instance,
+        WorkflowDefinitionJson def,
+        bool force,
+        CancellationToken ct)
+    {
+        try
+        {
+            // collect visited IDs
+            var root = SafeParseContext(instance);
+            var allNodes = def.Nodes.Where(ShouldCountForProgress).ToList();
+            var total = allNodes.Count;
+            if (total == 0) return;
+
+            var visitedSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (root["_visited"] is JsonArray arr)
+            {
+                foreach (var v in arr)
+                {
+                    var id = v?.GetValue<string>();
+                    if (!string.IsNullOrWhiteSpace(id) && allNodes.Any(n => n.Id.Equals(id, StringComparison.OrdinalIgnoreCase)))
+                        visitedSet.Add(id);
+                }
+            }
+
+            if (instance.Status == InstanceStatus.Completed)
+            {
+                // force all counted as visited
+                foreach (var n in allNodes) visitedSet.Add(n.Id);
+            }
+
+            var visitedCount = visitedSet.Count;
+            var pct = (int)Math.Floor((double)visitedCount / total * 100.0);
+            if (pct > 100) pct = 100;
+            if (pct < 0) pct = 0;
+
+            int last = -1;
+            if (root["_progress"] is JsonObject prog &&
+                prog["lastPercent"] is JsonValue lp &&
+                lp.TryGetValue<int>(out var lv))
+            {
+                last = lv;
+            }
+
+            if (!force && pct == last) return;
+
+            // update context progress
+            if (root["_progress"] is not JsonObject pObj)
+            {
+                pObj = new JsonObject();
+                root["_progress"] = pObj;
+            }
+            pObj["lastPercent"] = pct;
+            instance.Context = root.ToJsonString();
+            MarkDirty();
+
+            await CreateEventAsync(instance.Id, "Instance", "Progress",
+                JsonSerializer.Serialize(new
+                {
+                    percentage = pct,
+                    visitedCount,
+                    totalNodes = total,
+                    status = instance.Status.ToString()
+                }),
+                null);
+
+            // NEW SignalR push (best-effort, swallow failures)
+            try
+            {
+                var active = DeserializeActive(instance);
+                await _instanceNotifier.NotifyInstanceProgressAsync(
+                    _instanceTenantCache[instance.Id],
+                    instance.Id,
+                    pct,
+                    visitedCount,
+                    total,
+                    instance.Status.ToString(),
+                    active,
+                    ct);
+            }
+            catch { /* ignore */ }
+        }
+        catch
+        {
+            // swallow progress errors (never break core runtime)
+        }
     }
 
     #endregion
@@ -970,9 +1132,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         if (instance.Status != InstanceStatus.Running) return;
 
         if (_dirty)
-        {
             await SaveIfDirtyAsync();
-        }
 
         await CancelOpenTasksAsync(instance, "instance-completed", default);
         instance.Status = InstanceStatus.Completed;
@@ -984,6 +1144,15 @@ public class WorkflowRuntime : IWorkflowRuntime
         _logger.LogInformation("WF_INSTANCE_COMPLETE Instance={InstanceId} Reason={Reason}", instance.Id, reason);
 
         await SaveIfDirtyAsync();
+
+        // Force final 100% progress emission (compute via definition)
+        try
+        {
+            var def = BuilderDefinitionAdapter.Parse(instance.WorkflowDefinition.JSONDefinition);
+            await ComputeAndMaybeEmitProgressAsync(instance, def, force: true, CancellationToken.None);
+        }
+        catch { /* ignore */ }
+
         await SafeNotifyInstanceAndListAsync(instance);
     }
 
@@ -1105,6 +1274,14 @@ public class WorkflowRuntime : IWorkflowRuntime
             JsonSerializer.Serialize(new { nodeId = node.Id, error = errorMessage }), null);
 
         await SaveIfDirtyAsync();
+
+        try
+        {
+            var def = BuilderDefinitionAdapter.Parse(instance.WorkflowDefinition.JSONDefinition);
+            await ComputeAndMaybeEmitProgressAsync(instance, def, force: true, CancellationToken.None);
+        }
+        catch { }
+
         await SafeNotifyInstanceAndListAsync(instance);
         _logger.LogError("WF_INSTANCE_FAILED Instance={InstanceId} Node={NodeId} Error={Error}",
             instance.Id, node.Id, errorMessage);
@@ -1293,20 +1470,19 @@ public class WorkflowRuntime : IWorkflowRuntime
         var joinNode = def.Nodes.FirstOrDefault(n => n.Id.Equals(joinNodeId, StringComparison.OrdinalIgnoreCase));
         if (joinNode == null) return new JoinArrivalResult { Satisfied = false, NewlySatisfied = false, AddedToActive = false, CancelledBranches = new() };
         if (!joinNode.IsJoin())
-            return new JoinArrivalResult { Satisfied = false, NewlySatisfied = false, AddedToActive = true, CancelledBranches = new() }; // not actually a join; treat normal
+            return new JoinArrivalResult { Satisfied = false, NewlySatisfied = false, AddedToActive = true, CancelledBranches = new() };
 
         var gatewayId = joinNode.GetProperty<string>("gatewayId")?.Trim();
         if (string.IsNullOrWhiteSpace(gatewayId))
         {
             _logger.LogWarning("WF_JOIN_NO_GATEWAY Instance={InstanceId} JoinNode={JoinNode}", instance.Id, joinNode.Id);
-            return new JoinArrivalResult { Satisfied = true, NewlySatisfied = true, AddedToActive = true, CancelledBranches = new() }; // fail-open
+            return new JoinArrivalResult { Satisfied = true, NewlySatisfied = true, AddedToActive = true, CancelledBranches = new() };
         }
 
         var mode = (joinNode.GetProperty<string>("mode") ?? "all").Trim().ToLowerInvariant();
         var cancelRemaining = joinNode.GetProperty<bool?>("cancelRemaining") ?? false;
         var count = joinNode.GetProperty<int?>("count") ?? 0;
         var expression = joinNode.GetProperty<string>("expression");
-        // Quorum (B1): optional properties
         var quorumThresholdCount = joinNode.GetProperty<int?>("thresholdCount") ?? 0;
         double quorumThresholdPercent = 0;
         if (joinNode.Properties.TryGetValue("thresholdPercent", out var tpRaw))
@@ -1326,7 +1502,6 @@ public class WorkflowRuntime : IWorkflowRuntime
             return new JoinArrivalResult { Satisfied = true, NewlySatisfied = true, AddedToActive = true, CancelledBranches = new() };
         }
 
-        // attach join metadata if missing
         if (!groupObj.TryGetPropertyValue("joinNodeId", out var jVal) || (jVal?.GetValue<string>() ?? "") == "")
             groupObj["joinNodeId"] = joinNode.Id;
 
@@ -1348,31 +1523,6 @@ public class WorkflowRuntime : IWorkflowRuntime
                 ["satisfied"] = false,
                 ["satisfiedAtUtc"] = null
             };
-
-            // ---- B2: Timeout metadata capture (configured on join node) ----
-            if (joinNode.Properties.TryGetValue("timeout", out var timeoutRaw) && timeoutRaw is JsonElement toEl && toEl.ValueKind == JsonValueKind.Object)
-            {
-                int seconds = 0;
-                string? onTimeout = null;
-                string? timeoutTarget = null;
-                if (toEl.TryGetProperty("seconds", out var sEl) && sEl.ValueKind == JsonValueKind.Number)
-                    seconds = sEl.GetInt32();
-                if (toEl.TryGetProperty("onTimeout", out var otEl) && otEl.ValueKind == JsonValueKind.String)
-                    onTimeout = otEl.GetString();
-                if (toEl.TryGetProperty("target", out var tgtEl) && tgtEl.ValueKind == JsonValueKind.String)
-                    timeoutTarget = tgtEl.GetString();
-
-                if (seconds > 0)
-                {
-                    var timeoutAt = DateTime.UtcNow.AddSeconds(seconds);
-                    joinMeta["timeoutSeconds"] = seconds;
-                    joinMeta["timeoutAtUtc"] = timeoutAt.ToString("O");
-                    joinMeta["onTimeout"] = (onTimeout ?? "force").Trim().ToLowerInvariant(); // route | fail | force
-                    joinMeta["timeoutTarget"] = string.IsNullOrWhiteSpace(timeoutTarget) ? null : timeoutTarget;
-                    joinMeta["timeoutTriggered"] = false;
-                }
-            }
-            // ----------------------------------------------------------------
             groupObj["join"] = joinMeta;
         }
 
@@ -1381,12 +1531,10 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         var sourceId = sourceNode.Id;
 
-        // record arrival if not already
         if (!arrivals.Any(a => a?.GetValue<string>()?.Equals(sourceId, StringComparison.OrdinalIgnoreCase) == true))
         {
             arrivals.Add(sourceId);
 
-            // Emit arrival event
             CreateEventAsync(instance.Id, "Parallel", "ParallelJoinArrived",
                 JsonSerializer.Serialize(new
                 {
@@ -1409,21 +1557,14 @@ public class WorkflowRuntime : IWorkflowRuntime
             return new JoinArrivalResult { Satisfied = true, NewlySatisfied = false, AddedToActive = false, CancelledBranches = new() };
         }
 
-        // evaluate satisfaction
         bool satisfied;
         if (mode == "quorum")
         {
-            // Determine effective quorum count
             int totalBranches = branches.Count;
             int effectiveCount = quorumThresholdCount;
-            if (effectiveCount <= 0)
-            {
-                if (quorumThresholdPercent > 0)
-                {
-                    effectiveCount = (int)Math.Ceiling(totalBranches * (quorumThresholdPercent / 100.0));
-                }
-            }
-            if (effectiveCount <= 0) effectiveCount = totalBranches; // fallback -> all
+            if (effectiveCount <= 0 && quorumThresholdPercent > 0)
+                effectiveCount = (int)Math.Ceiling(totalBranches * (quorumThresholdPercent / 100.0));
+            if (effectiveCount <= 0) effectiveCount = totalBranches;
             joinMeta["thresholdCount"] = effectiveCount;
             joinMeta["thresholdPercent"] = quorumThresholdPercent;
             satisfied = arrivals.Count >= effectiveCount;
@@ -1449,11 +1590,9 @@ public class WorkflowRuntime : IWorkflowRuntime
             return new JoinArrivalResult { Satisfied = false, NewlySatisfied = false, AddedToActive = false, CancelledBranches = new() };
         }
 
-        // Mark satisfied
         joinMeta["satisfied"] = true;
         joinMeta["satisfiedAtUtc"] = DateTime.UtcNow.ToString("O");
 
-        // determine cancellations
         var cancelled = new List<string>();
         if (cancelRemaining && (mode == "any" || mode == "count"))
         {
@@ -1483,7 +1622,6 @@ public class WorkflowRuntime : IWorkflowRuntime
             }
         }
 
-        // Emit satisfied event
         CreateEventAsync(instance.Id, "Parallel", "ParallelJoinSatisfied",
             JsonSerializer.Serialize(new
             {
@@ -1494,8 +1632,6 @@ public class WorkflowRuntime : IWorkflowRuntime
                 cancelRemaining,
                 quorumThresholdPercent = mode == "quorum" ? quorumThresholdPercent : (double?)null,
                 quorumThresholdCount = mode == "quorum" ? (int?)joinMeta["thresholdCount"]!.GetValue<int>() : null,
-                timeoutSeconds = joinMeta.TryGetPropertyValue("timeoutSeconds", out var ts) ? ts?.GetValue<int?>() : null,
-                timeoutTriggered = false,
                 arrivals = arrivals.Select(a => a!.GetValue<string>()),
                 cancelledBranches = cancelled
             }), null).GetAwaiter().GetResult();
@@ -1523,7 +1659,6 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         try
         {
-            // Build ephemeral context overlay with _joinEval
             var overlay = new Dictionary<string, object?>
             {
                 ["_joinEval"] = new
@@ -1537,15 +1672,12 @@ public class WorkflowRuntime : IWorkflowRuntime
                 }
             };
 
-            // Merge simplistic (shallow) - if needed we can perform real merge later
             using var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(currentContextJson) ? "{}" : currentContextJson);
             var rootDict = new Dictionary<string, object?>();
             foreach (var prop in doc.RootElement.EnumerateObject())
                 rootDict[prop.Name] = prop.Value.ToString();
-
             foreach (var kv in overlay)
                 rootDict[kv.Key] = kv.Value;
-
             var mergedJson = JsonSerializer.Serialize(rootDict);
             return _conditionEvaluator
                 .EvaluateAsync(expression!, mergedJson)

@@ -144,7 +144,9 @@ public class WorkflowRuntimeProgressTests : TestBase
         allProgress.Count.Should().BeGreaterThanOrEqualTo(initialProgressEvents.Count);
 
         // Final progress payload should have percentage 100
-        var last = allProgress.Last();
-        last.Data.Should().Contain("\"percentage\":100").Or.Contain("\"percentage\": 100");
+        var lastData = allProgress.Last().Data ?? string.Empty;
+        // Normalize whitespace and assert contains percentage 100
+        new string(lastData.Where(ch => !char.IsWhiteSpace(ch)).ToArray())
+            .Should().Contain("\"percentage\":100");
     }
 }

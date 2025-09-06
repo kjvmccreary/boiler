@@ -1,83 +1,258 @@
-4.	Frontend vs Backend Validation Parity Tests
-Goal: Detect divergence early.
-Tasks: Import backend JSON fixtures (or reproduce), assert frontend validateDefinition errors ⊆ backend publish validation errors.
-Acceptance: Parity test suite passes; failures documented path to remediation.
-5.	workflowService Unit Tests
-Goal: Stabilize status normalization & error handling.
-Tasks: Tests for numeric/string status normalization, validateThenPublish short‑circuit, publish error shape parsing, task status mapping, snapshot retrieval.
-Acceptance: 85%+ coverage for workflow.service.ts; all edge error scenarios asserted.
-6.	Extract & Test Builder Pure Logic
-Goal: Reduce UI coupling.
-Refactor: Move applyGatewayBranchMetadata, extractBranch, ensureLatestSaved, dirty tracking into /features/workflow/lib.
-Tests: Unit tests for each; race / no-change optimization.
-Acceptance: BuilderPage shrinks (no logic duplication), library tests passing.
-7.	Workflow Builder Interaction Tests
-Goal: Validate primary authoring flows.
-Scenarios: Add nodes → connect edges → gateway true/false labeling → save → publish blocked on validation → fix errors → publish success. Include timer node creation.
-Acceptance: Scenario test passes without network (MSW only), deterministic edge labels.
-8.	Operations Pages Tests (Definitions / My Tasks / Instance Details)
-Goal: Guard core runtime UX.
-Tasks: Definitions load + publish button state rules; MyTasks claim→complete transitions; InstanceDetails current nodes highlight & events ordering (mock).
-Acceptance: Each page has at least one happy path + one permission-restricted test.
-9.	Permissions & RBAC UI Enforcement Tests
-Goal: Prevent accidental exposure.
-Tasks: Mock different user permission sets; assert hidden/disabled actions (publish, start instance, claim task).
-Acceptance: Matrix documented; tests assert absence (queryBy*) and presence where allowed.
-10.	Definition Immutability Frontend Guard Tests
-Goal: Enforce no edits post-publish (UI & service).
-Tasks: Attempt update after publish → blocked; attempt new version (if supported) → allowed.
-Acceptance: Tests reflect expected disabled inputs / API calls not issued.
-11.	Multi-Tenant Isolation UI Tests
-Goal: Prevent cross-tenant bleed.
-Tasks: Switch tenant mock → definitions/tasks lists refresh; ensure no cached leakage (distinct IDs).
-Acceptance: Cache invalidation verified via query key isolation.
-12.	Timer & Auto-Advance UX Tests (After TimerWorker)
-Goal: Visual accuracy for due timers.
-Tasks: Mock timer task becoming complete after “tick” (MSW state mutation); verify UI refresh & badge counts update.
-Acceptance: Poll or refetch triggers new state; no manual page reload needed.
-13.	Outbox / Event Stream Surface Tests (After Dispatcher)
-Goal: Basic visibility of event progression.
-Tasks: Mock events growth; assert timeline incremental render, idempotency not duplicated.
-Acceptance: Event ordering stable; duplicate suppression test passes.
-14.	UoW Save Batching Frontend Expectations
-Goal: Ensure no accidental extra API calls per action.
-Tasks: Spy on MSW handlers; claim/complete/start flows trigger exactly one POST each.
-Acceptance: Test counters asserted.
-16.	Coverage Gates & CI Enhancements
-Goal: Enforce quality floor.
-Tasks: Raise thresholds (e.g., 80% global, 85% workflow folder); add per-folder diff coverage report; fail build on uncovered new lines > N.
-Acceptance: CI pipeline enforces gates; documented override process.
-17.	Performance & Flake Hardening
-Goal: Stable, fast CI.
-Tasks: Reduce unnecessary jsdom renders, use test.each where possible, eliminate await sleep patterns, mock crypto/random where deterministic.
-Acceptance: Median test runtime reduced; zero flaky reruns over 3 consecutive runs.
-18.	Developer Docs & Test Contribution Guide
-Goal: Lower onboarding cost.
-Tasks: Add TESTING.md (patterns, fixtures, mocking strategy, naming conventions).
-Acceptance: Doc merged; referenced in root README.
-19.	Optional: Visual Regression Placeholder (Future)
-Goal: Prepare for screenshot-based diff later.
-Task: Abstract critical component markup with stable data-testid strategy.
-Acceptance: Key workflow components have deterministic testids.
-20.	Optional: Mutation Testing Spike
-Goal: Validate test rigor (esp. DSL & service).
-Task: Run Stryker (or similar) on DSL + service modules; record mutation score baseline.
-Acceptance: Baseline report stored; actionable mutants listed.
-Dependency / Ordering Notes
-•	Items 1–5 unblock the rest.
-•	Items 6–8 rely on extracted helpers & MSW handlers.
-•	Timer (12) / Outbox (13) wait for backend features.
-•	Architecture refactor (15) happens after breadth of tests added to avoid constant file moves during creation.
-Sizing (Rough T-Shirt)
-1–5: S / S / M / S / M
-6–8: M / M / M
-9–12: S / S / M / S
-13–14: M / S
-15–16: M / S
-17–18: S / S
-19–20: (Future)
-Definition of Done (Global)
-•	Tests deterministic (no random failing across 3 runs).
-•	No console.error leakage (unless intentionally asserted).
-•	New helpers documented.
-•	Coverage target met or consciously waived with comment.
+{
+  "success": true,
+  "data": {
+    "instance": {
+      "id": 46,
+      "workflowDefinitionId": 47,
+      "workflowDefinitionName": "Ref-01",
+      "definitionVersion": 1,
+      "status": "Completed",
+      "currentNodeIds": "[]",
+      "context": "{\"_visited\": [\"start-1757168809336\", \"humanTask-1757168814018\", \"end-1757168822415\"], \"_progress\": {\"lastPercent\": 100}, \"task_humanTask-1757168814018\": {\"approved\": true}}",
+      "startedAt": "2025-09-06T22:11:16.801328Z",
+      "completedAt": "2025-09-06T22:13:48.894584Z",
+      "startedByUserId": null,
+      "errorMessage": null,
+      "createdAt": "2025-09-06T22:11:16.848258Z",
+      "updatedAt": "2025-09-06T22:13:48.906545Z"
+    },
+    "definitionJson": "{\"key\": \"ref-01\", \"edges\": [{\"id\": \"e-start-1757168809336-h-humanTask-1757168814018-1757168816133\", \"to\": \"humanTask-1757168814018\", \"from\": \"start-1757168809336\"}, {\"id\": \"e-humanTask-1757168814018-h-end-1757168822415-1757168824803\", \"to\": \"end-1757168822415\", \"from\": \"humanTask-1757168814018\"}], \"nodes\": [{\"x\": 71, \"y\": -42.66667175292969, \"id\": \"start-1757168809336\", \"type\": \"start\", \"label\": \"Start\"}, {\"x\": 84.36201399216247, \"y\": 66.6714095380535, \"id\": \"humanTask-1757168814018\", \"type\": \"humanTask\", \"label\": \"Human Task\", \"dueInMinutes\": 10, \"assigneeRoles\": [\"Admin\"]}, {\"x\": 126.80207785445361, \"y\": 177.31871889331254, \"id\": \"end-1757168822415\", \"type\": \"end\", \"label\": \"End\"}]}",
+    "tasks": [
+      {
+        "id": 85,
+        "taskName": "Human Task",
+        "status": "Completed",
+        "workflowDefinitionName": "Ref-01",
+        "workflowInstanceId": 46,
+        "dueDate": "2025-09-06T22:21:16.988482Z",
+        "createdAt": "2025-09-06T22:11:17.008687Z",
+        "nodeId": "humanTask-1757168814018",
+        "nodeType": "human"
+      }
+    ],
+    "events": [
+      {
+        "id": 635,
+        "workflowInstanceId": 46,
+        "type": "Instance",
+        "name": "Started",
+        "data": "{\"startNodeId\": \"start-1757168809336\"}",
+        "occurredAt": "2025-09-06T22:11:16.907811Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:11:17.008687Z",
+        "updatedAt": "2025-09-06T22:11:17.008687Z"
+      },
+      {
+        "id": 636,
+        "workflowInstanceId": 46,
+        "type": "Edge",
+        "name": "EdgeTraversed",
+        "data": "{\"to\": \"humanTask-1757168814018\", \"from\": \"start-1757168809336\", \"mode\": \"AutoAdvance\", \"edgeId\": \"e-start-1757168809336-h-humanTask-1757168814018-1757168816133\"}",
+        "occurredAt": "2025-09-06T22:11:16.963676Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:11:17.008687Z",
+        "updatedAt": "2025-09-06T22:11:17.008687Z"
+      },
+      {
+        "id": 637,
+        "workflowInstanceId": 46,
+        "type": "Node",
+        "name": "Executed",
+        "data": "{\"nodeId\": \"start-1757168809336\", \"nodeType\": \"Start\", \"shouldWait\": false, \"taskCreated\": false}",
+        "occurredAt": "2025-09-06T22:11:16.965128Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:11:17.008687Z",
+        "updatedAt": "2025-09-06T22:11:17.008687Z"
+      },
+      {
+        "id": 638,
+        "workflowInstanceId": 46,
+        "type": "Instance",
+        "name": "Progress",
+        "data": "{\"status\": \"Running\", \"percentage\": 0, \"totalNodes\": 2, \"visitedCount\": 0}",
+        "occurredAt": "2025-09-06T22:11:16.966912Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:11:17.008687Z",
+        "updatedAt": "2025-09-06T22:11:17.008687Z"
+      },
+      {
+        "id": 639,
+        "workflowInstanceId": 46,
+        "type": "Node",
+        "name": "NodeActivated",
+        "data": "{\"label\": \"Human Task\", \"nodeId\": \"humanTask-1757168814018\", \"taskId\": 0, \"nodeType\": \"HumanTask\"}",
+        "occurredAt": "2025-09-06T22:11:17.032572Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:11:17.033898Z",
+        "updatedAt": "2025-09-06T22:11:17.033898Z"
+      },
+      {
+        "id": 640,
+        "workflowInstanceId": 46,
+        "type": "Node",
+        "name": "Executed",
+        "data": "{\"nodeId\": \"humanTask-1757168814018\", \"nodeType\": \"HumanTask\", \"shouldWait\": true, \"taskCreated\": true}",
+        "occurredAt": "2025-09-06T22:11:17.032684Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:11:17.033898Z",
+        "updatedAt": "2025-09-06T22:11:17.033898Z"
+      },
+      {
+        "id": 641,
+        "workflowInstanceId": 46,
+        "type": "Instance",
+        "name": "Progress",
+        "data": "{\"status\": \"Running\", \"percentage\": 0, \"totalNodes\": 2, \"visitedCount\": 0}",
+        "occurredAt": "2025-09-06T22:11:17.036836Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:11:17.043008Z",
+        "updatedAt": "2025-09-06T22:11:17.043008Z"
+      },
+      {
+        "id": 642,
+        "workflowInstanceId": 46,
+        "type": "Instance",
+        "name": "Started",
+        "data": "{\"Status\": \"started\", \"StartedAt\": \"2025-09-06T22:11:16.801328Z\", \"InstanceId\": 46, \"CompletedAt\": null, \"DefinitionVersion\": 1, \"WorkflowDefinitionId\": 47}",
+        "occurredAt": "2025-09-06T22:11:17.046791Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:11:17.047732Z",
+        "updatedAt": "2025-09-06T22:11:17.047732Z"
+      },
+      {
+        "id": 643,
+        "workflowInstanceId": 46,
+        "type": "Node",
+        "name": "NodeActivated",
+        "data": "{\"type\": \"humanTask\", \"label\": \"Human Task\", \"nodeId\": \"humanTask-1757168814018\"}",
+        "occurredAt": "2025-09-06T22:11:17.054221Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:11:17.055622Z",
+        "updatedAt": "2025-09-06T22:11:17.055622Z"
+      },
+      {
+        "id": 644,
+        "workflowInstanceId": 46,
+        "type": "Edge",
+        "name": "EdgeTraversed",
+        "data": "{\"to\": \"humanTask-1757168814018\", \"from\": \"start-1757168809336\", \"edgeId\": \"e-start-1757168809336-h-humanTask-1757168814018-1757168816133\"}",
+        "occurredAt": "2025-09-06T22:11:17.054638Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:11:17.055622Z",
+        "updatedAt": "2025-09-06T22:11:17.055622Z"
+      },
+      {
+        "id": 645,
+        "workflowInstanceId": 46,
+        "type": "Task",
+        "name": "Assigned",
+        "data": "{\"NodeId\": \"humanTask-1757168814018\", \"TaskId\": 85, \"TaskName\": \"Human Task\", \"AssignedAt\": \"2025-09-06T22:13:44.6396691Z\", \"AssignedToUserId\": 6, \"WorkflowInstanceId\": 46}",
+        "occurredAt": "2025-09-06T22:13:44.640813Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:13:44.642585Z",
+        "updatedAt": "2025-09-06T22:13:44.642585Z"
+      },
+      {
+        "id": 646,
+        "workflowInstanceId": 46,
+        "type": "Task",
+        "name": "Context_Updated",
+        "data": "{\"keys\": [\"approved\"], \"taskKey\": \"task_humanTask-1757168814018\", \"dataShape\": \"json\", \"taskNodeId\": \"humanTask-1757168814018\", \"appliedAtUtc\": \"2025-09-06T22:13:48.8609615Z\"}",
+        "occurredAt": "2025-09-06T22:13:48.862072Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:13:48.873219Z",
+        "updatedAt": "2025-09-06T22:13:48.873219Z"
+      },
+      {
+        "id": 647,
+        "workflowInstanceId": 46,
+        "type": "Task",
+        "name": "Completed",
+        "data": "{\"nodeId\": \"humanTask-1757168814018\", \"system\": false, \"taskId\": 85, \"completionData\": {\"approved\": true}}",
+        "occurredAt": "2025-09-06T22:13:48.863374Z",
+        "userId": 6,
+        "createdAt": "2025-09-06T22:13:48.873219Z",
+        "updatedAt": "2025-09-06T22:13:48.873219Z"
+      },
+      {
+        "id": 648,
+        "workflowInstanceId": 46,
+        "type": "Edge",
+        "name": "EdgeTraversed",
+        "data": "{\"to\": \"end-1757168822415\", \"from\": \"humanTask-1757168814018\", \"mode\": \"TaskCompletionAdvance\", \"edgeId\": \"e-humanTask-1757168814018-h-end-1757168822415-1757168824803\"}",
+        "occurredAt": "2025-09-06T22:13:48.864337Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:13:48.873219Z",
+        "updatedAt": "2025-09-06T22:13:48.873219Z"
+      },
+      {
+        "id": 649,
+        "workflowInstanceId": 46,
+        "type": "Node",
+        "name": "Executed",
+        "data": "{\"nodeId\": \"end-1757168822415\", \"nodeType\": \"End\", \"shouldWait\": false, \"taskCreated\": false}",
+        "occurredAt": "2025-09-06T22:13:48.86798Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:13:48.873219Z",
+        "updatedAt": "2025-09-06T22:13:48.873219Z"
+      },
+      {
+        "id": 650,
+        "workflowInstanceId": 46,
+        "type": "Instance",
+        "name": "Completed",
+        "data": "{\"reason\": \"active-set-drained\"}",
+        "occurredAt": "2025-09-06T22:13:48.895533Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:13:48.897481Z",
+        "updatedAt": "2025-09-06T22:13:48.897481Z"
+      },
+      {
+        "id": 651,
+        "workflowInstanceId": 46,
+        "type": "Instance",
+        "name": "Progress",
+        "data": "{\"status\": \"Completed\", \"percentage\": 100, \"totalNodes\": 2, \"visitedCount\": 2}",
+        "occurredAt": "2025-09-06T22:13:48.901005Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:13:48.906545Z",
+        "updatedAt": "2025-09-06T22:13:48.906545Z"
+      },
+      {
+        "id": 652,
+        "workflowInstanceId": 46,
+        "type": "Instance",
+        "name": "Progress",
+        "data": "{\"status\": \"Completed\", \"percentage\": 100, \"totalNodes\": 2, \"visitedCount\": 2}",
+        "occurredAt": "2025-09-06T22:13:48.90433Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:13:48.906545Z",
+        "updatedAt": "2025-09-06T22:13:48.906545Z"
+      },
+      {
+        "id": 653,
+        "workflowInstanceId": 46,
+        "type": "Instance",
+        "name": "Progress",
+        "data": "{\"status\": \"Completed\", \"percentage\": 100, \"totalNodes\": 2, \"visitedCount\": 2}",
+        "occurredAt": "2025-09-06T22:13:48.90463Z",
+        "userId": null,
+        "createdAt": "2025-09-06T22:13:48.906545Z",
+        "updatedAt": "2025-09-06T22:13:48.906545Z"
+      }
+    ],
+    "traversedEdgeIds": [
+      "e-start-1757168809336-h-humanTask-1757168814018-1757168816133",
+      "e-humanTask-1757168814018-h-end-1757168822415-1757168824803"
+    ],
+    "visitedNodeIds": [
+      "start-1757168809336",
+      "humanTask-1757168814018",
+      "end-1757168822415"
+    ],
+    "currentNodeIds": []
+  },
+  "message": "Runtime snapshot retrieved",
+  "errors": [],
+  "traceId": null
+}

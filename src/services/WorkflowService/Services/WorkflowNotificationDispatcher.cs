@@ -57,4 +57,27 @@ public class WorkflowNotificationDispatcher : IWorkflowNotificationDispatcher
         await _hub.Clients.Group(WorkflowNotificationsHub.TenantGroup(tenantId))
             .SendAsync("InstancesChanged", new { tenantId }, ct);
     }
+
+    public async Task NotifyInstanceProgressAsync(int tenantId, int instanceId, int percentage, int visitedCount,
+        int totalNodes, string status, IEnumerable<string> activeNodeIds, CancellationToken ct = default)
+    {
+        var payload = new
+        {
+            instanceId,
+            percentage,
+            visitedCount,
+            totalNodes,
+            status,
+            activeNodeIds = activeNodeIds?.ToArray() ?? Array.Empty<string>()
+        };
+
+        _logger.LogDebug("WF_NOTIFY InstanceProgress Tenant={TenantId} Instance={InstanceId} %={Pct}",
+            tenantId, instanceId, percentage);
+
+        await _hub.Clients.Group(WorkflowNotificationsHub.TenantGroup(tenantId))
+            .SendAsync("InstanceProgress", payload, ct);
+
+        await _hub.Clients.Group(WorkflowNotificationsHub.InstanceGroup(instanceId))
+            .SendAsync("InstanceProgress", payload, ct);
+    }
 }

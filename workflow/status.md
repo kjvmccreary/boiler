@@ -1,119 +1,132 @@
-Below is the updated backend ↔ frontend contract status (Phase 4 complete). Completed items are marked ✅. Use this as the current implementation tracker.
+Below is the updated backend ↔ frontend contract status (Phase 5 in progress). Completed items are marked ✅, partials 🔶, skipped tests 💤.
 
 --------------------------------------------------
-## 1. High‑impact mismatches (do these first)
+## 1. High‑impact mismatches
 --------------------------------------------------
-### ✅ COMPLETE A Definitions list response shape
-Backend: DefinitionsController.GetAll returns ApiResponseDto<List<WorkflowDefinitionDto>> (Items unwrapped).  
-Frontend risk: getDefinitions() may still treat entire response as array.  
-Action: Ensure workflowService.getDefinitions returns resp.data.data (the list). If pagination needed later, change backend to return full PagedResultDto and update UI.
+### ✅ A Definitions list response shape
+Backend: Returns ApiResponseDto<List<WorkflowDefinitionDto>> (items unwrapped).
+Frontend: Service method adjusted (final audit still pending in Section 2).
 
-### ✅ COMPLETE B Added / changed fields (IsArchived, ArchivedAt, PublishNotes, VersionNotes, ParentDefinitionId, Tags, ActiveInstanceCount, IsPublished, PublishedAt)  (OPEN)
-Current: Archived definitions are NOT filtered.  
-Action options:
-1) Backend: add includeArchived=false param (recommended)  
-2) Frontend: filter out d.isArchived unless user toggles “Show Archived”.
+### 🔶 B Added / changed fields (IsArchived, ArchivedAt, PublishNotes, VersionNotes, ParentDefinitionId, Tags, ActiveInstanceCount, IsPublished, PublishedAt)
+Archived filtering still not implemented (decision pending). UI does not yet expose “Show Archived” toggle.
 
-### ✅ C Start Instance navigation shape (OPEN)
-Backend: start instance returns ApiResponseDto<WorkflowInstanceDto>.  
-Action: Confirm frontend uses instance = resp.data.data (and navigate using instance.id). If still using response.id → fix.
-* useInstanceStatus hook (polling, pause-on-terminal) at features/workflow/instances/hooks/useInstanceStatus.ts
-* InstanceStatusBadge component for quick UI integration
-#### The above two bullet point items are placed under features/workflow/ to ease future extraction into an NPM package (logical feature boundary). No existing pages wired yet; integrate in InstanceDetails or list views as needed.
+### 🔶 C Start Instance navigation shape
+Need final confirmation everywhere navigation uses unwrapped instance.id (not raw response.id). Mark COMPLETE after audit.
 
-### ✅ COMPLETE D Instance completion status mismatch (PARTIAL)
-Frontend: InstanceDetailsPage now refetches snapshot after task completion (mitigates stale UI).  
-Backend: Need to verify HumanTaskExecutor / TaskService.CompleteTaskAsync marks instance Completed (Status + CompletedAt + completion event) when final human task finishes.  
-Open inputs needed (see Section 7).
+### ✅ D Instance completion status mismatch
+Verified end‑to‑end: human task completion -> active set drained -> Instance.Status=Completed, CompletedAt set, CurrentNodeIds empty, events + final progress(100%) emitted. (See snapshot in wflogs.txt.)
 
-### ✅ COMPLETE Permissions naming inconsistencies
-Resolved. All controllers in WorkflowService and UserService use Permissions.* constants. Legacy literals removed. Guard tests & Obsolete attribute for legacy added.
+### ✅ Permissions naming inconsistencies
+All controllers use Permissions.* constants.
 
 --------------------------------------------------
-## 2. Frontend service refactors (proposed) (PARTIAL)
-Ensure each method unwraps ApiResponseDto consistently:
-- getDefinitions(): return resp.data.data
-- startInstance(): return resp.data.data
-- getInstance(): return resp.data.data
-- getInstanceStatus(): resp.data.data
-- getRuntimeSnapshot(): resp.data.data
-- terminateInstance(): resp.data.data (bool)
-- signalInstance(): resp.data.data
-- unpublishDefinition(): resp.data.data
-- archiveDefinition(): resp.data.data
-- terminateDefinitionInstances(): resp.data.data.terminated
+## 2. Frontend service refactors (audit)
+Goal: uniform unwrapping of ApiResponseDto (.data.data).
+Items to audit (some already correct):
+- getDefinitions()
+- startInstance()
+- getInstance()
+- getInstanceStatus()
+- getRuntimeSnapshot()
+- terminateInstance()
+- signalInstance()
+- unpublishDefinition()
+- archiveDefinition()
+- terminateDefinitionInstances()
 
-Status: Confirmed NOT all verified yet. Needs audit in workflowService.ts.
+Status: 🔶 PARTIAL (formal pass still OPEN).
 
 --------------------------------------------------
 ## 3. Recommended backend improvements (optional)
-### A Paging metadata for definitions (OPEN)
-Add TotalCount if UI needs server pagination (otherwise defer).
-
-### B Archived filtering (OPEN)
-Add includeArchived (default false) or implement client filter.
-
-### C Instance finalization logic (OPEN)
-Verify pipeline:
-- Last active path reaches End node.
-- Instance.Status set to Completed.
-- CompletedAt & UpdatedAt set (UtcNow).
-- Instance completion event published (outbox).  
-Pending: Need HumanTaskExecutor / TaskService snippet.
+A Paging metadata for definitions (OPEN)  
+B Archived filtering param includeArchived=false (OPEN)  
+C Instance finalization logic ✅ COMPLETE (Human task path validated)  
+D (New) Progress event duplication optimization (see Section 11) – OPTIONAL
 
 --------------------------------------------------
 ## 4. Concrete frontend code changes
-(On demand. Not regenerated here. Ask if needed.)
+Recent:
+- SignalR integration for InstanceUpdated + InstanceProgress.
+- InstanceStatusBadge consumes push (falls back to polling).
+- Progress bar added (percentage + visited/total).
 
 --------------------------------------------------
 ## 5. Quick diff checklist
 | Concern | Status |
 |---------|--------|
-| Definitions unwrapped array | OPEN |
-| New fields ignored in grid (IsArchived etc.) | OPEN |
-| Start instance id access | OPEN (needs confirm) |
-| Stale instance after final task | PARTIAL (UI refresh done, backend finalization unverified) |
+| Definitions unwrapped array | 🔶 PARTIAL |
+| New definition fields surfaced in UI | OPEN |
+| Start instance id access | 🔶 PARTIAL |
+| Stale instance after final task | ✅ Resolved (push + refetch) |
 | Permissions naming | ✅ COMPLETE |
 | Archived filtering | OPEN |
-| Paging metadata | Optional / OPEN |
+| Paging metadata | OPEN |
+| SignalR InstanceUpdated push | ✅ COMPLETE |
+| SignalR InstanceProgress push | ✅ COMPLETE |
+| Status badge polling fallback | ✅ COMPLETE |
+| Join timeout tests | 💤 Skipped (temporary) |
+| Progress finalization accuracy | ✅ 100% verified |
+| Duplicate final progress events | OPEN (optimize) |
 
 --------------------------------------------------
-## 6. Action order
-1. Fix workflowService response parsing (definitions / startInstance / runtimeSnapshot) – OPEN  
-2. Fix startInstance navigation (use response.data.id) – OPEN (confirm)  
-3. Verify engine sets instance completion – OPEN  
-4. Add archived filter (backend or UI) – OPEN  
-5. ✅ Normalize permission claim names (constants in use; ensure AuthService issues canonical names)  
-6. (Optional) Return proper paging metadata – OPEN  
+## 6. Action order (revised)
+1. Audit workflowService.ts (unwrap consistency) – OPEN  
+2. Confirm all startInstance navigations use unwrapped id – OPEN  
+3. Implement includeArchived (backend) + toggle (frontend) – OPEN  
+4. Optimize duplicate final progress emissions (optional) – OPEN  
+5. Re‑enable & stabilize join timeout tests – OPEN (deferred)  
+6. Definitions paging metadata (if product needs) – OPEN  
+7. (Optional) Disable polling once first push seen per instance – OPTIONAL  
 
 --------------------------------------------------
-## 7. Inputs still needed to close Instance Completion issue
-Provide:
-- Task completion service code (TaskService.CompleteTaskAsync or equivalent).
-- HumanTaskExecutor implementation (C:\...\Engine\Executors\HumanTaskExecutor.cs).
-- Sample WorkflowInstances row after completing final task (Status, CurrentNodeIds, CompletedAt).
-Then: I will supply minimal patch to finalize status transition + event emission if missing.
+## 7. Instance finalization verification (COMPLETE)
+Snapshot (wflogs.txt) confirms:
+- Status=Completed, CompletedAt set
+- CurrentNodeIds = []
+- Progress lastPercent=100
+- Task Completed event emitted
+- Instance Completed + final Progress events present
+No further changes required for core finalization.
 
 --------------------------------------------------
 ## 8. Completed summary
-✅ Permissions normalization across services (constants only; guard tests).
-✅ Frontend instance detail now refetches after task completion (reduces stale state).
-✅ Integration tests updated to dynamically validate permission seeding (removed brittle hard-coded count).
-✅ Added new permission groups (Compliance, Security, System Monitor/Manage) and seeded.
+✅ Permissions normalization  
+✅ Instance lifecycle push (InstanceUpdated)  
+✅ Progress push (InstanceProgress)  
+✅ Human task completion -> instance finalization validated  
+✅ Context tracking (_visited, _progress)  
+✅ Frontend badge + progress bar integration  
 
 --------------------------------------------------
 ## 9. Pending decision points
-- Do you want server-side archived filtering now?
-- Do you need paging metadata in Phase 7 UI?
-- Should instance completion also push SignalR notification (future enhancement)?
+- Server-side archived filtering now or later?
+- Need paging or infinite scroll soon?
+- Keep multiple Progress(100%) events or dedupe?
+- When to re-activate join timeout tests?
 
 --------------------------------------------------
 ## 10. Next recommended steps (immediate)
-1. Send HumanTaskExecutor + completion service snippet.
-2. Audit & patch workflowService.ts for uniform unwrapping.
-3. Add includeArchived param (if product decision = hide archived by default).
-4. Confirm startInstance navigation path uses returned data.id.
-5. (Optional) Add test: start → claim → complete → instance Completed (integration).
+1. Perform service unwrapping audit (Section 2).  
+2. Add includeArchived param (default false) & UI toggle.  
+3. Dedupe final progress events (emit single 100% after completion).  
+4. Re-introduce timeout tests post refactor or mark permanently replaced by new coverage.  
 
 --------------------------------------------------
-End of current status (Phase 4 complete)
+## 11. Observations / minor technical debt
+- Duplicate final Progress events (3 identical 100% entries) — low risk; can suppress by caching last emitted percentage + a terminal guard.  
+- NodeActivated events appear twice for human task (different payload shape); could consolidate later.  
+- Assigned task event before claim is present; ensure ordering consistent with UX expectations if building timeline view.
+
+--------------------------------------------------
+## 12. Backlog (not blocking)
+- Progress event consolidation (single terminal emission).
+- Optional: Include activeTasksCount / openHumanTasks in InstanceUpdated.
+- Streaming of only deltas (reduce event volume).
+- Per-tenant throttling / coalescing of high-frequency automatic nodes.
+
+--------------------------------------------------
+## 13. Skipped tests note
+Join timeout tests (force / fail / route) temporarily skipped while join timeout scaffolding & metadata creation are refined. Track reactivation to avoid silent regressions.
+
+--------------------------------------------------
+End of current status (Phase 5 in progress)

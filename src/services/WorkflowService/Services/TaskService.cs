@@ -192,7 +192,47 @@ public class TaskService : ITaskService
             if (!currentUserId.HasValue)
                 return ApiResponseDto<WorkflowTaskDto>.ErrorResult("User context required");
 
-            // Let runtime perform task + progression (no auto-commit so we persist here)
+            // Pre‑load and authorize BEFORE runtime mutation
+            var tenantId = await _tenantProvider.GetCurrentTenantIdAsync();
+            if (!tenantId.HasValue)
+                return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Tenant context required");
+
+            var roles = (_userContext.Roles ?? Array.Empty<string>()).ToList();
+
+            var task = await _context.WorkflowTasks
+                .Include(t => t.WorkflowInstance)
+                .FirstOrDefaultAsync(t => t.Id == taskId && t.WorkflowInstance.TenantId == tenantId.Value, cancellationToken);
+
+            if (task == null)
+                return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task not found");
+
+            if (task.NodeType != "human")
+                return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Only human tasks can be completed via this endpoint");
+
+            // Valid open states that a user can complete (adjust if you allow completing Assigned -> auto-claim on complete)
+            var completableStates = new[]
+            {
+                WorkflowTaskStatus.Claimed,
+                WorkflowTaskStatus.InProgress
+            };
+
+            if (!completableStates.Contains(task.Status))
+                return ApiResponseDto<WorkflowTaskDto>.ErrorResult($"Task is not in a completable state ({task.Status})");
+
+            // Ownership / role validation
+            if (task.AssignedToUserId.HasValue && task.AssignedToUserId.Value != currentUserId.Value)
+                return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task is assigned to another user");
+
+            if (!task.AssignedToUserId.HasValue && !string.IsNullOrEmpty(task.AssignedToRole))
+            {
+                if (!roles.Contains(task.AssignedToRole, StringComparer.OrdinalIgnoreCase))
+                    return ApiResponseDto<WorkflowTaskDto>.ErrorResult("You lack the required role to complete this task");
+            }
+
+            if (!task.AssignedToUserId.HasValue && string.IsNullOrEmpty(task.AssignedToRole))
+                return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task must be claimed or assigned before completion");
+
+            // Delegate to runtime (which will progress workflow & potentially complete instance)
             await _workflowRuntime.CompleteTaskAsync(
                 taskId,
                 request.CompletionData ?? "{}",
@@ -200,18 +240,18 @@ public class TaskService : ITaskService
                 cancellationToken,
                 autoCommit: false);
 
-            // Persist any status / event / outbox changes made by runtime
             if (_context.ChangeTracker.HasChanges())
                 await _context.SaveChangesAsync(cancellationToken);
             else
                 _logger.LogDebug("WF_TASK_COMPLETE_NO_CHANGES TaskId={TaskId}", taskId);
 
-            var task = await _context.WorkflowTasks
+            // Reload (task mutated by runtime)
+            task = await _context.WorkflowTasks
                 .Include(t => t.WorkflowInstance)
                 .FirstOrDefaultAsync(t => t.Id == taskId, cancellationToken);
 
             if (task == null)
-                return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task not found");
+                return ApiResponseDto<WorkflowTaskDto>.ErrorResult("Task not found after completion");
 
             await SafeNotifyUser(task.TenantId, currentUserId.Value, cancellationToken);
             await SafeNotifyTenant(task.TenantId, cancellationToken);

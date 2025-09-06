@@ -337,7 +337,12 @@ export function InstanceDetailsPage() {
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          <InstanceStatusBadge instanceId={instance.id} compact existingStatus={instance.status as any} /> {/* Live badge */}
+          <InstanceStatusBadge
+            instanceId={instance.id}
+            compact
+            existingStatus={instance.status as any}
+            showProgress
+          /> {/* Live badge */}
           <Tooltip title="Refresh (full snapshot)">
             <IconButton onClick={handleRefresh}>
               <RefreshIcon />
@@ -376,7 +381,11 @@ export function InstanceDetailsPage() {
             <Box>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" color="text.secondary">Status (live)</Typography>
-                <InstanceStatusBadge instanceId={instance.id} existingStatus={instance.status as any} />{/* full badge with label */}
+                <InstanceStatusBadge
+                  instanceId={instance.id}
+                  existingStatus={instance.status as any}
+                  showProgress
+                />{/* full badge with label */}
               </Box>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" color="text.secondary">Workflow Definition</Typography>

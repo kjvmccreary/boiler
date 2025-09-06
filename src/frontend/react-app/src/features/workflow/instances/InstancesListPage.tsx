@@ -26,7 +26,8 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { workflowService } from '@/services/workflow.service';
-import type { WorkflowInstanceDto, InstanceStatus } from '@/types/workflow';
+import type { WorkflowInstanceDto } from '@/types/workflow';
+import { InstanceStatus } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import { InstanceStatusBadge } from './components/InstanceStatusBadge';
@@ -34,16 +35,20 @@ import { useTaskHub } from './hooks/useTaskHub';
 import { useInstanceHub } from './hooks/useInstanceHub';
 import type { InstanceUpdatedEvent } from '@/services/workflowNotifications';
 
-const TERMINAL: InstanceStatus[] = ['Completed', 'Cancelled', 'Failed'];
+const TERMINAL: InstanceStatus[] = [
+  InstanceStatus.Completed,
+  InstanceStatus.Cancelled,
+  InstanceStatus.Failed
+];
 
 function staticStatusChip(status: InstanceStatus) {
   switch (status) {
-    case 'Running': return <Chip label="Running" color="primary" size="small" />;
-    case 'Completed': return <Chip label="Completed" color="success" size="small" />;
-    case 'Failed': return <Chip label="Failed" color="error" size="small" />;
-    case 'Cancelled': return <Chip label="Cancelled" size="small" />;
-    case 'Suspended': return <Chip label="Suspended" color="warning" size="small" />;
-    default: return <Chip label={status} size="small" />;
+    case InstanceStatus.Running: return <Chip label="Running" color="primary" size="small" />;
+    case InstanceStatus.Completed: return <Chip label="Completed" color="success" size="small" />;
+    case InstanceStatus.Failed: return <Chip label="Failed" color="error" size="small" />;
+    case InstanceStatus.Cancelled: return <Chip label="Cancelled" size="small" />;
+    case InstanceStatus.Suspended: return <Chip label="Suspended" color="warning" size="small" />;
+    default: return <Chip label={String(status)} size="small" />;
   }
 }
 
@@ -198,6 +203,7 @@ export function InstancesListPage() {
             instanceId={inst.id}
             compact
             existingStatus={inst.status as InstanceStatus}
+            showProgress
           />
         );
       },
@@ -252,7 +258,7 @@ export function InstancesListPage() {
           />,
         ];
 
-        if (instance.status === 'Running') {
+        if (instance.status === InstanceStatus.Running) {
           actions.push(
             <GridActionsCellItem
               key="suspend"
@@ -271,7 +277,7 @@ export function InstancesListPage() {
           );
         }
 
-        if (instance.status === 'Suspended') {
+        if (instance.status === InstanceStatus.Suspended) {
           actions.push(
             <GridActionsCellItem
               key="resume"
