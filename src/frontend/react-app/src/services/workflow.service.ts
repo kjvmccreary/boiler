@@ -28,7 +28,6 @@ import type {
   TaskStatisticsDto,
   PagedResultDto,
   InstanceRuntimeSnapshotDto,
-  ValidateDefinitionRequestDto,
   ValidationResultDto,
   CreateNewVersionRequestDto
 } from '@/types/workflow';
@@ -38,6 +37,19 @@ export interface ApiResponse<T> {
   message?: string;
   errors?: string[] | Record<string, unknown>;
   data: T;
+}
+
+// Local (add if not already in types — harmless if duplicated at compile time is avoided by centralizing later)
+export interface InstanceStatusDto {
+  instanceId: number;
+  status: InstanceStatus | string | number;
+  currentNodeIds: string;
+  currentNodeNames: string[];
+  progressPercentage: number;
+  lastUpdated: string;
+  runtime: string;
+  activeTasksCount: number;
+  errorMessage?: string | null;
 }
 
 function unwrap<T>(payload: any): T {
@@ -97,7 +109,10 @@ function mapTasks(list: WorkflowTaskDto[]) {
   return list.map(mapTask);
 }
 
-export interface WorkflowDefinitionsFilters { published?: boolean; }
+export interface WorkflowDefinitionsFilters {
+  published?: boolean;
+  includeArchived?: boolean;
+}
 export interface WorkflowInstancesFilters {
   status?: InstanceStatus;
   workflowDefinitionId?: number;
@@ -137,6 +152,7 @@ export class WorkflowService {
   async getDefinitions(filters?: WorkflowDefinitionsFilters): Promise<WorkflowDefinitionDto[]> {
     const params = new URLSearchParams();
     if (filters?.published !== undefined) params.append('published', String(filters.published));
+    if (filters?.includeArchived !== undefined) params.append('includeArchived', String(filters.includeArchived));
     const resp = await apiClient.get(`/api/workflow/definitions${params.size ? `?${params}` : ''}`);
     return unwrap<WorkflowDefinitionDto[]>(resp.data);
   }
@@ -156,12 +172,8 @@ export class WorkflowService {
     return unwrap<WorkflowDefinitionDto>(resp.data);
   }
 
-  /**
-   * Validate arbitrary JSON definition (draft not yet saved or locally edited).
-   */
   async validateDefinitionJson(jsonDefinition: string): Promise<GraphValidationResult> {
     try {
-      // MUST match C# property name exactly (no camelCase policy configured)
       const resp = await apiClient.post('/api/workflow/definitions/validate', {
         JSONDefinition: jsonDefinition
       });
@@ -175,12 +187,10 @@ export class WorkflowService {
         warnings: payload.warnings ?? []
       };
     } catch (err: any) {
-      // Attempt to normalize error payload shapes
       const d = err?.response?.data;
       let errors: string[] = [];
       let warnings: string[] = [];
       if (Array.isArray(d?.errors)) {
-        // Could be array of strings or objects
         if (typeof d.errors[0] === 'string') errors = d.errors;
         else errors = d.errors.map((e: any) => e.message ?? e.Message ?? JSON.stringify(e));
       } else if (Array.isArray(d?.data?.errors)) {
@@ -191,11 +201,7 @@ export class WorkflowService {
         errors = ['Validation failed (unknown server response).'];
       }
       if (Array.isArray(d?.warnings)) warnings = d.warnings;
-      return {
-        success: false,
-        errors,
-        warnings
-      };
+      return { success: false, errors, warnings };
     }
   }
 
@@ -239,10 +245,6 @@ export class WorkflowService {
     }
   }
 
-  /**
-   * Convenience helper: validate then publish.
-   * Returns { published?: WorkflowDefinitionDto, validation?: GraphValidationResult }
-   */
   async validateThenPublish(id: number, opts?: { publishNotes?: string; forcePublish?: boolean }) {
     const vr = await this.validateDefinitionById(id);
     if (!vr.success) return { validation: vr, published: undefined };
@@ -275,7 +277,7 @@ export class WorkflowService {
   }
 
   async validateDefinition(jsonDefinition: string): Promise<ValidationResultDto> {
-    const resp = await apiClient.post('/api/workflow/definitions/validate', { jsonDefinition });
+    const resp = await apiClient.post('/api/workflow/definitions/validate', { JSONDefinition: jsonDefinition });
     return unwrap<ValidationResultDto>(resp.data);
   }
 
@@ -321,6 +323,12 @@ export class WorkflowService {
   async getInstance(id: number) {
     const resp = await apiClient.get(`/api/workflow/instances/${id}`);
     return mapInstance(unwrap<WorkflowInstanceDto>(resp.data));
+  }
+
+  async getInstanceStatus(id: number): Promise<InstanceStatusDto> {
+    const resp = await apiClient.get(`/api/workflow/instances/${id}/status`);
+    const dto = unwrap<InstanceStatusDto>(resp.data);
+    return { ...dto, status: normalizeInstanceStatus(dto.status) };
   }
 
   async startInstance(request: StartInstanceRequestDto) {
@@ -438,7 +446,6 @@ export class WorkflowService {
     return unwrap<TaskStatisticsDto>(resp.data);
   }
 
-  // Snapshot
   async getRuntimeSnapshot(instanceId: number): Promise<InstanceRuntimeSnapshotDto> {
     const resp = await apiClient.get(`/api/workflow/instances/${instanceId}/runtime-snapshot`);
     return unwrap<InstanceRuntimeSnapshotDto>(resp.data);
@@ -459,9 +466,7 @@ export interface TaskCountsDto {
   totalActionable: number;
 }
 
-// Summary (badge) endpoint
 export async function getMyTaskSummary(): Promise<TaskCountsDto> {
-  // apiClient unwraps ApiResponseDto -> response.data is already TaskCountsDto
   const res = await apiClient.get<TaskCountsDto>('/api/workflow/tasks/mine/summary');
   return res.data;
 }

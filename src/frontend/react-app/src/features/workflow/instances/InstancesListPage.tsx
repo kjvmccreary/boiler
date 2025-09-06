@@ -3,8 +3,6 @@ import {
   Box,
   Typography,
   Button,
-  IconButton,
-  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -26,11 +24,11 @@ import {
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { CanAccess } from '@/components/authorization/CanAccess';
 import { workflowService } from '@/services/workflow.service';
 import type { WorkflowInstanceDto, InstanceStatus } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
+import { InstanceStatusBadge } from './components/InstanceStatusBadge';
 
 export function InstancesListPage() {
   const [instances, setInstances] = useState<WorkflowInstanceDto[]>([]);
@@ -50,9 +48,9 @@ export function InstancesListPage() {
   const loadInstances = async () => {
     try {
       setLoading(true);
-      const items = await workflowService.getInstances(); // now unwrapped array
+      const items = await workflowService.getInstances(); // unwrapped array
       setInstances(items);
-    } catch (e) {
+    } catch {
       toast.error('Failed to load workflow instances');
     } finally {
       setLoading(false);
@@ -92,7 +90,6 @@ export function InstancesListPage() {
 
   const handleTerminateConfirm = async () => {
     if (!instanceToTerminate) return;
-
     try {
       await workflowService.terminateInstance(instanceToTerminate.id);
       toast.success('Workflow instance terminated');
@@ -106,47 +103,20 @@ export function InstancesListPage() {
     }
   };
 
-  const getStatusChip = (status: InstanceStatus) => {
-    switch (status) {
-      case 'Running':
-        return <Chip label="Running" color="primary" size="small" icon={<StartIcon />} />;
-      case 'Completed':
-        return <Chip label="Completed" color="success" size="small" />;
-      case 'Failed':
-        return <Chip label="Failed" color="error" size="small" />;
-      case 'Cancelled':
-        return <Chip label="Cancelled" color="default" size="small" />;
-      case 'Suspended':
-        return <Chip label="Suspended" color="warning" size="small" icon={<PauseIcon />} />;
-      default:
-        return <Chip label={status} color="default" size="small" />;
-    }
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
-  };
+  const formatDateTime = (dateString: string) => new Date(dateString).toLocaleString();
 
   const calculateDuration = (startedAt: string, completedAt?: string) => {
     const start = new Date(startedAt);
     const end = completedAt ? new Date(completedAt) : new Date();
     const diffMs = end.getTime() - start.getTime();
-    
     const hours = Math.floor(diffMs / (1000 * 60 * 60));
     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
+    if (hours > 0) return `${hours}h ${minutes}m`;
     return `${minutes}m`;
   };
 
   const columns: GridColDef[] = [
-    {
-      field: 'id',
-      headerName: 'Instance ID',
-      width: 120,
-    },
+    { field: 'id', headerName: 'Instance ID', width: 120 },
     {
       field: 'workflowDefinitionName',
       headerName: 'Workflow',
@@ -169,8 +139,16 @@ export function InstancesListPage() {
     {
       field: 'status',
       headerName: 'Status',
-      width: 130,
-      renderCell: (params) => getStatusChip(params.value as InstanceStatus),
+      width: 140,
+      renderCell: (params) => {
+        const instance = params.row as WorkflowInstanceDto;
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <InstanceStatusBadge instanceId={instance.id} compact />
+          </Box>
+        );
+      },
+      sortable: true
     },
     {
       field: 'currentNodeIds',
@@ -214,22 +192,24 @@ export function InstancesListPage() {
         const instance = params.row as WorkflowInstanceDto;
         const actions = [
           <GridActionsCellItem
+            key="view"
             icon={<ViewIcon />}
             label="View Details"
             onClick={() => handleView(params.id)}
           />,
         ];
 
-        // Status-specific actions
         if (instance.status === 'Running') {
           actions.push(
             <GridActionsCellItem
+              key="suspend"
               icon={<PauseIcon />}
               label="Suspend"
               onClick={() => handleSuspend(instance)}
               showInMenu
             />,
             <GridActionsCellItem
+              key="terminate"
               icon={<StopIcon />}
               label="Terminate"
               onClick={() => handleTerminate(instance)}
@@ -241,6 +221,7 @@ export function InstancesListPage() {
         if (instance.status === 'Suspended') {
           actions.push(
             <GridActionsCellItem
+              key="resume"
               icon={<StartIcon />}
               label="Resume"
               onClick={() => handleResume(instance)}
@@ -291,13 +272,9 @@ export function InstancesListPage() {
           pageSizeOptions={[10, 25, 50, 100]}
           initialState={{
             pagination: { paginationModel: { pageSize: 25 } },
-            sorting: {
-              sortModel: [{ field: 'startedAt', sort: 'desc' }],
-            },
+            sorting: { sortModel: [{ field: 'startedAt', sort: 'desc' }] },
           }}
-          slots={{
-            toolbar: GridToolbar,
-          }}
+          slots={{ toolbar: GridToolbar }}
           slotProps={{
             toolbar: {
               showQuickFilter: true,
@@ -313,7 +290,6 @@ export function InstancesListPage() {
         />
       </Box>
 
-      {/* Terminate Confirmation Dialog */}
       <Dialog open={terminateDialogOpen} onClose={() => setTerminateDialogOpen(false)}>
         <DialogTitle>Confirm Terminate</DialogTitle>
         <DialogContent>

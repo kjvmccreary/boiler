@@ -46,9 +46,6 @@ public class UpdateWorkflowDefinitionDto
 public class PublishDefinitionRequestDto
 {
     public string? PublishNotes { get; set; }
-
-    // Restored for backward compatibility with legacy tests.
-    // Semantics: if already published and ForcePublish=true → idempotent success.
     public bool ForcePublish { get; set; } = false;
 }
 
@@ -61,6 +58,8 @@ public class GetWorkflowDefinitionsRequestDto
     public int PageSize { get; set; } = 20;
     public string SortBy { get; set; } = "CreatedAt";
     public bool SortDescending { get; set; } = true;
+    // NEW: allow explicit inclusion of archived items (default false)
+    public bool IncludeArchived { get; set; } = false;
 }
 
 public class ValidateDefinitionRequestDto

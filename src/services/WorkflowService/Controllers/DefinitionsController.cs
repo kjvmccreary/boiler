@@ -41,6 +41,7 @@ public class DefinitionsController : ControllerBase
     public async Task<ActionResult<ApiResponseDto<List<WorkflowDefinitionDto>>>> GetAll(
         [FromQuery] string? search = null,
         [FromQuery] bool? published = null,
+        [FromQuery] bool includeArchived = false,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 100,
         CancellationToken ct = default)
@@ -50,12 +51,20 @@ public class DefinitionsController : ControllerBase
             SearchTerm = search,
             IsPublished = published,
             Page = page,
-            PageSize = pageSize
+            PageSize = pageSize,
+            IncludeArchived = includeArchived
         };
+
         var resp = await _definitionService.GetAllAsync(req, ct);
         if (!resp.Success || resp.Data == null)
             return StatusCode(500, ApiResponseDto<List<WorkflowDefinitionDto>>.ErrorResult(resp.Message ?? "Failed"));
-        return Ok(ApiResponseDto<List<WorkflowDefinitionDto>>.SuccessResult(resp.Data.Items));
+
+        // New: server‑side archived filtering unless explicitly requested
+        var items = includeArchived
+            ? resp.Data.Items
+            : resp.Data.Items.Where(d => !d.IsArchived).ToList();
+
+        return Ok(ApiResponseDto<List<WorkflowDefinitionDto>>.SuccessResult(items));
     }
 
     [HttpGet("{id:int}")]
@@ -275,7 +284,6 @@ public class DefinitionsController : ControllerBase
     [RequiresPermission(Permissions.Workflow.EditDefinitions)]
     public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> Archive(int id, CancellationToken ct = default)
     {
-        // Try service call – some tests do NOT mock, so guard for null
         ApiResponseDto<WorkflowDefinitionDto>? serviceResp = null;
         try
         {
@@ -292,7 +300,6 @@ public class DefinitionsController : ControllerBase
             dto = serviceResp.Data;
         }
 
-        // If service not available or returned not found, fallback to DB entity
         if (dto == null)
         {
             var entity = await _db.WorkflowDefinitions.FirstOrDefaultAsync(d => d.Id == id, ct);
@@ -323,7 +330,6 @@ public class DefinitionsController : ControllerBase
             return Ok(ApiResponseDto<WorkflowDefinitionDto>.SuccessResult(dto, "Archived"));
         }
 
-        // Have DTO from service; need real entity to mutate
         var dbEntity = await _db.WorkflowDefinitions.FirstOrDefaultAsync(d => d.Id == id, ct);
         if (dbEntity == null)
             return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Definition not found"));

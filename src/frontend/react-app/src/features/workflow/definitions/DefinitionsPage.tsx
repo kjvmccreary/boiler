@@ -152,15 +152,20 @@ export function DefinitionsPage() {
 
   const handleStartInstance = async (definition: WorkflowDefinitionDto) => {
     try {
-      const response = await workflowService.startInstance({
+      const instance = await workflowService.startInstance({
         workflowDefinitionId: definition.id,
         initialContext: '{}',
         startNotes: 'Started from definitions page'
       });
 
+      if (!instance || !instance.id) {
+        console.error('Start instance returned invalid payload:', instance);
+        toast.error('Instance started but response was invalid');
+        return;
+      }
+
       toast.success('Workflow instance started successfully');
-      // ✅ FIX: Add /app prefix
-      navigate(`/app/workflow/instances/${response.id}`);
+      navigate(`/app/workflow/instances/${instance.id}`);
     } catch (error) {
       console.error('Failed to start instance:', error);
       toast.error('Failed to start workflow instance');

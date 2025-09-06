@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { ReactElement } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -32,20 +31,30 @@ import {
   HowToReg as ClaimIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { workflowService } from '@/services/workflow.service';
+import { workflowService, type InstanceStatusDto } from '@/services/workflow.service';
 import type {
   WorkflowInstanceDto,
   WorkflowEventDto,
   TaskSummaryDto,
-  InstanceStatus,
   InstanceRuntimeSnapshotDto
 } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import DefinitionDiagram from '@/features/workflow/definitions/DefinitionDiagram';
+import { InstanceStatusBadge } from './components/InstanceStatusBadge';
+
+interface LightweightState {
+  status?: string;
+  currentNodeIds?: string[];
+  progressPercentage?: number;
+  activeTasksCount?: number;
+  lastUpdated?: string;
+}
 
 export function InstanceDetailsPage() {
   const { id } = useParams<{ id: string }>();
+  const instanceId = id ? parseInt(id, 10) : null;
+
   const [instance, setInstance] = useState<WorkflowInstanceDto | null>(null);
   const [events, setEvents] = useState<WorkflowEventDto[]>([]);
   const [tasks, setTasks] = useState<TaskSummaryDto[]>([]);
@@ -63,11 +72,21 @@ export function InstanceDetailsPage() {
   const navigate = useNavigate();
   const { currentTenant } = useTenant();
 
-  const loadSnapshot = useCallback(async () => {
-    if (!id) return;
+  const lightStateRef = useRef<LightweightState>({});
+  const pollingRef = useRef<number | null>(null);
+
+  const clearPoll = () => {
+    if (pollingRef.current) {
+      window.clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  };
+
+  const loadSnapshot = useCallback(async (silent = false) => {
+    if (!instanceId) return;
     try {
-      setLoading(true);
-      const snapshot: InstanceRuntimeSnapshotDto = await workflowService.getRuntimeSnapshot(parseInt(id, 10));
+      if (!silent) setLoading(true);
+      const snapshot: InstanceRuntimeSnapshotDto = await workflowService.getRuntimeSnapshot(instanceId);
       setInstance(snapshot.instance);
       setTasks(snapshot.tasks);
       setEvents(snapshot.events);
@@ -75,27 +94,90 @@ export function InstanceDetailsPage() {
       setTraversedEdgeIds(snapshot.traversedEdgeIds || []);
       setVisitedNodeIds(snapshot.visitedNodeIds || []);
       setCurrentNodeIds(snapshot.currentNodeIds || []);
+
+      // Seed lightweight cache to avoid immediate redundant full refresh
+      lightStateRef.current = {
+        status: snapshot.instance.status,
+        currentNodeIds: snapshot.currentNodeIds,
+        progressPercentage: undefined, // Not supplied in snapshot status; reserved for future
+        activeTasksCount: snapshot.tasks.filter(t => !['Completed', 'Cancelled', 'Failed'].includes(t.status)).length,
+        lastUpdated: new Date().toISOString()
+      };
     } catch {
       toast.error('Failed to load runtime snapshot');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  }, [id]);
+  }, [instanceId]);
 
-  useEffect(() => {
-    if (currentTenant && id) loadSnapshot();
-  }, [currentTenant, id, loadSnapshot]);
+  const shouldFullRefresh = (prior: LightweightState, next: InstanceStatusDto): boolean => {
+    if (!instance) return true; // first-time or lost state
+    if (prior.status !== next.status) return true;
+    // Compare active node list changes (stringify small array safe)
+    const prevNodes = (prior.currentNodeIds || []).join(',');
+    const nextNodes = (next.currentNodeIds || '').replace(/\s/g, '');
+    if (prevNodes !== nextNodes) return true;
+    // Could also trigger on activeTasksCount change if status DTO exposes it (we have next.activeTasksCount)
+    if (typeof next.activeTasksCount === 'number' && prior.activeTasksCount !== next.activeTasksCount) return true;
+    return false;
+  };
 
-  // Refresh when window regains focus (helps after completing a task in another tab / page)
-  useEffect(() => {
-    const onFocus = () => {
-      if (instance?.status === 'Running') {
-        loadSnapshot();
+  const lightweightPoll = useCallback(async () => {
+    if (!instanceId) return;
+    try {
+      const statusDto = await workflowService.getInstanceStatus(instanceId);
+      const prior = lightStateRef.current;
+
+      const fullNeeded = shouldFullRefresh(prior, statusDto);
+      // Update light cache
+      lightStateRef.current = {
+        status: String(statusDto.status),
+        currentNodeIds: statusDto.currentNodeIds?.split(',').map(s => s.trim()).filter(Boolean) || prior.currentNodeIds || [],
+        progressPercentage: statusDto.progressPercentage,
+        activeTasksCount: statusDto.activeTasksCount,
+        lastUpdated: statusDto.lastUpdated?.toString()
+      };
+
+      if (fullNeeded) {
+        // silent (no spinner) full refresh
+        await loadSnapshot(true);
+      } else {
+        // Apply light deltas without full snapshot
+        setInstance(prev =>
+          prev
+            ? { ...prev, status: statusDto.status as any, updatedAt: statusDto.lastUpdated || prev.updatedAt }
+            : prev
+        );
+        if (statusDto.currentNodeIds) {
+          setCurrentNodeIds(
+            statusDto.currentNodeIds
+              .split(',')
+              .map(s => s.trim())
+              .filter(Boolean)
+          );
+        }
       }
-    };
-    window.addEventListener('focus', onFocus);
-    return () => window.removeEventListener('focus', onFocus);
-  }, [instance?.status, loadSnapshot]);
+
+      // Stop polling if terminal
+      if (['Completed', 'Cancelled', 'Failed'].includes(String(statusDto.status))) {
+        clearPoll();
+      }
+    } catch {
+      // Swallow errors (transient). Could add retry backoff later.
+    }
+  }, [instanceId, loadSnapshot]);
+
+  useEffect(() => {
+    if (currentTenant && instanceId) {
+      void loadSnapshot().then(() => {
+        clearPoll();
+        pollingRef.current = window.setInterval(() => {
+          void lightweightPoll();
+        }, 5000);
+      });
+    }
+    return () => clearPoll();
+  }, [currentTenant, instanceId, loadSnapshot, lightweightPoll]);
 
   const handleRefresh = () => loadSnapshot();
 
@@ -104,7 +186,7 @@ export function InstanceDetailsPage() {
     try {
       await workflowService.terminateInstance(instance.id);
       toast.success('Workflow instance terminated');
-      loadSnapshot();
+      await loadSnapshot();
     } catch {
       toast.error('Failed to terminate workflow instance');
     }
@@ -115,7 +197,7 @@ export function InstanceDetailsPage() {
     try {
       await workflowService.suspendInstance(instance.id);
       toast.success('Workflow instance suspended');
-      loadSnapshot();
+      await loadSnapshot();
     } catch {
       toast.error('Failed to suspend workflow instance');
     }
@@ -126,7 +208,7 @@ export function InstanceDetailsPage() {
     try {
       await workflowService.resumeInstance(instance.id);
       toast.success('Workflow instance resumed');
-      loadSnapshot();
+      await loadSnapshot();
     } catch {
       toast.error('Failed to resume workflow instance');
     }
@@ -137,7 +219,7 @@ export function InstanceDetailsPage() {
       setClaimingTaskId(taskId);
       await workflowService.claimTask(taskId, {});
       toast.success(`Task ${taskId} claimed`);
-      await loadSnapshot();
+      await loadSnapshot(true);
     } catch {
       toast.error('Failed to claim task');
     } finally {
@@ -150,22 +232,11 @@ export function InstanceDetailsPage() {
       setCompletingTaskId(taskId);
       await workflowService.completeTask(taskId, { completionData: 'Completed via Instance Details' });
       toast.success(`Task ${taskId} completed`);
-      await loadSnapshot();
+      await loadSnapshot(true);
     } catch {
       toast.error('Failed to complete task');
     } finally {
       setCompletingTaskId(null);
-    }
-  };
-
-  const getStatusChip = (status: InstanceStatus) => {
-    switch (status) {
-      case 'Running': return <Chip label="Running" color="primary" size="small" icon={<StartIcon />} />;
-      case 'Completed': return <Chip label="Completed" color="success" size="small" />;
-      case 'Failed': return <Chip label="Failed" color="error" size="small" />;
-      case 'Cancelled': return <Chip label="Cancelled" size="small" />;
-      case 'Suspended': return <Chip label="Suspended" color="warning" size="small" icon={<PauseIcon />} />;
-      default: return <Chip label={status} size="small" />;
     }
   };
 
@@ -209,7 +280,7 @@ export function InstanceDetailsPage() {
         const s = p.value;
         switch (s) {
           case 'Created': return <Chip label="Available" size="small" />;
-          case 'Assigned': return <Chip label="Assigned" color="info" size="small" />;
+            case 'Assigned': return <Chip label="Assigned" color="info" size="small" />;
           case 'Claimed': return <Chip label="Claimed" color="primary" size="small" />;
           case 'InProgress': return <Chip label="In Progress" color="warning" size="small" />;
           case 'Completed': return <Chip label="Completed" color="success" size="small" />;
@@ -234,7 +305,6 @@ export function InstanceDetailsPage() {
       width: 140,
       getActions: (params: GridRowParams) => {
         const row = params.row as TaskSummaryDto;
-        // Start with base view action (let inference handle element typing)
         const actions = [
           <GridActionsCellItem
             key="view"
@@ -244,7 +314,6 @@ export function InstanceDetailsPage() {
             showInMenu={false}
           />
         ];
-
         if (instance?.status === 'Running') {
           if (['Created', 'Assigned'].includes(row.status) && claimingTaskId !== row.id) {
             actions.push(
@@ -271,7 +340,6 @@ export function InstanceDetailsPage() {
             );
           }
         }
-
         return actions;
       }
     }
@@ -285,7 +353,7 @@ export function InstanceDetailsPage() {
     );
   }
 
-  if (loading) {
+  if (loading && !instance) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
         <Typography>Loading workflow instance...</Typography>
@@ -319,8 +387,9 @@ export function InstanceDetailsPage() {
             </Typography>
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Tooltip title="Refresh">
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <InstanceStatusBadge instanceId={instance.id} compact /> {/* Live badge */}
+          <Tooltip title="Refresh (full snapshot)">
             <IconButton onClick={handleRefresh}>
               <RefreshIcon />
             </IconButton>
@@ -357,8 +426,8 @@ export function InstanceDetailsPage() {
             {/* Left Column */}
             <Box>
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">Status</Typography>
-                {getStatusChip(instance.status)}
+                <Typography variant="subtitle2" color="text.secondary">Status (live)</Typography>
+                <InstanceStatusBadge instanceId={instance.id} />{/* full badge with label */}
               </Box>
               <Box sx={{ mb: 2 }}>
                 <Typography variant="subtitle2" color="text.secondary">Workflow Definition</Typography>
@@ -395,7 +464,6 @@ export function InstanceDetailsPage() {
               </Box>
             </Box>
 
-            {/* Error row spans full width */}
             {instance.errorMessage && (
               <Box sx={{ gridColumn: '1 / -1' }}>
                 <Alert severity="error" sx={{ mt: 1 }}>
@@ -405,7 +473,6 @@ export function InstanceDetailsPage() {
               </Box>
             )}
 
-            {/* Context Data full width */}
             <Box sx={{ gridColumn: '1 / -1' }}>
               <Divider sx={{ my: 2 }} />
               <Typography variant="subtitle2" color="text.secondary" gutterBottom>Context Data</Typography>
@@ -434,21 +501,21 @@ export function InstanceDetailsPage() {
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
             Visual overlay of active, completed, overdue and traversed path.
           </Typography>
-            <DefinitionDiagram
-              jsonDefinition={definitionJson}
-              currentNodeIds={currentNodeIds}
-              tasks={tasks
-                .map(t => ({
-                  nodeId: t.nodeId || '',
-                  status: t.status as string,
-                  dueDate: t.dueDate
-                }))
-                .filter(t => t.nodeId)}
-              traversedEdgeIds={traversedEdgeIds}
-              visitedNodeIds={visitedNodeIds}
-              instanceStatus={instance.status}
-              dueSoonMinutes={15}
-            />
+          <DefinitionDiagram
+            jsonDefinition={definitionJson}
+            currentNodeIds={currentNodeIds}
+            tasks={tasks
+              .map(t => ({
+                nodeId: t.nodeId || '',
+                status: t.status as string,
+                dueDate: t.dueDate
+              }))
+              .filter(t => t.nodeId)}
+            traversedEdgeIds={traversedEdgeIds}
+            visitedNodeIds={visitedNodeIds}
+            instanceStatus={instance.status}
+            dueSoonMinutes={15}
+          />
         </CardContent>
       </Card>
 
