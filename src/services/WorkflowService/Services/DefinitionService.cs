@@ -27,12 +27,7 @@ public class DefinitionService : IDefinitionService
     private static readonly bool IsolationDiagnosticsEnabled =
         Environment.GetEnvironmentVariable("WF_ISO_DIAG") == "1";
 
-    // Central in-memory diagnostics queue (test-readable without relying on logger plumbing)
-#if DEBUG
     public static ConcurrentQueue<string> IsolationDiag { get; } = new();
-#else
-    public static ConcurrentQueue<string> IsolationDiag { get; } = new(); // or internal if tests compiled into same assembly
-#endif
     private static void Iso(string msg)
     {
         if (IsolationDiagnosticsEnabled) IsolationDiag.Enqueue(msg);
@@ -520,6 +515,12 @@ public class DefinitionService : IDefinitionService
 
             var query = _context.WorkflowDefinitions.Where(d => d.TenantId == tenantId.Value);
 
+            // NEW: default exclusion of archived definitions (tests expect this behavior)
+            if (!request.IncludeArchived)
+            {
+                query = query.Where(d => !d.IsArchived);
+            }
+
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 var term = request.SearchTerm.Trim().ToLowerInvariant();
@@ -568,14 +569,12 @@ public class DefinitionService : IDefinitionService
 
             var definitionIds = definitions.Select(d => d.Id).Distinct().ToList();
 
-            // Pull only necessary rows (translated) then aggregate in memory
             var instanceRows = await _context.WorkflowInstances
                 .Where(i => definitionIds.Contains(i.WorkflowDefinitionId) &&
                             (i.Status == InstanceStatus.Running || i.Status == InstanceStatus.Suspended))
                 .Select(i => new { i.WorkflowDefinitionId, i.DefinitionVersion })
                 .ToListAsync(cancellationToken);
 
-            // Group in memory (composite key supported in memory)
             var activeCounts = instanceRows
                 .GroupBy(x => new { x.WorkflowDefinitionId, x.DefinitionVersion })
                 .Select(g => new
@@ -797,8 +796,6 @@ public class DefinitionService : IDefinitionService
         return dto;
     }
 }
-
-// TOP-LEVEL (not nested) extension helpers & validator to fix CS1109 / CS9054
 
 internal static class DefinitionServicePublishValidationAdapters
 {

@@ -32,6 +32,9 @@
 
     <!-- Matches transitive requirement (>= 9.0.3) from Npgsql.EntityFrameworkCore.PostgreSQL 9.0.4 -->
     <PackageReference Include="Npgsql" Version="9.0.3" />
+
+    <!-- Added: required for WebApplicationFactory -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>

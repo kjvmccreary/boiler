@@ -78,8 +78,28 @@ public class Program
         builder.Services.AddDeterministicHashing(builder.Configuration);
 
         var cs = builder.Configuration.GetConnectionString("DefaultConnection");
-        builder.Services.AddDbContext<WorkflowDbContext>(o => o.UseNpgsql(cs, npgsql => npgsql.EnableRetryOnFailure()));
-        builder.Services.AddDbContext<ApplicationDbContext>(o => o.UseNpgsql(cs, npgsql => npgsql.EnableRetryOnFailure()));
+        var isTesting = builder.Environment.IsEnvironment("Testing");
+        var disableBackground = isTesting || Environment.GetEnvironmentVariable("WF_DISABLE_BG") == "1";
+
+        // IMPORTANT: Use only ONE EF provider per service provider.
+        if (isTesting)
+        {
+            builder.Services.AddDbContext<WorkflowDbContext>(o =>
+                o.UseInMemoryDatabase("wf-int-" + Guid.NewGuid().ToString("N"))
+                 .EnableSensitiveDataLogging());
+
+            builder.Services.AddDbContext<ApplicationDbContext>(o =>
+                o.UseInMemoryDatabase("app-int-" + Guid.NewGuid().ToString("N"))
+                 .EnableSensitiveDataLogging());
+        }
+        else
+        {
+            builder.Services.AddDbContext<WorkflowDbContext>(o =>
+                o.UseNpgsql(cs, npgsql => npgsql.EnableRetryOnFailure()));
+
+            builder.Services.AddDbContext<ApplicationDbContext>(o =>
+                o.UseNpgsql(cs, npgsql => npgsql.EnableRetryOnFailure()));
+        }
 
         // RBAC
         builder.Services.AddScoped<IRoleRepository, RoleRepository>();
@@ -134,28 +154,30 @@ public class Program
         builder.Services.AddScoped<IFeatureFlagProvider, NoopFeatureFlagProvider>();
         builder.Services.AddScoped<IFeatureFlagFallbackEmitter, FeatureFlagFallbackEmitter>();
 
-        // Outbox
+        // Outbox (core services always; workers only if enabled)
         builder.Services.AddScoped<IOutboxWriter, OutboxWriter>();
         builder.Services.AddScoped<IEventPublisher, EventPublisher>();
         builder.Services.Configure<OutboxOptions>(builder.Configuration.GetSection("Workflow:Outbox"));
         builder.Services.AddHealthChecks().AddCheck<OutboxHealthCheck>("outbox");
         builder.Services.AddSingleton<IOutboxMetricsProvider, OutboxMetricsProvider>();
         builder.Services.Configure<OutboxBackfillOptions>(builder.Configuration.GetSection("Workflow:Outbox:Backfill"));
-        builder.Services.AddHostedService<OutboxIdempotencyBackfillWorker>();
         builder.Services.AddScoped<IOutboxTransport, LoggingOutboxTransport>();
         builder.Services.AddScoped<OutboxDispatcherInterface, OutboxDispatcherImpl>();
-        builder.Services.AddHostedService<OutboxBackgroundWorker>();
 
-        // Timers / timeouts
-        builder.Services.AddHostedService<TimerWorker>();
-        builder.Services.Configure<JoinTimeoutOptions>(builder.Configuration.GetSection("Workflow:JoinTimeouts"));
-        builder.Services.AddHostedService<JoinTimeoutWorker>();
+        if (!disableBackground)
+        {
+            builder.Services.AddHostedService<OutboxIdempotencyBackfillWorker>();
+            builder.Services.AddHostedService<OutboxBackgroundWorker>();
+            builder.Services.AddHostedService<TimerWorker>();
+            builder.Services.Configure<JoinTimeoutOptions>(builder.Configuration.GetSection("Workflow:JoinTimeouts"));
+            builder.Services.AddHostedService<JoinTimeoutWorker>();
+        }
 
         builder.Services.AddSignalR();
 
         // Notifications
         builder.Services.AddSingleton<ITaskNotificationDispatcher, TaskNotificationDispatcher>();
-        builder.Services.AddScoped<IWorkflowNotificationDispatcher, WorkflowNotificationDispatcher>(); // NEW
+        builder.Services.AddScoped<IWorkflowNotificationDispatcher, WorkflowNotificationDispatcher>();
 
         builder.Services.AddAuthorization(options =>
         {
@@ -181,11 +203,8 @@ public class Program
 
         app.MapHealthChecks("/health");
 
-        // Existing hubs
         app.MapHub<TaskNotificationsHub>("/hubs/tasks");
         app.MapHub<TaskNotificationsHub>("/api/workflow/hubs/tasks");
-
-        // NEW instance hub mappings
         app.MapHub<WorkflowNotificationsHub>("/hubs/instances");
         app.MapHub<WorkflowNotificationsHub>("/api/workflow/hubs/instances");
 

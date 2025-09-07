@@ -210,12 +210,10 @@ public sealed class JoinTimeoutWorker : BackgroundService
                 if (!TryGetInt(joinMeta, "timeoutSeconds", out var timeoutSeconds) || timeoutSeconds <= 0) continue;
 
                 DateTime timeoutAt;
-                bool hasTimeoutAt = false;
                 if (TryGetString(joinMeta, "timeoutAtUtc", out var timeoutAtStr) &&
                     DateTime.TryParse(timeoutAtStr, out var parsedTimeoutAt))
                 {
                     timeoutAt = parsedTimeoutAt;
-                    hasTimeoutAt = true;
                 }
                 else
                 {

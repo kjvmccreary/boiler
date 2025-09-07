@@ -33,7 +33,7 @@ namespace WorkflowService.Tests.Engine;
 /// </summary>
 /// <remarks>
 /// Covers:
-/// - D3 Quorum join behavior (below / exact threshold & late arrivals)
+/// - D3 Quorum join behavior (below / exact threshold &amp; late arrivals)
 /// - D4 Timeout path (force | route | fail)
 /// </remarks>
 public class QuorumAndTimeoutTests : TestBase

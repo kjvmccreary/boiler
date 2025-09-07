@@ -1,99 +1,16 @@
-[9/6/2025 4:25:50.440 PM]  Interrupt: Enqueueing RunStatesOperation
-[9/6/2025 4:25:50.440 PM]  Enqueue operation 'RunStatesOperation', hashcode:59411790 
-[9/6/2025 4:25:50.440 PM]  Operation left in the the queue: 1
-[9/6/2025 4:25:50.440 PM]  	'RunStatesOperation', hashcode:59411790
-[9/6/2025 4:25:50.440 PM]  
+  C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Isolation\UsageIsolationIntegrationTests.cs(22,65): error CS1061: 'WorkflowServiceTestFixture' does not contain a definition for 'GetTenantTokenAsync' and no accessible extension method 'GetTenantTokenAsync' accepting a first argument of type 'WorkflowServiceTestFixture' could be found (are you missing a using directive or an assembly reference?)
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Isolation\UsageIsolationIntegrationTests.cs(22,37): error CS1729: 'TenantTestClient' does not contain a constructor that takes 2 arguments
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Isolation\DefinitionIsolationIntegrationTests.cs(27,37): error CS1061: 'WorkflowServiceTestFixture' does not contain a definition for 'GetTenantTokenAsync' and no accessible extension method 'GetTenantTokenAsync' accepting a first argument of type 'WorkflowServiceTestFixture' could be found (are you missing a using directive or an assembly reference?)
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Isolation\DefinitionIsolationIntegrationTests.cs(27,9): error CS1729: 'TenantTestClient' does not contain a constructor that takes 2 arguments
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Isolation\TaskIsolationIntegrationTests.cs(24,65): error CS1061: 'WorkflowServiceTestFixture' does not contain a definition for 'GetTenantTokenAsync' and no accessible extension method 'GetTenantTokenAsync' accepting a first argument of type 'WorkflowServiceTestFixture' could be found (are you missing a using directive or an assembly reference?)
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Isolation\TaskIsolationIntegrationTests.cs(24,37): error CS1729: 'TenantTestClient' does not contain a constructor that takes 2 arguments
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\DefinitionsIncludeArchivedIntegrationTests.cs(170,21): warning CS8604: Possible null reference argument for parameter 'source' in 'IEnumerable<string> Enumerable.Select<WorkflowDefinitionDto, string>(IEnumerable<WorkflowDefinitionDto> source, Func<WorkflowDefinitionDto, string> selector)'.
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\DefinitionsIncludeArchivedIntegrationTests.cs(220,9): warning CS8604: Possible null reference argument for parameter 'source' in 'WorkflowDefinitionDto Enumerable.First<WorkflowDefinitionDto>(IEnumerable<WorkflowDefinitionDto> source)'.
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\DefinitionsControllerTests.cs(130,21): warning CS8604: Possible null reference argument for parameter 'source' in 'IEnumerable<string> Enumerable.Select<WorkflowDefinitionDto, string>(IEnumerable<WorkflowDefinitionDto> source, Func<WorkflowDefinitionDto, string> selector)'.
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Infrastructure\WorkflowServiceTestFixture.cs(17,34): error CS0246: The type or namespace name 'WebApplicationFactoryClientOptions' could not be found (are you missing a using directive or an assembly reference?)
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Infrastructure\TestWebApplicationFactory.cs(23,20): error CS0246: The type or namespace name 'ApplicationDbContext' could not be found (are you missing a using directive or an assembly reference?)
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Infrastructure\TestWebApplicationFactory.cs(44,45): error CS0246: The type or namespace name 'IHostedService' could not be found (are you missing a using directive or an assembly reference?)
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Infrastructure\TestAuthHandler.cs(18,9): warning CS0618: 'AuthenticationHandler<AuthenticationSchemeOptions>.AuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions>, ILoggerFactory, UrlEncoder, ISystemClock)' is obsolete: 'ISystemClock is obsolete, use TimeProvider on AuthenticationSchemeOptions instead.'
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Infrastructure\TenantTestClient.cs(50,15): error CS1061: 'HttpClient' does not contain a definition for 'PostAsJsonAsync' and no accessible extension method 'PostAsJsonAsync' accepting a first argument of type 'HttpClient' could be found (are you missing a using directive or an assembly reference?)
 
-[9/6/2025 4:25:50.440 PM]  Operation Dequeue : 'RunStatesOperation'
-[9/6/2025 4:25:50.448 PM]  Building Test Projects
-[9/6/2025 4:25:50.501 PM]  Update Test run progress to 0/100.
-[9/6/2025 4:25:50.516 PM]  Start building 1 containers.
-[9/6/2025 4:25:50.516 PM]  Skipping build for IProjectBasedTestContainers since no solution is open.
-[9/6/2025 4:25:50.516 PM]  No IBuildableTestContainers were found.
-[9/6/2025 4:25:50.516 PM]  Completed building containers.
-[9/6/2025 4:25:50.516 PM]  Start updating 1 containers.
-[9/6/2025 4:25:50.516 PM]  Updating container C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll.
-[9/6/2025 4:25:50.518 PM]  Successfully refreshed container: C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll
-[9/6/2025 4:25:50.518 PM]  Completed updating containers.
-[9/6/2025 4:25:50.518 PM]  DiscoveryOperation<RunStatesOperation> Changed container count is 1
-[9/6/2025 4:25:50.532 PM]  Test run animation has started.
-[9/6/2025 4:25:50.873 PM]  Test run progress has started.
-[9/6/2025 4:25:50.936 PM]  Discovering the following containers :
-[9/6/2025 4:25:50.936 PM]  	C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll
-[9/6/2025 4:25:51.658 PM]  Starting test discovery for requested test run
-[9/6/2025 4:25:51.814 PM]  Project WorkflowService.Tests references test adapter: xunit.runner.visualstudio, version 2.5.6
-[9/6/2025 4:25:51.815 PM]  Project WorkflowService.Tests references test adapter: xunit.runner.visualstudio, version 2.5.6
-[9/6/2025 4:25:51.863 PM]  ========== Starting test discovery ==========
-[9/6/2025 4:25:51.865 PM]  File timestamp changed from 9/6/2025 4:16:17 PM to 9/6/2025 4:25:38 PM for C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll
-[9/6/2025 4:25:51.866 PM]  Grouped C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll : (VsTestConsoleRunner, , , False)
-[9/6/2025 4:25:51.868 PM]  Test discovery settings for C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll:
- <RunSettings>
-  <RunConfiguration>
-    <ResultsDirectory>C:\Users\mccre\dev\boiler\TestResults</ResultsDirectory>
-    <SolutionDirectory>C:\Users\mccre\dev\boiler\</SolutionDirectory>
-    <MaxCpuCount>0</MaxCpuCount>
-    <CollectSourceInformation>False</CollectSourceInformation>
-  </RunConfiguration>
-</RunSettings>.
-[9/6/2025 4:25:52.307 PM]  Logging TestHost Diagnostics in file: C:\Users\mccre\AppData\Local\Temp\TestPlatformLogs\2025_09_06_09_14_38_15756\logs.host.25-09-06_16-25-52_11207_18.txt
-[9/6/2025 4:25:52.351 PM]  [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.6+bf9b858c26 (64-bit .NET 9.0.7)
-[9/6/2025 4:25:52.408 PM]  [xUnit.net 00:00:00.05]   Discovering: WorkflowService.Tests
-[9/6/2025 4:25:52.458 PM]  [xUnit.net 00:00:00.10]   Discovered:  WorkflowService.Tests
-[9/6/2025 4:25:52.555 PM]  ========== Test discovery finished: 356 Tests found in 692.5 ms ==========
-[9/6/2025 4:25:52.781 PM]  ========== Starting test run ==========
-[9/6/2025 4:25:52.782 PM]  Tests run settings for C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll:
- <RunSettings>
-  <RunConfiguration>
-    <ResultsDirectory>C:\Users\mccre\dev\boiler\TestResults</ResultsDirectory>
-    <SolutionDirectory>C:\Users\mccre\dev\boiler\</SolutionDirectory>
-    <CollectSourceInformation>False</CollectSourceInformation>
-  </RunConfiguration>
-</RunSettings>.
-[9/6/2025 4:25:53.030 PM]  Logging TestHost Diagnostics in file: C:\Users\mccre\AppData\Local\Temp\TestPlatformLogs\2025_09_06_09_14_38_15756\logs.host.25-09-06_16-25-52_81437_23.txt
-[9/6/2025 4:25:53.085 PM]  [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.6+bf9b858c26 (64-bit .NET 9.0.7)
-[9/6/2025 4:25:53.138 PM]  [xUnit.net 00:00:00.05]   Starting:    WorkflowService.Tests
-[9/6/2025 4:25:56.426 PM] [Error] [xUnit.net 00:00:03.34]     WorkflowService.Tests.Engine.QuorumAndTimeoutTests.D4_Timeout_Route_ActivatesTimeoutHandler [FAIL]
-[9/6/2025 4:25:56.436 PM]  [xUnit.net 00:00:03.34]       Expected DbContext.WorkflowEvents.Where(e => e.WorkflowInstanceId == inst.Id && e.Type == "Parallel"&& e.Name == "ParallelJoinTimeout").Any(e => e.Data.Contains(@"""action"":""route""")) to be true, but found False.
-[9/6/2025 4:25:56.436 PM]  [xUnit.net 00:00:03.34]       Stack Trace:
-[9/6/2025 4:25:56.439 PM]  [xUnit.net 00:00:03.34]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[9/6/2025 4:25:56.440 PM]  [xUnit.net 00:00:03.34]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[9/6/2025 4:25:56.441 PM]  [xUnit.net 00:00:03.34]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[9/6/2025 4:25:56.442 PM]  [xUnit.net 00:00:03.34]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[9/6/2025 4:25:56.442 PM]  [xUnit.net 00:00:03.34]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[9/6/2025 4:25:56.442 PM]  [xUnit.net 00:00:03.34]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[9/6/2025 4:25:56.446 PM]  [xUnit.net 00:00:03.34]            at FluentAssertions.Primitives.BooleanAssertions`1.BeTrue(String because, Object[] becauseArgs)
-[9/6/2025 4:25:56.450 PM]  [xUnit.net 00:00:03.34]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\QuorumAndTimeoutTests.cs(307,0): at WorkflowService.Tests.Engine.QuorumAndTimeoutTests.D4_Timeout_Route_ActivatesTimeoutHandler()
-[9/6/2025 4:25:56.452 PM]  [xUnit.net 00:00:03.34]         --- End of stack trace from previous location ---
-[9/6/2025 4:25:56.473 PM]  Update Test run progress to 33/100.
-[9/6/2025 4:25:59.019 PM] [Error] [xUnit.net 00:00:05.93]     WorkflowService.Tests.Engine.QuorumAndTimeoutTests.D4_Timeout_Fail_FailsInstance [FAIL]
-[9/6/2025 4:25:59.028 PM]  [xUnit.net 00:00:05.93]       Expected DbContext.WorkflowInstances.First(i => i.Id == inst.Id).Status to be InstanceStatus.Failed {value: 4}, but found InstanceStatus.Running {value: 1}.
-[9/6/2025 4:25:59.055 PM]  [xUnit.net 00:00:05.93]       Stack Trace:
-[9/6/2025 4:25:59.062 PM]  [xUnit.net 00:00:05.93]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[9/6/2025 4:25:59.063 PM]  [xUnit.net 00:00:05.93]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[9/6/2025 4:25:59.065 PM]  [xUnit.net 00:00:05.93]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[9/6/2025 4:25:59.066 PM]  [xUnit.net 00:00:05.93]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[9/6/2025 4:25:59.067 PM]  [xUnit.net 00:00:05.93]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[9/6/2025 4:25:59.067 PM]  [xUnit.net 00:00:05.93]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[9/6/2025 4:25:59.069 PM]  Update Test run progress to 66/100.
-[9/6/2025 4:25:59.069 PM]  [xUnit.net 00:00:05.93]            at FluentAssertions.Primitives.EnumAssertions`2.Be(TEnum expected, String because, Object[] becauseArgs)
-[9/6/2025 4:25:59.069 PM]  [xUnit.net 00:00:05.93]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\QuorumAndTimeoutTests.cs(291,0): at WorkflowService.Tests.Engine.QuorumAndTimeoutTests.D4_Timeout_Fail_FailsInstance()
-[9/6/2025 4:25:59.071 PM]  [xUnit.net 00:00:05.93]         --- End of stack trace from previous location ---
-[9/6/2025 4:26:01.660 PM] [Error] [xUnit.net 00:00:08.54]     WorkflowService.Tests.Engine.QuorumAndTimeoutTests.D4_Timeout_Force_CompletesJoin [FAIL]
-[9/6/2025 4:26:01.678 PM]  [xUnit.net 00:00:08.54]       Expected DbContext.WorkflowEvents.Any(e => e.WorkflowInstanceId == inst.Id && e.Name == "ParallelJoinTimeout") to be true, but found False.
-[9/6/2025 4:26:01.684 PM]  [xUnit.net 00:00:08.54]       Stack Trace:
-[9/6/2025 4:26:01.685 PM]  [xUnit.net 00:00:08.54]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[9/6/2025 4:26:01.685 PM]  [xUnit.net 00:00:08.54]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[9/6/2025 4:26:01.686 PM]  [xUnit.net 00:00:08.54]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[9/6/2025 4:26:01.686 PM]  [xUnit.net 00:00:08.54]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[9/6/2025 4:26:01.687 PM]  [xUnit.net 00:00:08.54]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[9/6/2025 4:26:01.687 PM]  [xUnit.net 00:00:08.54]            at FluentAssertions.Execution.AssertionScope.FailWith(String message, Object[] args)
-[9/6/2025 4:26:01.687 PM]  [xUnit.net 00:00:08.54]            at FluentAssertions.Primitives.BooleanAssertions`1.BeTrue(String because, Object[] becauseArgs)
-[9/6/2025 4:26:01.688 PM]  [xUnit.net 00:00:08.54]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Engine\QuorumAndTimeoutTests.cs(275,0): at WorkflowService.Tests.Engine.QuorumAndTimeoutTests.D4_Timeout_Force_CompletesJoin()
-[9/6/2025 4:26:01.688 PM]  [xUnit.net 00:00:08.54]         --- End of stack trace from previous location ---
-[9/6/2025 4:26:01.688 PM]  [xUnit.net 00:00:08.59]   Finished:    WorkflowService.Tests
-[9/6/2025 4:26:01.728 PM]  Attachments processing not needed
-[9/6/2025 4:26:01.731 PM]  Update Test run progress to 75/100.
-[9/6/2025 4:26:01.731 PM]  Update Test run progress to 100/100.
-[9/6/2025 4:26:01.733 PM]  ========== Test run finished: 3 Tests (0 Passed, 3 Failed, 0 Skipped) run in 8.6 sec ==========
-[9/6/2025 4:26:01.733 PM]  Test run animation has stopped.
-[9/6/2025 4:26:01.734 PM]  Test run progress has stopped.
+Build failed with 10 error(s) and 8 warning(s) in 2.9s
