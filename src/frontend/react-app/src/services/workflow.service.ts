@@ -165,21 +165,17 @@ export interface GraphValidationResult {
 }
 
 export class WorkflowService {
-  // ----------------- Internal shared error extraction -----------------
   private extractApiErrors(data: any, defaultMessage: string): { primary: string; all: string[] } {
     if (!data) return { primary: defaultMessage, all: [defaultMessage] };
     let errors: string[] = [];
-    // Array form
     if (Array.isArray(data.errors)) {
       errors = data.errors.map((e: any) =>
         typeof e === 'string'
           ? e
           : (e?.message ?? e?.code ?? JSON.stringify(e)));
     } else if (data.errors) {
-      // Non-array errors object/string
       errors = [typeof data.errors === 'string' ? data.errors : JSON.stringify(data.errors)];
     }
-    // Single message fallback
     if (errors.length === 0 && typeof data.message === 'string' && data.message.trim().length > 0) {
       errors = [data.message];
     }
@@ -189,16 +185,11 @@ export class WorkflowService {
 
   // ----------------- Definitions -----------------
   async getDefinitions(filters?: WorkflowDefinitionsFilters): Promise<WorkflowDefinitionDto[]> {
-    // NOTE: getDefinitions is a convenience wrapper but previously
-    // did not supply paging, so the backend default (pageSize=20, ascending CreatedAt)
-    // truncated results and hid newer definitions (e.g., Ref-01).
-    // Preserve existing behavior if caller passes explicit filters.
     const effective = filters ?? { page: 1, pageSize: 100, sortBy: 'createdAt', desc: true };
     const paged = await this.getDefinitionsPaged(effective);
     return paged.items;
   }
 
-  // Explicit helper when a caller wants latest-first without remembering flags.
   async getLatestDefinitions(pageSize = 100) {
     const paged = await this.getDefinitionsPaged({
       page: 1,
@@ -409,7 +400,7 @@ export class WorkflowService {
 
   async startInstance(request: StartInstanceRequestDto) {
     const resp = await apiClient.post('/api/workflow/instances', request);
-    return mapInstance(unwrap<WorkflowInstanceDto>(resp.data)); // caller use result.id
+    return mapInstance(unwrap<WorkflowInstanceDto>(resp.data));
   }
 
   async signalInstance(id: number, request: SignalInstanceRequestDto) {
@@ -418,7 +409,6 @@ export class WorkflowService {
   }
 
   async terminateInstance(id: number) {
-      // DELETE returns ApiResponse<bool> (termination success)
     const resp = await apiClient.delete(`/api/workflow/instances/${id}`);
     return unwrap<boolean>(resp.data);
   }

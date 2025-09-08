@@ -1,7 +1,7 @@
 import type { DslDefinition, DslNode, ValidationResult } from './dsl.types';
 
 /**
- * Validates a workflow definition according to MVP rules
+ * Validates a workflow definition according to current builder rules (extended for gateway strategies).
  */
 export function validateDefinition(definition: DslDefinition): ValidationResult {
   const errors: string[] = [];
@@ -21,56 +21,62 @@ export function validateDefinition(definition: DslDefinition): ValidationResult 
     errors.push('Workflow must have at least one End node');
   }
 
-  // Rule (NEW): Duplicate node IDs
+  // Rule 3: Duplicate node IDs
   const idCounts: Record<string, number> = {};
-  for (const n of definition.nodes) {
-    idCounts[n.id] = (idCounts[n.id] || 0) + 1;
-  }
+  for (const n of definition.nodes) idCounts[n.id] = (idCounts[n.id] || 0) + 1;
   const duplicates = Object.entries(idCounts)
-    .filter(([, count]) => count > 1)
+    .filter(([, c]) => c > 1)
     .map(([id]) => id);
-  if (duplicates.length > 0) {
-    errors.push(`Duplicate node IDs: ${duplicates.join(', ')}`);
-  }
+  if (duplicates.length > 0) errors.push(`Duplicate node IDs: ${duplicates.join(', ')}`);
 
-  // Rule 3: All nodes must be reachable from Start
+  // Rule 4: Reachability from Start
   if (startNodes.length === 1) {
     const reachableNodes = findReachableNodes(definition, startNodes[0].id);
-    const unreachableNodes = definition.nodes.filter(n =>
+    const unreachable = definition.nodes.filter(n =>
       n.type !== 'start' && !reachableNodes.has(n.id)
     );
-    if (unreachableNodes.length > 0) {
-      errors.push(`Unreachable nodes: ${unreachableNodes.map(n => n.label || n.id).join(', ')}`);
+    if (unreachable.length > 0) {
+      errors.push(`Unreachable nodes: ${unreachable.map(n => n.label || n.id).join(', ')}`);
     }
   }
 
-  // Rule 4: All edges must connect valid nodes
+  // Rule 5: Edges must connect existing nodes
   for (const edge of definition.edges) {
     const fromNode = definition.nodes.find(n => n.id === edge.from);
     const toNode = definition.nodes.find(n => n.id === edge.to);
-    if (!fromNode) {
-      errors.push(`Edge ${edge.id} references non-existent source node: ${edge.from}`);
-    }
-    if (!toNode) {
-      errors.push(`Edge ${edge.id} references non-existent target node: ${edge.to}`);
-    }
+    if (!fromNode) errors.push(`Edge ${edge.id} references non-existent source node: ${edge.from}`);
+    if (!toNode) errors.push(`Edge ${edge.id} references non-existent target node: ${edge.to}`);
   }
 
-  // Rule 5: Gateway nodes must have condition
+  // Rule 6: Gateway validation (strategy-aware)
   for (const node of definition.nodes) {
     if (node.type === 'gateway') {
-      const gatewayNode = node as any;
-      if (!gatewayNode.condition || gatewayNode.condition.trim() === '') {
-        errors.push(`Gateway node "${node.label || node.id}" must have a condition`);
+      const gw: any = node;
+      // Migration heuristic:
+      const inferredStrategy: string = gw.strategy
+        ? gw.strategy
+        : (gw.condition ? 'conditional' : 'exclusive');
+
+      if (!gw.strategy) {
+        // Allow silent inference; could add warning later if desired
+        gw.strategy = inferredStrategy;
+      }
+
+      if (inferredStrategy === 'conditional') {
+        if (!gw.condition || typeof gw.condition !== 'string' || gw.condition.trim() === '') {
+          errors.push(`Gateway node "${node.label || node.id}" must have a condition`);
+        }
+      } else {
+        // exclusive / parallel: condition optional; ignore if empty
       }
     }
   }
 
-  // Rule 6: HumanTask nodes should have assignee roles (warning)
+  // Rule 7: HumanTask advisory (warning)
   for (const node of definition.nodes) {
     if (node.type === 'humanTask') {
-      const humanTaskNode = node as any;
-      if (!humanTaskNode.assigneeRoles || humanTaskNode.assigneeRoles.length === 0) {
+      const ht: any = node;
+      if (!ht.assigneeRoles || ht.assigneeRoles.length === 0) {
         warnings.push(`HumanTask node "${node.label || node.id}" should have assignee roles`);
       }
     }
@@ -93,18 +99,16 @@ function findReachableNodes(definition: DslDefinition, startNodeId: string): Set
     const currentId = toVisit.pop()!;
     if (reachable.has(currentId)) continue;
     reachable.add(currentId);
-    const outgoingEdges = definition.edges.filter(e => e.from === currentId);
-    for (const edge of outgoingEdges) {
-      if (!reachable.has(edge.to)) {
-        toVisit.push(edge.to);
-      }
+    const outgoing = definition.edges.filter(e => e.from === currentId);
+    for (const edge of outgoing) {
+      if (!reachable.has(edge.to)) toVisit.push(edge.to);
     }
   }
   return reachable;
 }
 
 /**
- * Validates a single node
+ * Validates a single node (strategy-aware).
  */
 export function validateNode(node: DslNode): ValidationResult {
   const errors: string[] = [];
@@ -115,21 +119,28 @@ export function validateNode(node: DslNode): ValidationResult {
 
   switch (node.type) {
     case 'gateway': {
-      const gatewayNode = node as any;
-      if (!gatewayNode.condition) errors.push('Gateway node must have a condition');
+      const gw: any = node;
+      const inferredStrategy: string = gw.strategy
+        ? gw.strategy
+        : (gw.condition ? 'conditional' : 'exclusive');
+
+      if (inferredStrategy === 'conditional') {
+        if (!gw.condition || typeof gw.condition !== 'string' || gw.condition.trim() === '') {
+          errors.push('Gateway node must have a condition');
+        }
+      }
       break;
     }
     case 'timer': {
-      const timerNode = node as any;
-      // UPDATED: accept delaySeconds as a valid timing input
-      if (!timerNode.delayMinutes && !timerNode.delaySeconds && !timerNode.untilIso) {
+      const t: any = node;
+      if (!t.delayMinutes && !t.delaySeconds && !t.untilIso) {
         errors.push('Timer node must have either delayMinutes, delaySeconds, or untilIso');
       }
       break;
     }
     case 'humanTask': {
-      const humanTaskNode = node as any;
-      if (!humanTaskNode.assigneeRoles || humanTaskNode.assigneeRoles.length === 0) {
+      const ht: any = node;
+      if (!ht.assigneeRoles || ht.assigneeRoles.length === 0) {
         warnings.push('HumanTask should have assignee roles');
       }
       break;

@@ -28,6 +28,7 @@ import type {
   GatewayNode,
   TimerNode
 } from '../dsl/dsl.types';
+import { PropertyPanel } from './panels/PropertyPanel';
 
 const nodeTypes = {
   start: WorkflowNode,
@@ -62,8 +63,8 @@ function BuilderCanvasInner({
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
+  const [activeNode, setActiveNode] = useState<Node | undefined>();
 
-  // Expose instance globally for console diagnostics
   const handleInit = useCallback((inst: ReactFlowInstance) => {
     setRfInstance(inst);
     (window as any).__RF = inst;
@@ -92,7 +93,14 @@ function BuilderCanvasInner({
           case 'end': return { ...baseNode, type: 'end', label: 'End' } as EndNode;
           case 'humanTask': return { ...baseNode, type: 'humanTask', label: 'Human Task', assigneeRoles: [] } as HumanTaskNode;
           case 'automatic': return { ...baseNode, type: 'automatic', label: 'Automatic Task', action: { kind: 'noop' } } as AutomaticNode;
-          case 'gateway': return { ...baseNode, type: 'gateway', label: 'Gateway', condition: '{"==": [{"var": "approved"}, true]}' } as GatewayNode;
+          case 'gateway':
+            return {
+              ...baseNode,
+              type: 'gateway',
+              label: 'Gateway',
+              // New style: strategy defaults to exclusive
+              strategy: 'exclusive'
+            } as GatewayNode;
           case 'timer': return { ...baseNode, type: 'timer', label: 'Timer', delayMinutes: 5 } as TimerNode;
           default: return { ...baseNode, type: 'start', label: 'Unknown' } as StartNode;
         }
@@ -106,6 +114,7 @@ function BuilderCanvasInner({
       };
 
       setNodes(nds => nds.concat(newNode));
+      setActiveNode(newNode);
     },
     [screenToFlowPosition, setNodes]
   );
@@ -165,6 +174,7 @@ function BuilderCanvasInner({
           const ids = selectedNodes.map(n => n.id);
           setNodes(nds => nds.filter(n => !ids.includes(n.id)));
           setEdges(eds => eds.filter(e => !ids.includes(e.source) && !ids.includes(e.target)));
+          if (activeNode && ids.includes(activeNode.id)) setActiveNode(undefined);
         }
         if (selectedEdges.length > 0) {
           const ids = selectedEdges.map(e => e.id);
@@ -172,8 +182,28 @@ function BuilderCanvasInner({
         }
       }
     },
-    [nodes, edges, setNodes, setEdges]
+    [nodes, edges, setNodes, setEdges, activeNode]
   );
+
+  const handleNodeClick = useCallback((evt: React.MouseEvent, node: Node) => {
+    onNodeClick(evt, node);
+    setActiveNode(node);
+  }, [onNodeClick]);
+
+  const updateNode = useCallback((id: string, patch: Record<string, any>) => {
+    setNodes(ns =>
+      ns.map(n => {
+        if (n.id !== id) return n;
+        const orig = n.data || {};
+        const merged = { ...orig, ...patch };
+        return { ...n, data: merged };
+      })
+    );
+    // update active snapshot
+    if (activeNode?.id === id) {
+      setActiveNode(prev => prev ? { ...prev, data: { ...prev.data, ...patch } } : prev);
+    }
+  }, [setNodes, activeNode]);
 
   return (
     <Box
@@ -188,7 +218,7 @@ function BuilderCanvasInner({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={effectiveConnect}
-        onNodeClick={onNodeClick}
+        onNodeClick={handleNodeClick}
         onDrop={onDrop}
         onDragOver={onDragOver}
         nodeTypes={nodeTypes}
@@ -214,6 +244,13 @@ function BuilderCanvasInner({
           position="bottom-right"
         />
       </ReactFlow>
+
+      <PropertyPanel
+        open={!!activeNode}
+        node={activeNode}
+        onClose={() => setActiveNode(undefined)}
+        updateNode={updateNode}
+      />
     </Box>
   );
 }

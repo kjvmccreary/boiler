@@ -52,7 +52,7 @@ export function serializeToDsl(
         trueSeen = true;
       } else if (e.label === 'false') {
         if (falseSeen) continue;
-        falseSeen = true;
+        falseSeen = falseSeen ? falseSeen : true; // explicit
       }
       filtered.push(e);
     }
@@ -70,12 +70,28 @@ export function deserializeFromDsl(def: DslDefinition): {
   nodes: any[];
   edges: Edge[];
 } {
-  const flowNodes = def.nodes.map(n => ({
-    id: n.id,
-    type: n.type,
-    position: { x: n.x, y: n.y },
-    data: { ...n }
-  }));
+  const flowNodes = def.nodes.map(n => {
+    // Migration note: ensure gateway strategy defaults (not mutating original object)
+    if (n.type === 'gateway') {
+      const g: any = { ...n };
+      if (!g.strategy) {
+        // Heuristic: legacy definitions with condition => treat as conditional, else exclusive
+        g.strategy = g.condition ? 'conditional' : 'exclusive';
+      }
+      return {
+        id: g.id,
+        type: g.type,
+        position: { x: g.x, y: g.y },
+        data: g
+      };
+    }
+    return {
+      id: n.id,
+      type: n.type,
+      position: { x: n.x, y: n.y },
+      data: { ...n }
+    };
+  });
 
   const flowEdges: Edge[] = def.edges.map(e => {
     const branch = e.label === 'true' || e.label === 'false'

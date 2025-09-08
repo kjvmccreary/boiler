@@ -3,6 +3,9 @@ export type NodeType = 'start' | 'end' | 'humanTask' | 'automatic' | 'gateway' |
 export type NodeId = string;
 export type EdgeId = string;
 
+// Gateway strategy union (initial set surfaced in builder)
+export type GatewayStrategy = 'exclusive' | 'conditional' | 'parallel';
+
 // Base node interface
 export interface DslNodeBase {
   id: NodeId;
@@ -31,20 +34,30 @@ export interface AutomaticNode extends DslNodeBase {
   };
 }
 
+/**
+ * Gateway node.
+ * Backward compatibility:
+ *  - Older drafts have no 'strategy' and always a 'condition' string (required).
+ *  - New model: strategy determines whether condition is required.
+ *    * conditional => condition required (JsonLogic serialized as string for now)
+ *    * exclusive | parallel => condition optional/ignored
+ * Migration heuristic (validation): if strategy absent and a condition field exists, treat as 'conditional'; else default 'exclusive'.
+ */
 export interface GatewayNode extends DslNodeBase {
   type: 'gateway';
-  condition: string; // JsonLogic expression
+  strategy?: GatewayStrategy;      // Newly introduced (optional for legacy)
+  condition?: string;              // Required only if strategy=conditional (or legacy with condition field)
 }
 
 export interface TimerNode extends DslNodeBase {
   type: 'timer';
   // Legacy relative delay in minutes (can now be fractional)
   delayMinutes?: number;
-  // NEW precise relative delay in seconds (takes precedence over delayMinutes if provided)
+  // Precise relative delay in seconds (takes precedence over delayMinutes if provided)
   delaySeconds?: number;
-  // Absolute override
+  // Absolute override (UTC ISO)
   untilIso?: string;
-  // Optional historical alias some earlier versions used
+  // Optional historical alias
   dueDate?: string;
 }
 

@@ -15,26 +15,14 @@ const nodeTypes: NodePaletteItem[] = [
     label: 'Start',
     icon: 'PlayArrow',
     description: 'Starting point of the workflow',
-    defaultData: {
-      id: '',
-      type: 'start',
-      label: 'Start',
-      x: 0,
-      y: 0,
-    },
+    defaultData: { id: '', type: 'start', label: 'Start', x: 0, y: 0 },
   },
   {
     type: 'end',
     label: 'End',
     icon: 'Stop',
     description: 'End point of the workflow',
-    defaultData: {
-      id: '',
-      type: 'end',
-      label: 'End',
-      x: 0,
-      y: 0,
-    },
+    defaultData: { id: '', type: 'end', label: 'End', x: 0, y: 0 },
   },
   {
     type: 'humanTask',
@@ -48,8 +36,6 @@ const nodeTypes: NodePaletteItem[] = [
       x: 0,
       y: 0,
       assigneeRoles: [],
-      dueInMinutes: undefined,
-      formSchema: undefined,
     },
   },
   {
@@ -70,14 +56,14 @@ const nodeTypes: NodePaletteItem[] = [
     type: 'gateway',
     label: 'Gateway',
     icon: 'AccountTree',
-    description: 'Conditional branching point',
+    description: 'Branching logic (choose strategy in properties)',
     defaultData: {
       id: '',
       type: 'gateway',
       label: 'Gateway',
       x: 0,
       y: 0,
-      condition: '{"==": [{"var": "approved"}, true]}',
+      strategy: 'exclusive',
     },
   },
   {
@@ -132,7 +118,7 @@ export function NodePalette() {
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
         {nodeTypes.map((nodeType) => {
           const IconComponent = iconMap[nodeType.icon as keyof typeof iconMap];
-          
+
           return (
             <Tooltip key={nodeType.type} title={nodeType.description} placement="right">
               <Paper
@@ -167,9 +153,12 @@ export function NodePalette() {
           <strong>Instructions:</strong>
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          • Drag nodes to canvas<br />
-          • Connect nodes by dragging from handles<br />
-          • Click nodes to edit properties<br />
+          • Drag nodes to canvas
+          <br />
+          • Connect nodes via handles
+          <br />
+          • Click nodes to edit properties
+          <br />
           • Delete with Del/Backspace key
         </Typography>
       </Box>

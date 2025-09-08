@@ -1,42 +1,147 @@
-{
-  "key": "ref-01",
-  "edges": [
-    {
-      "id": "e-start-1757168809336-h-humanTask-1757168814018-1757168816133",
-      "to": "humanTask-1757168814018",
-      "from": "start-1757168809336"
-    },
-    {
-      "id": "e-humanTask-1757168814018-h-end-1757168822415-1757168824803",
-      "to": "end-1757168822415",
-      "from": "humanTask-1757168814018"
-    }
-  ],
-  "nodes": [
-    {
-      "x": 71,
-      "y": -42.66667175292969,
-      "id": "start-1757168809336",
-      "type": "start",
-      "label": "Start"
-    },
-    {
-      "x": 84.36201399216247,
-      "y": 66.6714095380535,
-      "id": "humanTask-1757168814018",
-      "type": "humanTask",
-      "label": "Human Task",
-      "dueInMinutes": 10,
-      "assigneeRoles": [
-        "Admin"
-      ]
-    },
-    {
-      "x": 126.80207785445361,
-      "y": 177.31871889331254,
-      "id": "end-1757168822415",
-      "type": "end",
-      "label": "End"
-    }
-  ]
-}
+PS C:\Users\mccre\dev\boiler\src\frontend\react-app> npm run build
+
+> microservices-frontend@0.0.0 build
+> tsc -b && vite build
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:16:9 - error TS1005: '>' expected.
+
+16         type="source"
+           ~~~~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:16:13 - error TS1005: ')' expected.
+
+16         type="source"
+               ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:17:27 - error TS1005: ',' expected.
+
+17         position={Position.Bottom}
+                             ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:19:16 - error TS1136: Property assignment expected.
+
+19         style={{ background: '#5e35b1', width: 12, height: 12 }}
+                  ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:19:46 - error TS1005: ';' expected.
+
+19         style={{ background: '#5e35b1', width: 12, height: 12 }}
+                                                ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:19:58 - error TS1005: ';' expected.
+
+19         style={{ background: '#5e35b1', width: 12, height: 12 }}
+                                                            ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:20:7 - error TS1161: Unterminated regular expression literal.
+
+20       />
+         ~~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:21:5 - error TS1128: Declaration or statement expected.
+
+21     );
+       ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:25:6 - error TS1110: Type expected.
+
+25     <>
+        ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:27:9 - error TS1005: '>' expected.
+
+27         type="source"
+           ~~~~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:27:13 - error TS1005: ')' expected.
+
+27         type="source"
+               ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:28:27 - error TS1005: ',' expected.
+
+28         position={Position.Right}
+                             ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:30:16 - error TS1136: Property assignment expected.
+
+30         style={{ background: '#16a34a', width: 10, height: 10, top: '35%' }}
+                  ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:30:46 - error TS1005: ';' expected.
+
+30         style={{ background: '#16a34a', width: 10, height: 10, top: '35%' }}
+                                                ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:30:58 - error TS1005: ';' expected.
+
+30         style={{ background: '#16a34a', width: 10, height: 10, top: '35%' }}
+                                                            ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:30:67 - error TS1005: ';' expected.
+
+30         style={{ background: '#16a34a', width: 10, height: 10, top: '35%' }}
+                                                                     ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:30:76 - error TS1128: Declaration or statement expected.
+
+30         style={{ background: '#16a34a', width: 10, height: 10, top: '35%' }}
+                                                                              ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:31:7 - error TS1161: Unterminated regular expression literal.
+
+31       />
+         ~~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:34:27 - error TS1005: ',' expected.
+
+34         position={Position.Right}
+                             ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:36:16 - error TS1136: Property assignment expected.
+
+36         style={{ background: '#dc2626', width: 10, height: 10, top: '70%' }}
+                  ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:36:46 - error TS1005: ';' expected.
+
+36         style={{ background: '#dc2626', width: 10, height: 10, top: '70%' }}
+                                                ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:36:58 - error TS1005: ';' expected.
+
+36         style={{ background: '#dc2626', width: 10, height: 10, top: '70%' }}
+                                                            ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:36:67 - error TS1005: ';' expected.
+
+36         style={{ background: '#dc2626', width: 10, height: 10, top: '70%' }}
+                                                                     ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:36:76 - error TS1128: Declaration or statement expected.
+
+36         style={{ background: '#dc2626', width: 10, height: 10, top: '70%' }}
+                                                                              ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:37:7 - error TS1161: Unterminated regular expression literal.
+
+37       />
+         ~~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:38:6 - error TS1161: Unterminated regular expression literal.
+
+38     </>
+        ~~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:39:3 - error TS1128: Declaration or statement expected.
+
+39   );
+     ~
+
+src/features/workflow/builder/hooks/useGatewayHandles.ts:40:1 - error TS1128: Declaration or statement expected.
+
+40 }
+   ~
+
+
+Found 28 errors.

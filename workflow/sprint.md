@@ -3,7 +3,7 @@
 > Purpose: Track alignment between backend WorkflowService capabilities and frontend implementation, and manage sprint execution.  
 > Update Cadence: After each story refinement / completion.  
 > Owner: Workflow Feature Team  
-> Last Updated: (replace with current date)
+> Last Updated: 2025-09-08
 
 ---
 
@@ -27,9 +27,9 @@ Progress Legend:
 | Start / End Nodes | Stable | Implemented | — | Done | [x] |
 | HumanTask Node | Stable | Basic node only | Missing enhanced assignment UX | High | [ ] |
 | Automatic Node | Stable | Basic node | No action/webhook config panel | Medium | [ ] |
-| Gateway Strategy (exclusive / conditional / parallel) | Supported | Only basic / implied exclusive | No strategy selector | Critical | [ ] |
+| Gateway Strategy (exclusive / conditional / parallel) | Supported | Strategy selector & panel added | Parallel viz (C2) & expr validation (H1) pending | Critical | [~] |
 | Conditional Expressions (JsonLogic) | Supported | Not editable | No editor/validation | Critical | [ ] |
-| Parallel Fan-Out | Supported | Not representable | No parallel strategy UI | Critical | [ ] |
+| Parallel Fan-Out | Supported | Not representable | No parallel strategy UI visualization | Critical | [ ] |
 | Join Node & Modes | Supported (all/any/count/quorum/expression) | Missing | No node type or config | Critical | [ ] |
 | Join Mode Config (threshold / expression) | Supported | Missing | No inputs / validation | Critical | [ ] |
 | Timer Node (due / duration) | Supported (worker pending) | Minimal | Needs duration/datetime inputs + validation | High | [ ] |
@@ -66,7 +66,7 @@ Order = execution sequence within sprint. Use IDs for tracking.
 
 | ID | Story | Definition of Done | Owner | Status |
 |----|-------|--------------------|-------|--------|
-| C1 | Gateway Strategy Selector | strategy persisted (exclusive/conditional/parallel); DSL round-trips |  | [ ] |
+| C1 | Gateway Strategy Selector | strategy persisted (exclusive/conditional/parallel); DSL round-trips |  | [~] |
 | C2 | Parallel Gateway Visualization | Parallel edges annotated; warning if no downstream join |  | [ ] |
 | C3 | Join Node Type (Base) | Join node palette + serialization |  | [ ] |
 | C4 | Join Configuration Panel | Modes + dynamic fields + validation |  | [ ] |
@@ -119,12 +119,12 @@ Order = execution sequence within sprint. Use IDs for tracking.
 
 ## 4. Sequencing & Dependencies
 
-1. C1 → C2 → (enables) C3/C4 (gateway strategy before join referencing parallel origins)
-2. C5 (Timer) can proceed independently.
-3. C6–C9 (operations) share scaffolding in task & instance detail views—coordinate API service updates first.
-4. C10 + C11 require event & snapshot service wrappers (build after base instance detail scaffolding).
-5. H1 depends on minimal expression persistence from C1/C4.
-6. M2 depends on C1–C4 completion (structural graph metadata).
+1. C1 → C2 → (enables) C3/C4 (gateway strategy before join referencing parallel origins)  
+2. C5 (Timer) can proceed independently.  
+3. C6–C9 (operations) share scaffolding in task & instance detail views—coordinate API service updates first.  
+4. C10 + C11 require event & snapshot service wrappers (build after base instance detail scaffolding).  
+5. H1 depends on minimal expression persistence from C1/C4.  
+6. M2 depends on C1–C4 completion (structural graph metadata).  
 
 ---
 

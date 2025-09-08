@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Paper, Chip } from '@mui/material';
 import {
   PlayArrow as StartIcon,
   Stop as EndIcon,
@@ -10,6 +10,7 @@ import {
   Schedule as TimerIcon
 } from '@mui/icons-material';
 import type { DslNode } from '../../dsl/dsl.types';
+import { useGatewayHandles } from '../hooks/useGatewayHandles';
 
 const iconMap = {
   start: StartIcon,
@@ -25,7 +26,7 @@ const colorMap = {
   end: { bg: '#fce4ec', border: '#c2185b', text: '#c2185b' },
   humanTask: { bg: '#f3e5f5', border: '#7b1fa2', text: '#7b1fa2' },
   automatic: { bg: '#e8f5e8', border: '#388e3c', text: '#388e3c' },
-  gateway: { bg: '#ede7f6', border: '#5e35b1', text: '#5e35b1' }, // neutralized
+  gateway: { bg: '#ede7f6', border: '#5e35b1', text: '#5e35b1' },
   timer: { bg: '#e1f5fe', border: '#0277bd', text: '#0277bd' }
 };
 
@@ -34,12 +35,16 @@ export const WorkflowNode = memo(({ data, selected }: NodeProps<DslNode>) => {
   const colors = colorMap[data.type];
   const isGateway = data.type === 'gateway';
 
+  // Strategy (from new properties bag OR legacy direct)
+  const strategy: string | undefined = (data as any).strategy ?? (data as any).properties?.strategy;
+  const handles = isGateway ? useGatewayHandles(strategy as any) : null;
+
   return (
     <Paper
       elevation={selected ? 8 : 2}
       sx={{
-        minWidth: 130,
-        minHeight: isGateway ? 80 : 60,
+        minWidth: 140,
+        minHeight: isGateway ? 90 : 60,
         bgcolor: colors.bg,
         border: 2,
         borderColor: selected ? colors.border : 'transparent',
@@ -48,7 +53,6 @@ export const WorkflowNode = memo(({ data, selected }: NodeProps<DslNode>) => {
         position: 'relative'
       }}
     >
-      {/* Input (except start) */}
       {data.type !== 'start' && (
         <Handle
           type="target"
@@ -60,7 +64,7 @@ export const WorkflowNode = memo(({ data, selected }: NodeProps<DslNode>) => {
       <Box
         sx={{
           p: 1.25,
-          display: 'flex',
+            display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           gap: 0.5
@@ -74,7 +78,7 @@ export const WorkflowNode = memo(({ data, selected }: NodeProps<DslNode>) => {
             color: colors.text,
             textAlign: 'center',
             lineHeight: 1.2,
-            maxWidth: 110,
+            maxWidth: 120,
             overflow: 'hidden',
             textOverflow: 'ellipsis'
           }}
@@ -82,20 +86,34 @@ export const WorkflowNode = memo(({ data, selected }: NodeProps<DslNode>) => {
           {data.label || data.type}
         </Typography>
 
+        {isGateway && (
+          <Chip
+            size="small"
+            label={(strategy || 'exclusive').slice(0, 9)}
+            sx={{
+              height: 16,
+              fontSize: '0.55rem',
+              bgcolor: '#fff',
+              border: '1px solid',
+              borderColor: colors.border,
+              mt: 0.2
+            }}
+          />
+        )}
+
         {data.type === 'humanTask' && (data as any).assigneeRoles?.length > 0 && (
           <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.6rem' }}>
             {(data as any).assigneeRoles.length} role(s)
           </Typography>
         )}
 
-        {data.type === 'timer' && (data as any).delayMinutes && (
+        {data.type === 'timer' && (data as any).delayMinutes != null && (
           <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.6rem' }}>
             {(data as any).delayMinutes}m
           </Typography>
         )}
       </Box>
 
-      {/* Generic bottom output removed for gateway to prevent unlabeled edges */}
       {data.type !== 'end' && !isGateway && (
         <Handle
           type="source"
@@ -104,23 +122,7 @@ export const WorkflowNode = memo(({ data, selected }: NodeProps<DslNode>) => {
         />
       )}
 
-      {/* Binary gateway handles */}
-      {isGateway && (
-        <>
-          <Handle
-            type="source"
-            position={Position.Right}
-            id="true"
-            style={{ background: '#16a34a', width: 10, height: 10, top: '35%' }}
-          />
-          <Handle
-            type="source"
-            position={Position.Right}
-            id="false"
-            style={{ background: '#dc2626', width: 10, height: 10, top: '70%' }}
-          />
-        </>
-      )}
+      {isGateway && handles}
     </Paper>
   );
 });
