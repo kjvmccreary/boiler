@@ -31,11 +31,15 @@ D Progress terminal event duplication ✅ (deduped + completion guard)
 
 --------------------------------------------------
 ## 4. Concrete recent frontend changes
-- Advanced tag filtering UI (AllTags=AND, AnyTags=OR) + persistence (localStorage) + removable chips.
-- Backend request updated to supply `allTags` / `anyTags`.
-- Added helper adoption for validation endpoints.
-- Added final progress guard for auto-complete flows.
-- Existing publish/unpublish/archive terminate helper usage retained.
+- Advanced tag filtering UI (AllTags=AND, AnyTags=OR) + localStorage persistence + removable chips.
+- Tag Edit Dialog on Definitions page (supports draft & published, validation: max 12 tags, 40 chars each).
+- Tags column added (sortable; compact chip preview + overflow indicator).
+- Detail panel tooltip clarifying AND / OR semantics & legacy 'tags' deprecation.
+- Builder (Create / Edit) page: tag input with real‑time validation & normalization integrated into createDraft / updateDefinition.
+- Validation + normalization pipeline (normalizeTags) reused across create, update, filter, and dialog save.
+- Final progress emission guard (auto-complete flows) in runtime ensuring single terminal 100%.
+- Helper adoption for validation endpoints (consistent error extraction).
+- Persisted archived toggle & tag filters (localStorage); safe resets.
 
 --------------------------------------------------
 ## 5. Quick diff checklist
@@ -61,12 +65,16 @@ D Progress terminal event duplication ✅ (deduped + completion guard)
 | Tag delimiter policy                   | ✅ COMPLETE  | Comma-only |
 | Advanced tag AND/OR filtering          | ✅ COMPLETE  | anyTags / allTags + UI |
 | Validation endpoints helper adoption   | ✅ COMPLETE  | validate JSON & by Id |
+| Tag edit dialog & validation           | ✅ COMPLETE  | Definitions page |
+| Tags column (grid)                     | ✅ COMPLETE  | Sortable |
+| Builder tag entry + normalization      | ✅ COMPLETE  | Create / edit |
+| Tag persistence (filters)              | ✅ COMPLETE  | localStorage |
 
 --------------------------------------------------
 ## 6. Action order (current)
 1. Decide join timeout activation tests (fix vs retire).
 2. Legacy `tags` param deprecation decision (document precedence).
-3. Optional: Column toggles / saved grid prefs.
+3. Optional: Column visibility & sort preference persistence (grid personalization).
 4. Optional: Add activeTasksCount to InstanceUpdated payload.
 5. Optional: Progress rate metric (events/min).
 6. Collapse test adapters to direct service imports.
@@ -92,26 +100,32 @@ D Progress terminal event duplication ✅ (deduped + completion guard)
 ✅ Standardized API error parsing  
 ✅ Advanced AND/OR tag filtering (backend + UI + persistence)  
 ✅ Validation endpoints helper adoption  
+✅ Tag edit dialog (definitions)  
+✅ Tags column & detail tooltip  
+✅ Builder tag input + validation  
 
 --------------------------------------------------
 ## 9. Decision points
 - Join timeout test strategy.
 - Legacy `tags` parameter lifecycle (warn & remove?).
 - activeTasksCount timing.
+- Grid personalization scope (columns / density / sort persistence).
 
 --------------------------------------------------
 ## 10. Next recommended steps
-1. Document precedence (anyTags/allTags > legacy tags) & add deprecation notice.
+1. Document precedence (anyTags/allTags > legacy tags) & emit one-time console deprecation warning.
 2. Decide join timeout test plan / retirement note.
-3. (Optional) Persist grid column visibility & sort preferences.
-4. (Optional) Add activeTasksCount to InstanceUpdated & UI.
+3. Persist grid column visibility & sort preferences (user personalization).
+4. Add activeTasksCount to InstanceUpdated & UI (badge / column).
+5. (Optional) Implement progress rate metric & potential anomaly alert.
 
 --------------------------------------------------
 ## 11. Observations / minor technical debt
 - Adapters still present (test indirection).
 - Few endpoints still use ad-hoc error handling (non-critical).
-- Legacy `tags` param may cause confusion alongside new params.
-- Join timeout worker scenarios still partially validated.
+- Legacy `tags` param may cause confusion alongside new parameters.
+- Join timeout worker scenarios partially validated (skipped tests).
+- Grid personalization not yet implemented (foundation for future UX).
 
 --------------------------------------------------
 ## 12. Backlog (non‑blocking)
@@ -122,6 +136,9 @@ D Progress terminal event duplication ✅ (deduped + completion guard)
 - Modularize workflow types.
 - Progress rate metric.
 - Deprecation banner / console warning for legacy `tags`.
+- Grid personalization (columns, page size, density).
+- Progress anomaly detection (stalled instances).
+- Optional reusable TagInput component to DRY builder & dialog logic.
 
 --------------------------------------------------
 ## 13. Skipped tests note
