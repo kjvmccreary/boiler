@@ -6,13 +6,13 @@ import {
   MenuItem,
   Select,
   SelectChangeEvent,
-  TextField,
-  Typography,
-  Alert,
   Chip,
-  Stack
+  Stack,
+  Alert,
+  Typography
 } from '@mui/material';
 import { GatewayStrategy } from '../../dsl/dsl.types';
+import ExpressionEditor from '../components/ExpressionEditor';
 
 export interface GatewayPropertiesPanelProps {
   nodeId: string;
@@ -55,10 +55,6 @@ export function GatewayPropertiesPanel({
     onChange(patch);
   }, [strategy, condition, onChange]);
 
-  const handleConditionChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange({ condition: e.target.value });
-  }, [onChange]);
-
   const showParallelPanel = strategy === 'parallel';
 
   return (
@@ -87,15 +83,17 @@ export function GatewayPropertiesPanel({
       </FormControl>
 
       {strategy === 'conditional' && (
-        <TextField
-          label="JsonLogic Condition"
-          size="small"
-          multiline
-          minRows={3}
+        <ExpressionEditor
+          kind="gateway"
+          label="Condition (JsonLogic)"
           value={condition ?? ''}
-          onChange={handleConditionChange}
-          placeholder='{"==":[{"var":"approved"},true]}'
-          helperText="JsonLogic expression (validation coming in H1)."
+          onChange={val => onChange({ condition: val })}
+          onValidityChange={valid => {
+            // Could store a local flag if needed later
+            if (!valid) {
+              // no-op now; validation enforced in dsl.validate
+            }
+          }}
         />
       )}
 

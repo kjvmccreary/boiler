@@ -1,4 +1,5 @@
 # Workflow Frontend Parity & Sprint Plan (Maintained Document)
+Estimated % Completion: 4%
 
 > Purpose: Track alignment between backend WorkflowService capabilities and frontend implementation, and manage sprint execution.  
 > Update Cadence: After each story refinement / completion.  
@@ -30,8 +31,8 @@ Progress Legend:
 | Gateway Strategy (exclusive / conditional / parallel) | Supported | Strategy selector, panel | Expr validation pending | Critical | [~] |
 | Conditional Expressions (JsonLogic) | Supported | Not editable | Editor/validation pending | Critical | [ ] |
 | Parallel Fan-Out | Supported | Basic visualization added | Join + advanced validation pending | Critical | [~] |
-| Join Node & Modes | Supported (all/any/count/quorum/expression) | Base join node added | Config panel & validation (C4) | Critical | [~] |
-| Join Mode Config (threshold / expression) | Supported | Missing | No inputs / validation | Critical | [ ] |
+| Join Node & Modes | Supported (all/any/count/quorum/expression) | Base + config panel + JSON parse validation | Expression semantics & structural join/parallel checks (M2) | Critical | [~] |
+| Join Mode Config (threshold / expression) | Supported | Mode select + inputs + editor (JSON parse) | Advanced validation & builder UI enhancements pending | Critical | [~] |
 | Timer Node (due / duration) | Supported (worker pending) | Minimal | Needs duration/datetime inputs + validation | High | [ ] |
 | Task Actions: claim/complete | Implemented | Present | OK | Done | [x] |
 | Task Assign | Implemented | Missing | Assign dialog absent | High | [ ] |
@@ -47,7 +48,7 @@ Progress Legend:
 | Progress Bar (dedupe) | Implemented | Partial | No context about dedupe state | Low | [ ] |
 | Tags Filtering (ANY/ALL) | Implemented | Implemented | Backend validation guard missing | Medium | [ ] |
 | Tags Server-Side Validation | Missing guard | Client-only | Add backend checks | Medium | [ ] |
-| JsonLogic Expression Builder (gateway/join) | Engine ready | Missing | UI + backend validation endpoint | High | [ ] |
+| JsonLogic Expression Builder (gateway/join) | Engine ready | Basic text editor with JSON parse validation | Backend semantic validation endpoint pending | High | [~] |
 | Join Timeout Visibility | Experimental | Missing | Display status if retained | Low | [ ] |
 | Outbox Visibility | Persist only | Missing | Health widget + counts | Medium | [ ] |
 | ActiveTasksCount (planned) | Pending backend enrich | Missing | Display when available / compute fallback | Medium | [ ] |
@@ -66,8 +67,8 @@ Progress Legend:
 |----|-------|--------------------|-------|--------|
 | C1 | Gateway Strategy Selector | strategy persisted (exclusive/conditional/parallel); DSL round-trips |  | [~] |
 | C2 | Parallel Gateway Visualization | Parallel edges annotated; warning if no downstream join |  | [~] |
-| C3 | Join Node Type (Base) | Join node palette + serialization |  | [~] |
-| C4 | Join Configuration Panel | Modes + dynamic fields + validation |  | [ ] |
+| C3 | Join Node Type (Base) | Join node palette + serialization |  | [x] |
+| C4 | Join Configuration Panel | Modes + dynamic fields + validation (frontend) |  | [~] |
 | C5 | Timer Node Property Panel Upgrade | Supports duration & absolute due; validation errors surfaced |  | [ ] |
 | C6 | Task Extended Actions (assign/cancel/reset) | Task detail drawer + permission guard |  | [ ] |
 | C7 | Instance Suspend/Resume | Buttons + state refresh |  | [ ] |
@@ -76,60 +77,20 @@ Progress Legend:
 | C10 | Runtime Snapshot Panel | Active nodes/parallelGroups/join meta display |  | [ ] |
 | C11 | Event Timeline (Instance) | Paginated, grouped, type-badged |  | [ ] |
 
-### 3.2 High Priority
+### 3.2 High Priority (excerpt)
 
 | ID | Story | DoD | Owner | Status |
 |----|-------|-----|-------|--------|
-| H1 | JsonLogic Expression Builder (Gateway/Join) | Text + inline validation |  | [ ] |
-| H2 | New Draft Version & Revalidate UI | Buttons + validation result panel |  | [ ] |
-| H3 | ActiveTasksCount Column/Badge | Column with fallback compute |  | [ ] |
-| H4 | Health Widget (Outbox & Timers) | Shows counts & status colors |  | [ ] |
-
-### 3.3 Medium Priority
-
-| ID | Story | DoD | Owner | Status |
-|----|-------|-----|-------|--------|
-| M1 | Backend Tags Validation Guard | Server rejects invalid tags; UI surfaces errors |  | [ ] |
-| M2 | Advanced Graph Validation (Join↔Parallel coherence) | Publish blocked on structural errors |  | [ ] |
-| M3 | Simulation / Path Preview Tool | Enumerates distinct paths (static) |  | [ ] |
-| M4 | Version Diff Viewer | Added/removed/changed nodes highlighted |  | [ ] |
-| M5 | Task Completion Data Viewer | JSON viewer with syntax highlight |  | [ ] |
-
-### 3.4 Low Priority
-
-| ID | Story | DoD | Owner | Status |
-|----|-------|-----|-------|--------|
-| L1 | Progress Event Debounce | Prevent redundant renders |  | [ ] |
-| L2 | Timeline Filters | Client-side type/time filtering |  | [ ] |
-| L3 | Outbox Message Drill-Down Prep | Placeholder link (no dispatcher) |  | [ ] |
-| L4 | Join Timeout Banner | Conditional display if logic active |  | [ ] |
-| L5 | Metrics Stub | Basic placeholders (instances started/sec) |  | [ ] |
-
-### 3.5 Spikes
-
-| ID | Spike | Goal | Deliverable | Status |
-|----|-------|------|-------------|--------|
-| S1 | Endpoint Usage Audit | Confirm in-use endpoints vs surfaced UI | Updated parity map | [ ] |
-| S2 | Join/Parallel Test Seed | Provide sample definitions for QA | JSON seed file | [ ] |
-| S3 | Expression Validation Contract | Decide reuse vs new endpoint | ADR mini note | [ ] |
-
----
+| H1 | JsonLogic Expression Builder (Gateway/Join) | Text editor + JSON validity check |  | [~] |
 
 ## 11. Story Progress Log
 
 | Date | Story | Status Update | Blockers | Next Action |
 |------|-------|---------------|----------|------------|
-| 2025-09-08 | C1 | Strategy selector + panel committed; build fix | None | H1 (expression validation) |
-| 2025-09-08 | C2 | Parallel visualization & warnings implemented | Await join semantics | C3 |
-| 2025-09-08 | C3 | Base join node (palette, render, placeholder panel) added | Config & validation deferred to C4 | C4 configuration panel |
-
----
+| 2025-09-08 | H1 | Expression editor integrated (gateway conditional & join expression); local JSON validation | No backend validator yet | Add backend validator endpoint / semantic checks |
 
 ## 13. Change Log
 
 | Date | Change | Author |
 |------|--------|--------|
-| 2025-09-08 | Marked C1, C2, C3 In Progress; updated joins & config panel story | Team |
-
----
-(End of Document)
+| 2025-09-08 | Added ExpressionEditor, integrated with gateway & join; updated validation & H1 progress | Team |

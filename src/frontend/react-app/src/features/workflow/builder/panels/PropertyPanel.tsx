@@ -1,8 +1,9 @@
-import { Box, Drawer, IconButton, Typography, Alert } from '@mui/material';
+import { Box, Drawer, IconButton, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import { Edge, Node } from 'reactflow';
 import GatewayPropertiesPanel from './GatewayPropertiesPanel';
-import { GatewayStrategy } from '../../dsl/dsl.types';
+import JoinPropertiesPanel from './JoinPropertiesPanel';
+import { GatewayStrategy, JoinMode } from '../../dsl/dsl.types';
 import type { ReactNode } from 'react';
 
 export interface PropertyPanelProps {
@@ -49,16 +50,15 @@ export function PropertyPanel({ open, node, edges, onClose, updateNode }: Proper
   } else if (type === 'join') {
     const props = (data as any).properties || data;
     body = (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <Typography variant="subtitle1" fontWeight={600}>Join</Typography>
-        <Alert severity="info" variant="outlined">
-          Base Join node added. Configuration panel (modes, thresholds, expression) will arrive in C4.
-        </Alert>
-        <Typography variant="body2" color="text.secondary">
-          Current Mode: <strong>{props.mode || 'all'}</strong><br />
-          Cancel Remaining: <strong>{String(props.cancelRemaining ?? false)}</strong>
-        </Typography>
-      </Box>
+      <JoinPropertiesPanel
+        nodeId={node.id}
+        mode={props.mode as JoinMode}
+        thresholdCount={props.thresholdCount}
+        thresholdPercent={props.thresholdPercent}
+        expression={props.expression}
+        cancelRemaining={props.cancelRemaining}
+        onChange={patch => update(patch)}
+      />
     );
   } else {
     body = (
