@@ -1,13 +1,11 @@
+import { ReactNode } from 'react';
 import { Handle, Position } from 'reactflow';
 import { GatewayStrategy } from '../../dsl/dsl.types';
-import { ReactNode } from 'react';
 
 /**
  * Returns the correct handle set for a gateway based on strategy.
- * For now:
- *  - exclusive / conditional: binary true/false
- *  - parallel: single unlabeled bottom handle (fan-out edges can be added manually)
- * C2 may extend to dynamic branch creation UI or multi vertical handles.
+ *  - exclusive / conditional: true & false handles (binary decision)
+ *  - parallel: single bottom handle (fan-out — C2 will add richer UI)
  */
 export function useGatewayHandles(strategy: GatewayStrategy | undefined): ReactNode {
   if (strategy === 'parallel') {
@@ -38,3 +36,5 @@ export function useGatewayHandles(strategy: GatewayStrategy | undefined): ReactN
     </>
   );
 }
+
+export default useGatewayHandles;

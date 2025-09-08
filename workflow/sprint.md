@@ -27,9 +27,9 @@ Progress Legend:
 | Start / End Nodes | Stable | Implemented | — | Done | [x] |
 | HumanTask Node | Stable | Basic node only | Missing enhanced assignment UX | High | [ ] |
 | Automatic Node | Stable | Basic node | No action/webhook config panel | Medium | [ ] |
-| Gateway Strategy (exclusive / conditional / parallel) | Supported | Strategy selector & panel added | Parallel viz (C2) & expr validation (H1) pending | Critical | [~] |
+| Gateway Strategy (exclusive / conditional / parallel) | Supported | Strategy selector & panel added | Parallel viz & expr validation pending | Critical | [~] |
 | Conditional Expressions (JsonLogic) | Supported | Not editable | No editor/validation | Critical | [ ] |
-| Parallel Fan-Out | Supported | Not representable | No parallel strategy UI visualization | Critical | [ ] |
+| Parallel Fan-Out | Supported | Not representable | Visualization & warnings (C2) | Critical | [ ] |
 | Join Node & Modes | Supported (all/any/count/quorum/expression) | Missing | No node type or config | Critical | [ ] |
 | Join Mode Config (threshold / expression) | Supported | Missing | No inputs / validation | Critical | [ ] |
 | Timer Node (due / duration) | Supported (worker pending) | Minimal | Needs duration/datetime inputs + validation | High | [ ] |
@@ -47,7 +47,7 @@ Progress Legend:
 | Progress Bar (dedupe) | Implemented | Partial | No context about dedupe state | Low | [ ] |
 | Tags Filtering (ANY/ALL) | Implemented | Implemented | Backend validation guard missing | Medium | [ ] |
 | Tags Server-Side Validation | Missing guard | Client-only | Add backend checks | Medium | [ ] |
-| JsonLogic Expression Builder (gateway/join) | Engine ready | Missing | UI + backend validation endpoint usage | High | [ ] |
+| JsonLogic Expression Builder (gateway/join) | Engine ready | Missing | UI + backend validation endpoint | High | [ ] |
 | Join Timeout Visibility | Experimental | Missing | Display status if retained | Low | [ ] |
 | Outbox Visibility | Persist only | Missing | Health widget + counts | Medium | [ ] |
 | ActiveTasksCount (planned) | Pending backend enrich | Missing | Display when available / compute fallback | Medium | [ ] |
@@ -59,8 +59,6 @@ Progress Legend:
 ---
 
 ## 3. Sprint Story Backlog (Triaged)
-
-Order = execution sequence within sprint. Use IDs for tracking.
 
 ### 3.1 Critical Stories
 
@@ -117,28 +115,19 @@ Order = execution sequence within sprint. Use IDs for tracking.
 
 ---
 
-## 4. Sequencing & Dependencies
+## 11. Story Progress Log
 
-1. C1 → C2 → (enables) C3/C4 (gateway strategy before join referencing parallel origins)  
-2. C5 (Timer) can proceed independently.  
-3. C6–C9 (operations) share scaffolding in task & instance detail views—coordinate API service updates first.  
-4. C10 + C11 require event & snapshot service wrappers (build after base instance detail scaffolding).  
-5. H1 depends on minimal expression persistence from C1/C4.  
-6. M2 depends on C1–C4 completion (structural graph metadata).  
+| Date | Story | Status Update | Blockers | Next Action |
+|------|-------|---------------|----------|------------|
+| 2025-09-08 | C1 | Strategy selector + panel committed; build fix (JSX file rename) | None | Implement C2 visualization & join warning |
 
 ---
 
-## 5. Risk Register
+## 13. Change Log
 
-| Risk | Impact | Mitigation | Owner | Status |
-|------|--------|------------|-------|--------|
-| DSL schema extension breaks existing drafts | High | Add migration defaults; version key in JSON |  | Open |
-| Complex join misconfiguration leads to runtime stalls | High | Pre-publish validation (M2) |  | Open |
-| Expression errors reduce adoption | Medium | Inline validation + examples |  | Open |
-| Timeline payload size grows | Medium | Pagination + lazy load early |  | Open |
-| Parallel gateway used w/o join | Medium | Warning & publish blocker if unresolved |  | Open |
-| Outbox backlog undetected | Medium | Health widget (H4) |  | Open |
+| Date | Change | Author |
+|------|--------|--------|
+| 2025-09-08 | Marked C1 In Progress; added progress log entry; updated parity row | Team |
 
 ---
-
-## 6. DSL Schema Additions (Proposed)
+(End of Document)

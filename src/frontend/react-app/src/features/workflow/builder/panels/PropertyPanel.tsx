@@ -3,6 +3,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { Node } from 'reactflow';
 import GatewayPropertiesPanel from './GatewayPropertiesPanel';
 import { GatewayStrategy } from '../../dsl/dsl.types';
+import type { ReactNode } from 'react';
 
 export interface PropertyPanelProps {
   open: boolean;
@@ -27,10 +28,11 @@ export function PropertyPanel({ open, node, onClose, updateNode }: PropertyPanel
     updateNode(node.id, patch);
   };
 
-  let body: JSX.Element | null = null;
+  // Changed from JSX.Element | null to ReactNode to avoid relying on global JSX namespace
+  let body: ReactNode = null;
 
   if (type === 'gateway') {
-    const props = data.properties || {};
+    const props = (data as any).properties || data;
     const strategy: GatewayStrategy | undefined = props.strategy;
     body = (
       <GatewayPropertiesPanel
@@ -43,7 +45,7 @@ export function PropertyPanel({ open, node, onClose, updateNode }: PropertyPanel
   } else {
     body = (
       <Typography variant="body2" color="text.secondary">
-        No specialized editor for node type "{type}" yet.
+        No specialized editor for node type &quot;{type}&quot; yet.
       </Typography>
     );
   }
@@ -55,7 +57,7 @@ export function PropertyPanel({ open, node, onClose, updateNode }: PropertyPanel
           <Typography variant="h6" fontSize={16} fontWeight={600} sx={{ pr: 1 }}>
             Node Properties
           </Typography>
-          <IconButton size="small" onClick={onClose}>
+            <IconButton size="small" onClick={onClose}>
             <CloseIcon fontSize="small" />
           </IconButton>
         </Box>
