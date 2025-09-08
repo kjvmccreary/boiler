@@ -72,11 +72,11 @@ export function InstanceDetailsPage() {
     try {
       if (!silent) setLoading(true);
       const snapshot: InstanceRuntimeSnapshotDto = await workflowService.getRuntimeSnapshot(instanceId);
-      setInstance(snapshot.instance);
-      setTasks(snapshot.tasks);
-      setEvents(snapshot.events);
-      setDefinitionJson(snapshot.definitionJson);
-      setTraversedEdgeIds(snapshot.traversedEdgeIds || []);
+      setInstance(snapshot.instance ?? null);
+      setTasks((snapshot.tasks as any[] | undefined)?.map(t => t) ?? []);
+      setEvents(snapshot.events ?? []);
+      setDefinitionJson(snapshot.definitionJson ?? null);
+      setTraversedEdgeIds(snapshot.traversedEdgeIds ?? []);
       setVisitedNodeIds(snapshot.visitedNodeIds || []);
       setCurrentNodeIds(snapshot.currentNodeIds || []);
     } catch {
@@ -471,7 +471,7 @@ export function InstanceDetailsPage() {
               .filter(t => t.nodeId)}
             traversedEdgeIds={traversedEdgeIds}
             visitedNodeIds={visitedNodeIds}
-            instanceStatus={instance.status}
+            instanceStatus={String(instance.status)}
             dueSoonMinutes={15}
           />
         </CardContent>

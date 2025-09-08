@@ -39,12 +39,26 @@ export function RoleWorkflowUsageDialog({
   actionType,
   newRoleName
 }: RoleWorkflowUsageDialogProps) {
-  if (!usageInfo || !usageInfo.isUsedInWorkflows) {
-    return null;
-  }
+  if (!usageInfo) return null;
 
-  const publishedDefinitions = usageInfo.usedInDefinitions.filter(d => d.isPublished);
-  const draftDefinitions = usageInfo.usedInDefinitions.filter(d => !d.isPublished);
+  // Derive legacy flag if backend didn’t set it
+  const isUsed = usageInfo.isUsedInWorkflows ?? (usageInfo.usedInDefinitions?.length ?? 0) > 0;
+  if (!isUsed) return null;
+
+  // Normalize alias fields (non-mutating map for safety)
+  const normalizedDefs = (usageInfo.usedInDefinitions || []).map(d => ({
+    ...d,
+    definitionId: d.definitionId ?? d.id,
+    definitionName: d.definitionName ?? d.name,
+    usageCount: d.usageCount ?? (d.usedInNodes?.length ?? 0),
+    usedInNodes: (d.usedInNodes || []).map(n => ({
+      ...n,
+      nodeName: n.nodeName ?? n.nodeLabel ?? n.nodeId
+    }))
+  }));
+
+  const publishedDefinitions = normalizedDefs.filter(d => d.isPublished);
+  const draftDefinitions = normalizedDefs.filter(d => !d.isPublished);
 
   return (
     <Dialog 
@@ -90,7 +104,7 @@ export function RoleWorkflowUsageDialog({
           
           <Paper variant="outlined" sx={{ maxHeight: 300, overflow: 'auto', p: 1 }}>
             <List dense>
-              {usageInfo.usedInDefinitions.map((definition, index) => (
+              {normalizedDefs.map((definition, index) => (
                 <React.Fragment key={definition.definitionId}>
                   <ListItem>
                     <ListItemText

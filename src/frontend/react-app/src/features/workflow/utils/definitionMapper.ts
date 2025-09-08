@@ -8,6 +8,10 @@ import {
 } from '../../../types/workflow';
 import { Edge as RFEdge, Node } from 'reactflow';
 
+// Helper to coerce editor node type to a safe string
+const coerceNodeType = (t: any): string =>
+  typeof t === 'string' && t.length ? t : 'humanTask';
+
 function normalize(v?: string | null): string | undefined {
   if (!v) return undefined;
   const l = v.trim().toLowerCase();
@@ -20,8 +24,8 @@ function normalize(v?: string | null): string | undefined {
 
 function infer(edge: EditorWorkflowEdge): string | undefined {
   return (
-    normalize(edge.fromHandle) ||
-    normalize(edge.label) ||
+    normalize(edge.fromHandle || undefined) ||
+    normalize(edge.label || undefined) ||
     (() => {
       const id = edge.id.toLowerCase();
       if (id.includes('true')) return 'true';
@@ -83,9 +87,11 @@ export function toGraph(def: EditorWorkflowDefinition) {
 
   const nodes: Node<RFNodeData>[] = def.nodes.map(n => ({
     id: n.id,
-    type: n.type === 'gateway' ? 'wfGateway' : n.type,
+    type: coerceNodeType(n.type),
     position: { x: (n as any).x ?? 0, y: (n as any).y ?? 0 },
     data: {
+      nodeId: n.id,
+      type: coerceNodeType(n.type),
       label: n.label,
       dueInMinutes: (n as any).dueInMinutes,
       assigneeRoles: (n as any).assigneeRoles,
@@ -108,7 +114,12 @@ export function toGraph(def: EditorWorkflowDefinition) {
       source: e.from,
       target: e.to,
       sourceHandle: physical,
-      data: { branch: logical },
+      data: {
+        branch: (e as any).fromHandle,
+        from: e.from,
+        to: e.to,
+        edgeId: e.id
+      },
       label: logical,
       type: 'straight',
       style: {
@@ -134,14 +145,14 @@ export function toDefinition(
 ): EditorWorkflowDefinition {
   const defNodes: EditorWorkflowNode[] = nodes.map(n => ({
     id: n.id,
-    type: n.type === 'wfGateway' ? 'gateway' : (n.type ?? 'humanTask'),
-    label: n.data?.label,
-    x: n.position.x,
-    y: n.position.y,
-    dueInMinutes: n.data?.dueInMinutes,
-    assigneeRoles: n.data?.assigneeRoles,
-    condition: n.data?.condition,
-    action: n.data?.action
+    type: coerceNodeType(n.data?.type ?? n.type),
+    label: (n.data as any)?.label ?? (n as any).label,
+    x: typeof n.position?.x === 'number' ? n.position.x : 0,
+    y: typeof n.position?.y === 'number' ? n.position.y : 0,
+    dueInMinutes: (n.data as any)?.dueInMinutes as number | undefined,
+    assigneeRoles: (n.data as any)?.assigneeRoles as string[] | undefined,
+    condition: (n.data as any)?.condition as string | undefined,
+    action: (n.data as any)?.action
   }));
 
   const defEdges: EditorWorkflowEdge[] = edges.map(e => {
@@ -150,13 +161,12 @@ export function toDefinition(
       (typeof e.label === 'string' ? normalize(e.label) : undefined) ||
       (e.sourceHandle ? normalize(e.sourceHandle) : undefined);
 
-    // FAIL-SAFE: inject label/fromHandle if sourceHandle has truthy branch
     const finalLogical =
       logical === 'true' || logical === 'false'
         ? logical
         : (e.sourceHandle === 'true' || e.sourceHandle === 'false'
-            ? (e.sourceHandle as 'true' | 'false')
-            : undefined);
+          ? (e.sourceHandle as 'true' | 'false')
+          : undefined);
 
     return {
       id: e.id,
@@ -167,5 +177,10 @@ export function toDefinition(
     };
   });
 
-  return { key, nodes: defNodes, edges: defEdges, ...extras };
+  return {
+    key,
+    nodes: defNodes,
+    edges: defEdges,
+    ...extras
+  } as EditorWorkflowDefinition;
 }

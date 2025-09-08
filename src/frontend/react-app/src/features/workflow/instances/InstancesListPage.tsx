@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -7,7 +7,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Chip
+  Chip,
+  Switch,
+  FormControlLabel,
+  Tooltip
 } from '@mui/material';
 import {
   DataGridPremium,
@@ -41,6 +44,15 @@ const TERMINAL: InstanceStatus[] = [
   InstanceStatus.Failed
 ];
 
+const LS_KEY_HIDE_COMPLETED = 'wf.instances.hideCompleted';
+
+function readStoredHideCompleted(defaultValue: boolean): boolean {
+  if (typeof window === 'undefined') return defaultValue;
+  const raw = window.localStorage.getItem(LS_KEY_HIDE_COMPLETED);
+  if (raw === null) return defaultValue;
+  return raw === 'true';
+}
+
 function staticStatusChip(status: InstanceStatus) {
   switch (status) {
     case InstanceStatus.Running: return <Chip label="Running" color="primary" size="small" />;
@@ -57,9 +69,17 @@ export function InstancesListPage() {
   const [loading, setLoading] = useState(true);
   const [terminateDialogOpen, setTerminateDialogOpen] = useState(false);
   const [instanceToTerminate, setInstanceToTerminate] = useState<WorkflowInstanceDto | null>(null);
+  const [hideCompleted, setHideCompleted] = useState<boolean>(() => readStoredHideCompleted(true));
 
   const navigate = useNavigate();
   const { currentTenant } = useTenant();
+
+  // Persist hideCompleted
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(LS_KEY_HIDE_COMPLETED, String(hideCompleted));
+    }
+  }, [hideCompleted]);
 
   const loadInstances = useCallback(async (silent = false) => {
     try {
@@ -79,9 +99,7 @@ export function InstancesListPage() {
     }
   }, [currentTenant, loadInstances]);
 
-  // SignalR: refresh list on tasks changed events (throttled)
   useTaskHub(() => {
-    // Only refresh if at least one row is non-terminal (benefit)
     if (instances.some(i => i.status === 'Running' || i.status === 'Suspended')) {
       void loadInstances(true);
     }
@@ -96,7 +114,6 @@ export function InstancesListPage() {
       row.status = evt.status as any;
       row.completedAt = evt.completedAt || row.completedAt;
       row.errorMessage = evt.errorMessage ?? row.errorMessage;
-      // currentNodeIds normalization (backend may send JSON array string or csv)
       if (evt.currentNodeIds) row.currentNodeIds = evt.currentNodeIds;
       next[idx] = row;
       return next;
@@ -106,7 +123,6 @@ export function InstancesListPage() {
   useInstanceHub({
     onInstanceUpdated: mergeInstancePush,
     onInstancesChanged: () => {
-      // Silent refresh only if any non-terminal present (avoid hammering backend)
       if (instances.some(i => i.status === 'Running' || i.status === 'Suspended')) {
         void loadInstances(true);
       }
@@ -168,6 +184,13 @@ export function InstancesListPage() {
     return `${minutes}m`;
   };
 
+  const displayedInstances = useMemo(
+    () => hideCompleted
+      ? instances.filter(i => !TERMINAL.includes(i.status as InstanceStatus))
+      : instances,
+    [instances, hideCompleted]
+  );
+
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'Instance ID', width: 120 },
     {
@@ -178,14 +201,14 @@ export function InstancesListPage() {
       renderCell: (params) => {
         const instance = params.row as WorkflowInstanceDto;
         return (
-          <Box>
-            <Typography variant="subtitle2" fontWeight="medium">
-              {params.value}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              v{instance.definitionVersion}
-            </Typography>
-          </Box>
+            <Box>
+              <Typography variant="subtitle2" fontWeight="medium">
+                {params.value}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                v{instance.definitionVersion}
+              </Typography>
+            </Box>
         );
       },
     },
@@ -302,29 +325,50 @@ export function InstancesListPage() {
     );
   }
 
+  const hiddenCount = instances.length - displayedInstances.length;
+
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Workflow Instances
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h4" component="h1">
+            Workflow Instances
+          </Typography>
           <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
             {currentTenant.name}
           </Typography>
-        </Typography>
+        </Box>
 
-        <Button
-          variant="outlined"
-          startIcon={<RefreshIcon />}
-          onClick={() => void loadInstances()}
-          disabled={loading}
-        >
-          Refresh
-        </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={hideCompleted}
+                onChange={(e) => setHideCompleted(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Hide Completed"
+          />
+          {hideCompleted && hiddenCount > 0 && (
+            <Tooltip title={`${hiddenCount} terminal (Completed/Failed/Cancelled) hidden`}>
+              <Chip size="small" label={`Hidden: ${hiddenCount}`} />
+            </Tooltip>
+          )}
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={() => void loadInstances()}
+            disabled={loading}
+          >
+            Refresh
+          </Button>
+        </Box>
       </Box>
 
       <Box sx={{ flex: 1, minHeight: 0 }}>
         <DataGridPremium
-          rows={instances}
+          rows={displayedInstances}
           columns={columns}
           loading={loading}
           pagination
@@ -353,8 +397,7 @@ export function InstancesListPage() {
         <DialogTitle>Confirm Terminate</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to terminate workflow instance "{instanceToTerminate?.id}"?
-            This will stop the workflow execution immediately.
+            Terminate workflow instance "{instanceToTerminate?.id}"? This stops execution immediately.
           </Typography>
         </DialogContent>
         <DialogActions>

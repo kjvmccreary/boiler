@@ -15,6 +15,8 @@ import {
   Select,
   MenuItem,
   Tooltip,
+  Switch,
+  FormControlLabel
 } from '@mui/material';
 import {
   Assignment as ClaimIcon,
@@ -40,11 +42,21 @@ import { TASK_STATUSES } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
 
+const LS_KEY_HIDE_COMPLETED_TASKS = 'wf.tasks.hideCompleted';
+
+function readStoredHideCompleted(defaultValue: boolean): boolean {
+  if (typeof window === 'undefined') return defaultValue;
+  const raw = window.localStorage.getItem(LS_KEY_HIDE_COMPLETED_TASKS);
+  if (raw === null) return defaultValue;
+  return raw === 'true';
+}
+
 export function MyTasksPage() {
   const [tasks, setTasks] = useState<TaskSummaryDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<TaskStatus | ''>('');
   const [overdueOnly, setOverdueOnly] = useState(false);
+  const [hideCompleted, setHideCompleted] = useState<boolean>(() => readStoredHideCompleted(true));
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
   const [taskToComplete, setTaskToComplete] = useState<TaskSummaryDto | null>(null);
   const [completionData, setCompletionData] = useState('{"approved": true}');
@@ -54,7 +66,14 @@ export function MyTasksPage() {
   const { currentTenant } = useTenant();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Parse query params (from bell navigation)
+  // Persist hideCompleted
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(LS_KEY_HIDE_COMPLETED_TASKS, String(hideCompleted));
+    }
+  }, [hideCompleted]);
+
+  // Parse query params (for existing filters)
   useEffect(() => {
     const spStatus = searchParams.get('status');
     const spOverdue = searchParams.get('overdue');
@@ -64,7 +83,6 @@ export function MyTasksPage() {
     } else {
       setStatusFilter('');
     }
-
     setOverdueOnly(spOverdue === 'true');
   }, [searchParams]);
 
@@ -102,7 +120,7 @@ export function MyTasksPage() {
   const handleClaimTask = async (task: TaskSummaryDto) => {
     try {
       await workflowService.claimTask(task.id, { claimNotes: 'Claimed from My Tasks page' });
-      toast.success('Task claimed successfully');
+      toast.success('Task claimed');
       loadMyTasks();
     } catch {
       toast.error('Failed to claim task');
@@ -123,7 +141,7 @@ export function MyTasksPage() {
         completionData,
         completionNotes: completionNotes || undefined
       });
-      toast.success('Task completed successfully');
+      toast.success('Task completed');
       loadMyTasks();
     } catch {
       toast.error('Failed to complete task');
@@ -141,26 +159,34 @@ export function MyTasksPage() {
       case 'Assigned': return <Chip label="Assigned" color="info" size="small" icon={<AssignedIcon />} />;
       case 'Claimed': return <Chip label="Claimed" color="primary" size="small" />;
       case 'InProgress': return <Chip label="In Progress" color="warning" size="small" />;
-      case 'Completed': return <Chip label="Completed" color="success" size="small" icon={<CompleteIcon />} />;
+      case 'Completed': return <Chip label="Completed" color="success" size="small" icon={<AssignmentTurnedInIcon />} />;
       case 'Cancelled': return <Chip label="Cancelled" color="error" size="small" />;
       case 'Failed': return <Chip label="Failed" color="error" size="small" />;
       default: return <Chip label={status} size="small" />;
     }
   };
 
+  // Fallback since AssignmentTurnedInIcon not imported in original - reusing CompleteIcon
+  const AssignmentTurnedInIcon = CompleteIcon;
+
   const isOverdue = (dueDate?: string) => !!dueDate && new Date(dueDate) < new Date();
 
-  const filteredByNodeType = useMemo(
+  const humanOrUndefined = useMemo(
     () => tasks.filter(t => (t as any).nodeType === 'human' || (t as any).nodeType === undefined),
     [tasks]
   );
 
+  const preFiltered = useMemo(
+    () => hideCompleted ? humanOrUndefined.filter(t => t.status !== 'Completed') : humanOrUndefined,
+    [humanOrUndefined, hideCompleted]
+  );
+
   const finalTasks = useMemo(() => {
-    if (!overdueOnly) return filteredByNodeType;
-    return filteredByNodeType.filter(
-      t => isOverdue(t.dueDate) && t.status !== 'Completed' && t.status !== 'Cancelled'
+    if (!overdueOnly) return preFiltered;
+    return preFiltered.filter(
+      t => isOverdue(t.dueDate) && t.status !== 'Cancelled' && t.status !== 'Failed'
     );
-  }, [filteredByNodeType, overdueOnly]);
+  }, [preFiltered, overdueOnly]);
 
   const columns: GridColDef[] = [
     {
@@ -281,23 +307,26 @@ export function MyTasksPage() {
     );
   }
 
+  const hiddenCompleted = hideCompleted ? tasks.filter(t => t.status === 'Completed').length : 0;
+
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          My Tasks
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h4" component="h1">
+            My Tasks
+          </Typography>
           <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
             {currentTenant.name}
           </Typography>
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <FormControl sx={{ minWidth: 150 }}>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+          <FormControl sx={{ minWidth: 150 }} size="small">
             <InputLabel>Status Filter</InputLabel>
             <Select
               value={statusFilter}
               onChange={handleStatusFilterChange}
               label="Status Filter"
-              size="small"
             >
               <MenuItem value="">All Tasks</MenuItem>
               <MenuItem value="Created">Available</MenuItem>
@@ -308,9 +337,19 @@ export function MyTasksPage() {
               <MenuItem value="Failed">Failed</MenuItem>
             </Select>
           </FormControl>
-          {overdueOnly && (
-            <Tooltip title="Showing only overdue tasks">
-              <Chip size="small" color="error" variant="outlined" label="Overdue" />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={hideCompleted}
+                onChange={(e) => setHideCompleted(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Hide Completed"
+          />
+          {hideCompleted && hiddenCompleted > 0 && (
+            <Tooltip title={`${hiddenCompleted} completed hidden`}>
+              <Chip size="small" label={`Hidden: ${hiddenCompleted}`} />
             </Tooltip>
           )}
           <Button

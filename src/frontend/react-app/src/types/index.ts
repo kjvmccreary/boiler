@@ -247,4 +247,6 @@ export type {
   // Enums
   InstanceStatus,
   TaskStatus
-} from './workflow.js';
+} from './workflow';
+
+export * from './workflow';

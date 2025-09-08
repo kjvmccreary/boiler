@@ -163,11 +163,13 @@ public class DefinitionsIncludeArchivedIntegrationTests
 
         var ok = result.Result as OkObjectResult;
         ok.Should().NotBeNull();
-        var envelope = ok!.Value as ApiResponseDto<System.Collections.Generic.List<WorkflowDefinitionDto>>;
+        var envelope = ok!.Value as ApiResponseDto<PagedResultDto<WorkflowDefinitionDto>>;
         envelope.Should().NotBeNull();
         envelope!.Success.Should().BeTrue();
+        envelope.Data.Should().NotBeNull();
 
-        var names = envelope.Data.Select(d => d.Name).ToList();
+        var items = envelope.Data!.Items;
+        var names = items.Select(d => d.Name).ToList();
         names.Should().Contain("ActiveDraft");
         names.Should().Contain("ActivePublished");
         names.Should().NotContain("ArchivedDraft");
@@ -191,10 +193,11 @@ public class DefinitionsIncludeArchivedIntegrationTests
 
         var ok = result.Result as OkObjectResult;
         ok.Should().NotBeNull();
-        var envelope = ok!.Value as ApiResponseDto<System.Collections.Generic.List<WorkflowDefinitionDto>>;
+        var envelope = ok!.Value as ApiResponseDto<PagedResultDto<WorkflowDefinitionDto>>;
         envelope.Should().NotBeNull();
         envelope!.Success.Should().BeTrue();
-        envelope.Data.Should().HaveCount(4);
+        envelope.Data.Should().NotBeNull();
+        envelope.Data!.Items.Should().HaveCount(4);
     }
 
     [Fact]
@@ -214,9 +217,10 @@ public class DefinitionsIncludeArchivedIntegrationTests
 
         var ok = result.Result as OkObjectResult;
         ok.Should().NotBeNull();
-        var envelope = ok!.Value as ApiResponseDto<System.Collections.Generic.List<WorkflowDefinitionDto>>;
+        var envelope = ok!.Value as ApiResponseDto<PagedResultDto<WorkflowDefinitionDto>>;
         envelope.Should().NotBeNull();
-        envelope!.Data.Should().HaveCount(1);
-        envelope.Data.First().IsArchived.Should().BeFalse();
+        envelope!.Data.Should().NotBeNull();
+        envelope.Data!.Items.Should().HaveCount(1);
+        envelope.Data!.Items.First().IsArchived.Should().BeFalse();
     }
 }

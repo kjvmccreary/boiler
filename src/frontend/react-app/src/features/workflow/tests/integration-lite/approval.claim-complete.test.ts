@@ -21,9 +21,9 @@ describe('Integration-Lite / Claim & Complete Flow', () => {
     const first = tasks[0];
 
     const claimed = await workflowService.claimTask((first as any).id, {} as any);
-    expect(claimed.status.toLowerCase()).toBe('claimed');
+    expect(String(claimed.status).toLowerCase()).toBe('claimed');
 
     const completed = await workflowService.completeTask((first as any).id, { completionData: '{}' } as any);
-    expect(completed.status.toLowerCase()).toBe('completed');
+    expect(String(completed.status).toLowerCase()).toBe('completed');
   });
 });

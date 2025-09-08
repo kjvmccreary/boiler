@@ -35,11 +35,10 @@ import type {
 export interface ApiResponse<T> {
   success: boolean;
   message?: string;
-  errors?: string[] | Record<string, unknown>;
+  errors?: string[] | { code?: string; message?: string }[] | Record<string, unknown>;
   data: T;
 }
 
-// Local (add if not already in types — harmless if duplicated at compile time is avoided by centralizing later)
 export interface InstanceStatusDto {
   instanceId: number;
   status: InstanceStatus | string | number;
@@ -52,13 +51,23 @@ export interface InstanceStatusDto {
   errorMessage?: string | null;
 }
 
-function unwrap<T>(payload: any): T {
+function unwrap<T>(payload: unknown): T {
   if (payload && typeof payload === 'object' && 'success' in payload && 'data' in payload) {
-    return (payload as ApiResponse<T>).data;
+    const r = payload as ApiResponse<T>;
+    if (!r.success) {
+      const errs = Array.isArray(r.errors)
+        ? r.errors.map(e => (typeof e === 'string' ? e : (e as any).message ?? JSON.stringify(e)))
+        : r.message
+          ? [r.message]
+          : ['Request failed'];
+      throw new Error(errs.join('; '));
+    }
+    return r.data;
   }
   return payload as T;
 }
 
+// --- Status normalization maps ---
 const INSTANCE_STATUS_NUM_MAP: Record<number, InstanceStatus> = {
   1: InstanceStatus.Running,
   2: InstanceStatus.Completed,
@@ -66,7 +75,6 @@ const INSTANCE_STATUS_NUM_MAP: Record<number, InstanceStatus> = {
   4: InstanceStatus.Failed,
   5: InstanceStatus.Suspended
 };
-
 const TASK_STATUS_NUM_MAP: Record<number, TaskStatus> = {
   1: 'Created',
   2: 'Assigned',
@@ -86,7 +94,6 @@ function normalizeInstanceStatus(v: unknown): InstanceStatus {
   }
   return InstanceStatus.Running;
 }
-
 function normalizeTaskStatus(v: unknown): TaskStatus {
   if (typeof v === 'string') {
     const match = TASK_STATUSES.find(s => s.toLowerCase() === v.toLowerCase());
@@ -109,9 +116,16 @@ function mapTasks(list: WorkflowTaskDto[]) {
   return list.map(mapTask);
 }
 
+// --- Filters ---
 export interface WorkflowDefinitionsFilters {
+  search?: string;
   published?: boolean;
+  tags?: string;
   includeArchived?: boolean;
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  desc?: boolean;
 }
 export interface WorkflowInstancesFilters {
   status?: InstanceStatus;
@@ -148,13 +162,24 @@ export interface GraphValidationResult {
 }
 
 export class WorkflowService {
-  // Definitions
+  // ----------------- Definitions -----------------
   async getDefinitions(filters?: WorkflowDefinitionsFilters): Promise<WorkflowDefinitionDto[]> {
+    const paged = await this.getDefinitionsPaged(filters);
+    return paged.items;
+  }
+
+  async getDefinitionsPaged(filters?: WorkflowDefinitionsFilters): Promise<PagedResultDto<WorkflowDefinitionDto>> {
     const params = new URLSearchParams();
+    if (filters?.search) params.append('search', filters.search);
     if (filters?.published !== undefined) params.append('published', String(filters.published));
+    if (filters?.tags) params.append('tags', filters.tags);
     if (filters?.includeArchived !== undefined) params.append('includeArchived', String(filters.includeArchived));
+    if (filters?.page) params.append('page', String(filters.page));
+    if (filters?.pageSize) params.append('pageSize', String(filters.pageSize));
+    if (filters?.sortBy) params.append('sortBy', filters.sortBy);
+    if (filters?.desc !== undefined) params.append('desc', String(filters.desc));
     const resp = await apiClient.get(`/api/workflow/definitions${params.size ? `?${params}` : ''}`);
-    return unwrap<WorkflowDefinitionDto[]>(resp.data);
+    return unwrap<PagedResultDto<WorkflowDefinitionDto>>(resp.data);
   }
 
   async getDefinition(id: number) {
@@ -174,15 +199,11 @@ export class WorkflowService {
 
   async validateDefinitionJson(jsonDefinition: string): Promise<GraphValidationResult> {
     try {
-      const resp = await apiClient.post('/api/workflow/definitions/validate', {
-        JSONDefinition: jsonDefinition
-      });
+      const resp = await apiClient.post('/api/workflow/definitions/validate', { JSONDefinition: jsonDefinition });
       const d: any = resp.data;
       const payload = d.data ?? d;
       return {
-        success:
-          (payload.isValid ?? payload.success ?? true) &&
-          ((payload.errors?.length ?? 0) === 0),
+        success: (payload.isValid ?? payload.success ?? true) && ((payload.errors?.length ?? 0) === 0),
         errors: payload.errors ?? [],
         warnings: payload.warnings ?? []
       };
@@ -191,8 +212,7 @@ export class WorkflowService {
       let errors: string[] = [];
       let warnings: string[] = [];
       if (Array.isArray(d?.errors)) {
-        if (typeof d.errors[0] === 'string') errors = d.errors;
-        else errors = d.errors.map((e: any) => e.message ?? e.Message ?? JSON.stringify(e));
+        errors = (d.errors as any[]).map(e => (typeof e === 'string' ? e : e.message ?? JSON.stringify(e)));
       } else if (Array.isArray(d?.data?.errors)) {
         errors = d.data.errors;
       } else if (d?.message) {
@@ -224,7 +244,7 @@ export class WorkflowService {
     }
   }
 
-  async publishDefinition(id: number, opts?: { publishNotes?: string; forcePublish?: boolean }) {
+  async publishDefinition(id: number, opts?: PublishDefinitionRequestDto) {
     try {
       const resp = await apiClient.post(`/api/workflow/definitions/${id}/publish`, {
         publishNotes: opts?.publishNotes,
@@ -245,7 +265,7 @@ export class WorkflowService {
     }
   }
 
-  async validateThenPublish(id: number, opts?: { publishNotes?: string; forcePublish?: boolean }) {
+  async validateThenPublish(id: number, opts?: PublishDefinitionRequestDto) {
     const vr = await this.validateDefinitionById(id);
     if (!vr.success) return { validation: vr, published: undefined };
     try {
@@ -291,18 +311,9 @@ export class WorkflowService {
     return unwrap<ValidationResultDto>(resp.data);
   }
 
-  // Instances
+  // ----------------- Instances -----------------
   async getInstances(filters?: WorkflowInstancesFilters) {
-    const params = new URLSearchParams();
-    if (filters?.status) params.append('status', filters.status);
-    if (filters?.workflowDefinitionId) params.append('workflowDefinitionId', String(filters.workflowDefinitionId));
-    if (filters?.startedByUserId) params.append('startedByUserId', String(filters.startedByUserId));
-    if (filters?.page) params.append('page', String(filters.page));
-    if (filters?.pageSize) params.append('pageSize', String(filters.pageSize));
-    if (filters?.searchTerm) params.append('searchTerm', filters.searchTerm);
-    const resp = await apiClient.get(`/api/workflow/instances${params.size ? `?${params}` : ''}`);
-    const paged = unwrap<PagedResultDto<WorkflowInstanceDto>>(resp.data);
-    paged.items = mapInstances(paged.items);
+    const paged = await this.getInstancesPaged(filters);
     return paged.items;
   }
 
@@ -333,7 +344,7 @@ export class WorkflowService {
 
   async startInstance(request: StartInstanceRequestDto) {
     const resp = await apiClient.post('/api/workflow/instances', request);
-    return mapInstance(unwrap<WorkflowInstanceDto>(resp.data));
+    return mapInstance(unwrap<WorkflowInstanceDto>(resp.data)); // caller use result.id
   }
 
   async signalInstance(id: number, request: SignalInstanceRequestDto) {
@@ -342,6 +353,7 @@ export class WorkflowService {
   }
 
   async terminateInstance(id: number) {
+      // DELETE returns ApiResponse<bool> (termination success)
     const resp = await apiClient.delete(`/api/workflow/instances/${id}`);
     return unwrap<boolean>(resp.data);
   }
@@ -366,7 +378,7 @@ export class WorkflowService {
     return mapInstance(unwrap<WorkflowInstanceDto>(resp.data));
   }
 
-  // Tasks
+  // ----------------- Tasks -----------------
   async getTasks(filters?: WorkflowTasksFilters): Promise<WorkflowTaskDto[]> {
     const params = new URLSearchParams();
     if (filters?.mine !== undefined) params.append('mine', String(filters.mine));
@@ -417,7 +429,7 @@ export class WorkflowService {
     return mapTask(unwrap<WorkflowTaskDto>(resp.data));
   }
 
-  // Events / Admin
+  // ----------------- Events / Admin -----------------
   async getWorkflowEvents(filters?: WorkflowEventsFilters) {
     const params = new URLSearchParams();
     if (filters?.instanceId) params.append('instanceId', String(filters.instanceId));
@@ -467,6 +479,6 @@ export interface TaskCountsDto {
 }
 
 export async function getMyTaskSummary(): Promise<TaskCountsDto> {
-  const res = await apiClient.get<TaskCountsDto>('/api/workflow/tasks/mine/summary');
-  return res.data;
+  const res = await apiClient.get<ApiResponse<TaskCountsDto>>('/api/workflow/tasks/mine/summary');
+  return unwrap<TaskCountsDto>(res.data);
 }

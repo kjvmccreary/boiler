@@ -17,6 +17,12 @@ public class WorkflowDefinitionDto
     public bool IsArchived { get; set; }
     public DateTime? ArchivedAt { get; set; }
     public int ActiveInstanceCount { get; set; }
+
+    // NEW: Extended metadata fields referenced in status/context docs
+    public string? PublishNotes { get; set; }
+    public string? VersionNotes { get; set; }
+    public int? ParentDefinitionId { get; set; }
+    public string? Tags { get; set; }
 }
 
 public class CreateWorkflowDefinitionDto
@@ -58,7 +64,6 @@ public class GetWorkflowDefinitionsRequestDto
     public int PageSize { get; set; } = 20;
     public string SortBy { get; set; } = "CreatedAt";
     public bool SortDescending { get; set; } = true;
-    // NEW: allow explicit inclusion of archived items (default false)
     public bool IncludeArchived { get; set; } = false;
 }
 

@@ -1,150 +1,163 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
-using AutoMapper;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using WorkflowService.Controllers;
-using WorkflowService.Domain.Models;
-using WorkflowService.Persistence;
-using WorkflowService.Services;
 using WorkflowService.Services.Interfaces;
-using WorkflowService.Services.Validation; // <-- ensure this matches actual namespace
+using WorkflowService.Services.Validation;
 using DTOs.Workflow;
 using DTOs.Common;
-using Contracts.Services;
-using WorkflowService.Engine.Validation;
 using Xunit;
 
 namespace WorkflowService.Tests.Definitions;
 
-public class DefinitionsControllerTests
+public class DefinitionsControllerTests : TestBase
 {
-    private WorkflowDbContext CreateContext(ITenantProvider tenantProvider)
+    private readonly Mock<IDefinitionService> _mockDefinitionService = new();
+    private readonly Mock<ILogger<DefinitionsController>> _mockLogger;
+    private readonly Mock<IWorkflowGraphValidator> _mockGraphValidator = new();
+    private readonly DefinitionsController _controller;
+
+    public DefinitionsControllerTests()
     {
-        var options = new DbContextOptionsBuilder<WorkflowDbContext>()
-            .UseInMemoryDatabase($"defs-ctrl-{Guid.NewGuid():N}")
-            .EnableSensitiveDataLogging()
-            .Options;
+        _mockLogger = CreateMockLogger<DefinitionsController>();
+        _controller = new DefinitionsController(
+            _mockDefinitionService.Object,
+            MockTenantProvider.Object,
+            DbContext,
+            _mockLogger.Object,
+            _mockGraphValidator.Object);
 
-        var httpAccessor = new Mock<IHttpContextAccessor>();
-        var logger = new Mock<ILogger<WorkflowDbContext>>();
-
-        return new WorkflowDbContext(options, httpAccessor.Object, tenantProvider, logger.Object);
+        OverrideControllerHttpContextWithPermissionClaims(_controller);
     }
 
-    private static IMapper CreateMapper()
+    #region Helpers
+
+    private void OverrideControllerHttpContextWithPermissionClaims(ControllerBase controller)
     {
-        var cfg = new MapperConfiguration(c =>
+        var claims = new List<Claim>
         {
-            c.CreateMap<WorkflowDefinition, WorkflowDefinitionDto>();
-        });
-        return cfg.CreateMapper();
+            new(ClaimTypes.NameIdentifier, "1"),
+            new("tenantId", "1"),
+            new("permission", Common.Constants.Permissions.Workflow.ViewDefinitions),
+        };
+
+        var identity = new ClaimsIdentity(claims, "TestAuth");
+        var principal = new ClaimsPrincipal(identity);
+        var http = new DefaultHttpContext { User = principal };
+        http.Request.Headers["X-Tenant-ID"] = "1";
+        controller.ControllerContext = new ControllerContext { HttpContext = http };
     }
 
-    private async Task SeedAsync(WorkflowDbContext ctx, int tenantId = 1)
-    {
-        var now = DateTime.UtcNow;
-        ctx.WorkflowDefinitions.AddRange(
-            new WorkflowDefinition
-            {
-                TenantId = tenantId,
-                Name = "A1",
-                Version = 1,
-                JSONDefinition = "{}",
-                IsArchived = false,
-                CreatedAt = now,
-                UpdatedAt = now
-            },
-            new WorkflowDefinition
-            {
-                TenantId = tenantId,
-                Name = "A2-Archived",
-                Version = 1,
-                JSONDefinition = "{}",
-                IsArchived = true,
-                ArchivedAt = now.AddMinutes(-1),
-                CreatedAt = now,
-                UpdatedAt = now
-            }
-        );
-        await ctx.SaveChangesAsync();
-    }
+    private static PagedResultDto<WorkflowDefinitionDto> Paged(params WorkflowDefinitionDto[] defs) =>
+        new()
+        {
+            Items = defs.ToList(),
+            TotalCount = defs.Length,
+            Page = 1,
+            PageSize = defs.Length == 0 ? 1 : defs.Length
+        };
 
-    private DefinitionService CreateService(out WorkflowDbContext ctx, int tenantId = 1)
-    {
-        var tenantProvider = new Mock<ITenantProvider>();
-        tenantProvider.Setup(t => t.GetCurrentTenantIdAsync()).ReturnsAsync(tenantId);
-
-        ctx = CreateContext(tenantProvider.Object);
-
-        var mapper = CreateMapper();
-        var eventPublisher = new Mock<IEventPublisher>();
-        var graphValidation = new Mock<IGraphValidationService>();
-        var publishValidator = new Mock<IWorkflowPublishValidator>();
-        var logger = new Mock<ILogger<DefinitionService>>();
-
-        return new DefinitionService(
-            ctx,
-            mapper,
-            tenantProvider.Object,
-            eventPublisher.Object,
-            graphValidation.Object,
-            logger.Object,
-            publishValidator.Object);
-    }
-
-    private DefinitionsController CreateController(DefinitionService service, WorkflowDbContext ctx, int tenantId = 1)
-    {
-        var tenantProvider = new Mock<ITenantProvider>();
-        tenantProvider.Setup(t => t.GetCurrentTenantIdAsync()).ReturnsAsync(tenantId);
-        var graphValidator = new Mock<IWorkflowGraphValidator>();
-        var logger = new Mock<ILogger<DefinitionsController>>();
-
-        return new DefinitionsController(
-            service,
-            tenantProvider.Object,
-            ctx,
-            logger.Object,
-            graphValidator.Object);
-    }
+    #endregion
 
     [Fact]
     public async Task GetAll_Default_ShouldExcludeArchived()
     {
-        var svc = CreateService(out var ctx);
-        await SeedAsync(ctx);
-        var controller = CreateController(svc, ctx);
+        _mockDefinitionService
+            .Setup(s => s.GetAllAsync(
+                It.Is<GetWorkflowDefinitionsRequestDto>(r => r.IncludeArchived == false),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<PagedResultDto<WorkflowDefinitionDto>>.SuccessResult(
+                Paged(
+                    new WorkflowDefinitionDto
+                    {
+                        Id = 1,
+                        Name = "ActiveDraft",
+                        Version = 1,
+                        JSONDefinition = "{}",
+                        IsPublished = false,
+                        IsArchived = false,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    },
+                    new WorkflowDefinitionDto
+                    {
+                        Id = 2,
+                        Name = "ActivePublished",
+                        Version = 1,
+                        JSONDefinition = "{}",
+                        IsPublished = true,
+                        IsArchived = false,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    }
+                )));
 
-        var result = await controller.GetAll(search: null, published: null, includeArchived: false, page: 1, pageSize: 50, ct: CancellationToken.None);
+        var result = await _controller.GetAll(includeArchived: false);
         var ok = result.Result as OkObjectResult;
         ok.Should().NotBeNull();
 
-        var envelope = ok!.Value as ApiResponseDto<System.Collections.Generic.List<WorkflowDefinitionDto>>;
+        var envelope = ok!.Value as ApiResponseDto<PagedResultDto<WorkflowDefinitionDto>>;
         envelope.Should().NotBeNull();
-        var names = envelope!.Data.Select(d => d.Name).ToList();
-        names.Should().Contain("A1");
-        names.Should().NotContain("A2-Archived");
+        envelope!.Success.Should().BeTrue();
+        envelope.Data.Should().NotBeNull();
+        envelope.Data!.Items.Should().OnlyContain(d => d.IsArchived == false);
+        envelope.Data!.Items.Select(d => d.Name).Should().Contain(new[] { "ActiveDraft", "ActivePublished" });
     }
 
     [Fact]
     public async Task GetAll_IncludeArchived_ShouldReturnArchived()
     {
-        var svc = CreateService(out var ctx);
-        await SeedAsync(ctx);
-        var controller = CreateController(svc, ctx);
+        _mockDefinitionService
+            .Setup(s => s.GetAllAsync(
+                It.Is<GetWorkflowDefinitionsRequestDto>(r => r.IncludeArchived == true),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync(ApiResponseDto<PagedResultDto<WorkflowDefinitionDto>>.SuccessResult(
+                Paged(
+                    new WorkflowDefinitionDto
+                    {
+                        Id = 1,
+                        Name = "ActiveDraft",
+                        Version = 1,
+                        JSONDefinition = "{}",
+                        IsPublished = false,
+                        IsArchived = false,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    },
+                    new WorkflowDefinitionDto
+                    {
+                        Id = 2,
+                        Name = "ArchivedDraft",
+                        Version = 1,
+                        JSONDefinition = "{}",
+                        IsPublished = false,
+                        IsArchived = true,
+                        ArchivedAt = DateTime.UtcNow.AddMinutes(-10),
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    }
+                )));
 
-        var result = await controller.GetAll(search: null, published: null, includeArchived: true, page: 1, pageSize: 50, ct: CancellationToken.None);
+        var result = await _controller.GetAll(includeArchived: true);
         var ok = result.Result as OkObjectResult;
         ok.Should().NotBeNull();
 
-        var envelope = ok!.Value as ApiResponseDto<System.Collections.Generic.List<WorkflowDefinitionDto>>;
+        var envelope = ok!.Value as ApiResponseDto<PagedResultDto<WorkflowDefinitionDto>>;
         envelope.Should().NotBeNull();
-        envelope!.Data.Should().HaveCount(2);
+        envelope!.Success.Should().BeTrue();
+        envelope.Data.Should().NotBeNull();
+
+        var items = envelope.Data!.Items;
+        items.Should().ContainSingle(d => d.IsArchived);
+        items.Any(d => d.IsArchived).Should().BeTrue();
+        items.Select(d => d.Name).Should().Contain(new[] { "ActiveDraft", "ArchivedDraft" });
     }
 }

@@ -146,6 +146,8 @@ export function TaskDetailsPage() {
     );
   }
 
+  const taskStatus = String(task.status) as any;
+
   return (
     <Box sx={{ p: 3, maxWidth: 900 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
@@ -166,7 +168,7 @@ export function TaskDetailsPage() {
               <RefreshIcon />
             </IconButton>
           </Tooltip>
-          {isClaimable(task.status) && (
+          {isClaimable(taskStatus) && (
             <Button
               startIcon={<ClaimIcon />}
               onClick={handleClaim}
@@ -177,7 +179,7 @@ export function TaskDetailsPage() {
               {claiming ? 'Claiming...' : 'Claim'}
             </Button>
           )}
-          {isCompletable(task.status) && (
+          {isCompletable(taskStatus) && (
             <Button
               startIcon={<CompleteIcon />}
               onClick={handleOpenComplete}
@@ -197,7 +199,7 @@ export function TaskDetailsPage() {
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
           <Box>
             <Typography variant="subtitle2" color="text.secondary">Status</Typography>
-            {statusChip(task.status)}
+            {statusChip(taskStatus)}
           </Box>
           <Box>
             <Typography variant="subtitle2" color="text.secondary">Task Name</Typography>

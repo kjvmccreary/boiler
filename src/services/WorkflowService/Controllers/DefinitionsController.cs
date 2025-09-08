@@ -2,76 +2,138 @@ using Common.Authorization;
 using Common.Constants;
 using DTOs.Common;
 using DTOs.Workflow;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WorkflowService.Services.Interfaces;
 using Contracts.Services;
-using WorkflowService.Services.Validation;
-using WorkflowService.Engine;
 using WorkflowService.Persistence;
+using WorkflowService.Engine;
+using WorkflowService.Services.Validation;
 using Microsoft.EntityFrameworkCore;
 
 namespace WorkflowService.Controllers;
 
 [ApiController]
 [Route("api/workflow/definitions")]
+[Authorize(Policy = "workflow.read")]
 public class DefinitionsController : ControllerBase
 {
-    private readonly IDefinitionService _definitionService;
+    private readonly IDefinitionService _definitions;
     private readonly ITenantProvider _tenantProvider;
-    private readonly ILogger<DefinitionsController> _logger;
-    private readonly IWorkflowGraphValidator _graphValidator;
     private readonly WorkflowDbContext _db;
+    private readonly IWorkflowGraphValidator _graphValidator;
+    private readonly ILogger<DefinitionsController> _logger;
 
     public DefinitionsController(
-        IDefinitionService definitionService,
+        IDefinitionService definitions,
         ITenantProvider tenantProvider,
         WorkflowDbContext db,
         ILogger<DefinitionsController> logger,
         IWorkflowGraphValidator graphValidator)
     {
-        _definitionService = definitionService;
+        _definitions = definitions;
         _tenantProvider = tenantProvider;
         _db = db;
         _logger = logger;
         _graphValidator = graphValidator;
     }
 
+    /// <summary>
+    /// Returns workflow definitions (paged).
+    /// </summary>
+    /// <remarks>
+    /// Filtering &amp; paging rules:
+    /// - By default archived definitions are excluded (<c>includeArchived=false</c>).
+    /// - Set <c>includeArchived=true</c> to include archived definitions in results.
+    /// - You can filter by publication status using <c>published=true|false</c>.
+    /// - Text search (name / description / tags) via <c>search</c> query parameter.
+    /// - Tag filtering via comma-delimited <c>tags</c>.
+    /// - Sorting: <c>sortBy</c> (e.g. <c>createdAt</c>, <c>updatedAt</c>, <c>name</c>) with <c>desc=true</c> for descending.
+    /// - Paging controlled by <c>page</c> (1-based) and <c>pageSize</c>.
+    ///
+    /// Response envelope:
+    /// <code>
+    /// {
+    ///   "success": true,
+    ///   "message": null,
+    ///   "errors": null,
+    ///   "data": {
+    ///     "items": [
+    ///       {
+    ///         "id": 123,
+    ///         "name": "Onboarding",
+    ///         "version": 3,
+    ///         "jsonDefinition": "...",
+    ///         "description": "Employee onboarding flow",
+    ///         "isPublished": true,
+    ///         "isArchived": false,
+    ///         "publishedAt": "2025-09-08T12:34:56Z",
+    ///         "archivedAt": null,
+    ///         "createdAt": "2025-08-01T09:10:11Z",
+    ///         "updatedAt": "2025-09-08T12:34:56Z",
+    ///         "activeInstanceCount": 4,
+    ///         "publishNotes": "Minor SLA update",
+    ///         "versionNotes": "v3 adjustments",
+    ///         "tags": "hr,onboarding"
+    ///       }
+    ///     ],
+    ///     "totalCount": 42,
+    ///     "page": 1,
+    ///     "pageSize": 20
+    ///   }
+    /// }
+    /// </code>
+    ///
+    /// Notes:
+    /// - <c>activeInstanceCount</c> may be 0 for archived or draft-only definitions.
+    /// - <c>publishNotes</c>, <c>versionNotes</c>, and <c>tags</c> can be null.
+    /// - When <c>includeArchived=false</c>, records where <c>isArchived=true</c> are filtered out before paging.
+    /// </remarks>
+    /// <param name="search">Text search across name, description, tags.</param>
+    /// <param name="published">Filter by publication state (true = only published, false = only drafts).</param>
+    /// <param name="tags">Comma-delimited tag filter (AND semantics optionally implemented server-side).</param>
+    /// <param name="sortBy">Field to sort by (default server-defined).</param>
+    /// <param name="desc">Set true for descending sort.</param>
+    /// <param name="page">1-based page index.</param>
+    /// <param name="pageSize">Page size (max limits may apply).</param>
+    /// <param name="includeArchived">Include archived definitions (default false).</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <response code="200">Paged list of workflow definitions.</response>
+    /// <response code="401">Unauthorized / missing tenant context.</response>
+    /// <response code="403">Forbidden (insufficient permissions).</response>
     [HttpGet]
-    [RequiresPermission(Permissions.Workflow.ViewDefinitions)]
-    public async Task<ActionResult<ApiResponseDto<List<WorkflowDefinitionDto>>>> GetAll(
+    public async Task<ActionResult<ApiResponseDto<PagedResultDto<WorkflowDefinitionDto>>>> GetAll(
         [FromQuery] string? search = null,
         [FromQuery] bool? published = null,
-        [FromQuery] bool includeArchived = false,
+        [FromQuery] string? tags = null,
+        [FromQuery] string? sortBy = null,
+        [FromQuery] bool desc = false,
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 100,
+        [FromQuery] int pageSize = 20,
+        [FromQuery] bool includeArchived = false,
         CancellationToken ct = default)
     {
-        var req = new GetWorkflowDefinitionsRequestDto
+        var request = new GetWorkflowDefinitionsRequestDto
         {
             SearchTerm = search,
             IsPublished = published,
+            Tags = tags,
+            SortBy = sortBy,
+            SortDescending = desc,
             Page = page,
             PageSize = pageSize,
             IncludeArchived = includeArchived
         };
 
-        var resp = await _definitionService.GetAllAsync(req, ct);
-        if (!resp.Success || resp.Data == null)
-            return StatusCode(500, ApiResponseDto<List<WorkflowDefinitionDto>>.ErrorResult(resp.Message ?? "Failed"));
-
-        // New: server‑side archived filtering unless explicitly requested
-        var items = includeArchived
-            ? resp.Data.Items
-            : resp.Data.Items.Where(d => !d.IsArchived).ToList();
-
-        return Ok(ApiResponseDto<List<WorkflowDefinitionDto>>.SuccessResult(items));
+        var result = await _definitions.GetAllAsync(request, ct);
+        return Ok(result);
     }
 
     [HttpGet("{id:int}")]
     [RequiresPermission(Permissions.Workflow.ViewDefinitions)]
     public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionDto>>> Get(int id, CancellationToken ct)
     {
-        var resp = await _definitionService.GetByIdAsync(id, null, ct);
+        var resp = await _definitions.GetByIdAsync(id, null, ct);
         if (!resp.Success || resp.Data == null)
             return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult(resp.Message ?? "Definition not found"));
         return Ok(resp);
@@ -83,7 +145,7 @@ public class DefinitionsController : ControllerBase
         [FromBody] ValidateDefinitionRequestDto request,
         CancellationToken ct)
     {
-        var resp = await _definitionService.ValidateDefinitionAsync(request, ct);
+        var resp = await _definitions.ValidateDefinitionAsync(request, ct);
         return resp.Success ? Ok(resp) : BadRequest(resp);
     }
 
@@ -93,7 +155,7 @@ public class DefinitionsController : ControllerBase
         [FromBody] CreateWorkflowDefinitionDto request,
         CancellationToken ct)
     {
-        var resp = await _definitionService.CreateDraftAsync(request, ct);
+        var resp = await _definitions.CreateDraftAsync(request, ct);
         if (!resp.Success)
             return BadRequest(resp);
         return CreatedAtAction(nameof(Get), new { id = resp.Data!.Id }, resp);
@@ -106,7 +168,7 @@ public class DefinitionsController : ControllerBase
         [FromBody] UpdateWorkflowDefinitionDto request,
         CancellationToken ct)
     {
-        var resp = await _definitionService.UpdateDraftAsync(id, request, ct);
+        var resp = await _definitions.UpdateDraftAsync(id, request, ct);
         if (!resp.Success)
             return BadRequest(resp);
         return Ok(resp);
@@ -116,7 +178,7 @@ public class DefinitionsController : ControllerBase
     [RequiresPermission(Permissions.Workflow.EditDefinitions)]
     public async Task<ActionResult<ApiResponseDto<bool>>> DeleteDraft(int id, CancellationToken ct)
     {
-        var resp = await _definitionService.DeleteDraftAsync(id, ct);
+        var resp = await _definitions.DeleteDraftAsync(id, ct);
         if (!resp.Success)
             return BadRequest(resp);
         return Ok(resp);
@@ -129,7 +191,7 @@ public class DefinitionsController : ControllerBase
         [FromBody] CreateNewVersionRequestDto request,
         CancellationToken ct)
     {
-        var resp = await _definitionService.CreateNewVersionAsync(id, request, ct);
+        var resp = await _definitions.CreateNewVersionAsync(id, request, ct);
         if (!resp.Success)
             return BadRequest(resp);
         return Ok(resp);
@@ -144,7 +206,7 @@ public class DefinitionsController : ControllerBase
     {
         request ??= new PublishDefinitionRequestDto();
 
-        var defResp = await _definitionService.GetByIdAsync(id, null, ct);
+        var defResp = await _definitions.GetByIdAsync(id, null, ct);
         if (!defResp.Success || defResp.Data == null)
             return NotFound(ApiResponseDto<WorkflowDefinitionDto>.ErrorResult("Definition not found"));
 
@@ -175,7 +237,7 @@ public class DefinitionsController : ControllerBase
             });
         }
 
-        var resp = await _definitionService.PublishAsync(id, request, ct);
+        var resp = await _definitions.PublishAsync(id, request, ct);
         return resp.Success ? Ok(resp) : BadRequest(resp);
     }
 
@@ -183,7 +245,7 @@ public class DefinitionsController : ControllerBase
     [RequiresPermission(Permissions.Workflow.ViewDefinitions)]
     public async Task<ActionResult<ApiResponseDto<WorkflowDefinitionInstanceUsageDto>>> Usage(int id, CancellationToken ct)
     {
-        var resp = await _definitionService.GetUsageAsync(id, ct);
+        var resp = await _definitions.GetUsageAsync(id, ct);
         if (!resp.Success) return NotFound(resp);
         return Ok(resp);
     }
@@ -199,7 +261,7 @@ public class DefinitionsController : ControllerBase
 
         try
         {
-            var resp = await _definitionService.UnpublishAsync(id, request, ct);
+            var resp = await _definitions.UnpublishAsync(id, request, ct);
             if (resp != null && resp.Success) return Ok(resp);
             if (resp != null && !resp.Success)
             {
@@ -239,11 +301,11 @@ public class DefinitionsController : ControllerBase
     [RequiresPermission(Permissions.Workflow.ViewDefinitions)]
     public async Task<ActionResult<ApiResponseDto<ValidationResultDto>>> Revalidate(int id, CancellationToken ct = default)
     {
-        var defResp = await _definitionService.GetByIdAsync(id, null, ct);
+        var defResp = await _definitions.GetByIdAsync(id, null, ct);
         if (!defResp.Success || defResp.Data == null)
             return NotFound(ApiResponseDto<ValidationResultDto>.ErrorResult("Definition not found"));
 
-        var validate = await _definitionService.ValidateDefinitionAsync(new ValidateDefinitionRequestDto
+        var validate = await _definitions.ValidateDefinitionAsync(new ValidateDefinitionRequestDto
         {
             JSONDefinition = defResp.Data.JSONDefinition
         }, ct);
@@ -287,7 +349,7 @@ public class DefinitionsController : ControllerBase
         ApiResponseDto<WorkflowDefinitionDto>? serviceResp = null;
         try
         {
-            serviceResp = await _definitionService.GetByIdAsync(id, null, ct);
+            serviceResp = await _definitions.GetByIdAsync(id, null, ct);
         }
         catch (Exception ex)
         {

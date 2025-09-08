@@ -1,35 +1,12 @@
-// =====================================
-// WORKFLOW TYPES
-// =====================================
-
-export interface ApiResponseDto<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-  errors?: string[];
-  traceId?: string;
-}
-
-export interface PagedResultDto<T> {
-  items: T[];
-  totalCount: number;
-  page: number;
-  pageSize: number;
-}
-
-// =====================================
-// ENUMS / STRING UNIONS
-// =====================================
-
+// ================= Core Enums & Constants =================
 export enum InstanceStatus {
   Running = 'Running',
   Completed = 'Completed',
-  Failed = 'Failed',
   Cancelled = 'Cancelled',
+  Failed = 'Failed',
   Suspended = 'Suspended'
 }
 
-// Converted from enum → string union for simpler literal usage
 export type TaskStatus =
   | 'Created'
   | 'Assigned'
@@ -39,7 +16,6 @@ export type TaskStatus =
   | 'Cancelled'
   | 'Failed';
 
-// Central canonical list (runtime array) for validation / normalization
 export const TASK_STATUSES: TaskStatus[] = [
   'Created',
   'Assigned',
@@ -50,21 +26,25 @@ export const TASK_STATUSES: TaskStatus[] = [
   'Failed'
 ];
 
-// =====================================
-// DEFINITIONS
-// =====================================
-
+// ================= Definitions =================
 export interface WorkflowDefinitionDto {
   id: number;
   name: string;
   version: number;
   jsonDefinition: string;
+  description?: string | null;
   isPublished: boolean;
-  description?: string;
-  publishedAt?: string;
-  publishedByUserId?: number;
+  publishedAt?: string | null;
+  publishedByUserId?: number | null;
   createdAt: string;
   updatedAt: string;
+  isArchived: boolean;
+  archivedAt?: string | null;
+  activeInstanceCount: number;
+  publishNotes?: string | null;
+  versionNotes?: string | null;
+  parentDefinitionId?: number | null;
+  tags?: string | null;
 }
 
 export interface CreateWorkflowDefinitionDto {
@@ -86,291 +66,248 @@ export interface PublishDefinitionRequestDto {
   forcePublish?: boolean;
 }
 
-export interface ValidateDefinitionRequestDto {
-  jsonDefinition: string;
-}
-
-export interface ValidationResultDto {
-  isValid: boolean;
-  errors: string[];
-  warnings: string[];
-  metadata: Record<string, any>;
-}
-
 export interface CreateNewVersionRequestDto {
   name: string;
-  description?: string;
   jsonDefinition: string;
+  description?: string;
   versionNotes?: string;
   tags?: string;
 }
 
-// =====================================
-// INSTANCES
-// =====================================
-
+// ================= Instances =================
 export interface WorkflowInstanceDto {
   id: number;
   workflowDefinitionId: number;
-  workflowDefinitionName: string;
+  workflowDefinitionName?: string;
   definitionVersion: number;
-  status: InstanceStatus;
-  currentNodeIds: string; // raw json array or csv
-  context: string;
+  status: InstanceStatus | string | number;
+  currentNodeIds: string;
   startedAt: string;
   completedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
   startedByUserId?: number;
-  errorMessage?: string;
-  createdAt: string;
-  updatedAt: string;
+  errorMessage?: string | null;
+  context?: string;
 }
 
-export interface StartInstanceRequestDto {
-  workflowDefinitionId: number;
-  initialContext?: string;
-  startNotes?: string;
-  workflowVersion?: number;
-  instanceName?: string;
-  variables?: Record<string, any>;
-}
-
-export interface SignalInstanceRequestDto {
-  signalName: string;
-  signalData?: string;
-}
-
-export interface TerminateInstanceRequestDto {
-  reason: string;
-  forceTerminate?: boolean;
-}
-
-export interface RetryInstanceRequestDto {
-  retryReason?: string;
-  resetToNodeId?: string;
-}
-
-export interface MoveToNodeRequestDto {
-  targetNodeId: string;
-  contextUpdates?: string;
-  reason?: string;
-}
-
-export interface InstanceStatusDto {
-  instanceId: number;
-  status: InstanceStatus;
-  currentNodeIds: string;
-  currentNodeNames: string[];
-  progressPercentage: number;
-  lastUpdated: string;
-  runtime: string;
-  activeTasksCount: number;
-  errorMessage?: string;
-}
-
-// =====================================
-// TASKS
-// =====================================
-
+// ================= Tasks =================
 export interface WorkflowTaskDto {
   id: number;
   workflowInstanceId: number;
-  nodeId: string;
+  workflowDefinitionId: number;
   taskName: string;
-  status: TaskStatus;
+  status: TaskStatus | string | number;
+  nodeId?: string;
+  nodeType?: string;
+  dueDate?: string;
   assignedToUserId?: number;
   assignedToRole?: string;
-  dueDate?: string;
-  data: string;
-  claimedAt?: string;
-  completedAt?: string;
-  completionData?: string;
-  errorMessage?: string;
   createdAt: string;
   updatedAt: string;
+  completionData?: Record<string, unknown>;
+  completionNotes?: string;
+  completedAt?: string;
+  data?: string;
+  errorMessage?: string;
 }
 
 export interface TaskSummaryDto {
   id: number;
   taskName: string;
-  status: TaskStatus | string; // backend might send raw string; normalized client-side
-  workflowDefinitionName: string;
   workflowInstanceId: number;
+  workflowDefinitionId: number;
+  workflowDefinitionName: string;
+  status: TaskStatus;
   dueDate?: string;
-  createdAt: string;
-  nodeId?: string;
-  nodeType?: string;
-}
-
-export interface CompleteTaskRequestDto {
-  completionData?: string;
-  completionNotes?: string;
-}
-
-export interface ClaimTaskRequestDto {
-  claimNotes?: string;
-}
-
-export interface AssignTaskRequestDto {
   assignedToUserId?: number;
   assignedToRole?: string;
-  assignmentNotes?: string;
+  nodeType?: string;
+  createdAt: string;
+  nodeId?: string;
 }
 
-export interface ResetTaskRequestDto {
-  newStatus: TaskStatus;
-  assignToUserId?: number;
-  errorMessage?: string;
+// ================= Task Actions =================
+export interface ClaimTaskRequestDto { claimNotes?: string; }
+export interface CompleteTaskRequestDto { completionData?: string; completionNotes?: string; }
+export interface AssignTaskRequestDto { userId?: number; role?: string; assignNotes?: string; }
+export interface ResetTaskRequestDto { reason?: string; }
+
+// ================= Instance Actions =================
+export interface StartInstanceRequestDto {
+  workflowDefinitionId: number;
+  initialContext?: string;
+  startNotes?: string;
+}
+export interface SignalInstanceRequestDto { signal: string; payload?: unknown; }
+export interface RetryInstanceRequestDto { retryReason?: string; }
+export interface MoveToNodeRequestDto { targetNodeId: string; reason?: string; }
+export interface TerminateInstanceRequestDto { reason?: string; }
+
+// ================= Bulk / Admin =================
+export interface BulkCancelInstancesRequestDto {
+  workflowDefinitionId?: number;
+  olderThanMinutes?: number;
+  statusIn?: InstanceStatus[];
   reason?: string;
 }
+export interface BulkOperationResultDto {
+  totalMatched: number;
+  totalAffected: number;
+  message?: string;
+}
 
-// =====================================
-// EVENTS
-// =====================================
-
+// ================= Events & Stats =================
 export interface WorkflowEventDto {
   id: number;
   workflowInstanceId: number;
-  type: string;
-  name: string;
-  data: string;
+  eventType: string;
+  name?: string;
+  data?: Record<string, unknown>;
   occurredAt: string;
   userId?: number;
-  createdAt: string;
-  updatedAt: string;
+}
+export interface WorkflowStatsDto {
+  activeInstances: number;
+  runningTasks: number;
+  completedInstances24h: number;
+  failedInstances24h: number;
+  averageDurationMinutes?: number;
+}
+export interface TaskStatisticsDto {
+  total: number;
+  created: number;
+  assigned: number;
+  claimed: number;
+  inProgress: number;
+  completed: number;
+  cancelled: number;
+  failed: number;
 }
 
-// =====================================
-// SNAPSHOT
-// =====================================
+// ================= Paging =================
+export interface PagedResultDto<T> {
+  items: T[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+}
 
+// ================= Validation =================
+export interface ValidationResultDto {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+  metadata?: Record<string, unknown>;
+}
+
+// ================= Runtime Snapshot =================
+// All optional so augmentation / legacy fields don't conflict
 export interface InstanceRuntimeSnapshotDto {
-  instance: WorkflowInstanceDto;
-  definitionJson: string;
-  tasks: TaskSummaryDto[];
-  events: WorkflowEventDto[];
-  traversedEdgeIds: string[];
-  visitedNodeIds: string[];
+  instanceId: number;
+  definitionVersion: number;
   currentNodeIds: string[];
+  visitedNodeIds?: string[];
+  progressPercentage?: number;
+  tasks?: WorkflowTaskDto[];
+  status: InstanceStatus | string;
+  lastUpdated: string;
+  instance?: WorkflowInstanceDto | null;
+  events?: WorkflowEventDto[];
+  definitionJson?: string | null;
+  traversedEdgeIds?: string[];
 }
 
-// =====================================
-// ROLE USAGE
-// =====================================
-
+// ================= Role Usage / Definition Usage =================
 export interface WorkflowNodeUsageDto {
   nodeId: string;
-  nodeName: string;
   nodeType: string;
+  nodeLabel?: string;
+  nodeName?: string;
+  rolesReferenced?: string[];
 }
 
 export interface WorkflowDefinitionUsageDto {
-  definitionId: number;
-  definitionName: string;
+  id: number;
+  name: string;
   version: number;
   isPublished: boolean;
-  usageCount: number;
+  isArchived: boolean;
   usedInNodes: WorkflowNodeUsageDto[];
+  definitionId?: number;
+  definitionName?: string;
+  usageCount?: number;
 }
 
 export interface RoleUsageInWorkflowsDto {
-  isUsedInWorkflows: boolean;
-  usedInDefinitions: WorkflowDefinitionUsageDto[];
-  totalUsageCount: number;
   roleName: string;
-  message: string;
+  definitionCount: number;
+  usedInDefinitions: WorkflowDefinitionUsageDto[];
+  isUsedInWorkflows?: boolean;
 }
 
 export interface CheckRoleUsageRequestDto {
   roleName: string;
 }
 
-// =====================================
-// ADMIN / ANALYTICS
-// =====================================
-
-export interface WorkflowStatsDto {
-  totalDefinitions: number;
-  publishedDefinitions: number;
-  totalInstances: number;
-  runningInstances: number;
-  completedInstances: number;
-  failedInstances: number;
-  suspendedInstances: number;
-  totalTasks: number;
-  pendingTasks: number;
-  activeTasks: number;
-  completedTasks: number;
-  overdueTasks: number;
-  totalEvents: number;
-  eventsLast24Hours: number;
-}
-
-export interface TaskStatisticsDto {
-  totalTasks: number;
-  pendingTasks: number;
-  inProgressTasks: number;
-  completedTasks: number;
-  overdueTasks: number;
-  tasksByType: Record<string, number>;
-  tasksByStatus: Record<TaskStatus, number>;
-  averageCompletionTime: number;
-  lastUpdated: string;
-}
-
-export interface BulkCancelInstancesRequestDto {
-  workflowDefinitionId?: number;
-  status?: InstanceStatus;
-  startedBefore?: string;
-  reason: string;
-}
-
-export interface BulkOperationResultDto {
-  successCount: number;
-  failureCount: number;
-  totalCount: number;
-  operationType: string;
-}
-
-// =====================================
-// BUILDER (subset)
-// =====================================
+// ================= Builder / Editor Types =================
+export type EditorNodeType =
+  | 'start'
+  | 'end'
+  | 'humanTask'
+  | 'automatic'
+  | 'gateway'
+  | 'timer';
 
 export interface EditorWorkflowNode {
   id: string;
-  type: string;
+  type: EditorNodeType | string;
   label?: string;
   x: number;
   y: number;
-  dueInMinutes?: number;
   assigneeRoles?: string[];
+  dueInMinutes?: number;
+  formSchema?: unknown;
+  action?: { kind: 'webhook' | 'noop'; config?: Record<string, unknown> };
   condition?: string;
-  action?: any;
-  [key: string]: any;
+  delayMinutes?: number;
+  untilIso?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface EditorWorkflowEdge {
   id: string;
   from: string;
   to: string;
-  fromHandle?: string | null;
-  label?: string | null;
+  label?: string;
+  fromHandle?: string;
+  enriched?: boolean;
 }
 
 export interface EditorWorkflowDefinition {
+  id?: string;
   key?: string;
+  name?: string;
+  version?: number;
   nodes: EditorWorkflowNode[];
   edges: EditorWorkflowEdge[];
-  [key: string]: any;
+  metadata?: Record<string, unknown>;
 }
 
+// React Flow node/edge data (all optional to avoid conflicts)
 export interface RFNodeData {
+  nodeId?: string;
   label?: string;
-  dueInMinutes?: number;
-  assigneeRoles?: string[];
-  condition?: string;
-  action?: any;
+  type?: EditorNodeType | string;
+  roles?: string[];
+  status?: string;
+  [k: string]: unknown;
 }
 
 export interface RFEdgeData {
-  fromHandle?: string | null;
+  edgeId?: string;
+  from?: string;
+  to?: string;
+  branch?: string;
+  [k: string]: unknown;
 }

@@ -3,15 +3,14 @@ import {
   Box,
   Typography,
   Button,
-  IconButton,
   Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
-  Menu,
-  MenuItem,
+  Switch,
+  FormControlLabel
 } from '@mui/material';
 import {
   DataGridPremium,
@@ -19,7 +18,7 @@ import {
   GridRowParams,
   GridActionsCellItem,
   GridRowId,
-  GridToolbar,
+  GridToolbar
 } from '@mui/x-data-grid-premium';
 import {
   Add as AddIcon,
@@ -29,10 +28,9 @@ import {
   PlayArrow as StartIcon,
   Visibility as ViewIcon,
   FileCopy as DuplicateIcon,
-  MoreVert as MoreVertIcon,
   Gavel as UnpublishIcon,
   Archive as ArchiveIcon,
-  Cancel as TerminateIcon,
+  Cancel as TerminateIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { CanAccess } from '@/components/authorization/CanAccess';
@@ -40,6 +38,15 @@ import { workflowService } from '@/services/workflow.service';
 import type { WorkflowDefinitionDto } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
+
+const LS_KEY_SHOW_ARCHIVED = 'wf.definitions.showArchived';
+
+function readStoredShowArchived(defaultValue: boolean): boolean {
+  if (typeof window === 'undefined') return defaultValue;
+  const raw = window.localStorage.getItem(LS_KEY_SHOW_ARCHIVED);
+  if (raw === null) return defaultValue;
+  return raw === 'true';
+}
 
 export function DefinitionsPage() {
   const [definitions, setDefinitions] = useState<WorkflowDefinitionDto[]>([]);
@@ -53,74 +60,58 @@ export function DefinitionsPage() {
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [terminateDialogOpen, setTerminateDialogOpen] = useState(false);
   const [targetDefinition, setTargetDefinition] = useState<WorkflowDefinitionDto | null>(null);
+  const [showArchived, setShowArchived] = useState<boolean>(() => readStoredShowArchived(false));
 
   const navigate = useNavigate();
   const { currentTenant } = useTenant();
+
+  // Persist toggle
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(LS_KEY_SHOW_ARCHIVED, String(showArchived));
+    }
+  }, [showArchived]);
 
   useEffect(() => {
     if (currentTenant) {
       loadDefinitions();
     }
-  }, [currentTenant]);
+  }, [currentTenant, showArchived]);
 
   const loadDefinitions = async () => {
     try {
       setLoading(true);
-      console.log('🔄 DefinitionsPage: Loading workflow definitions');
-
-      const response = await workflowService.getDefinitions();
-      
-      // ✅ FIX: Add defensive checks for the response
-      if (!response) {
-        console.warn('⚠️ DefinitionsPage: No response from getDefinitions');
-        setDefinitions([]);
-        return;
-      }
-
+      const response = await workflowService.getDefinitions({
+        includeArchived: showArchived
+      });
       if (!Array.isArray(response)) {
-        console.warn('⚠️ DefinitionsPage: Response is not an array:', response);
         setDefinitions([]);
         return;
       }
-
-      console.log('✅ DefinitionsPage: Loaded', response.length, 'definitions');
       setDefinitions(response);
     } catch (error) {
-      console.error('❌ DefinitionsPage: Failed to load definitions:', error);
+      console.error('Failed to load definitions:', error);
       toast.error('Failed to load workflow definitions');
-      // ✅ FIX: Set empty array on error to prevent further crashes
       setDefinitions([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ FIX: Add /app prefix to navigation paths
-  const handleCreateNew = () => {
-    navigate('/app/workflow/builder/new');
-  };
-
-  const handleEdit = (id: GridRowId) => {
-    navigate(`/app/workflow/builder/${id}`);
-  };
-
-  const handleView = (id: GridRowId) => {
-    navigate(`/app/workflow/definitions/${id}`);
-  };
+  const handleCreateNew = () => navigate('/app/workflow/builder/new');
+  const handleEdit = (id: GridRowId) => navigate(`/app/workflow/builder/${id}`);
+  const handleView = (id: GridRowId) => navigate(`/app/workflow/definitions/${id}`);
 
   const handleDuplicate = async (definition: WorkflowDefinitionDto) => {
     try {
-      const duplicateRequest = {
+      await workflowService.createDraft({
         name: `${definition.name} (Copy)`,
         jsonDefinition: definition.jsonDefinition,
-        description: definition.description
-      };
-
-      await workflowService.createDraft(duplicateRequest);
-      toast.success('Workflow definition duplicated successfully');
+        description: definition.description ?? undefined
+      });
+      toast.success('Workflow definition duplicated');
       loadDefinitions();
-    } catch (error) {
-      console.error('Failed to duplicate definition:', error);
+    } catch {
       toast.error('Failed to duplicate workflow definition');
     }
   };
@@ -133,15 +124,13 @@ export function DefinitionsPage() {
 
   const handlePublishConfirm = async () => {
     if (!definitionToPublish) return;
-
     try {
       await workflowService.publishDefinition(definitionToPublish.id, {
         publishNotes: publishNotes || undefined
       });
-      toast.success('Workflow definition published successfully');
+      toast.success('Workflow definition published');
       loadDefinitions();
-    } catch (error) {
-      console.error('Failed to publish definition:', error);
+    } catch {
       toast.error('Failed to publish workflow definition');
     } finally {
       setPublishDialogOpen(false);
@@ -156,18 +145,14 @@ export function DefinitionsPage() {
         workflowDefinitionId: definition.id,
         initialContext: '{}',
         startNotes: 'Started from definitions page'
-      });
-
-      if (!instance || !instance.id) {
-        console.error('Start instance returned invalid payload:', instance);
-        toast.error('Instance started but response was invalid');
+      } as any);
+      if (!instance?.id) {
+        toast.error('Instance started but response invalid');
         return;
       }
-
-      toast.success('Workflow instance started successfully');
+      toast.success('Workflow instance started');
       navigate(`/app/workflow/instances/${instance.id}`);
-    } catch (error) {
-      console.error('Failed to start instance:', error);
+    } catch {
       toast.error('Failed to start workflow instance');
     }
   };
@@ -179,13 +164,11 @@ export function DefinitionsPage() {
 
   const handleDeleteConfirm = async () => {
     if (!definitionToDelete) return;
-
     try {
       await workflowService.deleteDefinition(definitionToDelete.id);
-      toast.success('Workflow definition deleted successfully');
+      toast.success('Workflow definition deleted');
       loadDefinitions();
-    } catch (error) {
-      console.error('Failed to delete definition:', error);
+    } catch {
       toast.error('Failed to delete workflow definition');
     } finally {
       setDeleteDialogOpen(false);
@@ -203,7 +186,7 @@ export function DefinitionsPage() {
       await workflowService.unpublishDefinition(targetDefinition.id);
       toast.success('Definition unpublished');
       loadDefinitions();
-    } catch (e) {
+    } catch {
       toast.error('Unpublish failed');
     } finally {
       setUnpublishDialogOpen(false); setTargetDefinition(null);
@@ -241,69 +224,79 @@ export function DefinitionsPage() {
       headerName: 'Name',
       flex: 1,
       minWidth: 200,
+      renderCell: (params) => {
+        const def = params.row as WorkflowDefinitionDto;
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <span>{def.name}</span>
+            {def.isArchived && (
+              <Chip label="Archived" size="small" color="default" variant="outlined" />
+            )}
+          </Box>
+        );
+      }
     },
     {
       field: 'description',
       headerName: 'Description',
       flex: 1,
       minWidth: 250,
-      renderCell: (params) => params.value || 'No description',
+      renderCell: (params) => params.value || '—',
     },
     {
       field: 'version',
       headerName: 'Version',
-      width: 100,
+      width: 90,
       renderCell: (params) => `v${params.value}`,
     },
     {
       field: 'isPublished',
       headerName: 'Status',
-      width: 120,
-      renderCell: (params) => (
-        params.value ? (
-          <Chip label="Published" color="success" size="small" icon={<PublishIcon />} />
-        ) : (
-          <Chip label="Draft" color="warning" size="small" variant="outlined" />
-        )
-      ),
+      width: 130,
+      renderCell: (params) => {
+        const def = params.row as WorkflowDefinitionDto;
+        if (def.isArchived) return <Chip label="Archived" size="small" color="default" />;
+        return params.value
+          ? <Chip label="Published" color="success" size="small" icon={<PublishIcon />} />
+          : <Chip label="Draft" color="warning" size="small" variant="outlined" />;
+      },
     },
     {
       field: 'createdAt',
       headerName: 'Created',
-      width: 120,
+      width: 130,
       type: 'date',
       valueGetter: (value) => new Date(value),
+      renderCell: (params) => new Date(params.value).toLocaleDateString()
     },
     {
       field: 'publishedAt',
       headerName: 'Published',
-      width: 120,
+      width: 130,
       type: 'date',
       valueGetter: (value) => value ? new Date(value) : null,
-      renderCell: (params) => {
-        if (!params.value) return 'Not published';
-        return new Date(params.value).toLocaleDateString();
-      },
+      renderCell: (params) => params.value ? new Date(params.value).toLocaleDateString() : '—',
     },
     {
       field: 'actions',
       type: 'actions',
       headerName: 'Actions',
-      width: 120,
+      width: 130,
       getActions: (params: GridRowParams) => {
         const definition = params.row as WorkflowDefinitionDto;
         const actions = [
           <GridActionsCellItem
+            key="view"
             icon={<ViewIcon />}
             label="View"
             onClick={() => handleView(params.id)}
-          />,
+          />
         ];
 
-        // Edit action (only for drafts)
-        if (!definition.isPublished) {
+        if (!definition.isPublished && !definition.isArchived) {
           actions.push(
             <GridActionsCellItem
+              key="edit"
               icon={<EditIcon />}
               label="Edit"
               onClick={() => handleEdit(params.id)}
@@ -312,9 +305,9 @@ export function DefinitionsPage() {
           );
         }
 
-        // Duplicate action
         actions.push(
           <GridActionsCellItem
+            key="dup"
             icon={<DuplicateIcon />}
             label="Duplicate"
             onClick={() => handleDuplicate(definition)}
@@ -322,10 +315,10 @@ export function DefinitionsPage() {
           />
         );
 
-        // Publish action (only for drafts)
-        if (!definition.isPublished) {
+        if (!definition.isPublished && !definition.isArchived) {
           actions.push(
             <GridActionsCellItem
+              key="publish"
               icon={<PublishIcon />}
               label="Publish"
               onClick={() => handlePublish(definition)}
@@ -334,34 +327,31 @@ export function DefinitionsPage() {
           );
         }
 
-        // Start instance action (only for published)
-        if (definition.isPublished) {
+        if (definition.isPublished && !definition.isArchived) {
           actions.push(
             <GridActionsCellItem
+              key="start"
               icon={<StartIcon />}
               label="Start Instance"
               onClick={() => handleStartInstance(definition)}
               showInMenu
-            />
-          );
-        }
-
-        // Unpublish, Archive, Terminate actions (only for published)
-        if (definition.isPublished) {
-          actions.push(
+            />,
             <GridActionsCellItem
+              key="unpub"
               icon={<UnpublishIcon />}
               label="Unpublish"
               onClick={() => openUnpublish(definition)}
               showInMenu
             />,
             <GridActionsCellItem
+              key="archive"
               icon={<ArchiveIcon />}
               label="Archive"
               onClick={() => openArchive(definition)}
               showInMenu
             />,
             <GridActionsCellItem
+              key="terminate"
               icon={<TerminateIcon />}
               label="Terminate Instances"
               onClick={() => openTerminate(definition)}
@@ -370,10 +360,10 @@ export function DefinitionsPage() {
           );
         }
 
-        // Delete action (only for drafts)
-        if (!definition.isPublished) {
+        if (!definition.isPublished && !definition.isArchived) {
           actions.push(
             <GridActionsCellItem
+              key="delete"
               icon={<DeleteIcon />}
               label="Delete"
               onClick={() => handleDelete(definition)}
@@ -397,60 +387,72 @@ export function DefinitionsPage() {
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Workflow Definitions
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h4" component="h1">
+            Workflow Definitions
+          </Typography>
           <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
             {currentTenant.name}
           </Typography>
-        </Typography>
+        </Box>
 
-        <CanAccess permission="workflow.write">
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleCreateNew}
-          >
-            Create Workflow
-          </Button>
-        </CanAccess>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={showArchived}
+                onChange={(e) => setShowArchived(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Show Archived"
+          />
+          <CanAccess permission="workflow.write">
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreateNew}
+            >
+              Create Workflow
+            </Button>
+          </CanAccess>
+        </Box>
       </Box>
 
       <Box sx={{ flex: 1, minHeight: 0 }}>
         <DataGridPremium
           rows={definitions}
           columns={columns}
+          getRowId={(r) => r.id}
           loading={loading}
           pagination
           pageSizeOptions={[10, 25, 50, 100]}
           initialState={{
-            pagination: { paginationModel: { pageSize: 10 } },
+            pagination: { paginationModel: { pageSize: 10 } }
           }}
           slots={{
-            toolbar: GridToolbar,
+            toolbar: GridToolbar
           }}
           slotProps={{
             toolbar: {
               showQuickFilter: true,
-              quickFilterProps: { debounceMs: 500 },
-            },
+              quickFilterProps: { debounceMs: 500 }
+            }
           }}
           disableRowSelectionOnClick
           sx={{
-            '& .MuiDataGrid-row:hover': {
-              backgroundColor: 'action.hover',
-            },
+            '& .MuiDataGrid-row:hover': { backgroundColor: 'action.hover' }
           }}
         />
       </Box>
 
-      {/* Dialogs remain the same */}
+      {/* Publish Dialog */}
       <Dialog open={publishDialogOpen} onClose={() => setPublishDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Publish Workflow Definition</DialogTitle>
         <DialogContent>
           <Typography sx={{ mb: 2 }}>
-            Are you sure you want to publish "{definitionToPublish?.name}"? 
-            Once published, the definition becomes immutable and can be used to start workflow instances.
+            Publish "{definitionToPublish?.name}"? Published versions become immutable and usable for instances.
           </Typography>
           <TextField
             fullWidth
@@ -459,7 +461,7 @@ export function DefinitionsPage() {
             rows={3}
             value={publishNotes}
             onChange={(e) => setPublishNotes(e.target.value)}
-            placeholder="Add notes about this publication..."
+            placeholder="Describe the changes or reason for publishing..."
           />
         </DialogContent>
         <DialogActions>
@@ -470,12 +472,12 @@ export function DefinitionsPage() {
         </DialogActions>
       </Dialog>
 
+      {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete workflow definition "{definitionToDelete?.name}"?
-            This action cannot be undone.
+            Delete "{definitionToDelete?.name}"? This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -486,11 +488,12 @@ export function DefinitionsPage() {
         </DialogActions>
       </Dialog>
 
+      {/* Unpublish Dialog */}
       <Dialog open={unpublishDialogOpen} onClose={() => setUnpublishDialogOpen(false)}>
         <DialogTitle>Unpublish Definition</DialogTitle>
         <DialogContent>
           <Typography>
-            Unpublish "{targetDefinition?.name}"? New instances cannot start; existing continue running.
+            Unpublish "{targetDefinition?.name}"? New instances cannot start; existing ones continue.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -499,11 +502,12 @@ export function DefinitionsPage() {
         </DialogActions>
       </Dialog>
 
+      {/* Archive Dialog */}
       <Dialog open={archiveDialogOpen} onClose={() => setArchiveDialogOpen(false)}>
         <DialogTitle>Archive Definition</DialogTitle>
         <DialogContent>
           <Typography>
-            Archive "{targetDefinition?.name}"? It will be hidden from normal lists.
+            Archive "{targetDefinition?.name}"? It will be hidden unless "Show Archived" is enabled.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -512,6 +516,7 @@ export function DefinitionsPage() {
         </DialogActions>
       </Dialog>
 
+      {/* Terminate Instances Dialog */}
       <Dialog open={terminateDialogOpen} onClose={() => setTerminateDialogOpen(false)}>
         <DialogTitle>Terminate Running Instances</DialogTitle>
         <DialogContent>
