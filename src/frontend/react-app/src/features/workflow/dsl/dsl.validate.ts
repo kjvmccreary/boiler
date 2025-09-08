@@ -187,8 +187,25 @@ export function validateNode(node: DslNode): ValidationResult {
     }
     case 'timer': {
       const t: any = node;
-      if (!t.delayMinutes && !t.delaySeconds && !t.untilIso) {
-        errors.push('Timer node must have either delayMinutes, delaySeconds, or untilIso');
+      const hasRelative = (t.delayMinutes && t.delayMinutes > 0) || (t.delaySeconds && t.delaySeconds > 0);
+      const hasAbsolute = !!t.untilIso;
+      if (!hasRelative && !hasAbsolute) {
+        errors.push('Timer node must specify a relative delay (minutes/seconds) or an absolute untilIso');
+      }
+      if (hasRelative && hasAbsolute) {
+        errors.push('Timer node cannot have both relative delay and absolute untilIso');
+      }
+      if (hasRelative) {
+        if (t.delayMinutes && t.delayMinutes < 0) errors.push('Timer delayMinutes must be >= 0');
+        if (t.delaySeconds && t.delaySeconds < 0) errors.push('Timer delaySeconds must be >= 0');
+        if ((t.delayMinutes || 0) === 0 && (t.delaySeconds || 0) === 0) {
+          errors.push('Timer relative delay must be > 0 total');
+        }
+      }
+      if (hasAbsolute) {
+        const dt = new Date(t.untilIso);
+        if (isNaN(dt.getTime())) errors.push('Timer untilIso must be a valid ISO datetime');
+        else if (dt.getTime() <= Date.now()) errors.push('Timer untilIso must be in the future');
       }
       break;
     }

@@ -3,6 +3,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import { Edge, Node } from 'reactflow';
 import GatewayPropertiesPanel from './GatewayPropertiesPanel';
 import JoinPropertiesPanel from './JoinPropertiesPanel';
+import TimerPropertiesPanel from './TimerPropertiesPanel';
 import { GatewayStrategy, JoinMode } from '../../dsl/dsl.types';
 import type { ReactNode } from 'react';
 
@@ -57,6 +58,17 @@ export function PropertyPanel({ open, node, edges, onClose, updateNode }: Proper
         thresholdPercent={props.thresholdPercent}
         expression={props.expression}
         cancelRemaining={props.cancelRemaining}
+        onChange={patch => update(patch)}
+      />
+    );
+  } else if (type === 'timer') {
+    const props = (data as any).properties || data;
+    body = (
+      <TimerPropertiesPanel
+        nodeId={node.id}
+        delayMinutes={props.delayMinutes}
+        delaySeconds={props.delaySeconds}
+        untilIso={props.untilIso}
         onChange={patch => update(patch)}
       />
     );

@@ -153,6 +153,7 @@ public class Program
         builder.Services.AddScoped<IGatewayStrategyRegistry, GatewayStrategyRegistry>();
         builder.Services.AddScoped<IFeatureFlagProvider, NoopFeatureFlagProvider>();
         builder.Services.AddScoped<IFeatureFlagFallbackEmitter, FeatureFlagFallbackEmitter>();
+        builder.Services.AddScoped<IExpressionValidationService, ExpressionValidationService>();
 
         // Outbox (core services always; workers only if enabled)
         builder.Services.AddScoped<IOutboxWriter, OutboxWriter>();

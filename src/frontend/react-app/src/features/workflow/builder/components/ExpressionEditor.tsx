@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Box, TextField, Typography, IconButton, Tooltip, Chip, Stack } from '@mui/material';
+import { Box, TextField, Typography, IconButton, Tooltip, Chip, Stack, CircularProgress } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import { workflowService } from '@/services/workflow.service';
 
 export interface ExpressionEditorProps {
   label?: string;
@@ -31,6 +32,9 @@ export function ExpressionEditor({
   const [raw, setRaw] = useState(value ?? '');
   const [isValid, setIsValid] = useState(true);
   const [lastValidated, setLastValidated] = useState<number>(0);
+  const [semanticLoading, setSemanticLoading] = useState(false);
+  const [semanticErrors, setSemanticErrors] = useState<string[]>([]);
+  const [semanticWarnings, setSemanticWarnings] = useState<string[]>([]);
 
   const validate = useCallback((text: string) => {
     if (!text || !text.trim()) {
@@ -54,6 +58,29 @@ export function ExpressionEditor({
     // Re-validate when external value changes
     if (value !== undefined) validate(value);
   }, [value, validate]);
+
+  // Debounced semantic validate (basic 500ms after last change)
+  useEffect(() => {
+    const handle = setTimeout(async () => {
+      if (!raw.trim()) {
+        setSemanticErrors([]);
+        setSemanticWarnings([]);
+        return;
+      }
+      // Only run if local JSON is syntactically valid
+      try { JSON.parse(raw); } catch { return; }
+
+      setSemanticLoading(true);
+      try {
+        const res = await workflowService.validateExpression(kind, raw);
+        setSemanticErrors(res.errors);
+        setSemanticWarnings(res.warnings);
+      } finally {
+        setSemanticLoading(false);
+      }
+    }, 500);
+    return () => clearTimeout(handle);
+  }, [raw, kind]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const next = e.target.value;
@@ -92,16 +119,29 @@ export function ExpressionEditor({
         disabled={disabled}
         error={!isValid}
         helperText={
-          isValid
-            ? `${kind === 'gateway' ? 'Gateway' : 'Join'} condition parsed OK ${
-                lastValidated ? `(@${new Date(lastValidated).toLocaleTimeString()})` : ''
-              }`
-            : 'Must be valid JSON (JsonLogic shape)'
+          !isValid
+            ? 'Must be valid JSON (JsonLogic shape)'
+            : semanticErrors.length
+            ? semanticErrors[0]
+            : semanticWarnings.length
+            ? semanticWarnings[0]
+            : `${kind === 'gateway' ? 'Gateway' : 'Join'} condition parsed OK`
         }
         FormHelperTextProps={{
           sx: { fontSize: '0.7rem', lineHeight: 1.1 }
         }}
       />
+      {semanticLoading && (
+        <Stack direction="row" spacing={1} sx={{ mt: 0.5 }}>
+          <CircularProgress size={14} />
+          <Typography variant="caption" color="text.secondary">Checking semantics...</Typography>
+        </Stack>
+      )}
+      {!semanticLoading && semanticWarnings.length > 1 && (
+        <Typography variant="caption" color="warning.main">
+          {semanticWarnings.length} warnings
+        </Typography>
+      )}
     </Box>
   );
 }

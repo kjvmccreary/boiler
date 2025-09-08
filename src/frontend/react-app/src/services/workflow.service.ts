@@ -52,6 +52,13 @@ export interface InstanceStatusDto {
   errorMessage?: string | null;
 }
 
+export interface ExpressionValidationResult {
+  success: boolean;
+  errors: string[];
+  warnings: string[];
+  ast?: { operatorName?: string; arity?: number };
+}
+
 function unwrap<T>(payload: unknown): T {
   if (payload && typeof payload === 'object' && 'success' in payload && 'data' in payload) {
     const r = payload as ApiResponse<T>;
@@ -516,6 +523,48 @@ export class WorkflowService {
   async getRuntimeSnapshot(instanceId: number): Promise<InstanceRuntimeSnapshotDto> {
     const resp = await apiClient.get(`/api/workflow/instances/${instanceId}/runtime-snapshot`);
     return unwrap<InstanceRuntimeSnapshotDto>(resp.data);
+  }
+
+  async validateExpression(kind: 'gateway' | 'join', expression: string): Promise<ExpressionValidationResult> {
+    try {
+      // NOTE: apiClient interceptor already unwraps { success, data } into just data when present.
+      // Therefore resp.data is EITHER:
+      //  - ExpressionValidationResultDto (unwrapped)
+      //  - Or (if backend returns raw) still the result object
+      const resp = await apiClient.post('/api/workflow/expressions/validate', { kind, expression });
+
+      const raw: any = resp.data;
+
+      // If interceptor did NOT unwrap (defensive), handle optional wrapper.
+      const inner =
+        raw && typeof raw === 'object' && 'data' in raw && ('success' in raw)
+          ? raw.data
+          : raw;
+
+      // Normalize casing (backend might use PascalCase)
+      const errors = inner.errors ?? inner.Errors ?? [];
+      const warnings = inner.warnings ?? inner.Warnings ?? [];
+      const ast = inner.ast ?? inner.Ast;
+
+      // Determine success (prefer explicit success flag, else infer from errors length)
+      const successFlag = (inner.success ?? inner.Success);
+      const success = typeof successFlag === 'boolean'
+        ? successFlag && errors.length === 0
+        : errors.length === 0;
+
+      return {
+        success,
+        errors,
+        warnings,
+        ast
+      };
+    } catch (e: any) {
+      return {
+        success: false,
+        errors: [e?.message || 'Validation request failed'],
+        warnings: []
+      };
+    }
   }
 }
 
