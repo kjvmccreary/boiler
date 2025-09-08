@@ -40,6 +40,7 @@ import type { WorkflowDefinitionDto } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import { useWorkflowValidation } from '../hooks/useWorkflowValidation';
+import { normalizeTags } from '@/utils/tags';
 
 // --- Helpers to enforce gateway branch metadata ---
 function extractBranch(edge: Edge): 'true' | 'false' | undefined {
@@ -104,6 +105,21 @@ export function BuilderPage() {
 
   const [workflowName, setWorkflowName] = useState('');
   const [workflowDescription, setWorkflowDescription] = useState('');
+  const [workflowTags, setWorkflowTags] = useState('');
+  const [tagsError, setTagsError] = useState<string | null>(null);
+
+  // Tag policy limits (aligned with DefinitionsPage)
+  const MAX_TAGS = 12;
+  const MAX_TAG_LENGTH = 40;
+
+  function validateTags(raw: string): string | null {
+    if (!raw.trim()) return null;
+    const norm = normalizeTags(raw).normalized;
+    if (norm.length > MAX_TAGS) return `Too many tags (max ${MAX_TAGS})`;
+    const over = norm.find(t => t.length > MAX_TAG_LENGTH);
+    if (over) return `Tag "${over}" exceeds ${MAX_TAG_LENGTH} chars`;
+    return null;
+  }
 
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [publishNotes, setPublishNotes] = useState('');
@@ -135,6 +151,7 @@ export function BuilderPage() {
       setDefinition(definitionData);
       setWorkflowName(definitionData.name);
       setWorkflowDescription(definitionData.description || '');
+      setWorkflowTags(definitionData.tags || '');
 
       if (definitionData.jsonDefinition) {
         lastSavedJsonRef.current = definitionData.jsonDefinition;
@@ -207,6 +224,14 @@ export function BuilderPage() {
   const handleSave = async () => {
     try {
       setSaving(true);
+      // Validate tags early
+      const ve = validateTags(workflowTags);
+      setTagsError(ve);
+      if (ve) {
+        toast.error(ve);
+        setSaving(false);
+        return;
+      }
       let dslDefinition: DslDefinition = serializeToDsl(
         nodes,
         edges,
@@ -215,12 +240,16 @@ export function BuilderPage() {
       );
       dslDefinition = applyGatewayBranchMetadata(dslDefinition, edges);
       const jsonDefinitionString = JSON.stringify(dslDefinition);
+      const normTags = workflowTags.trim()
+        ? normalizeTags(workflowTags).canonicalQuery
+        : undefined;
 
       if (isNewWorkflow || !definition) {
         const response = await workflowService.createDraft({
           name: workflowName,
           description: workflowDescription,
-          jsonDefinition: jsonDefinitionString
+          jsonDefinition: jsonDefinitionString,
+          tags: normTags
         });
         setDefinition(response);
         toast.success('Workflow saved as draft');
@@ -229,7 +258,8 @@ export function BuilderPage() {
         const response = await workflowService.updateDefinition(parseInt(id!), {
           name: workflowName,
           description: workflowDescription,
-          jsonDefinition: jsonDefinitionString
+          jsonDefinition: jsonDefinitionString,
+          tags: normTags
         });
         setDefinition(response);
         toast.success('Workflow updated');
@@ -253,6 +283,18 @@ export function BuilderPage() {
       definition?.version
     );
     const json = JSON.stringify(applyGatewayBranchMetadata(dsl, edges));
+    const normTags = workflowTags.trim()
+      ? normalizeTags(workflowTags).canonicalQuery
+      : undefined;
+
+    // Validate tags before auto-save
+    const ve = validateTags(workflowTags);
+    setTagsError(ve);
+    if (ve) {
+      toast.error(ve);
+      return false;
+    }
+
     if (!definition) {
       await handleSave();
       return true;
@@ -262,7 +304,8 @@ export function BuilderPage() {
         await workflowService.updateDefinition(definition.id, {
           name: workflowName,
           description: workflowDescription,
-          jsonDefinition: json
+          jsonDefinition: json,
+          tags: normTags
         });
         lastSavedJsonRef.current = json;
         setDirty(false);
@@ -407,11 +450,25 @@ export function BuilderPage() {
             onChange={e => { setWorkflowName(e.target.value); markDirty(); }}
             sx={{ width: 200 }}
           />
+          <TextField
+            size="small"
+            placeholder="tags (comma,separated)"
+            value={workflowTags}
+            onChange={e => {
+              setWorkflowTags(e.target.value);
+              const err = validateTags(e.target.value);
+              setTagsError(err);
+              markDirty();
+            }}
+            error={!!tagsError}
+            helperText={tagsError || ' '}
+            sx={{ width: 240 }}
+          />
           <Button
             variant="outlined"
             startIcon={<SaveIcon />}
             onClick={handleSave}
-            disabled={saving || !workflowName.trim()}
+            disabled={saving || !workflowName.trim() || !!tagsError}
           >
             {saving ? 'Saving...' : 'Save'}
           </Button>
@@ -482,6 +539,7 @@ export function BuilderPage() {
           workflowDescription={workflowDescription}
           onWorkflowNameChange={(v) => { setWorkflowName(v); markDirty(); }}
           onWorkflowDescriptionChange={(v) => { setWorkflowDescription(v); markDirty(); }}
+          // (Tags intentionally handled in header; could be wired in if PropertyPanel evolves)
         />
       </Box>
 
