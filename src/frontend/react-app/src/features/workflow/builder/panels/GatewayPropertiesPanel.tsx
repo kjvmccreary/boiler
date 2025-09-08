@@ -8,7 +8,9 @@ import {
   SelectChangeEvent,
   TextField,
   Typography,
-  Alert
+  Alert,
+  Chip,
+  Stack
 } from '@mui/material';
 import { GatewayStrategy } from '../../dsl/dsl.types';
 
@@ -18,29 +20,35 @@ export interface GatewayPropertiesPanelProps {
   strategy?: GatewayStrategy;
   condition?: string;
   onChange: (patch: Record<string, any>) => void;
+
+  // Parallel visualization metadata
+  parallelBranchCount?: number;
+  hasJoinCandidate?: boolean;
+  parallelWarnings?: string[];
 }
 
 const strategyOptions: { value: GatewayStrategy; label: string; desc: string }[] = [
   { value: 'exclusive', label: 'Exclusive', desc: 'Choose exactly one branch (default)' },
   { value: 'conditional', label: 'Conditional', desc: 'Evaluate expression to select true/false edges' },
-  { value: 'parallel', label: 'Parallel', desc: 'Fan out to all outgoing branches (C2 will enable visual enhancements)' }
+  { value: 'parallel', label: 'Parallel', desc: 'Fan out to all outgoing branches (executed concurrently)' }
 ];
 
 export function GatewayPropertiesPanel({
   nodeId,
   strategy = 'exclusive',
   condition,
-  onChange
+  onChange,
+  parallelBranchCount,
+  hasJoinCandidate,
+  parallelWarnings
 }: GatewayPropertiesPanelProps) {
 
   const handleStrategyChange = useCallback((e: SelectChangeEvent<string>) => {
     const next = e.target.value as GatewayStrategy;
     const patch: Record<string, any> = { strategy: next };
-    // Clear condition if leaving conditional
     if (strategy === 'conditional' && next !== 'conditional') {
       patch.condition = undefined;
     }
-    // Provide starter JsonLogic if entering conditional with no condition
     if (next === 'conditional' && !condition) {
       patch.condition = '{"==":[{"var":"approved"},true]}';
     }
@@ -50,6 +58,8 @@ export function GatewayPropertiesPanel({
   const handleConditionChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     onChange({ condition: e.target.value });
   }, [onChange]);
+
+  const showParallelPanel = strategy === 'parallel';
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -61,9 +71,9 @@ export function GatewayPropertiesPanel({
         <InputLabel id={`gw-${nodeId}-strategy-label`}>Strategy</InputLabel>
         <Select
           labelId={`gw-${nodeId}-strategy-label`}
-            label="Strategy"
-            value={strategy}
-            onChange={handleStrategyChange}
+          label="Strategy"
+          value={strategy}
+          onChange={handleStrategyChange}
         >
           {strategyOptions.map(opt => (
             <MenuItem key={opt.value} value={opt.value}>
@@ -85,14 +95,33 @@ export function GatewayPropertiesPanel({
           value={condition ?? ''}
           onChange={handleConditionChange}
           placeholder='{"==":[{"var":"approved"},true]}'
-          helperText="JsonLogic expression. H1 story will add validation."
+          helperText="JsonLogic expression (validation coming in H1)."
         />
       )}
 
-      {strategy === 'parallel' && (
-        <Alert severity="info" variant="outlined">
-          Parallel fan-out active. All outgoing edges will execute. C2 will add visualization & join warnings.
-        </Alert>
+      {showParallelPanel && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Chip
+              size="small"
+              color="primary"
+              variant="outlined"
+              label={`Branches: ${parallelBranchCount ?? 0}`}
+            />
+            <Chip
+              size="small"
+              color={hasJoinCandidate ? 'success' : 'warning'}
+              variant="outlined"
+              label={hasJoinCandidate ? 'Join Found' : 'No Join Node'}
+            />
+          </Stack>
+          <Alert severity="info" variant="outlined">
+            Parallel execution: all outgoing edges will be activated. A downstream Join node will synchronize branches (coming in C3/C4).
+          </Alert>
+          {(parallelWarnings || []).map((w, i) => (
+            <Alert key={i} severity="warning" variant="standard">{w}</Alert>
+          ))}
+        </Box>
       )}
     </Box>
   );

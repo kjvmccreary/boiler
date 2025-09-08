@@ -1,10 +1,13 @@
 // Core DSL types for Workflow JSON definitions
-export type NodeType = 'start' | 'end' | 'humanTask' | 'automatic' | 'gateway' | 'timer';
+export type NodeType = 'start' | 'end' | 'humanTask' | 'automatic' | 'gateway' | 'timer' | 'join';
 export type NodeId = string;
 export type EdgeId = string;
 
-// Gateway strategy union (initial set surfaced in builder)
+// Gateway strategy union
 export type GatewayStrategy = 'exclusive' | 'conditional' | 'parallel';
+
+// Join mode union (will be expanded in C4 configuration story)
+export type JoinMode = 'all' | 'any' | 'count' | 'quorum' | 'expression';
 
 // Base node interface
 export interface DslNodeBase {
@@ -34,31 +37,34 @@ export interface AutomaticNode extends DslNodeBase {
   };
 }
 
-/**
- * Gateway node.
- * Backward compatibility:
- *  - Older drafts have no 'strategy' and always a 'condition' string (required).
- *  - New model: strategy determines whether condition is required.
- *    * conditional => condition required (JsonLogic serialized as string for now)
- *    * exclusive | parallel => condition optional/ignored
- * Migration heuristic (validation): if strategy absent and a condition field exists, treat as 'conditional'; else default 'exclusive'.
- */
 export interface GatewayNode extends DslNodeBase {
   type: 'gateway';
-  strategy?: GatewayStrategy;      // Newly introduced (optional for legacy)
-  condition?: string;              // Required only if strategy=conditional (or legacy with condition field)
+  strategy?: GatewayStrategy;
+  condition?: string;
 }
 
 export interface TimerNode extends DslNodeBase {
   type: 'timer';
-  // Legacy relative delay in minutes (can now be fractional)
   delayMinutes?: number;
-  // Precise relative delay in seconds (takes precedence over delayMinutes if provided)
   delaySeconds?: number;
-  // Absolute override (UTC ISO)
   untilIso?: string;
-  // Optional historical alias
   dueDate?: string;
+}
+
+/**
+ * Join node (base form – detailed configuration arrives in C4)
+ * Defaults:
+ *  - mode 'all' (wait for all incoming branches)
+ *  - thresholdCount / thresholdPercent used for count/quorum modes (C4)
+ *  - cancelRemaining indicates pruning of unfinished branches once satisfied
+ */
+export interface JoinNode extends DslNodeBase {
+  type: 'join';
+  mode?: JoinMode;
+  thresholdCount?: number;
+  thresholdPercent?: number;
+  expression?: string;
+  cancelRemaining?: boolean;
 }
 
 // Union type for all nodes
@@ -68,7 +74,8 @@ export type DslNode =
   | HumanTaskNode
   | AutomaticNode
   | GatewayNode
-  | TimerNode;
+  | TimerNode
+  | JoinNode;
 
 // Edge definition
 export interface DslEdge {

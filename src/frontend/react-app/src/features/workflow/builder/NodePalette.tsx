@@ -6,6 +6,7 @@ import {
   Settings as AutomaticIcon,
   AccountTree as GatewayIcon,
   Schedule as TimerIcon,
+  MergeType as JoinIcon
 } from '@mui/icons-material';
 import type { NodeType, NodePaletteItem } from '../dsl/dsl.types';
 
@@ -15,14 +16,14 @@ const nodeTypes: NodePaletteItem[] = [
     label: 'Start',
     icon: 'PlayArrow',
     description: 'Starting point of the workflow',
-    defaultData: { id: '', type: 'start', label: 'Start', x: 0, y: 0 },
+    defaultData: { id: '', type: 'start', label: 'Start', x: 0, y: 0 }
   },
   {
     type: 'end',
     label: 'End',
     icon: 'Stop',
     description: 'End point of the workflow',
-    defaultData: { id: '', type: 'end', label: 'End', x: 0, y: 0 },
+    defaultData: { id: '', type: 'end', label: 'End', x: 0, y: 0 }
   },
   {
     type: 'humanTask',
@@ -35,8 +36,8 @@ const nodeTypes: NodePaletteItem[] = [
       label: 'Human Task',
       x: 0,
       y: 0,
-      assigneeRoles: [],
-    },
+      assigneeRoles: []
+    }
   },
   {
     type: 'automatic',
@@ -49,22 +50,22 @@ const nodeTypes: NodePaletteItem[] = [
       label: 'Automatic Task',
       x: 0,
       y: 0,
-      action: { kind: 'noop' },
-    },
+      action: { kind: 'noop' }
+    }
   },
   {
     type: 'gateway',
     label: 'Gateway',
     icon: 'AccountTree',
-    description: 'Branching logic (choose strategy in properties)',
+    description: 'Branching logic (select strategy in properties)',
     defaultData: {
       id: '',
       type: 'gateway',
       label: 'Gateway',
       x: 0,
       y: 0,
-      strategy: 'exclusive',
-    },
+      strategy: 'exclusive'
+    }
   },
   {
     type: 'timer',
@@ -77,9 +78,24 @@ const nodeTypes: NodePaletteItem[] = [
       label: 'Timer',
       x: 0,
       y: 0,
-      delayMinutes: 5,
-    },
+      delayMinutes: 5
+    }
   },
+  {
+    type: 'join',
+    label: 'Join',
+    icon: 'MergeType',
+    description: 'Synchronize parallel branches (base)',
+    defaultData: {
+      id: '',
+      type: 'join',
+      label: 'Join',
+      x: 0,
+      y: 0,
+      mode: 'all',
+      cancelRemaining: false
+    } as any
+  }
 ];
 
 const iconMap = {
@@ -89,6 +105,7 @@ const iconMap = {
   Settings: AutomaticIcon,
   AccountTree: GatewayIcon,
   Schedule: TimerIcon,
+  MergeType: JoinIcon
 };
 
 export function NodePalette() {
@@ -105,7 +122,7 @@ export function NodePalette() {
         borderColor: 'divider',
         bgcolor: 'background.paper',
         p: 2,
-        overflow: 'auto',
+        overflow: 'auto'
       }}
     >
       <Typography variant="h6" gutterBottom>
@@ -116,9 +133,8 @@ export function NodePalette() {
       </Typography>
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {nodeTypes.map((nodeType) => {
+        {nodeTypes.map(nodeType => {
           const IconComponent = iconMap[nodeType.icon as keyof typeof iconMap];
-
           return (
             <Tooltip key={nodeType.type} title={nodeType.description} placement="right">
               <Paper
@@ -128,15 +144,11 @@ export function NodePalette() {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,
-                  '&:hover': {
-                    bgcolor: 'action.hover',
-                  },
-                  '&:active': {
-                    cursor: 'grabbing',
-                  },
+                  '&:hover': { bgcolor: 'action.hover' },
+                  '&:active': { cursor: 'grabbing' }
                 }}
                 draggable
-                onDragStart={(event) => onDragStart(event, nodeType.type)}
+                onDragStart={event => onDragStart(event, nodeType.type)}
               >
                 <IconComponent fontSize="small" color="primary" />
                 <Typography variant="body2" fontWeight="medium">
@@ -153,12 +165,9 @@ export function NodePalette() {
           <strong>Instructions:</strong>
         </Typography>
         <Typography variant="caption" color="text.secondary">
-          • Drag nodes to canvas
-          <br />
-          • Connect nodes via handles
-          <br />
-          • Click nodes to edit properties
-          <br />
+          • Drag nodes to canvas<br />
+          • Connect nodes via handles<br />
+          • Click nodes to edit properties<br />
           • Delete with Del/Backspace key
         </Typography>
       </Box>

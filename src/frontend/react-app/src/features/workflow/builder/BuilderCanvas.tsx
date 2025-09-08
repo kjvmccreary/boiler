@@ -68,8 +68,7 @@ function BuilderCanvasInner({
   const handleInit = useCallback((inst: ReactFlowInstance) => {
     setRfInstance(inst);
     (window as any).__RF = inst;
-    // eslint-disable-next-line no-console
-    console.log('[RF][Init] instance exposed as window.__RF');
+    console.log('[RF][Init] instance exposed as window.__RF'); // eslint-disable-line
   }, []);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -98,10 +97,17 @@ function BuilderCanvasInner({
               ...baseNode,
               type: 'gateway',
               label: 'Gateway',
-              // New style: strategy defaults to exclusive
               strategy: 'exclusive'
             } as GatewayNode;
           case 'timer': return { ...baseNode, type: 'timer', label: 'Timer', delayMinutes: 5 } as TimerNode;
+          case 'join':
+            return {
+              ...baseNode,
+              type: 'join',
+              label: 'Join',
+              mode: 'all',
+              cancelRemaining: false
+            } as any;
           default: return { ...baseNode, type: 'start', label: 'Unknown' } as StartNode;
         }
       };
@@ -119,41 +125,61 @@ function BuilderCanvasInner({
     [screenToFlowPosition, setNodes]
   );
 
+  // Helper: compute label for parallel branch
+  const computeParallelBranchLabel = (sourceId: string): string => {
+    const existing = edges.filter(e => e.source === sourceId);
+    const index = existing.length + 1;
+    return `b${index}`;
+  };
+
   const internalHandleConnect = useCallback(
     (params: Connection) => {
-      const branch =
+      const sourceNode = nodes.find(n => n.id === params.source);
+      let branch: string | undefined =
         params.sourceHandle === 'true' || params.sourceHandle === 'false'
           ? params.sourceHandle
           : undefined;
+
+      let style: Edge['style'] | undefined;
+      let label: string | undefined = branch;
+
+      if (sourceNode?.data?.strategy === 'parallel') {
+        // Auto-label parallel branch if unlabeled
+        label = computeParallelBranchLabel(sourceNode.id);
+        style = {
+          strokeDasharray: '4 2',
+          stroke: '#5e35b1',
+          strokeWidth: 2
+        };
+      }
 
       setEdges(prev =>
         addEdge(
           {
             ...params,
-            id: `e-${params.source}-${params.sourceHandle ?? 'h'}-${params.target}-${Date.now()}`,
+            id: `e-${params.source}-${params.sourceHandle ?? label ?? 'h'}-${params.target}-${Date.now()}`,
             source: params.source,
             target: params.target,
             sourceHandle: params.sourceHandle ?? undefined,
-            label: branch,
-            data: { fromHandle: branch },
-            type: 'default'
+            label,
+            data: { fromHandle: branch, parallel: sourceNode?.data?.strategy === 'parallel' },
+            type: 'default',
+            style
           } as Edge,
           prev
         )
       );
     },
-    [setEdges]
+    [setEdges, nodes, edges]
   );
 
   const effectiveConnect = onConnect ?? internalHandleConnect;
 
-  // Debug: log only gateway edges whenever edges change
   useEffect(() => {
     const gatewayEdgeDebug = edges
       .filter(e => nodes.some(n => n.id === e.source && (n as any).data?.type === 'gateway') || nodes.some(n => n.id === e.source && n.type === 'gateway'));
     if (gatewayEdgeDebug.length) {
-      // eslint-disable-next-line no-console
-      console.log('[RF][GatewayEdges]', gatewayEdgeDebug.map(e => ({
+      console.log('[RF][GatewayEdges]', gatewayEdgeDebug.map(e => ({ // eslint-disable-line
         id: e.id,
         source: e.source,
         target: e.target,
@@ -172,7 +198,7 @@ function BuilderCanvasInner({
 
         if (selectedNodes.length > 0) {
           const ids = selectedNodes.map(n => n.id);
-          setNodes(nds => nds.filter(n => !ids.includes(n.id)));
+            setNodes(nds => nds.filter(n => !ids.includes(n.id)));
           setEdges(eds => eds.filter(e => !ids.includes(e.source) && !ids.includes(e.target)));
           if (activeNode && ids.includes(activeNode.id)) setActiveNode(undefined);
         }
@@ -199,7 +225,6 @@ function BuilderCanvasInner({
         return { ...n, data: merged };
       })
     );
-    // update active snapshot
     if (activeNode?.id === id) {
       setActiveNode(prev => prev ? { ...prev, data: { ...prev.data, ...patch } } : prev);
     }
@@ -248,6 +273,7 @@ function BuilderCanvasInner({
       <PropertyPanel
         open={!!activeNode}
         node={activeNode}
+        edges={edges}
         onClose={() => setActiveNode(undefined)}
         updateNode={updateNode}
       />

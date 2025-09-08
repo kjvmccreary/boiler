@@ -27,10 +27,10 @@ Progress Legend:
 | Start / End Nodes | Stable | Implemented | — | Done | [x] |
 | HumanTask Node | Stable | Basic node only | Missing enhanced assignment UX | High | [ ] |
 | Automatic Node | Stable | Basic node | No action/webhook config panel | Medium | [ ] |
-| Gateway Strategy (exclusive / conditional / parallel) | Supported | Strategy selector & panel added | Parallel viz & expr validation pending | Critical | [~] |
-| Conditional Expressions (JsonLogic) | Supported | Not editable | No editor/validation | Critical | [ ] |
-| Parallel Fan-Out | Supported | Not representable | Visualization & warnings (C2) | Critical | [ ] |
-| Join Node & Modes | Supported (all/any/count/quorum/expression) | Missing | No node type or config | Critical | [ ] |
+| Gateway Strategy (exclusive / conditional / parallel) | Supported | Strategy selector, panel | Expr validation pending | Critical | [~] |
+| Conditional Expressions (JsonLogic) | Supported | Not editable | Editor/validation pending | Critical | [ ] |
+| Parallel Fan-Out | Supported | Basic visualization added | Join + advanced validation pending | Critical | [~] |
+| Join Node & Modes | Supported (all/any/count/quorum/expression) | Base join node added | Config panel & validation (C4) | Critical | [~] |
 | Join Mode Config (threshold / expression) | Supported | Missing | No inputs / validation | Critical | [ ] |
 | Timer Node (due / duration) | Supported (worker pending) | Minimal | Needs duration/datetime inputs + validation | High | [ ] |
 | Task Actions: claim/complete | Implemented | Present | OK | Done | [x] |
@@ -65,8 +65,8 @@ Progress Legend:
 | ID | Story | Definition of Done | Owner | Status |
 |----|-------|--------------------|-------|--------|
 | C1 | Gateway Strategy Selector | strategy persisted (exclusive/conditional/parallel); DSL round-trips |  | [~] |
-| C2 | Parallel Gateway Visualization | Parallel edges annotated; warning if no downstream join |  | [ ] |
-| C3 | Join Node Type (Base) | Join node palette + serialization |  | [ ] |
+| C2 | Parallel Gateway Visualization | Parallel edges annotated; warning if no downstream join |  | [~] |
+| C3 | Join Node Type (Base) | Join node palette + serialization |  | [~] |
 | C4 | Join Configuration Panel | Modes + dynamic fields + validation |  | [ ] |
 | C5 | Timer Node Property Panel Upgrade | Supports duration & absolute due; validation errors surfaced |  | [ ] |
 | C6 | Task Extended Actions (assign/cancel/reset) | Task detail drawer + permission guard |  | [ ] |
@@ -119,7 +119,9 @@ Progress Legend:
 
 | Date | Story | Status Update | Blockers | Next Action |
 |------|-------|---------------|----------|------------|
-| 2025-09-08 | C1 | Strategy selector + panel committed; build fix (JSX file rename) | None | Implement C2 visualization & join warning |
+| 2025-09-08 | C1 | Strategy selector + panel committed; build fix | None | H1 (expression validation) |
+| 2025-09-08 | C2 | Parallel visualization & warnings implemented | Await join semantics | C3 |
+| 2025-09-08 | C3 | Base join node (palette, render, placeholder panel) added | Config & validation deferred to C4 | C4 configuration panel |
 
 ---
 
@@ -127,7 +129,7 @@ Progress Legend:
 
 | Date | Change | Author |
 |------|--------|--------|
-| 2025-09-08 | Marked C1 In Progress; added progress log entry; updated parity row | Team |
+| 2025-09-08 | Marked C1, C2, C3 In Progress; updated joins & config panel story | Team |
 
 ---
 (End of Document)

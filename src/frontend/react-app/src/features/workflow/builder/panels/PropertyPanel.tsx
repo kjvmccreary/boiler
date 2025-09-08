@@ -1,6 +1,6 @@
-import { Box, Drawer, IconButton, Typography } from '@mui/material';
+import { Box, Drawer, IconButton, Typography, Alert } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { Node } from 'reactflow';
+import { Edge, Node } from 'reactflow';
 import GatewayPropertiesPanel from './GatewayPropertiesPanel';
 import { GatewayStrategy } from '../../dsl/dsl.types';
 import type { ReactNode } from 'react';
@@ -8,11 +8,12 @@ import type { ReactNode } from 'react';
 export interface PropertyPanelProps {
   open: boolean;
   node?: Node;
+  edges: Edge[];
   onClose: () => void;
   updateNode: (id: string, patch: Record<string, any>) => void;
 }
 
-export function PropertyPanel({ open, node, onClose, updateNode }: PropertyPanelProps) {
+export function PropertyPanel({ open, node, edges, onClose, updateNode }: PropertyPanelProps) {
   if (!node) {
     return (
       <Drawer anchor="right" open={open} onClose={onClose}>
@@ -23,24 +24,41 @@ export function PropertyPanel({ open, node, onClose, updateNode }: PropertyPanel
 
   const data = node.data || {};
   const type = node.type;
-
-  const update = (patch: Record<string, any>) => {
-    updateNode(node.id, patch);
-  };
-
-  // Changed from JSX.Element | null to ReactNode to avoid relying on global JSX namespace
+  const update = (patch: Record<string, any>) => updateNode(node.id, patch);
   let body: ReactNode = null;
 
   if (type === 'gateway') {
     const props = (data as any).properties || data;
     const strategy: GatewayStrategy | undefined = props.strategy;
+    const outgoing = edges.filter(e => e.source === node.id);
+    const parallelWarnings: string[] = [];
+    if (strategy === 'parallel' && outgoing.length < 2) {
+      parallelWarnings.push('Needs at least 2 outgoing branches for a meaningful parallel fan-out.');
+    }
     body = (
       <GatewayPropertiesPanel
         nodeId={node.id}
         strategy={strategy}
         condition={props.condition}
-        onChange={(patch) => update(patch)}
+        onChange={patch => update(patch)}
+        parallelBranchCount={outgoing.length}
+        hasJoinCandidate={false}
+        parallelWarnings={parallelWarnings}
       />
+    );
+  } else if (type === 'join') {
+    const props = (data as any).properties || data;
+    body = (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Typography variant="subtitle1" fontWeight={600}>Join</Typography>
+        <Alert severity="info" variant="outlined">
+          Base Join node added. Configuration panel (modes, thresholds, expression) will arrive in C4.
+        </Alert>
+        <Typography variant="body2" color="text.secondary">
+          Current Mode: <strong>{props.mode || 'all'}</strong><br />
+          Cancel Remaining: <strong>{String(props.cancelRemaining ?? false)}</strong>
+        </Typography>
+      </Box>
     );
   } else {
     body = (
@@ -57,7 +75,7 @@ export function PropertyPanel({ open, node, onClose, updateNode }: PropertyPanel
           <Typography variant="h6" fontSize={16} fontWeight={600} sx={{ pr: 1 }}>
             Node Properties
           </Typography>
-            <IconButton size="small" onClick={onClose}>
+          <IconButton size="small" onClick={onClose}>
             <CloseIcon fontSize="small" />
           </IconButton>
         </Box>

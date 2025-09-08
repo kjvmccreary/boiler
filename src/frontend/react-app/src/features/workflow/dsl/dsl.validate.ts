@@ -58,7 +58,6 @@ export function validateDefinition(definition: DslDefinition): ValidationResult 
         : (gw.condition ? 'conditional' : 'exclusive');
 
       if (!gw.strategy) {
-        // Allow silent inference; could add warning later if desired
         gw.strategy = inferredStrategy;
       }
 
@@ -66,8 +65,12 @@ export function validateDefinition(definition: DslDefinition): ValidationResult 
         if (!gw.condition || typeof gw.condition !== 'string' || gw.condition.trim() === '') {
           errors.push(`Gateway node "${node.label || node.id}" must have a condition`);
         }
-      } else {
-        // exclusive / parallel: condition optional; ignore if empty
+      } else if (inferredStrategy === 'parallel') {
+        // Parallel fan-out advisory warnings (Join checks will be added when Join node type exists in C3)
+        const outgoing = definition.edges.filter(e => e.from === node.id);
+        if (outgoing.length < 2) {
+          warnings.push(`Parallel gateway "${node.label || node.id}" should have at least 2 outgoing branches`);
+        }
       }
     }
   }
