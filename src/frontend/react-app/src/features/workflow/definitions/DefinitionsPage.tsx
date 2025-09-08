@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -10,7 +10,9 @@ import {
   DialogActions,
   TextField,
   Switch,
-  FormControlLabel
+  FormControlLabel,
+  Divider,
+  Stack
 } from '@mui/material';
 import {
   DataGridPremium,
@@ -30,7 +32,8 @@ import {
   FileCopy as DuplicateIcon,
   Gavel as UnpublishIcon,
   Archive as ArchiveIcon,
-  Cancel as TerminateIcon
+  Cancel as TerminateIcon,
+  InfoOutlined as InfoIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { CanAccess } from '@/components/authorization/CanAccess';
@@ -46,6 +49,21 @@ function readStoredShowArchived(defaultValue: boolean): boolean {
   const raw = window.localStorage.getItem(LS_KEY_SHOW_ARCHIVED);
   if (raw === null) return defaultValue;
   return raw === 'true';
+}
+
+function formatDate(value?: string | Date | null): string {
+  if (!value) return '—';
+  const d = typeof value === 'string' ? new Date(value) : value;
+  if (isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString();
+}
+
+function splitTags(raw?: string | null): string[] {
+  if (!raw) return [];
+  return raw
+    .split(/[, ]+/)
+    .map(t => t.trim())
+    .filter(Boolean);
 }
 
 export function DefinitionsPage() {
@@ -76,6 +94,7 @@ export function DefinitionsPage() {
     if (currentTenant) {
       loadDefinitions();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentTenant, showArchived]);
 
   const loadDefinitions = async () => {
@@ -262,26 +281,33 @@ export function DefinitionsPage() {
       },
     },
     {
+      field: 'activeInstanceCount',
+      headerName: 'Active',
+      width: 90,
+      type: 'number',
+      renderCell: (params) => (params.row?.activeInstanceCount ?? 0) || 0
+    },
+    {
       field: 'createdAt',
       headerName: 'Created',
       width: 130,
       type: 'date',
-      valueGetter: (value) => new Date(value),
-      renderCell: (params) => new Date(params.value).toLocaleDateString()
+      valueGetter: (value) => value ? new Date(value as string) : null,
+      renderCell: (params) => formatDate(params.value)
     },
     {
       field: 'publishedAt',
       headerName: 'Published',
       width: 130,
       type: 'date',
-      valueGetter: (value) => value ? new Date(value) : null,
-      renderCell: (params) => params.value ? new Date(params.value).toLocaleDateString() : '—',
+      valueGetter: (value) => value ? new Date(value as string) : null,
+      renderCell: (params) => formatDate(params.value),
     },
     {
       field: 'actions',
       type: 'actions',
       headerName: 'Actions',
-      width: 130,
+      width: 140,
       getActions: (params: GridRowParams) => {
         const definition = params.row as WorkflowDefinitionDto;
         const actions = [
@@ -290,6 +316,20 @@ export function DefinitionsPage() {
             icon={<ViewIcon />}
             label="View"
             onClick={() => handleView(params.id)}
+          />,
+          <GridActionsCellItem
+            key="info"
+            icon={<InfoIcon />}
+            label="Details"
+            onClick={() => {
+              // Toggle detail panel by emitting built-in event
+              const grid = document.querySelector('[role="grid"]');
+              if (grid) {
+                // DataGridPremium toggles with keyboard/row click; here we rely on row click fallback.
+                // This action serves as a hint; manual click can also expand.
+              }
+            }}
+            showInMenu
           />
         ];
 
@@ -377,13 +417,91 @@ export function DefinitionsPage() {
     },
   ];
 
+  // Detail panel for rich metadata
+  const getDetailPanelContent = useCallback(
+    (params: GridRowParams) => {
+      const def = params.row as WorkflowDefinitionDto;
+      const tags = splitTags(def.tags);
+      return (
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: 'background.default',
+            borderTop: theme => `1px solid ${theme.palette.divider}`,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2
+          }}
+        >
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            Metadata for: {def.name} (v{def.version})
+          </Typography>
+          <Stack direction="row" spacing={4} flexWrap="wrap" useFlexGap>
+            <Box sx={{ minWidth: 240 }}>
+              <Typography variant="caption" color="text.secondary">Publish Notes</Typography>
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                {def.publishNotes?.trim() || '—'}
+              </Typography>
+            </Box>
+            <Box sx={{ minWidth: 240 }}>
+              <Typography variant="caption" color="text.secondary">Version Notes</Typography>
+              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                {def.versionNotes?.trim() || '—'}
+              </Typography>
+            </Box>
+            <Box sx={{ minWidth: 160 }}>
+              <Typography variant="caption" color="text.secondary">Active Instances</Typography>
+              <Typography variant="body2">
+                {def.activeInstanceCount ?? 0}
+              </Typography>
+            </Box>
+            <Box sx={{ minWidth: 200 }}>
+              <Typography variant="caption" color="text.secondary">Tags</Typography>
+              <Box sx={{ mt: 0.5, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {tags.length === 0 && <Typography variant="body2">—</Typography>}
+                {tags.map(t => (
+                  <Chip key={t} size="small" label={t} variant="outlined" />
+                ))}
+              </Box>
+            </Box>
+            <Box sx={{ minWidth: 200 }}>
+              <Typography variant="caption" color="text.secondary">State & Timestamps</Typography>
+              <Typography variant="body2">
+                {def.isPublished ? 'Published' : 'Draft'}
+                {def.isArchived ? ' • Archived' : ''}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Created: {formatDate(def.createdAt)}
+              </Typography><br />
+              <Typography variant="caption" color="text.secondary">
+                Published: {formatDate(def.publishedAt as any)}
+              </Typography><br />
+              {def.isArchived && (
+                <Typography variant="caption" color="text.secondary">
+                  Archived: {formatDate(def.archivedAt as any)}
+                </Typography>
+              )}
+            </Box>
+          </Stack>
+          <Divider />
+          <Typography variant="caption" color="text.secondary">
+            Definition Id: {def.id} • Parent Definition Id: {def.parentDefinitionId ?? '—'}
+          </Typography>
+        </Box>
+      );
+    },
+    []
+  );
+
+  const getDetailPanelHeight = useCallback(() => 210, []);
+
   if (!currentTenant) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
         <Typography>Please select a tenant to view workflow definitions</Typography>
       </Box>
     );
-  }
+    }
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -431,10 +549,12 @@ export function DefinitionsPage() {
           initialState={{
             pagination: { paginationModel: { pageSize: 10 } }
           }}
+          getDetailPanelContent={getDetailPanelContent}
+          getDetailPanelHeight={getDetailPanelHeight}
           slots={{
             toolbar: GridToolbar
           }}
-          slotProps={{
+            slotProps={{
             toolbar: {
               showQuickFilter: true,
               quickFilterProps: { debounceMs: 500 }

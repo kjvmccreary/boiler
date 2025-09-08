@@ -1,66 +1,74 @@
 import { describe, it, expect } from 'vitest';
 import { workflowService } from '@/services/workflow.service';
-import { apiClient } from '@/services/api.client';
 import approvalBasic from '@/test/fixtures/workflow/approval.basic.json';
 
 /**
  * Multi-tenant isolation test:
- * Uses localStorage test_tenant_id -> injected as X-Tenant-Id header (ApiClient test-mode logic).
- * Ensures definitions, instances, tasks do not leak across tenants.
+ * Relies on apiClient test-mode logic reading localStorage 'test_tenant_id'
+ * and injecting X-Tenant-Id header.
+ *
+ * Verifies:
+ *  - Definitions are isolated per tenant
+ *  - Tasks created in one tenant are not visible in another
  */
 describe('WorkflowService / Multi-Tenant Isolation', () => {
-  async function listDefinitions(): Promise<any[]> {
-    const resp = await apiClient.get('/api/workflow/definitions');
-    return resp.data as any[];
+  async function definitionNames(): Promise<string[]> {
+    const defs = await workflowService.getDefinitions({ includeArchived: true });
+    return defs.map(d => d.name).sort();
   }
 
-  async function listTasks(): Promise<any[]> {
-    const resp = await apiClient.get('/api/workflow/tasks');
-    return resp.data as any[];
+  async function taskCount(): Promise<number> {
+    const tasks = await workflowService.getTasks({ pageSize: 50 });
+    return tasks.length;
   }
 
   it('isolates definitions and tasks between tenants', async () => {
-    // Tenant A create + publish + start
+    // ---------- Tenant A ----------
     localStorage.setItem('test_tenant_id', 'tenantA');
+
     const draftA = await workflowService.createDraft({
-      key: 'defA',
-      name: 'Def A',
-      description: 'Tenant A',
-      jsonDefinition: approvalBasic
-    } as any);
-    await workflowService.publishDefinition((draftA as any).id);
-    await workflowService.startInstance({ definitionKey: 'defA' } as any);
+      name: 'TenantA Flow',
+      description: 'Tenant A Definition',
+      jsonDefinition: JSON.stringify(approvalBasic)
+    });
 
-    const defsA1 = await listDefinitions();
-    expect(defsA1.map(d => d.key)).toEqual(['defA']);
-    const tasksA1 = await listTasks();
-    expect(tasksA1.length).toBeGreaterThan(0);
+    await workflowService.publishDefinition(draftA.id);
+    await workflowService.startInstance({ workflowDefinitionId: draftA.id });
 
-    // Tenant B should see nothing initially
+    const defsA1 = await definitionNames();
+    expect(defsA1).toEqual(['TenantA Flow']);
+
+    const tasksA1 = await taskCount();
+    expect(tasksA1).toBeGreaterThan(0);
+
+    // ---------- Tenant B (should be isolated) ----------
     localStorage.setItem('test_tenant_id', 'tenantB');
-    const defsB0 = await listDefinitions();
-    expect(defsB0.length).toBe(0);
 
-    // Create in B
+    const defsB0 = await definitionNames();
+    expect(defsB0).toEqual([]);
+
     const draftB = await workflowService.createDraft({
-      key: 'defB',
-      name: 'Def B',
-      description: 'Tenant B',
-      jsonDefinition: approvalBasic
-    } as any);
-    await workflowService.publishDefinition((draftB as any).id);
-    await workflowService.startInstance({ definitionKey: 'defB' } as any);
+      name: 'TenantB Flow',
+      description: 'Tenant B Definition',
+      jsonDefinition: JSON.stringify(approvalBasic)
+    });
 
-    const defsB1 = await listDefinitions();
-    expect(defsB1.map(d => d.key)).toEqual(['defB']);
-    const tasksB = await listTasks();
-    expect(tasksB.length).toBeGreaterThan(0);
+    await workflowService.publishDefinition(draftB.id);
+    await workflowService.startInstance({ workflowDefinitionId: draftB.id });
 
-    // Back to A: original state unchanged by B
+    const defsB1 = await definitionNames();
+    expect(defsB1).toEqual(['TenantB Flow']);
+
+    const tasksB = await taskCount();
+    expect(tasksB).toBeGreaterThan(0);
+
+    // ---------- Back to Tenant A (unchanged) ----------
     localStorage.setItem('test_tenant_id', 'tenantA');
-    const defsA2 = await listDefinitions();
-    expect(defsA2.map(d => d.key)).toEqual(['defA']);
-    const tasksA2 = await listTasks();
-    expect(tasksA2.length).toBe(tasksA1.length);
+
+    const defsA2 = await definitionNames();
+    expect(defsA2).toEqual(['TenantA Flow']);
+
+    const tasksA2 = await taskCount();
+    expect(tasksA2).toBe(tasksA1); // Should not have been affected by Tenant B operations
   });
 });
