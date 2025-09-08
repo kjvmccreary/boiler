@@ -1,85 +1,156 @@
-[9/8/2025 8:22:41.868 AM]  Interrupt: Enqueueing RunStatesOperation
-[9/8/2025 8:22:41.868 AM]  Enqueue operation 'RunStatesOperation', hashcode:65185755 
-[9/8/2025 8:22:41.868 AM]  Operation left in the the queue: 1
-[9/8/2025 8:22:41.868 AM]  	'RunStatesOperation', hashcode:65185755
-[9/8/2025 8:22:41.868 AM]  
+PS C:\Users\mccre\dev\boiler\src\frontend\react-app> npm run test -- src/tests/serviceContracts
 
-[9/8/2025 8:22:41.868 AM]  Operation Dequeue : 'RunStatesOperation'
-[9/8/2025 8:22:41.877 AM]  Building Test Projects
-[9/8/2025 8:22:41.971 AM]  Update Test run progress to 0/100.
-[9/8/2025 8:22:41.984 AM]  Start building 1 containers.
-[9/8/2025 8:22:41.984 AM]  Skipping build for IProjectBasedTestContainers since no solution is open.
-[9/8/2025 8:22:41.984 AM]  No IBuildableTestContainers were found.
-[9/8/2025 8:22:41.984 AM]  Completed building containers.
-[9/8/2025 8:22:41.984 AM]  Start updating 1 containers.
-[9/8/2025 8:22:41.984 AM]  Updating container C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll.
-[9/8/2025 8:22:41.991 AM]  Successfully refreshed container: C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll
-[9/8/2025 8:22:41.991 AM]  Completed updating containers.
-[9/8/2025 8:22:41.991 AM]  DiscoveryOperation<RunStatesOperation> Changed container count is 1
-[9/8/2025 8:22:42.007 AM]  Test run animation has started.
-[9/8/2025 8:22:42.026 AM]  Test run progress has started.
-[9/8/2025 8:22:42.029 AM]  Discovering the following containers :
-[9/8/2025 8:22:42.029 AM]  	C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll
-[9/8/2025 8:22:43.401 AM]  Starting test discovery for requested test run
-[9/8/2025 8:22:43.510 AM]  ========== Starting test discovery ==========
-[9/8/2025 8:22:43.511 AM]  File timestamp changed from 9/7/2025 8:45:53 AM to 9/8/2025 8:22:04 AM for C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll
-[9/8/2025 8:22:43.511 AM]  Grouped C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll : (VsTestConsoleRunner, , , False)
-[9/8/2025 8:22:43.512 AM]  Test discovery settings for C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll:
- <RunSettings>
-  <RunConfiguration>
-    <ResultsDirectory>C:\Users\mccre\dev\boiler\TestResults</ResultsDirectory>
-    <SolutionDirectory>C:\Users\mccre\dev\boiler\</SolutionDirectory>
-    <MaxCpuCount>0</MaxCpuCount>
-    <CollectSourceInformation>False</CollectSourceInformation>
-  </RunConfiguration>
-</RunSettings>.
-[9/8/2025 8:22:43.578 AM]  Project WorkflowService.Tests references test adapter: xunit.runner.visualstudio, version 2.5.6
-[9/8/2025 8:22:43.578 AM]  Project WorkflowService.Tests references test adapter: xunit.runner.visualstudio, version 2.5.6
-[9/8/2025 8:22:43.852 AM]  Logging TestHost Diagnostics in file: C:\Users\mccre\AppData\Local\Temp\TestPlatformLogs\2025_09_06_19_08_41_39728\logs.host.25-09-08_08-22-43_66522_21.txt
-[9/8/2025 8:22:43.901 AM]  [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.6+bf9b858c26 (64-bit .NET 9.0.7)
-[9/8/2025 8:22:43.963 AM]  [xUnit.net 00:00:00.06]   Discovering: WorkflowService.Tests
-[9/8/2025 8:22:44.014 AM]  [xUnit.net 00:00:00.11]   Discovered:  WorkflowService.Tests
-[9/8/2025 8:22:44.105 AM]  ========== Test discovery finished: 380 Tests found in 594.9 ms ==========
-[9/8/2025 8:22:44.154 AM]  ========== Starting test run ==========
-[9/8/2025 8:22:44.155 AM]  Tests run settings for C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\bin\Debug\net9.0\WorkflowService.Tests.dll:
- <RunSettings>
-  <RunConfiguration>
-    <ResultsDirectory>C:\Users\mccre\dev\boiler\TestResults</ResultsDirectory>
-    <SolutionDirectory>C:\Users\mccre\dev\boiler\</SolutionDirectory>
-    <CollectSourceInformation>False</CollectSourceInformation>
-  </RunConfiguration>
-</RunSettings>.
-[9/8/2025 8:22:44.389 AM]  Logging TestHost Diagnostics in file: C:\Users\mccre\AppData\Local\Temp\TestPlatformLogs\2025_09_06_19_08_41_39728\logs.host.25-09-08_08-22-44_17450_24.txt
-[9/8/2025 8:22:44.446 AM]  [xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v2.5.6+bf9b858c26 (64-bit .NET 9.0.7)
-[9/8/2025 8:22:44.498 AM]  [xUnit.net 00:00:00.05]   Starting:    WorkflowService.Tests
-[9/8/2025 8:22:45.022 AM] [Error] [xUnit.net 00:00:00.57]     WorkflowService.Tests.Definitions.DefinitionsControllerTests.GetAll_IncludeArchived_ShouldReturnArchived [FAIL]
-[9/8/2025 8:22:45.024 AM]  [xUnit.net 00:00:00.57]       Expected envelope not to be <null>.
-[9/8/2025 8:22:45.033 AM]  [xUnit.net 00:00:00.57]       Stack Trace:
-[9/8/2025 8:22:45.034 AM]  [xUnit.net 00:00:00.57]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[9/8/2025 8:22:45.035 AM]  [xUnit.net 00:00:00.57]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[9/8/2025 8:22:45.035 AM]  [xUnit.net 00:00:00.57]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[9/8/2025 8:22:45.035 AM]  [xUnit.net 00:00:00.57]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[9/8/2025 8:22:45.037 AM]  [xUnit.net 00:00:00.57]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[9/8/2025 8:22:45.037 AM]  [xUnit.net 00:00:00.57]            at FluentAssertions.Execution.AssertionScope.FailWith(String message)
-[9/8/2025 8:22:45.038 AM]  [xUnit.net 00:00:00.57]            at FluentAssertions.Primitives.ReferenceTypeAssertions`2.NotBeNull(String because, Object[] becauseArgs)
-[9/8/2025 8:22:45.038 AM]  [xUnit.net 00:00:00.57]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\DefinitionsControllerTests.cs(147,0): at WorkflowService.Tests.Definitions.DefinitionsControllerTests.GetAll_IncludeArchived_ShouldReturnArchived()
-[9/8/2025 8:22:45.039 AM]  [xUnit.net 00:00:00.57]         --- End of stack trace from previous location ---
-[9/8/2025 8:22:45.039 AM] [Error] [xUnit.net 00:00:00.58]     WorkflowService.Tests.Definitions.DefinitionsControllerTests.GetAll_Default_ShouldExcludeArchived [FAIL]
-[9/8/2025 8:22:45.039 AM]  [xUnit.net 00:00:00.58]       Expected envelope not to be <null>.
-[9/8/2025 8:22:45.039 AM]  [xUnit.net 00:00:00.58]       Stack Trace:
-[9/8/2025 8:22:45.041 AM]  [xUnit.net 00:00:00.58]            at FluentAssertions.Execution.XUnit2TestFramework.Throw(String message)
-[9/8/2025 8:22:45.041 AM]  [xUnit.net 00:00:00.58]            at FluentAssertions.Execution.TestFrameworkProvider.Throw(String message)
-[9/8/2025 8:22:45.041 AM]  [xUnit.net 00:00:00.58]            at FluentAssertions.Execution.DefaultAssertionStrategy.HandleFailure(String message)
-[9/8/2025 8:22:45.041 AM]  [xUnit.net 00:00:00.58]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[9/8/2025 8:22:45.042 AM]  [xUnit.net 00:00:00.58]            at FluentAssertions.Execution.AssertionScope.FailWith(Func`1 failReasonFunc)
-[9/8/2025 8:22:45.042 AM]  [xUnit.net 00:00:00.58]            at FluentAssertions.Execution.AssertionScope.FailWith(String message)
-[9/8/2025 8:22:45.043 AM]  [xUnit.net 00:00:00.58]            at FluentAssertions.Primitives.ReferenceTypeAssertions`2.NotBeNull(String because, Object[] becauseArgs)
-[9/8/2025 8:22:45.043 AM]  [xUnit.net 00:00:00.58]         C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Definitions\DefinitionsControllerTests.cs(129,0): at WorkflowService.Tests.Definitions.DefinitionsControllerTests.GetAll_Default_ShouldExcludeArchived()
-[9/8/2025 8:22:45.044 AM]  [xUnit.net 00:00:00.58]         --- End of stack trace from previous location ---
-[9/8/2025 8:22:45.044 AM]  [xUnit.net 00:00:00.58]   Finished:    WorkflowService.Tests
-[9/8/2025 8:22:45.081 AM]  Attachments processing not needed
-[9/8/2025 8:22:45.082 AM]  ========== Test run finished: 6 Tests (4 Passed, 2 Failed, 0 Skipped) run in 592 ms ==========
-[9/8/2025 8:22:45.126 AM]  Update Test run progress to 85/100.
-[9/8/2025 8:22:45.126 AM]  Update Test run progress to 100/100.
-[9/8/2025 8:22:45.144 AM]  Test run animation has stopped.
-[9/8/2025 8:22:45.161 AM]  Test run progress has stopped.
+> microservices-frontend@0.0.0 test
+> vitest --config vitest.config.js src/tests/serviceContracts
+
+
+ DEV  v1.6.1 C:/Users/mccre/dev/boiler/src/frontend/react-app
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:18:13)
+🔍 API CLIENT: Creating axios instance with baseURL: empty (using Vite proxy)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:19:13)
+🔍 API CLIENT: Expected proxy config:
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
+  - /api/auth/* → AuthService (port 7001)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:21:13)
+  - /api/* → UserService (port 7002)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:18:13)
+🔍 API CLIENT: Creating axios instance with baseURL: empty (using Vite proxy)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:19:13)
+🔍 API CLIENT: Expected proxy config:
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
+  - /api/auth/* → AuthService (port 7001)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:21:13)
+  - /api/* → UserService (port 7002)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:18:13)
+🔍 API CLIENT: Creating axios instance with baseURL: empty (using Vite proxy)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:19:13)
+🔍 API CLIENT: Expected proxy config:
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
+  - /api/auth/* → AuthService (port 7001)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:21:13)
+  - /api/* → UserService (port 7002)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:18:13)
+🔍 API CLIENT: Creating axios instance with baseURL: empty (using Vite proxy)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:19:13)
+🔍 API CLIENT: Expected proxy config:
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
+  - /api/auth/* → AuthService (port 7001)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:21:13)
+  - /api/* → UserService (port 7002)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:18:13)
+🔍 API CLIENT: Creating axios instance with baseURL: empty (using Vite proxy)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:19:13)
+🔍 API CLIENT: Expected proxy config:
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
+  - /api/auth/* → AuthService (port 7001)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:21:13)
+  - /api/* → UserService (port 7002)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:18:13)
+🔍 API CLIENT: Creating axios instance with baseURL: empty (using Vite proxy)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:19:13)
+🔍 API CLIENT: Expected proxy config:
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
+  - /api/auth/* → AuthService (port 7001)
+
+stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:21:13)
+  - /api/* → UserService (port 7002)
+
+ ✓ |frontend| src/tests/serviceContracts/serviceUnwrap.definitions.test.ts (15)
+   ✓ Definitions service unwrap contracts (15)
+     ✓ getDefinitionsPaged
+     ✓ getDefinitions returns items array
+     ✓ getDefinition
+     ✓ createDraft
+     ✓ updateDefinition
+     ✓ publishDefinition
+     ✓ validateDefinitionJson
+     ✓ validateDefinitionById
+     ✓ createNewVersion
+     ✓ revalidateDefinition
+     ✓ archiveDefinition
+     ✓ unpublishDefinition
+     ✓ terminateDefinitionInstances
+     ✓ deleteDefinition
+     ✓ publishDefinition error unwrap
+ ✓ |frontend| src/tests/serviceContracts/serviceUnwrap.instances.test.ts (13)
+   ✓ Instances service unwrap contracts (13)
+     ✓ getInstancesPaged
+     ✓ getInstances
+     ✓ getInstance
+     ✓ getInstanceStatus
+     ✓ startInstance
+     ✓ signalInstance
+     ✓ terminateInstance
+     ✓ suspendInstance
+     ✓ resumeInstance
+     ✓ retryInstance
+     ✓ moveInstanceToNode
+     ✓ getRuntimeSnapshot
+     ✓ error path startInstance
+ ✓ |frontend| src/tests/serviceContracts/serviceUnwrap.tasks.test.ts (5)
+   ✓ Tasks service unwrap contracts (5)
+     ✓ getTask
+     ✓ getTasksPaged synthetic
+     ✓ claimTask
+     ✓ completeTask
+     ✓ assignTask
+ ❯ |frontend| src/tests/serviceContracts/serviceUnwrap.errorHandling.test.ts (2)
+   ❯ Service unwrap error handling (2)
+     × publishDefinition propagates error (success=false) (retry x1)
+     ✓ startInstance propagates error (success=false)
+ ✓ |frontend| src/tests/serviceContracts/startInstanceShape.test.ts (1)
+   ✓ startInstance unwrap (1)
+     ✓ returns flattened instance DTO (no envelope)
+ ✓ |frontend| src/tests/serviceContracts/serviceUnwrap.statusNormalization.test.ts (1)
+   ✓ Instance status normalization (1)
+     ✓ numeric status normalized to string
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |frontend| src/tests/serviceContracts/serviceUnwrap.errorHandling.test.ts > Service unwrap error handling > publishDefinition propagates error (success=false)
+ FAIL  |frontend| src/tests/serviceContracts/serviceUnwrap.errorHandling.test.ts > Service unwrap error handling > publishDefinition propagates error (success=false)
+AssertionError: expected [Function] to throw error matching /validation|graph invalid/i but got 'Operation failed'
+
+- Expected:
+/validation|graph invalid/i
+
++ Received:
+"Operation failed"
+
+ ❯ src/tests/serviceContracts/serviceUnwrap.errorHandling.test.ts:22:5
+     20|     }, { status: 400 });
+     21|
+     22|     await expect(
+       |     ^
+     23|       (defs as any).publishDefinition(1, { publishNotes: 'x' })
+     24|     ).rejects.toThrow(/validation|graph invalid/i);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ Test Files  1 failed | 5 passed (6)
+      Tests  1 failed | 36 passed (37)
+   Start at  12:05:00
+   Duration  1.29s (transform 151ms, setup 292ms, collect 167ms, tests 50ms, environment 405ms, prepare 84ms)

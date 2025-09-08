@@ -253,13 +253,33 @@ export class WorkflowService {
       return unwrap<WorkflowDefinitionDto>(resp.data);
     } catch (err: any) {
       const d = err?.response?.data;
-      const errors: string[] =
-        d?.errors
-          ? (Array.isArray(d.errors) ? d.errors : [String(d.errors)])
-          : d?.message
-            ? [d.message]
-            : ['Publish failed'];
-      const e = new Error(errors.join('; '));
+      // Extract meaningful messages
+      let errors: string[] = [];
+      if (Array.isArray(d?.errors)) {
+        errors = d.errors.map((e: any) =>
+          typeof e === 'string'
+            ? e
+            : (e?.message ?? e?.code ?? JSON.stringify(e)));
+      } else if (d?.errors) {
+        errors = [typeof d.errors === 'string' ? d.errors : JSON.stringify(d.errors)];
+      }
+      if (errors.length === 0 && typeof d?.message === 'string') {
+        errors = [d.message];
+      }
+      if (errors.length === 0) {
+        errors = ['Publish failed'];
+      }
+
+      // Harden: if we ended with a generic placeholder but original axios error had a better message, prefer it.
+      const genericSet = /^(publish failed|operation failed)$/i;
+      const rawAxiosMessage: string | undefined = err?.message;
+      if (genericSet.test(errors[0]) && typeof d?.message === 'string') {
+        errors[0] = d.message;
+      } else if (genericSet.test(errors[0]) && rawAxiosMessage && !genericSet.test(rawAxiosMessage)) {
+        errors[0] = rawAxiosMessage;
+      }
+
+      const e = new Error(errors[0]);
       (e as any).errors = errors;
       throw e;
     }

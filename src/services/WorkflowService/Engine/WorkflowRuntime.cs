@@ -24,6 +24,8 @@ public class WorkflowRuntime : IWorkflowRuntime
 
     private readonly Dictionary<int, int> _instanceTenantCache = new();
     private bool _dirty;
+    // Progress emission cache to suppress duplicate terminal (100%) events
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<int, int> _progressCache = new();
 
     public WorkflowRuntime(
         WorkflowDbContext context,
@@ -111,8 +113,11 @@ public class WorkflowRuntime : IWorkflowRuntime
         await ContinueWorkflowAsync(instance.Id, cancellationToken);
         if (autoCommit) await SaveIfDirtyAsync(cancellationToken);
 
-        // Initial progress emission (force so UI can show 0% quickly)
-        await ComputeAndMaybeEmitProgressAsync(instance, workflowDef, force: true, cancellationToken);
+        // Hardened: only emit initial progress if still running (avoid duplicate 100% on immediate completion Start->End)
+        if (instance.Status == InstanceStatus.Running)
+        {
+            await ComputeAndMaybeEmitProgressAsync(instance, workflowDef, force: true, cancellationToken);
+        }
 
         await SafeNotifyInstanceAndListAsync(instance);
         return instance;
@@ -434,6 +439,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         await ComputeAndMaybeEmitProgressAsync(instance, def, force: true, cancellationToken);
 
         if (autoCommit) await SafeNotifyInstanceAndListAsync(instance);
+        // Keep cache so any subsequent progress recomputation (unlikely) is still deduped.
     }
 
     public async Task RetryWorkflowAsync(
@@ -512,6 +518,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         await ComputeAndMaybeEmitProgressAsync(instance, def, force: false, cancellationToken);
 
         if (autoCommit) await SafeNotifyInstanceAndListAsync(instance);
+        // Keep cache so resumed flow still dedupes.
     }
 
     public async Task ResumeWorkflowAsync(
@@ -583,7 +590,18 @@ public class WorkflowRuntime : IWorkflowRuntime
                         }), null);
                     await TryCompleteIfNoActiveAsync(instance);
                     if (instance.Status == InstanceStatus.Completed)
-                        await ComputeAndMaybeEmitProgressAsync(instance, workflowDef, force: true, cancellationToken);
+                    {
+                        // Dedupe: final progress (100%) was already emitted inside TryCompleteInstanceAsync.
+                        // Only emit here if (for some reason) the terminal emission did not happen (cache missing or <100).
+                        if (!_progressCache.TryGetValue(instance.Id, out var lp) || lp < 100)
+                        {
+                            await ComputeAndMaybeEmitProgressAsync(instance, workflowDef, force: true, cancellationToken);
+                        }
+                    }
+                    else
+                    {
+                        await ComputeAndMaybeEmitProgressAsync(instance, workflowDef, force: false, cancellationToken);
+                    }
                     return;
                 }
                 throw new InvalidOperationException($"No executor for node type {node.Type}");
@@ -603,7 +621,8 @@ public class WorkflowRuntime : IWorkflowRuntime
                     MarkDirty();
 
                     await CreateEventAsync(instance.Id, "Node", "Failed",
-                        $"{{\"nodeId\":\"{node.Id}\",\"error\":\"{result.ErrorMessage}\",\"policy\":\"suspend\"}}", null);
+                        $"{{\"nodeId\":\"{node.Id}\",\"error\":\"{result.ErrorMessage}\"," +
+                        $"\"policy\":\"suspend\"}}", null);
 
                     await CreateEventAsync(instance.Id, "Instance", "Suspended",
                         $"{{\"reason\":\"automatic-action-failure\",\"nodeId\":\"{node.Id}\"}}", null);
@@ -796,7 +815,12 @@ public class WorkflowRuntime : IWorkflowRuntime
 
             if (instance.Status == InstanceStatus.Completed)
             {
-                await ComputeAndMaybeEmitProgressAsync(instance, workflowDef, force: true, cancellationToken);
+                // Dedupe: final progress (100%) was already emitted inside TryCompleteInstanceAsync.
+                // Only emit here if (for some reason) the terminal emission did not happen (cache missing or <100).
+                if (!_progressCache.TryGetValue(instance.Id, out var lp) || lp < 100)
+                {
+                    await ComputeAndMaybeEmitProgressAsync(instance, workflowDef, force: true, cancellationToken);
+                }
             }
             else
             {
@@ -843,6 +867,18 @@ public class WorkflowRuntime : IWorkflowRuntime
         catch { /* non-critical */ }
     }
 
+    private bool ShouldEmitProgress(int instanceId, int pct)
+    {
+        if (pct == 100 &&
+            _progressCache.TryGetValue(instanceId, out var existing) &&
+            existing == 100)
+        {
+            _logger.LogDebug("WF_PROGRESS_SUPPRESS_DUP100 Instance={InstanceId}", instanceId);
+            return false;
+        }
+        return true;
+    }
+
     private async Task ComputeAndMaybeEmitProgressAsync(
         WorkflowInstance instance,
         WorkflowDefinitionJson def,
@@ -851,7 +887,6 @@ public class WorkflowRuntime : IWorkflowRuntime
     {
         try
         {
-            // collect visited IDs
             var root = SafeParseContext(instance);
             var allNodes = def.Nodes.Where(ShouldCountForProgress).ToList();
             var total = allNodes.Count;
@@ -889,7 +924,10 @@ public class WorkflowRuntime : IWorkflowRuntime
 
             if (!force && pct == last) return;
 
-            // update context progress
+            // Hardened: suppress any duplicate 100% (even forced) after first emission
+            if (!ShouldEmitProgress(instance.Id, pct))
+                return;
+
             if (root["_progress"] is not JsonObject pObj)
             {
                 pObj = new JsonObject();
@@ -909,7 +947,6 @@ public class WorkflowRuntime : IWorkflowRuntime
                 }),
                 null);
 
-            // NEW SignalR push (best-effort, swallow failures)
             try
             {
                 var active = DeserializeActive(instance);
@@ -923,11 +960,13 @@ public class WorkflowRuntime : IWorkflowRuntime
                     active,
                     ct);
             }
-            catch { /* ignore */ }
+            catch { }
+
+            _progressCache[instance.Id] = pct;
         }
         catch
         {
-            // swallow progress errors (never break core runtime)
+            // suppress
         }
     }
 
@@ -1042,6 +1081,8 @@ public class WorkflowRuntime : IWorkflowRuntime
 
     #region Outgoing Utilities (Non-Gateway)
 
+    // Re-added helper utilities used by CompleteTaskAsync and ExecuteNodeInternalAsync
+
     private List<string> GetLinearOutgoingTargets(WorkflowDefinitionJson def, string nodeId)
     {
         var edges = def.Edges
@@ -1061,20 +1102,18 @@ public class WorkflowRuntime : IWorkflowRuntime
     private List<string> GetOutgoingTargetsForAdvance(
         WorkflowDefinitionJson workflowDef,
         WorkflowNode currentNode)
-    {
-        return GetLinearOutgoingTargets(workflowDef, currentNode.Id);
-    }
+        => GetLinearOutgoingTargets(workflowDef, currentNode.Id);
 
     private static string? FindEdgeId(string from, string to, WorkflowDefinitionJson def)
-         => def.Edges.FirstOrDefault(e =>
-                (e.Source?.Equals(from, StringComparison.OrdinalIgnoreCase) == true ||
-                 e.From?.Equals(from, StringComparison.OrdinalIgnoreCase) == true ||
-                 e.EffectiveSource?.Equals(from, StringComparison.OrdinalIgnoreCase) == true)
-                &&
-                (e.Target?.Equals(to, StringComparison.OrdinalIgnoreCase) == true ||
-                 e.To?.Equals(to, StringComparison.OrdinalIgnoreCase) == true ||
-                 e.EffectiveTarget?.Equals(to, StringComparison.OrdinalIgnoreCase) == true))
-               ?.Id;
+        => def.Edges.FirstOrDefault(e =>
+               (e.Source?.Equals(from, StringComparison.OrdinalIgnoreCase) == true ||
+                e.From?.Equals(from, StringComparison.OrdinalIgnoreCase) == true ||
+                e.EffectiveSource?.Equals(from, StringComparison.OrdinalIgnoreCase) == true)
+               &&
+               (e.Target?.Equals(to, StringComparison.OrdinalIgnoreCase) == true ||
+                e.To?.Equals(to, StringComparison.OrdinalIgnoreCase) == true ||
+                e.EffectiveTarget?.Equals(to, StringComparison.OrdinalIgnoreCase) == true))
+           ?.Id;
 
     #endregion
 
@@ -1154,6 +1193,9 @@ public class WorkflowRuntime : IWorkflowRuntime
         catch { /* ignore */ }
 
         await SafeNotifyInstanceAndListAsync(instance);
+        // Do NOT clear the progress cache here: a second forced 100% progress attempt
+        // can occur immediately after (e.g., in ExecuteNodeInternalAsync) causing a duplicate
+        // if cache is cleared. Retaining the cache entry suppresses duplicate terminal events.
     }
 
     private void CreateOrUpdateParallelGroup(WorkflowInstance instance, string gatewayNodeId, List<string> branches)
@@ -1285,6 +1327,7 @@ public class WorkflowRuntime : IWorkflowRuntime
         await SafeNotifyInstanceAndListAsync(instance);
         _logger.LogError("WF_INSTANCE_FAILED Instance={InstanceId} Node={NodeId} Error={Error}",
             instance.Id, node.Id, errorMessage);
+        // Keep cache to suppress any accidental secondary forced emission.
     }
 
     private void UpdateWorkflowContextTaskCompletion(
@@ -1587,7 +1630,14 @@ public class WorkflowRuntime : IWorkflowRuntime
         {
             instance.Context = root.ToJsonString();
             MarkDirty();
-            return new JoinArrivalResult { Satisfied = false, NewlySatisfied = false, AddedToActive = false, CancelledBranches = new() };
+            // FIX: Typo 'Added to Active' -> 'AddedToActive' caused CS1003 syntax errors
+            return new JoinArrivalResult
+            {
+                Satisfied = false,
+                NewlySatisfied = false,
+                AddedToActive = false,
+                CancelledBranches = new()
+            };
         }
 
         joinMeta["satisfied"] = true;
@@ -1659,7 +1709,7 @@ public class WorkflowRuntime : IWorkflowRuntime
 
         try
         {
-            var overlay = new Dictionary<string, object?>
+            var overlay = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
             {
                 ["_joinEval"] = new
                 {
@@ -1673,7 +1723,7 @@ public class WorkflowRuntime : IWorkflowRuntime
             };
 
             using var doc = JsonDocument.Parse(string.IsNullOrWhiteSpace(currentContextJson) ? "{}" : currentContextJson);
-            var rootDict = new Dictionary<string, object?>();
+            var rootDict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
             foreach (var prop in doc.RootElement.EnumerateObject())
                 rootDict[prop.Name] = prop.Value.ToString();
             foreach (var kv in overlay)
@@ -1766,5 +1816,12 @@ public class WorkflowRuntime : IWorkflowRuntime
         }
     }
 
+    #endregion
+
+    #region Progress Cache Helper
+    private void ClearProgressCacheForInstance(int instanceId)
+    {
+        _progressCache.TryRemove(instanceId, out _);
+    }
     #endregion
 }
