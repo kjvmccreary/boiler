@@ -31,6 +31,7 @@ import type {
   ValidationResultDto,
   CreateNewVersionRequestDto
 } from '@/types/workflow';
+import { normalizeTags } from '@/utils/tags';
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -162,9 +163,47 @@ export interface GraphValidationResult {
 }
 
 export class WorkflowService {
+  // ----------------- Internal shared error extraction -----------------
+  private extractApiErrors(data: any, defaultMessage: string): { primary: string; all: string[] } {
+    if (!data) return { primary: defaultMessage, all: [defaultMessage] };
+    let errors: string[] = [];
+    // Array form
+    if (Array.isArray(data.errors)) {
+      errors = data.errors.map((e: any) =>
+        typeof e === 'string'
+          ? e
+          : (e?.message ?? e?.code ?? JSON.stringify(e)));
+    } else if (data.errors) {
+      // Non-array errors object/string
+      errors = [typeof data.errors === 'string' ? data.errors : JSON.stringify(data.errors)];
+    }
+    // Single message fallback
+    if (errors.length === 0 && typeof data.message === 'string' && data.message.trim().length > 0) {
+      errors = [data.message];
+    }
+    if (errors.length === 0) errors = [defaultMessage];
+    return { primary: errors[0], all: errors };
+  }
+
   // ----------------- Definitions -----------------
   async getDefinitions(filters?: WorkflowDefinitionsFilters): Promise<WorkflowDefinitionDto[]> {
-    const paged = await this.getDefinitionsPaged(filters);
+    // NOTE: getDefinitions is a convenience wrapper but previously
+    // did not supply paging, so the backend default (pageSize=20, ascending CreatedAt)
+    // truncated results and hid newer definitions (e.g., Ref-01).
+    // Preserve existing behavior if caller passes explicit filters.
+    const effective = filters ?? { page: 1, pageSize: 100, sortBy: 'createdAt', desc: true };
+    const paged = await this.getDefinitionsPaged(effective);
+    return paged.items;
+  }
+
+  // Explicit helper when a caller wants latest-first without remembering flags.
+  async getLatestDefinitions(pageSize = 100) {
+    const paged = await this.getDefinitionsPaged({
+      page: 1,
+      pageSize,
+      sortBy: 'createdAt',
+      desc: true
+    });
     return paged.items;
   }
 
@@ -172,7 +211,11 @@ export class WorkflowService {
     const params = new URLSearchParams();
     if (filters?.search) params.append('search', filters.search);
     if (filters?.published !== undefined) params.append('published', String(filters.published));
-    if (filters?.tags) params.append('tags', filters.tags);
+    // Filters.tags is now assumed comma-only canonical; if multi-form input slips through normalize lightly.
+    if (filters?.tags) {
+      const norm = normalizeTags(filters.tags);
+      if (norm.canonicalQuery) params.append('tags', norm.canonicalQuery);
+    }
     if (filters?.includeArchived !== undefined) params.append('includeArchived', String(filters.includeArchived));
     if (filters?.page) params.append('page', String(filters.page));
     if (filters?.pageSize) params.append('pageSize', String(filters.pageSize));
@@ -188,11 +231,20 @@ export class WorkflowService {
   }
 
   async createDraft(request: CreateWorkflowDefinitionDto) {
+    // Tag policy: normalize prior to send (comma-only; preserve multi-word)
+    if ((request as any).tags) {
+      const norm = normalizeTags((request as any).tags);
+      (request as any).tags = norm.canonicalQuery;
+    }
     const resp = await apiClient.post('/api/workflow/definitions/draft', request);
     return unwrap<WorkflowDefinitionDto>(resp.data);
   }
 
   async updateDefinition(id: number, request: UpdateWorkflowDefinitionDto) {
+    if ((request as any).tags) {
+      const norm = normalizeTags((request as any).tags);
+      (request as any).tags = norm.canonicalQuery;
+    }
     const resp = await apiClient.put(`/api/workflow/definitions/${id}`, request);
     return unwrap<WorkflowDefinitionDto>(resp.data);
   }
@@ -252,35 +304,9 @@ export class WorkflowService {
       });
       return unwrap<WorkflowDefinitionDto>(resp.data);
     } catch (err: any) {
-      const d = err?.response?.data;
-      // Extract meaningful messages
-      let errors: string[] = [];
-      if (Array.isArray(d?.errors)) {
-        errors = d.errors.map((e: any) =>
-          typeof e === 'string'
-            ? e
-            : (e?.message ?? e?.code ?? JSON.stringify(e)));
-      } else if (d?.errors) {
-        errors = [typeof d.errors === 'string' ? d.errors : JSON.stringify(d.errors)];
-      }
-      if (errors.length === 0 && typeof d?.message === 'string') {
-        errors = [d.message];
-      }
-      if (errors.length === 0) {
-        errors = ['Publish failed'];
-      }
-
-      // Harden: if we ended with a generic placeholder but original axios error had a better message, prefer it.
-      const genericSet = /^(publish failed|operation failed)$/i;
-      const rawAxiosMessage: string | undefined = err?.message;
-      if (genericSet.test(errors[0]) && typeof d?.message === 'string') {
-        errors[0] = d.message;
-      } else if (genericSet.test(errors[0]) && rawAxiosMessage && !genericSet.test(rawAxiosMessage)) {
-        errors[0] = rawAxiosMessage;
-      }
-
-      const e = new Error(errors[0]);
-      (e as any).errors = errors;
+      const { primary, all } = this.extractApiErrors(err?.response?.data, 'Publish failed');
+      const e = new Error(primary);
+      (e as any).errors = all;
       throw e;
     }
   }
@@ -302,18 +328,39 @@ export class WorkflowService {
   }
 
   async unpublishDefinition(id: number) {
-    const resp = await apiClient.post(`/api/workflow/definitions/${id}/unpublish`, {});
-    return unwrap<WorkflowDefinitionDto>(resp.data);
+    try {
+      const resp = await apiClient.post(`/api/workflow/definitions/${id}/unpublish`, {});
+      return unwrap<WorkflowDefinitionDto>(resp.data);
+    } catch (err: any) {
+      const { primary, all } = this.extractApiErrors(err?.response?.data, 'Unpublish failed');
+      const e = new Error(primary);
+      (e as any).errors = all;
+      throw e;
+    }
   }
 
   async archiveDefinition(id: number) {
-    const resp = await apiClient.post(`/api/workflow/definitions/${id}/archive`, {});
-    return unwrap<WorkflowDefinitionDto>(resp.data);
+    try {
+      const resp = await apiClient.post(`/api/workflow/definitions/${id}/archive`, {});
+      return unwrap<WorkflowDefinitionDto>(resp.data);
+    } catch (err: any) {
+      const { primary, all } = this.extractApiErrors(err?.response?.data, 'Archive failed');
+      const e = new Error(primary);
+      (e as any).errors = all;
+      throw e;
+    }
   }
 
   async terminateDefinitionInstances(id: number) {
-    const resp = await apiClient.post(`/api/workflow/definitions/${id}/terminate-running`, {});
-    return unwrap<{ terminated: number }>(resp.data);
+    try {
+      const resp = await apiClient.post(`/api/workflow/definitions/${id}/terminate-running`, {});
+      return unwrap<{ terminated: number }>(resp.data);
+    } catch (err: any) {
+      const { primary, all } = this.extractApiErrors(err?.response?.data, 'Terminate running instances failed');
+      const e = new Error(primary);
+      (e as any).errors = all;
+      throw e;
+    }
   }
 
   async validateDefinition(jsonDefinition: string): Promise<ValidationResultDto> {

@@ -100,8 +100,14 @@ export function DefinitionsPage() {
   const loadDefinitions = async () => {
     try {
       setLoading(true);
+      console.log('🔄 DefinitionsPage: Loading workflow definitions');
+      // Fetch with explicit paging & newest-first sort so recent definitions (e.g., Ref-01) appear.
       const response = await workflowService.getDefinitions({
-        includeArchived: showArchived
+        page: 1,
+        pageSize: 100,
+        sortBy: 'createdAt',
+        desc: true,
+        includeArchived: false
       });
       if (!Array.isArray(response)) {
         setDefinitions([]);
@@ -547,7 +553,7 @@ export function DefinitionsPage() {
           pagination
           pageSizeOptions={[10, 25, 50, 100]}
           initialState={{
-            pagination: { paginationModel: { pageSize: 10 } }
+            pagination: { paginationModel: { pageSize: 100 } },
           }}
           getDetailPanelContent={getDetailPanelContent}
           getDetailPanelHeight={getDetailPanelHeight}

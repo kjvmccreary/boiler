@@ -1,99 +1,114 @@
 # Workflow Frontend Service – API Unwrapping & Contract Audit (Phase 5)
 
-Status: COMPLETE (Items 2 & 3 from action list closed).  
-Purpose: Enforce uniform ApiResponse<T> unwrapping, highlight edge cases, and provide a baseline for future test assertions.
+Status: COMPLETE (All core unwrap + normalization test coverage in place).  
+Last Updated: 2025-09-08
 
-## 1. Envelope Contract (Canonical)
-All workflow HTTP endpoints (except SignalR hub pushes) return:
-`interface ApiResponse<T> { success: boolean; message?: string; errors?: { code?: string; message?: string }[] | string[] | any; data?: T; }`  
-Paged variant: `data: { items: TItem[]; totalCount: number; page: number; pageSize: number }`
+## 1. Canonical Envelope
+`interface ApiResponse<T> { success: boolean; message?: string; errors?: (string | { code?: string; message?: string })[] | any; data: T }`
 
-Helper: `unwrap<T>(resp.data)` throws aggregated Error when `success === false`.
+All service methods route through a single `unwrap<T>()` except specialized error handlers (publish/unpublish/archive/terminateDefinitionInstances now refactored via `extractApiErrors`).
 
-## 2. Definitions API Matrix
-| Method | HTTP | Path | Body | Raw Shape | Unwrap Type | Paged? | Notes |
-|--------|------|------|------|-----------|-------------|--------|-------|
-| getDefinitionsPaged | GET | /api/workflow/definitions | Query | ApiResponse<PagedResultDto<WorkflowDefinitionDto>> | PagedResultDto<WorkflowDefinitionDto> | Yes | Grid source |
-| getDefinitions | GET | /api/workflow/definitions | Query | Same | WorkflowDefinitionDto[] | Yes | Convenience (items only) |
-| getDefinition | GET | /api/workflow/definitions/{id} | – | ApiResponse<WorkflowDefinitionDto> | WorkflowDefinitionDto | No | |
-| createDraft | POST | /api/workflow/definitions/draft | CreateWorkflowDefinitionDto | ApiResponse<WorkflowDefinitionDto> | WorkflowDefinitionDto | No | |
-| updateDefinition | PUT | /api/workflow/definitions/{id} | UpdateWorkflowDefinitionDto | ApiResponse<WorkflowDefinitionDto> | WorkflowDefinitionDto | No | |
-| publishDefinition | POST | /api/workflow/definitions/{id}/publish | {publishNotes,forcePublish} | ApiResponse<WorkflowDefinitionDto> | WorkflowDefinitionDto | No | Custom error mapping |
-| validateDefinitionJson | POST | /api/workflow/definitions/validate | { JSONDefinition } | ApiResponse<ValidationResultDto> | GraphValidationResult | No | Adaptive legacy tolerance |
-| validateDefinitionById | GET | /api/workflow/definitions/{id}/validate | – | ApiResponse<ValidationResultDto> | GraphValidationResult | No | |
-| validateDefinition | POST | /api/workflow/definitions/validate | { JSONDefinition } | ApiResponse<ValidationResultDto> | ValidationResultDto | No | Direct unwrap |
-| createNewVersion | POST | /api/workflow/definitions/{id}/new-version | CreateNewVersionRequestDto | ApiResponse<WorkflowDefinitionDto> | WorkflowDefinitionDto | No | |
-| revalidateDefinition | POST | /api/workflow/definitions/{id}/revalidate | {} | ApiResponse<ValidationResultDto> | ValidationResultDto | No | |
-| deleteDefinition | DELETE | /api/workflow/definitions/{id} | – | ApiResponse<boolean> | boolean | No | |
-| unpublishDefinition | POST | /api/workflow/definitions/{id}/unpublish | {} | ApiResponse<WorkflowDefinitionDto> | WorkflowDefinitionDto | No | |
-| archiveDefinition | POST | /api/workflow/definitions/{id}/archive | {} | ApiResponse<WorkflowDefinitionDto> | WorkflowDefinitionDto | No | |
-| terminateDefinitionInstances | POST | /api/workflow/definitions/{id}/terminate-running | {} | ApiResponse<{terminated:number}> | { terminated:number } | No | |
+## 2. Definitions API Matrix (Current)
+| Method | Path | Raw | Returns (post-unwrap) | Notes |
+|--------|------|-----|-----------------------|-------|
+| getDefinitionsPaged | /api/workflow/definitions | ApiResponse<PagedResultDto<Definition>> | PagedResultDto<WorkflowDefinitionDto> | Grid |
+| getDefinitions | same | same | WorkflowDefinitionDto[] | Convenience |
+| getDefinition | /definitions/{id} | ApiResponse<Definition> | WorkflowDefinitionDto | |
+| createDraft | /definitions/draft | ApiResponse<Definition> | WorkflowDefinitionDto | |
+| updateDefinition | /definitions/{id} | ApiResponse<Definition> | WorkflowDefinitionDto | |
+| publishDefinition | /definitions/{id}/publish | ApiResponse<Definition> | WorkflowDefinitionDto | Custom error parsing (helper) |
+| validateDefinitionJson | /definitions/validate | ApiResponse<ValidationResultDto> | GraphValidationResult | Legacy tolerant mapping |
+| validateDefinitionById | /definitions/{id}/validate | ApiResponse<ValidationResultDto> | GraphValidationResult | |
+| validateDefinition | /definitions/validate | ApiResponse<ValidationResultDto> | ValidationResultDto | Direct unwrap |
+| createNewVersion | /definitions/{id}/new-version | ApiResponse<Definition> | WorkflowDefinitionDto | |
+| revalidateDefinition | /definitions/{id}/revalidate | ApiResponse<ValidationResultDto> | ValidationResultDto | |
+| deleteDefinition | /definitions/{id} (DELETE) | ApiResponse<boolean> | boolean | |
+| unpublishDefinition | /definitions/{id}/unpublish | ApiResponse<Definition> | WorkflowDefinitionDto | Helper |
+| archiveDefinition | /definitions/{id}/archive | ApiResponse<Definition> | WorkflowDefinitionDto | Helper |
+| terminateDefinitionInstances | /definitions/{id}/terminate-running | ApiResponse<{terminated:number}> | { terminated:number } | Helper |
 
-Definition metadata exposure: UI now surfaces PublishNotes, VersionNotes, Tags, ActiveInstanceCount, ParentDefinitionId in the detail panel (DefinitionsPage) – not in base columns (intentionally).
+Metadata surfaced (detail panel only): PublishNotes, VersionNotes, Tags, ActiveInstanceCount, ParentDefinitionId, IsArchived, ArchivedAt, IsPublished, PublishedAt.
 
 ## 3. Instances API Matrix
-| Method | HTTP | Path | Body | Raw Shape | Unwrap | Paged | Post |
-|--------|------|------|------|-----------|--------|-------|------|
-| getInstancesPaged | GET | /api/workflow/instances | Query | ApiResponse<PagedResultDto<WorkflowInstanceDto>> | PagedResultDto<WorkflowInstanceDto> | Yes | Status normalized |
-| getInstances | GET | /api/workflow/instances | Query | Same | WorkflowInstanceDto[] | Yes | Items only |
-| getInstance | GET | /api/workflow/instances/{id} | – | ApiResponse<WorkflowInstanceDto> | WorkflowInstanceDto | No | Status normalized |
-| getInstanceStatus | GET | /api/workflow/instances/{id}/status | – | ApiResponse<InstanceStatusDto> | InstanceStatusDto | No | Status normalized |
-| startInstance | POST | /api/workflow/instances | StartInstanceRequestDto | ApiResponse<WorkflowInstanceDto> | WorkflowInstanceDto | No | Caller uses id |
-| signalInstance | POST | /api/workflow/instances/{id}/signal | SignalInstanceRequestDto | ApiResponse<WorkflowInstanceDto> | WorkflowInstanceDto | No | |
-| terminateInstance | DELETE | /api/workflow/instances/{id} | – | ApiResponse<boolean> | boolean | No | |
-| suspendInstance | POST | /api/workflow/instances/{id}/suspend | {} | ApiResponse<WorkflowInstanceDto> | WorkflowInstanceDto | No | |
-| resumeInstance | POST | /api/workflow/instances/{id}/resume | {} | ApiResponse<WorkflowInstanceDto> | WorkflowInstanceDto | No | |
-| retryInstance | POST | /api/workflow/admin/instances/{id}/retry | RetryInstanceRequestDto | ApiResponse<WorkflowInstanceDto> | WorkflowInstanceDto | No | |
-| moveInstanceToNode | POST | /api/workflow/admin/instances/{id}/move-to-node | MoveToNodeRequestDto | ApiResponse<WorkflowInstanceDto> | WorkflowInstanceDto | No | |
-| getRuntimeSnapshot | GET | /api/workflow/instances/{id}/runtime-snapshot | – | ApiResponse<InstanceRuntimeSnapshotDto> | InstanceRuntimeSnapshotDto | No | |
+| Method | Path | Returns | Post-processing |
+|--------|------|---------|-----------------|
+| getInstancesPaged | /instances | PagedResultDto<WorkflowInstanceDto> | Status normalization |
+| getInstances | /instances | WorkflowInstanceDto[] | Status normalization |
+| getInstance | /instances/{id} | WorkflowInstanceDto | Status normalization |
+| getInstanceStatus | /instances/{id}/status | InstanceStatusDto | Status normalization |
+| startInstance | /instances | WorkflowInstanceDto | Flattened id usage |
+| signalInstance | /instances/{id}/signal | WorkflowInstanceDto | Status normalization |
+| terminateInstance | /instances/{id} (DELETE) | boolean | |
+| suspendInstance | /instances/{id}/suspend | WorkflowInstanceDto | |
+| resumeInstance | /instances/{id}/resume | WorkflowInstanceDto | |
+| retryInstance | /admin/instances/{id}/retry | WorkflowInstanceDto | |
+| moveInstanceToNode | /admin/instances/{id}/move-to-node | WorkflowInstanceDto | |
+| getRuntimeSnapshot | /instances/{id}/runtime-snapshot | InstanceRuntimeSnapshotDto | |
 
-## 4. Tasks API Matrix
-(unchanged – verified)  
-All task methods unwrap & normalize status; no envelope leakage.
+## 4. Tasks API (Verified)
+All task methods unwrap arrays or single DTOs and normalize task status (`Created/Assigned/...`). No envelope leakage.
 
 ## 5. Events & Admin
-(unchanged – verified)  
-getWorkflowEvents currently unpaged; candidate for pagination later.
+- getWorkflowEvents returns unwrapped array (non-paged).
+- bulkCancelInstances, getWorkflowStats, getTaskStatistics all unwrap cleanly.
+- No custom error helper applied yet (future consistency task).
 
-## 6. Real-Time (SignalR)
-Duplicate terminal (100%) progress events still observed (pending dedupe guard).
+## 6. Real-Time Progress
+Duplicate terminal (100%) progress events: RESOLVED (dedupe guard active). Previous “Open” item closed.
 
-## 7. Start Instance Usage Audit (FINAL – COMPLETE)
-Repository-wide search confirmed no direct use of response.data.id. Multi-tenant test updated to use workflowDefinitionId. Audit stamp: PASS.
+## 7. Start Instance Usage Audit
+Confirmed: no direct `response.data` property access outside service. All consumers rely on flattened DTO. PASS.
 
-## 8. Edge Case Notes
-| Concern | Status | Action |
-|---------|--------|--------|
-| Adaptive validation responses | Accepted | Consolidate after backend uniformity |
-| Duplicate 100% progress events | Open | Add runtime/publisher guard |
-| Metadata visibility | Addressed | In detail panel (not grid) |
-| unwrap permissiveness | Acceptable | Optional stricter assertion deferred |
-| Enum normalization | Retained | Defensive resilience |
+## 8. Error Handling Improvements
+| Area | Previous | Now |
+|------|----------|-----|
+| publishDefinition | Generic “[object Object]” / “Publish failed” | Specific first error (message/code) |
+| unpublish/archive/terminateDefinitionInstances | Basic unwrap | Standardized helper |
+| Remaining (validateDefinitionJson etc.) | Mixed manual parsing | Candidate for helper adoption |
 
-## 9. Planned Tests (Pending)
-1. unwrap error aggregation
-2. Paged extraction integrity
-3. Status normalization (numeric → enum)
-4. PublishDefinition error mapping
-5. StartInstance returns normalized DTO (no envelope)
+## 9. Edge Case Coverage
+| Concern | Status | Notes |
+|---------|--------|-------|
+| Numeric → enum normalization (instances/tasks) | Covered | Tests assert conversion |
+| Paged integrity (definitions/instances) | Covered | Contract tests |
+| Error envelope propagation | Covered | publishDefinition + generic unwrap failures |
+| StartInstance flattening | Covered | Tests confirm absence of `success/data` |
+| Validation tolerant mapping | Accepted | Unified refactor optional |
 
-## 10. Action Items (Revised)
-| Order | Action | Status |
-|-------|--------|--------|
-| 1 | Service unwrapping audit | ✅ Complete |
-| 2 | StartInstance usage audit | ✅ Complete |
-| 3 | Progress dedupe guard | ⏳ Pending |
-| 4 | FE unwrap & normalization tests | ⏳ Pending |
-| 5 | Decide validateDefinitionJson consolidation | ⏳ Pending |
-| 6 | (Optional) Grid column toggles / extra metadata | Deferred |
+## 10. Test Coverage Summary
+- Definitions: paged, single, create/update/publish, error path.
+- Instances: paged, start, signal, retry, move, status normalization, error path.
+- Tasks: get, paged synthetic wrapper, claim/assign/complete.
+- Unwrapping error propagation: explicit tests.
+- Skipped (outside unwrap scope): join timeout activation (engine timing) – tracked separately.
 
-## 11. Verification Checklist
-- [x] Unwrap uniform
-- [x] StartInstance consumers clean
-- [x] Metadata surfaced (detail panel)
-- [ ] Progress dedupe
-- [ ] FE tests for unwrap
-- [ ] Validation consolidation decision
+## 11. Outstanding / Follow-Up
+| Item | Type | Action |
+|------|------|--------|
+| Apply helper to validateDefinitionJson & events/admin endpoints | Consistency | Pending |
+| Tag parsing decision | Product | Pending |
+| Remove adapters in favor of direct workflow.service imports | Cleanup | Pending |
+| Join timeout activation tests (engine) | Separate | Partial / 3 skipped |
 
-Audit Updated: Step 2 & 3 (original plan numbering) closed.  
-Updated On: 2025-09-08
+## 12. Verification Checklist (Updated)
+- [x] Uniform unwrap logic
+- [x] Error mapping improved for key definition actions
+- [x] Progress dedupe in place
+- [x] Status normalization tested
+- [x] StartInstance envelope removed & tested
+- [x] Paged extraction integrity
+- [ ] Helper adoption across all remaining error catch blocks (optional)
+- [ ] Tag parsing policy finalized
+
+## 13. Risk / Impact Notes
+- Remaining ad-hoc catches (validateDefinitionJson) could diverge if backend error shapes change.
+- Tag splitting ambiguity may produce inconsistent filter behavior for multi-word tags.
+- Adapter layer adds minimal overhead; safe to remove post-cleanup.
+
+## 14. Recommendations (Immediate)
+1. Apply `extractApiErrors` to validateDefinitionJson / validateDefinitionById for uniformity.
+2. Decide tag policy & document in status.md + builder UI hint.
+3. Remove service adapters (direct imports in tests) to reduce churn.
+4. Optionally add an assertion helper to centralize “no envelope” expectations for future tests.
+
+Audit Updated: All previously “Pending” test items now closed; only consistency & product decisions remain.

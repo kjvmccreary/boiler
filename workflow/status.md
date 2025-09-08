@@ -31,10 +31,11 @@ D Progress terminal event duplication ✅ (deduped single 100%)
 
 --------------------------------------------------
 ## 4. Concrete recent frontend changes
-- Added comprehensive contract test suite (definitions / instances / tasks / status normalization).
-- Error path test for publishDefinition temporarily skipped pending helper refactor.
-- Terminal progress dedupe implemented (in-memory lastPercent + suppression of duplicate 100%).
-- Adapters added to re-export consolidated workflow.service.ts for tests.
+- Added comprehensive contract test suite (definitions / instances / tasks / status normalization / error paths).
+- Added extractApiErrors helper; refactored publish/unpublish/archive/terminateDefinitionInstances.
+- Re-enabled publishDefinition error test (now green).
+- Terminal progress dedupe implemented.
+- Adapters export workflow.service.ts for tests (can be collapsed later).
 
 --------------------------------------------------
 ## 5. Quick diff checklist
@@ -50,32 +51,31 @@ D Progress terminal event duplication ✅ (deduped single 100%)
 | SignalR InstanceUpdated push           | ✅ COMPLETE  | |
 | SignalR InstanceProgress push          | ✅ COMPLETE  | |
 | Status badge polling fallback          | ✅ COMPLETE  | |
-| Join timeout tests                     | 💤 SKIPPED   | Decision pending |
+| Join timeout tests                     | 🔶 PARTIAL   | 5 scenarios authored: 2 passing (idempotent, not-expired), 3 skipped (fail/force/route activation) |
 | Progress finalization accuracy         | ✅ COMPLETE  | |
 | Duplicate final progress events        | ✅ COMPLETE  | Guarded |
 | Service unwrapping audit               | ✅ COMPLETE  | |
 | StartInstance usage audit              | ✅ COMPLETE  | |
-| FE contract test suite                 | 🔶 PARTIAL   | One skipped publishDefinition error test |
-| PublishDefinition error surfacing      | 🔶 PARTIAL   | Helper pending |
+| FE contract test suite                 | ✅ COMPLETE  | All active tests passing |
+| PublishDefinition error surfacing      | ✅ COMPLETE  | Helper-based parsing |
 | Tag delimiter policy                   | OPEN         | Decision needed |
 
 --------------------------------------------------
 ## 6. Action order (current)
-1. (In Progress) Add extractApiErrors helper + refactor publish/unpublish/archive (Micro-step 1).  
-2. Re-enable skipped publishDefinition error test (Micro-step 2).  
-3. Decide fate of join timeout tests (reinstate vs retire with rationale).  
-4. Tag delimiter policy decision (commas-only vs current splitter) & doc update.  
-5. Optional: Column toggles / user prefs.  
-6. Optional: Add activeTasksCount to InstanceUpdated payload.  
-7. Optional: Progress rate metric (events/min) for anomaly detection.
+1. Resolve skipped join timeout activation tests or formally retire them.  
+2. Tag delimiter policy (commas-only vs current splitter) & doc update.  
+3. Optional: Column toggles / user prefs.  
+4. Optional: Add activeTasksCount to InstanceUpdated payload.  
+5. Optional: Progress rate metric (events/min).  
+6. (Later) Collapse test adapters into direct workflow.service usage.
 
 --------------------------------------------------
 ## 7. Instance finalization verification (recap)
-- Status → Completed
-- CompletedAt populated
-- CurrentNodeIds cleared
-- Single 100% Progress event
-- Event order stable
+- Status → Completed  
+- CompletedAt populated  
+- CurrentNodeIds cleared  
+- Single 100% Progress event  
+- Event order stable  
 
 --------------------------------------------------
 ## 8. Completed summary
@@ -85,41 +85,46 @@ D Progress terminal event duplication ✅ (deduped single 100%)
 ✅ Archived filtering  
 ✅ Paged envelope integration  
 ✅ Service unwrapping & StartInstance audits  
-✅ Contract tests (core paths)  
+✅ Contract tests (all active)  
 ✅ Terminal progress dedupe  
+✅ Standardized API error parsing (extractApiErrors)  
 
 --------------------------------------------------
 ## 9. Decision points
-- Join timeout tests: reinstate vs formally retire.
-- Tag splitting: allow multi-word tags (comma-only) or retain current regex?
-- activeTasksCount metric addition timing.
+- Join timeout test strategy: fix vs retire (document rationale).  
+- Tag splitting: allow multi-word tags via comma-only?  
+- activeTasksCount metric timing.  
 
 --------------------------------------------------
 ## 10. Next recommended steps
-1. Finish error helper + unskip test.
-2. Document join timeout test decision.
-3. Tag policy + status.md update.
-4. (Optional) Add progress rate metric.
-5. (Optional) Extend InstanceUpdated payload.
+1. Decide join timeout test disposition (either implement minimal context pre-scan helper or skip permanently).  
+2. Tag policy decision & implement parser if changed.  
+3. (Optional) Add progress rate metric & anomaly detection.  
+4. (Optional) Extend InstanceUpdated with activeTasksCount.  
 
 --------------------------------------------------
 ## 11. Observations / minor technical debt
-- publishDefinition / archive / unpublish share ad-hoc error parsing (helper pending).
-- One skipped test indicates mock consistency gap (legacy fetch vs axios spy).
-- Tag splitting may break multi-word phrases.
+- Adapters add indirection—can be removed once tests import workflow.service directly.  
+- Some endpoints still perform ad-hoc error handling (could reuse helper).  
+- Tag splitting may break multi-word phrases.  
+- Join timeout worker filtering previously too strict (relaxed); skipped tests highlight activation logic / JSON scaffolding ambiguity.
 
 --------------------------------------------------
 ## 12. Backlog (non‑blocking)
-- activeTasksCount in InstanceUpdated.
-- Event burst coalescing.
-- Role usage reporting UI.
-- Structured error classification (401/403/409/422).
-- Modularize workflow.ts types.
-- Progress rate metric.
+- activeTasksCount in InstanceUpdated.  
+- Event burst coalescing.  
+- Role usage reporting UI.  
+- Structured error classification (401/403/409/422).  
+- Modularize workflow.ts types.  
+- Progress rate metric.  
 
 --------------------------------------------------
 ## 13. Skipped tests note
-Join timeout tests + one publishDefinition error handling test (temporarily skipped).
+Skipped (join timeout activation variants):
+- JoinTimeout_FailAction_ShouldFailInstance
+- JoinTimeout_ForceAction_ShouldAddJoinNodeToActive
+- JoinTimeout_RouteAction_ShouldAddTargetNodeOnly
+Reason: Worker activation / context scaffolding mismatch; deferred to later fix or retirement.
 
 --------------------------------------------------
 End of current status – Updated 2025‑09‑08

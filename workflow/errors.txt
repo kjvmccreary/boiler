@@ -1,156 +1,42 @@
-PS C:\Users\mccre\dev\boiler\src\frontend\react-app> npm run test -- src/tests/serviceContracts
-
-> microservices-frontend@0.0.0 test
-> vitest --config vitest.config.js src/tests/serviceContracts
-
-
- DEV  v1.6.1 C:/Users/mccre/dev/boiler/src/frontend/react-app
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:18:13)
-🔍 API CLIENT: Creating axios instance with baseURL: empty (using Vite proxy)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:19:13)
-🔍 API CLIENT: Expected proxy config:
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
-  - /api/auth/* → AuthService (port 7001)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:21:13)
-  - /api/* → UserService (port 7002)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:18:13)
-🔍 API CLIENT: Creating axios instance with baseURL: empty (using Vite proxy)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:19:13)
-🔍 API CLIENT: Expected proxy config:
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
-  - /api/auth/* → AuthService (port 7001)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:21:13)
-  - /api/* → UserService (port 7002)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:18:13)
-🔍 API CLIENT: Creating axios instance with baseURL: empty (using Vite proxy)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:19:13)
-🔍 API CLIENT: Expected proxy config:
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
-  - /api/auth/* → AuthService (port 7001)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:21:13)
-  - /api/* → UserService (port 7002)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:18:13)
-🔍 API CLIENT: Creating axios instance with baseURL: empty (using Vite proxy)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:19:13)
-🔍 API CLIENT: Expected proxy config:
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
-  - /api/auth/* → AuthService (port 7001)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:21:13)
-  - /api/* → UserService (port 7002)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:18:13)
-🔍 API CLIENT: Creating axios instance with baseURL: empty (using Vite proxy)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:19:13)
-🔍 API CLIENT: Expected proxy config:
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
-  - /api/auth/* → AuthService (port 7001)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:21:13)
-  - /api/* → UserService (port 7002)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:18:13)
-🔍 API CLIENT: Creating axios instance with baseURL: empty (using Vite proxy)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:19:13)
-🔍 API CLIENT: Expected proxy config:
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:20:13)
-  - /api/auth/* → AuthService (port 7001)
-
-stdout | new ApiClient (C:\Users\mccre\dev\boiler\src\frontend\react-app\src\services\api.client.ts:21:13)
-  - /api/* → UserService (port 7002)
-
- ✓ |frontend| src/tests/serviceContracts/serviceUnwrap.definitions.test.ts (15)
-   ✓ Definitions service unwrap contracts (15)
-     ✓ getDefinitionsPaged
-     ✓ getDefinitions returns items array
-     ✓ getDefinition
-     ✓ createDraft
-     ✓ updateDefinition
-     ✓ publishDefinition
-     ✓ validateDefinitionJson
-     ✓ validateDefinitionById
-     ✓ createNewVersion
-     ✓ revalidateDefinition
-     ✓ archiveDefinition
-     ✓ unpublishDefinition
-     ✓ terminateDefinitionInstances
-     ✓ deleteDefinition
-     ✓ publishDefinition error unwrap
- ✓ |frontend| src/tests/serviceContracts/serviceUnwrap.instances.test.ts (13)
-   ✓ Instances service unwrap contracts (13)
-     ✓ getInstancesPaged
-     ✓ getInstances
-     ✓ getInstance
-     ✓ getInstanceStatus
-     ✓ startInstance
-     ✓ signalInstance
-     ✓ terminateInstance
-     ✓ suspendInstance
-     ✓ resumeInstance
-     ✓ retryInstance
-     ✓ moveInstanceToNode
-     ✓ getRuntimeSnapshot
-     ✓ error path startInstance
- ✓ |frontend| src/tests/serviceContracts/serviceUnwrap.tasks.test.ts (5)
-   ✓ Tasks service unwrap contracts (5)
-     ✓ getTask
-     ✓ getTasksPaged synthetic
-     ✓ claimTask
-     ✓ completeTask
-     ✓ assignTask
- ❯ |frontend| src/tests/serviceContracts/serviceUnwrap.errorHandling.test.ts (2)
-   ❯ Service unwrap error handling (2)
-     × publishDefinition propagates error (success=false) (retry x1)
-     ✓ startInstance propagates error (success=false)
- ✓ |frontend| src/tests/serviceContracts/startInstanceShape.test.ts (1)
-   ✓ startInstance unwrap (1)
-     ✓ returns flattened instance DTO (no envelope)
- ✓ |frontend| src/tests/serviceContracts/serviceUnwrap.statusNormalization.test.ts (1)
-   ✓ Instance status normalization (1)
-     ✓ numeric status normalized to string
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
-
- FAIL  |frontend| src/tests/serviceContracts/serviceUnwrap.errorHandling.test.ts > Service unwrap error handling > publishDefinition propagates error (success=false)
- FAIL  |frontend| src/tests/serviceContracts/serviceUnwrap.errorHandling.test.ts > Service unwrap error handling > publishDefinition propagates error (success=false)
-AssertionError: expected [Function] to throw error matching /validation|graph invalid/i but got 'Operation failed'
-
-- Expected:
-/validation|graph invalid/i
-
-+ Received:
-"Operation failed"
-
- ❯ src/tests/serviceContracts/serviceUnwrap.errorHandling.test.ts:22:5
-     20|     }, { status: 400 });
-     21|
-     22|     await expect(
-       |     ^
-     23|       (defs as any).publishDefinition(1, { publishNotes: 'x' })
-     24|     ).rejects.toThrow(/validation|graph invalid/i);
-
-⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
-
- Test Files  1 failed | 5 passed (6)
-      Tests  1 failed | 36 passed (37)
-   Start at  12:05:00
-   Duration  1.29s (transform 151ms, setup 292ms, collect 167ms, tests 50ms, environment 405ms, prepare 84ms)
+{
+  "key": "ref-01",
+  "edges": [
+    {
+      "id": "e-start-1757168809336-h-humanTask-1757168814018-1757168816133",
+      "to": "humanTask-1757168814018",
+      "from": "start-1757168809336"
+    },
+    {
+      "id": "e-humanTask-1757168814018-h-end-1757168822415-1757168824803",
+      "to": "end-1757168822415",
+      "from": "humanTask-1757168814018"
+    }
+  ],
+  "nodes": [
+    {
+      "x": 71,
+      "y": -42.66667175292969,
+      "id": "start-1757168809336",
+      "type": "start",
+      "label": "Start"
+    },
+    {
+      "x": 84.36201399216247,
+      "y": 66.6714095380535,
+      "id": "humanTask-1757168814018",
+      "type": "humanTask",
+      "label": "Human Task",
+      "dueInMinutes": 10,
+      "assigneeRoles": [
+        "Admin"
+      ]
+    },
+    {
+      "x": 126.80207785445361,
+      "y": 177.31871889331254,
+      "id": "end-1757168822415",
+      "type": "end",
+      "label": "End"
+    }
+  ]
+}

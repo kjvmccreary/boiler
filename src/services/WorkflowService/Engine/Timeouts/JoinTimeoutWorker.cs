@@ -57,22 +57,30 @@ public sealed class JoinTimeoutWorker : BackgroundService
         }
     }
 
-    private async Task ScanAsync(CancellationToken ct)
+    // Exposed for tests (Option A reinstatement). Returns number of instances updated / processed.
+    public async Task<int> ScanOnceAsync(CancellationToken ct = default) => await ScanAsync(ct);
+
+    private async Task<int> ScanAsync(CancellationToken ct)
     {
         using var scope = _services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<WorkflowDbContext>();
 
         // Only need a heuristic marker that timeouts exist
+        // NOTE: Relaxed filter for reliability (in-memory tests + varied JSON layout).
+        // We pull a bounded set of running instances, then cheap pre-filter in-memory.
         var candidates = await db.WorkflowInstances
-            .Where(i =>
-                i.Status == DTOs.Workflow.Enums.InstanceStatus.Running &&
-                !string.IsNullOrEmpty(i.Context) &&
-                i.Context.Contains("\"timeoutSeconds\""))
+            .Where(i => i.Status == DTOs.Workflow.Enums.InstanceStatus.Running &&
+                        !string.IsNullOrEmpty(i.Context))
             .OrderBy(i => i.Id)
             .Take(_options.BatchSize)
             .ToListAsync(ct);
 
-        if (candidates.Count == 0) return;
+        // Narrow to those that appear to have join timeout markers.
+        candidates = candidates
+            .Where(i => i.Context!.Contains("\"timeoutSeconds\"", StringComparison.Ordinal))
+            .ToList();
+
+        if (candidates.Count == 0) return 0;
 
         var now = DateTime.UtcNow;
         int processed = 0;
@@ -299,6 +307,8 @@ public sealed class JoinTimeoutWorker : BackgroundService
 
         if (processed > 0)
             await db.SaveChangesAsync(ct);
+
+        return processed;
     }
 
     #region Helpers
