@@ -1,167 +1,296 @@
-Application Context Document (Current State Snapshot – Updated Phase 5)
+Application Context Document (Comprehensive Snapshot – Phase 5+ With Recent UI & Runtime Enhancements)
 
-1. High-Level Overview
-Multi-service, multi-tenant workflow platform (.NET 9 / C# 13) centered on WorkflowService (definitions, instances, tasks, events, publish lifecycle). Frontend (React + MUI + DataGrid Premium + emerging ReactFlow builder) consumes a consistent envelope (ApiResponseDto<T>) with normalization helpers. Recent focus: definition pagination, archived filtering, live instance/task updates via SignalR, UI toggles with local persistence, contract stabilization, and test alignment.
+1. High‑Level Overview
+A multi-tenant workflow orchestration platform built on .NET 9 (C# 13) with a React 18 (TypeScript) frontend. Core capabilities: versioned workflow definitions (JSON DSL), instance execution engine (human, automatic, gateway, timer, join), task lifecycle, event stream persistence, publish/version lifecycle, and real-time progress / task notifications (SignalR). Recent work delivered contract stabilization (paged envelopes, archived filtering), advanced AND/OR tag filtering with persistence, tag editing & validation in both Builder and Definitions management UI, final progress event dedupe guard, and enriched definition metadata surface.
 
 2. Tech Stack
-* Runtime: .NET 9, C# 13
-* Data: PostgreSQL (EF Core 9) + InMemory for unit/integration tests
-* Messaging: Outbox pattern (relational table, deterministic idempotency keys) – RabbitMQ not yet integrated
-* Auth: JWT + permission claims (string-based “permission” claim)
-* Frontend: React 18, Vite, TypeScript, MUI, @mui/x-data-grid-premium, SignalR client
-* Graph builder: Planned / partial (EditorWorkflowDefinition types + mapping utilities)
-* Logging: Serilog
-* Real-time: SignalR hubs (tasks & instances)
-* Background workers: Outbox dispatcher, Backfill, TimerWorker, JoinTimeoutWorker (pending fix), future event optimizations
+Backend: .NET 9, C# 13, ASP.NET Core, EF Core 9 (PostgreSQL), Serilog.
+Frontend: React 18, Vite, TypeScript, MUI 5, @mui/x-data-grid-premium, ReactFlow (builder), SignalR client.
+Auth & Security: JWT + permission claims (“permission” claim), multi-tenant via ITenantProvider (X-Tenant-ID header).
+Persistence: PostgreSQL (WorkflowDefinitions, WorkflowInstances, WorkflowTasks, WorkflowEvents, OutboxMessages).
+Messaging Pattern: Outbox table (dispatcher not yet fully implemented).
+Background Workers (current / planned): TimerWorker (pending), OutboxDispatcher (pending), JoinTimeoutWorker (problematic), future anomaly/progress workers.
+Testing: xUnit + FluentAssertions + Moq (unit/integration); frontend minimal runtime contract reliance (no deep UI test suite yet).
 
 3. Projects / Assemblies
-* WorkflowService (core workflow API & engine)
-* DTOs (transport contracts)
-* Contracts (shared service/repository interfaces)
-* Common (cross-cutting: tenancy, auditing, deterministic hashing)
-* ApiGateway (reverse proxy / discovery middleware)
-* Frontend (react-app)
-* Tests: unit + integration (WorkflowService.Tests), coverage includes controllers/services
+WorkflowService (API + engine)
+DTOs (transport contracts)
+Contracts (interfaces for tenancy, notifications, conditions)
+Common (utility/auditing helpers)
+ApiGateway (reverse proxy / multi-service routing)
+Frontend (react-app)
+WorkflowService.Tests (unit/integration)
+Misc: Potential administrative or support libraries (role/permission seeding).
 
-4. Domain Model (Key Entities)
-WorkflowDefinition:
-* Immutable after publish (JSONDefinition locked)
-* Version chain via ParentDefinitionId
-* Fields: IsPublished, PublishedAt, PublishNotes, VersionNotes, IsArchived, ArchivedAt, Tags, ActiveInstanceCount
-WorkflowInstance:
-* DefinitionVersion, Status (Running, Suspended, Completed, Cancelled, Failed)
-* CurrentNodeIds (string or JSON), Context (JSON), StartedAt, CompletedAt
-WorkflowTask:
-* Human or automatic node tasks; Status transitions (Created → Assigned → Claimed → InProgress → Completed/Cancelled/Failed)
-* Role/user assignment; optional DueDate
-WorkflowEvent:
-* Timeline trace (OccurredAt, EventType, Name, Data)
-OutboxMessage:
-* Deterministic hash key (TenantId + logical payload), RetryCount, ProcessedAt, Error state
+4. Core Domain Entities
+WorkflowDefinition
+  Fields: Id, Name, Version, JSONDefinition, IsPublished, PublishedAt, PublishNotes, VersionNotes, IsArchived, ArchivedAt, ParentDefinitionId, Tags (comma-separated, normalized), ActiveInstanceCount.
+  Immutable after publish (JSONDefinition should not change; new version path).
+WorkflowInstance
+  Fields: Id, WorkflowDefinitionId, DefinitionVersion, Status (Running | Suspended | Completed | Cancelled | Failed), CurrentNodeIds (JSON or list), Context (JSON), StartedAt, CompletedAt, ErrorMessage.
+  Tracks active and visited nodes via context arrays (_visited, _parallelGroups, join metadata).
+WorkflowTask
+  Fields: Id, WorkflowInstanceId, NodeId, TaskName, NodeType (human/timer/auto), Status (Created→...→Completed/Cancelled/Failed), AssignedToUserId, AssignedToRole, DueDate, CompletionData, CompletedAt.
+WorkflowEvent
+  Timeline record: WorkflowInstanceId, Type (Instance | Task | Edge | Gateway | Parallel | Node | Signal), Name, Data (JSON), OccurredAt, UserId (optional).
+OutboxMessage
+  Fields: Id, TenantId, EventType, EventData, IsProcessed, RetryCount, (Planned) IdempotencyKey, ProcessedAt, Error.
+  Future: unique index on (TenantId, IdempotencyKey).
 
-5. Security & Tenancy
-* Tenant resolution via ITenantProvider (header X-Tenant-ID preferred; claim fallback)
-* Permissions constants normalized (Permissions.Workflow.*)
-* Role/permission enforcement integrated with controllers ([Authorize]/custom attributes)
-* Multi-tenant isolation enforced at service layer; some queries manually constrained (explicit Where on TenantId)
+5. Security & Tenancy Model
+Tenant isolation enforced at query layer and runtime caching:
+  _instanceTenantCache keyed by InstanceId.
+Permissions:
+  Granular constants (workflow.view_instances, workflow.start_instances, workflow.view_tasks, workflow.claim_tasks, workflow.complete_tasks, workflow.admin, etc.).
+  Controllers decorated with permission checks.
+AuthZ Determination:
+  JWT contains permission claims; X-Tenant-ID header used to scope all operations.
+Risk:
+  Some deep runtime queries rely on cached TenantId; audit coverage pending for tenant leakage.
 
-6. Workflow Engine Architecture
-* Runtime orchestrator + node executors (Start/End, HumanTask, Automatic, Gateway, Timer, Join)
-* Gateway strategies (Feature flag, A/B) with pluggable registry (currently minimal/no external provider wiring)
-* Validation layers:
-  - GraphValidationService (structure)
-  - Publish-time validator (graph rules, JSON parse via BuilderDefinitionAdapter)
-* Extensible automatic action executors (Noop + placeholder webhook pattern)
-* Diagnostics scaffolding (enrichment of gateway edges, conditional logging)
+6. DSL & Builder Model
+DSL (WorkflowDefinition JSON):
+  nodes[]: { id, type, properties{} }, edges[]: { id, source/from, target/to, (optional labels / branch handles) }.
+Supported Node Types: Start, End, HumanTask, Automatic, Gateway (conditional, parallel, exclusive semantics), Timer, Join (gateway join), plus potential placeholders.
+Builder:
+  serializeToDsl / deserializeFromDsl mapping ReactFlow nodes/edges ↔ DSL.
+  Gateway branch normalization (true/false).
+  Tag entry integrated (workflowTags state; validation + normalization via normalizeTags).
+  Publish path runs Graph + DSL validation before runtime publish call.
 
-7. Services Layer (Selected Behavior)
-DefinitionService:
-* Draft lifecycle, publish (immutability enforcement), version creation, usage stats, includeArchived support
-* Paging implemented (PagedResultDto)
-InstanceService (implied / partial): start, signal, status, runtime snapshot, suspend/resume, terminate
-TaskService: claim, assign, complete, reset (admin), cancel
-RoleService: tenant-bound role management, usage lookup (role-in-workflows analysis placeholders)
-Outbox services: deterministic production + dispatch loop
+7. Execution Engine (WorkflowRuntime)
+Overview:
+  StartWorkflowAsync: creates instance, marks start visited, invokes ContinueWorkflowAsync, emits initial or terminal progress (guard for immediate auto-complete flows).
+  ContinueWorkflowAsync: loops active node execution until yielding (waiting tasks) or completion or safety counter (5000).
+  Node Execution: delegating to INodeExecutor implementations (HumanTask, Automatic, Gateway, Timer placeholder, Start/End fallback).
+  Progress Emission:
+    ComputeAndMaybeEmitProgressAsync calculates percentage = visitedCount / total countable nodes (excludes Start).
+    Dedupe: _progressCache prevents duplicate 100% events; start-of-flow guard ensures final 100% appears even for auto flows.
+  Task Completion:
+    CompleteTaskAsync transitions task, updates context (task_{nodeId}), removes node from active, handles parallel/join logic, may auto-advance further.
+Parallel & Join Handling:
+  _parallelGroups structured JSON in Context maintains branches, remaining, completed, join metadata.
+  Join modes supported (all, any, count, quorum thresholdCount/thresholdPercent, expression).
+  Expression evaluation executed via IConditionEvaluator (JsonLogic or domain expression).
+Error Handling:
+  Node failures can suspend instance or mark failed; emit both Node Failed and Instance Failed events.
+Immutability / Save:
+  MarkDirty + SaveIfDirtyAsync pattern ensures EF context flush control (batching operations).
+Critical Guards:
+  Progress dedupe
+  Safety break on runaway loops
+  Late task completion on completed/cancelled instances triggers automatic task cancellation event rather than exception.
 
-8. Outbox Pattern
-* Deterministic hashing to avoid duplicates
-* Unique constraint on (TenantId, IdempotencyKey)
-* Retry / deadletter escalation controlled by simple retry increments
-* Background dispatcher & optional backfill worker
-* Health checks propagate latency/deadletter concerns (future dashboard candidate)
+8. Gateway Processing
+Gateway Evaluation:
+  Strategies: exclusive (default), parallel (branch fan-out), condition-driven selection (via _gatewayDecisions in context), fallback heuristics when missing decisions.
+Events:
+  GatewayEvaluated with strategy, outgoingEdges, selected.
+Edges traversed emit EdgeTraversed events with mode (AutoAdvance, TaskCompletionAdvance, AutoAdvanceParallel).
+Parallel groups create markers for join evaluation.
+Missing Enhancements:
+  Weighted routing, feature-flag integration, dynamic condition injection not fully implemented.
 
-9. Recent / Notable Hardening & Changes
-* Unified paged envelope for definitions (replacing legacy flat list)
-* Added includeArchived filtering end-to-end + toggle in UI
-* LocalStorage persistence for toggles: Hide Completed (instances/tasks), Show Archived (definitions)
-* Instance finalization validated (completion status correctness)
-* Type system stabilization (workflow.ts with builder/editor/usage types + optional snapshot fields)
-* Controller tests updated to paged contract; removed legacy list-based assumptions
+9. Progress & Context Internals
+Context JSON Special Keys:
+  _visited: JsonArray of node IDs visited.
+  _progress: { lastPercent } store.
+  _parallelGroups: grouping object with branch tracking + join metadata.
+  _gatewayDecisions: optional structure for predetermined branching diagnostics.
+  task_{nodeId}: per-task completion data (raw JSON or wrapped).
+Progress Calculation:
+  ShouldCountForProgress excludes Start; Completed instance forces all counted nodes as visited (ensures 100%).
+Open Considerations:
+  Potential addition of partial branch weighting; currently linear count.
 
-10. Backend ↔ Frontend Contract Adjustments (Current State)
-* Envelope: ApiResponseDto<T> consistent for workflow endpoints
-* Definitions GET: ApiResponseDto<PagedResultDto<WorkflowDefinitionDto>> (frontend unwraps data.items)
-* includeArchived param implemented (default false)
-* StartInstance returns ApiResponseDto<WorkflowInstanceDto>; frontend uses data.id
-* Snapshot includes tasks, events, visited/traversed metadata (some optional)
-* Builder/editor mapping utilities expect EditorWorkflowDefinition ←→ Graph nodes/edges
+10. Tags System (Backend & Frontend)
+Normalization:
+  normalizeTags(raw) -> canonicalQuery (comma-separated, trimmed, lowercase stable or original preserved per implementation), normalized[] list.
+Filtering:
+  anyTags (OR semantics), allTags (AND semantics). Legacy tags param remains (OR) for backward compatibility and can be deprecated.
+Persistence:
+  Definitions.Tags stored as canonical string; tag modifications through updateDefinition or createDraft.
+UI:
+  Definitions Page:
+    Advanced Filters panel: All Tags (AND), Any Tags (OR).
+    Chips preview; apply/reset with persistence via localStorage keys (wf.definitions.anyTags / wf.definitions.allTags).
+    Sortable Tags column with top 3 chips + overflow indicator.
+    Tag Edit Dialog with validation (max 12 tags, each ≤ 40 chars).
+  Builder Page:
+    Tag input integrated directly in top toolbar; validation identical; normalized on create/update.
+Validation & Limits:
+  Controlled solely in frontend currently; backend normalization tolerant (should implement server-side guard for defense-in-depth).
+Deprecation Plan (Pending):
+  Console warning & status document; precedence rule: anyTags/allTags override legacy tags.
 
-11. Background Worker Status
-JoinTimeoutWorker:
-* Still logging nullable access exceptions (root cause unresolved)
-* Temporarily tolerated (does not block execution path)
-TimerWorker & Outbox workers operational
-Optimization opportunity: progress event deduplication (see Section 17)
+11. Frontend Architecture Summary
+State Patterns:
+  Local React state + ephemeral fetch; minimal global store (no Redux).
+Persistence:
+  localStorage for showArchived, tag filters, (similar toggles for hideCompleted in other views).
+Data Grid:
+  @mui/x-data-grid-premium for definitions, with detail panel for metadata (publish notes, version notes, tags, active instance count, timings).
+Builder:
+  ReactFlow-based visual editor (nodes/edges editing, property panel, validation workflow, publish flow).
+Services:
+  workflow.service.ts handles all API interactions, unwrapping ApiResponse envelope, applying status normalization & tag normalization.
+Error Handling:
+  extractApiErrors centralizes picking first actionable message; used for publish/unpublish/archive/terminate/validation operations.
 
-12. Instance Completion Status (Resolved)
-* Verified transitions produce:
-  - Status=Completed
-  - CompletedAt populated
-  - CurrentNodeIds empty
-  - Terminal progress ≥ one 100% event
-* Frontend now reflects completion rapidly via SignalR push, minimal polling fallback
-
-13. Permissions
-* Controllers standardized on Permissions.Workflow.* constants
-* Legacy literal permission strings replaced (reduces mismatch risk)
-* Claims: “permission” claim holds values—tokens must include needed workflow permissions
-
-14. Dependency Injection & Lifetime Overview
-Registered (not exhaustive):
-* IDefinitionService / IInstanceService / ITaskService (scoped)
-* Validation: IWorkflowGraphValidator, IGraphValidationService, IWorkflowPublishValidator
-* Runtime executors: multiple INodeExecutor
-* Feature/gateway registries
-* Outbox: writer, dispatcher, backfill
-* SignalR hubs + notifications dispatch
-* Tenant services (ITenantProvider), auditing, hashing
-Potential enhancement: split builder-specific services from runtime concerns to tighten hosting footprint
-
-15. Configuration / Environment Variables
-* ConnectionStrings:DefaultConnection
-* X-Tenant-ID header required (missing → 401/tenant error path)
-* WF_ISO_DIAG=1 enables isolation diagnostics
-* Workflow:Outbox / Workflow:JoinTimeouts section options
-* Optional Docker flags (NO_CACHE_DOCKER etc.)
-
-16. Testing Overview
-* Definitions controller tests aligned to paged envelope
-* Archived filtering integration tests (includeArchived true/false) passing
-* Publish path tests include validation error shaping
-* Some tests skipped (join timeout scenarios)
-* Frontend tests minimal (task/definition service behavior mostly untested client-side)
-* Type safety improved; builder utilities compile with unified types
-
-17. Real-Time & Eventing
-SignalR:
-* Task events push list refresh
-* InstanceUpdated & InstanceProgress events update live status/progress badges
-Current Issue:
-* Multiple (duplicate) Progress(100%) terminal events (low impact) → potential guard to emit only first terminal event
-Potential Enhancements:
-* Delta-only payloads for large volume workflows
-* Batch compression for high-frequency automatic nodes
-
-18. Diagnostics / Observability
-* Outbox logging (FETCH / DISPATCH / DEADLETTER)
-* Instance / task mutation logs via service layers
-* Health endpoint includes tenant & outbox indicators
-* Performance measurements not yet centralized (no metrics aggregator)
-* Consider: structured event classification for timeline UI
-
-19. API Summary (Key Endpoints)
+12. Service Layer (Frontend)
+Unwrap Logic:
+  Generic unwrap<T>() enforces success field gating; errors aggregated.
 Definitions:
-  GET /api/workflow/definitions?includeArchived=bool&search=&published=&tags=&sortBy=&desc=&page=&pageSize=
+  getDefinitionsPaged (paging query param builder incl. tags), getDefinitions convenience wrapper defaults page=1 pageSize=100 sorted newest.
+Instances:
+  getInstancesPaged normalizes status; runtime snapshot retrieval included.
+Tasks:
+  getTasks/mine with status normalization; action methods (claim/assign/complete/reset/cancel).
+Events/Stats:
+  getWorkflowEvents, getTaskStatistics, getWorkflowStats, bulkCancelInstances.
+Validation:
+  validateDefinitionJson / validateDefinitionById integrate helper error mapping; GraphValidationResult computed.
+SignalR (Elsewhere):
+  Not shown here but referenced: startTaskHub / instance progress subscription (progress + updated events).
+
+13. Response Envelope (Backend)
+ApiResponse<T>:
+  { success: bool, message?: string, errors?: array/mixed, data: T }
+Paged:
+  data: { items, totalCount, page, pageSize }
+Frontend strips envelope and returns typed DTOs; startInstance flattened (used as result.id).
+
+14. Real-Time & Live Updates
+Current:
+  Progress events push via workflow progress notifier (NotifyInstanceProgressAsync).
+  Instance listing refresh triggered post-mutation; tasks listing via task notifier events.
+Client Behavior:
+  DataGrid refresh triggered after actions (publish/unpublish/archive/duplicate).
+Enhancements (Potential):
+  Active tasks count on instance progress/snapshot.
+  Broadcast minimal diff for heavy payload reduction.
+
+15. Background Workers (Current vs Pending)
+Implemented in concept (partially in codebase):
+  TimerWorker (NOT wired): should poll due timer tasks and auto-complete.
+  OutboxDispatcher (MVP placeholder): selects unprocessed messages; actual transport integration absent.
+  JoinTimeoutWorker: logging exceptions (join timeout logic not stable).
+Planned:
+  AnomalyDetector (progress stall alerts), EventBurstCoalescer.
+
+16. Validation Layers
+Graph Publish Validator:
+  Single Start, ≥1 End, reachability, no orphan ends, no duplicate IDs.
+Runtime Defensive Validation:
+  Safe parse context, fallback event emission when nodes missing.
+Frontend Pre-Publish:
+  validateDefinitionById + local DSL validation + auto-save re-run.
+Missing:
+  UI-level structural validation for join configurations (parallel+join pairs).
+Opportunity:
+  Add offline “simulate path” tool.
+
+17. Test Coverage Overview
+Covered:
+  Publish/unpublish/archive/terminate endpoints with error handling.
+  Definitions paging + archived filtering.
+  Instance lifecycle (start, signal, completion).
+  Gateway selection (some scenarios).
+  Progress finalization (100% appears).
+  Task claim/complete baseline.
+Partial/Skipped:
+  Join timeout activation test variants (fail, force, route).
+  Timer auto-fire (depends on TimerWorker).
+  Outbox dispatch idempotency under concurrency.
+Frontend:
+  No comprehensive component test coverage; relies on manual verification and backend tests enforcing contract shape.
+
+18. Performance & Scaling Considerations
+Queries:
+  Definitions list uses paging—indexes recommended: (TenantId, IsArchived, IsPublished, UpdatedAt DESC).
+Concurrency:
+  Runtime loops may thrash if large parallel expansions; safety counter protects runaway loops.
+Progress Frequency:
+  Coalescing not implemented; potential for event spam on large automatic chains (dedupe only addresses terminal duplicates).
+Outbox:
+  Dispatcher absent—message table can grow unbounded (needs retention policy).
+
+19. Observability & Diagnostics
+Logging:
+  Structured Serilog; engine logs WF_* prefixed messages (WF_START, WF_NODE_EXEC_START, etc.).
+Progress:
+  Cache prevents repeated 100% emission (reduces noise).
+Events:
+  Rich event stream supports future timeline visualization.
+Pending:
+  Metrics counters (tasks per minute, average instance completion time).
+  Health probe expansion (outbox lag, timer backlog).
+Recommended:
+  Add structured log enrichment for tenant + instance tracing.
+
+20. Risk / Debt Inventory
+High Priority:
+  TimerWorker missing → timers rely on manual completion.
+  Outbox dispatcher missing → no external event propagation.
+  JoinTimeout logic unreliable.
+Medium:
+  Multi-tenant enforcement not fully tested for deep edge cases.
+  Definition immutability enforcement needs explicit validation & negative tests.
+  Automatic executors minimal (no robust webhook integration).
+Low:
+  Duplicate 100% progress issue resolved; low residual risk.
+  Lack of UI tests; manual regression passes needed.
+
+21. UI Enhancements (Recent)
+Definitions Page:
+  Advanced tag filtering (All=AND, Any=OR) with localStorage persistence.
+  Tags column + overflow indicator, metadata detail panel expanded.
+  Edit Tags dialog (validation + preview chips) for draft/published.
+Builder Page:
+  Inline tag input + validation (shared policy).
+Progress UI:
+  Terminal dedupe reduces flicker for completed instances.
+Filter Persistence:
+  showArchived, anyTags, allTags stored under stable localStorage keys.
+Tooltips:
+  Tag semantics (AND vs OR) explained in detail panel.
+Chip Interaction:
+  Removal updates filter state but requires explicit Apply (reduces query spam).
+
+22. Open Items Backlog (Condensed Jira-Ready)
+1. TimerWorker implementation (auto-complete due timer tasks).
+2. OutboxDispatcher + idempotency key & processed auditing.
+3. Join timeout test strategy (implement vs retire) + fix worker.
+4. Legacy tags parameter deprecation (precedence documentation + console warning).
+5. Multi-tenant enforcement test suite (negative leakage tests).
+6. Definition immutability hardening (guard PUT after publish).
+7. ActiveTasksCount in InstanceUpdated payload & UI column/badge.
+8. Grid personalization (columns, sort, page size, density persistence).
+9. Standardize error helper across remaining admin / events endpoints.
+10. Progress rate metric & anomaly detection (stalled flows).
+11. Event burst coalescing (batch or debounce progress/task events).
+12. Automatic action registry extensions (webhook executor).
+13. Role usage reporting (aggregate role distribution across defs).
+14. Structured error classification (401/403/409/422 friendly surfacing).
+15. Test coverage: timer auto-fire, outbox idempotency, parallel/join edge cases.
+16. Builder simulation / dry-run harness.
+17. Deprecation banner for legacy tags.
+18. Performance baseline & regression check for filtered definition queries.
+19. Reusable TagInput component (DRY across builder + dialogs).
+20. Instance history timeline UI using stored WorkflowEvents.
+
+23. API Surface (Key Endpoints Recap)
+Definitions:
+  GET /api/workflow/definitions (paged; filters: search, published, includeArchived, tags, anyTags, allTags, sortBy, desc, page, pageSize)
   GET /api/workflow/definitions/{id}
   POST /api/workflow/definitions/draft
   PUT /api/workflow/definitions/{id}
   POST /api/workflow/definitions/{id}/publish
   POST /api/workflow/definitions/{id}/unpublish
-  POST /api/workflow/definitions/{id}/new-version
   POST /api/workflow/definitions/{id}/archive
+  POST /api/workflow/definitions/{id}/new-version
   POST /api/workflow/definitions/{id}/terminate-running
   POST /api/workflow/definitions/{id}/revalidate
-  GET  /api/workflow/definitions/{id}/usage
 Instances:
   GET /api/workflow/instances (+ filters)
   GET /api/workflow/instances/{id}
@@ -172,7 +301,7 @@ Instances:
   POST /api/workflow/instances/{id}/suspend
   POST /api/workflow/instances/{id}/resume
   DELETE /api/workflow/instances/{id}
-Tasks (selection):
+Tasks:
   GET /api/workflow/tasks
   GET /api/workflow/tasks/mine
   GET /api/workflow/tasks/{id}
@@ -181,127 +310,131 @@ Tasks (selection):
   POST /api/workflow/tasks/{id}/assign
   POST /api/workflow/tasks/{id}/cancel
   POST /api/workflow/admin/tasks/{id}/reset
-Admin / Stats:
+Admin / Stats / Events:
   GET /api/workflow/tasks/statistics
   POST /api/workflow/admin/instances/bulk-cancel
+  GET /api/workflow/admin/events
 Health:
   GET /health
 
-20. Response Envelope (Canonical)
-ApiResponseDto<T>:
-{
-  success: bool,
-  message?: string,
-  errors?: [{ code?: string, message?: string }],
-  data?: T
-}
-Paged variant: data: { items: TItem[], totalCount, page, pageSize }
+24. DTO / Envelope Conventions
+PagedResultDto<T> { items: T[], totalCount, page, pageSize }
+WorkflowDefinitionDto includes tags (string | null).
+WorkflowInstanceDto includes normalized status (InstanceStatus).
+WorkflowTaskDto includes status normalization & completion metadata.
+GraphValidationResult (frontend abstraction) merges backend envelope variants.
 
-21. Frontend Integration State
-Implemented:
-* Definitions paged fetch + archived toggle
-* Instances & My Tasks hide-completed toggles (persisted)
-* Instance runtime diagram & state badges
-* Task status chips + claim/complete flows
-Pending / Enhancements:
-* Display additional definition metadata (PublishNotes, VersionNotes, Tags, ActiveInstanceCount)
-* Progress event deduplication (UI stabilization)
-* Formal service method audit doc for unwrap consistency
-* Central error classification (401 vs 403 vs 409 vs 422 mapping)
+25. Builder / Editor Type Summary
+EditorWorkflowDefinition { nodes, edges, metadata? }
+EditorWorkflowNode { id, type, label?, x, y, roles?, action?, condition?, metadata }
+EditorWorkflowEdge { id, from, to, label?, fromHandle? }
+Mapping ensures gateway boolean edges consistent (true/false).
+Potential future metadata expansions: SLA, form schema, data-binding.
 
-22. Open Follow-Ups
-1. Final audit: all startInstance usages rely on data.id (no stale patterns)
-2. Service unwrapping matrix (document each method’s expectation)
-3. Optional: expose metadata fields in definition detail or expanded row
-4. Implement terminal progress event dedupe (cache lastPercent per instance)
-5. Decide fate of skipped join-timeout tests (reactivate or deprecate with note)
-6. Role usage reporting endpoint completion (if UI to display role impact)
-7. Optional: add activeTasksCount to InstanceUpdated events
+26. Runtime Internals (Selected Methods)
+StartWorkflowAsync:
+  Creates instance, marks start node visited, triggers continuation loop, emits initial or force terminal progress.
+ContinueWorkflowAsync:
+  Pulls active nodes; executes each unless waiting task present; attempts completion if active set drained.
+CompleteTaskAsync:
+  Status transition, context injection, active set mutation, emits parallel/join events, may recursively continue.
+ComputeAndMaybeEmitProgressAsync:
+  Derives visitedCount vs total countable nodes; persists lastPercent; dedupes duplicate 100%.
+TryCompleteInstanceAsync:
+  Cancels open tasks, sets Completed, emits final events, forces progress recalculation.
 
-23. Feature Flags / Extension Points
-* Gateway strategies pluggable (feature flag / A-B)
-* Automatic action registry (future: webhook, script, integration)
-* Publish validation extensible
-* Event stream shaping (future: classification, severity)
+27. Join / Parallel Mechanics
+Parallel:
+  Gateway with parallel strategy populates _parallelGroups[gatewayNodeId].branches.
+Join:
+  Arrival events tracked in joinMeta (“arrivals” array).
+  Mode strategies: all, any, count, quorum(percent/count), expression (custom expression evaluation with overlay _joinEval).
+Cancellation:
+  cancelRemaining supports aggressively pruning remaining branches when join satisfied.
 
-24. Risk & Debt Areas
-* Duplicate terminal progress events (noise)
-* JoinTimeoutWorker exceptions – potential hidden missed transitions
-* Unexposed metadata fields reduce admin visibility (PublishNotes/VersionNotes)
-* Sparse frontend automated test coverage
-* Builder/editor type sprawl (all in single workflow.ts) – consider modularization
+28. Error Handling & Resilience
+Execution errors:
+  Node failure paths can suspend or fail instance; events persisted.
+Validation failures:
+  Graph validation returns actionable error list; publish blocked until resolved.
+Late Task Completion:
+  On already completed/cancelled instance → task auto-cancel + event note.
+Silent / Suppressed Exceptions:
+  Some progress emission & notifier exceptions swallowed to avoid halting engine (trade-off: diagnostic visibility).
 
-25. Quick Action Checklist
-| Area | Action |
-|------|--------|
-| Service unwrap audit | Produce method matrix & confirm conformity |
-| StartInstance usage | Grep & verify all use response.data.id |
-| Definition metadata UI | Decide: add columns or details panel |
-| Progress dedupe | Implement single terminal emission |
-| Join timeout tests | Reactivate or retire with rationale |
-| Role usage endpoints | Complete server implementation if needed by UI |
-| Frontend error handling | Standardize toast messaging by HTTP status |
+29. Frontend UX Patterns
+Explicit Apply for advanced filters to avoid excessive network calls.
+Chip-based removal workflow (mutates input, requires reapply).
+Detail panel shows extended metadata (publish notes, version notes, tags, timestamps).
+Dialogs for destructive / lifecycle operations (Publish, Unpublish, Archive, Terminate Instances, Edit Tags).
+Normalization performed just-in-time before persistence (tags, statuses).
+Consistent toast feedback patterns (success/failure contextual messaging).
 
-26. Environment / Headers Required
-* Authorization: Bearer {JWT}
-* X-Tenant-ID: {tenantId}
-Missing / invalid tenant context → 401 or controlled error envelope. Ensure consistent 401 vs 403 semantics (permission vs absence).
+30. Local Storage Keys (Current)
+wf.definitions.showArchived
+wf.definitions.anyTags
+wf.definitions.allTags
+(Elsewhere probable: wf.instances.hideCompleted, wf.tasks.hideCompleted)
 
-27. Suggested Immediate Next Steps
-1. Produce and store “service unwrap audit” markdown (ensures future regressions are obvious).
-2. Add optional definition metadata to a flyout or expandable grid row.
-3. Implement simple progress dedupe (cache last emitted non-terminal + block duplicate 100%).
-4. Decide on re-enabling join timeout logic (fix nullable root cause first).
-5. Add minimal Jest or React Testing Library coverage for workflowService error paths.
+31. Performance Considerations
+Hot Paths:
+  ContinueWorkflowAsync loops; may benefit from micro-batching events.
+  Progress emission frequency could be reduced by only emitting on percent change (already partially enforced).
+Indexes (Recommended):
+  WorkflowDefinitions: (TenantId, IsArchived, IsPublished, UpdatedAt DESC)
+  WorkflowInstances: (TenantId, Status, StartedAt DESC)
+  WorkflowTasks: (WorkflowInstanceId, Status, DueDate)
+Potential:
+  Event table growth; add archival or partitioning strategy.
 
-28. Builder / Editor Model (Current State)
-* Types: EditorWorkflowDefinition / EditorWorkflowNode / EditorWorkflowEdge + mapping utilities (definitionMapper.ts)
-* Conversion ensures gateway branches normalized (true/false/else)
-* RFNodeData/RFEdgeData types relaxed (optional fields for resilience)
-* Future: validation + palette integration pending
+32. Observability Backlog
+Planned Metrics:
+  InstancesStarted/sec, TasksCompleted/sec, AverageDuration, TimerLag, OutboxLag.
+Event Classification:
+  Consider severity tagging (info / warn / error) for future UI timeline filtering.
 
-29. Real-Time UX Integration
-* useTaskHub & useInstanceHub hooks throttle refresh
-* Status badge polls only if push missing (avoids noisy network)
-* Potential optimization: disable polling after first push per instance
+33. Security / Guarding
+Immutability:
+  PUT after publish should reject (needs full enforcement + tests).
+Tenant Leaks:
+  Validate cross-reference queries (joins on definitions/instances/tasks incorporate TenantId).
+Role Enforcement:
+  Admin endpoints strictly require workflow.admin permission (confirmed).
+Data Sanitization:
+  Task completion data stored raw (if JSON parse fails) → consider size limit / sanitization.
 
-30. Documentation / Developer Experience
-* Swagger XML comments recommended for key endpoints (definitions GetAll documented pattern prepared)
-* status.md maintains delta-focused contract; context.md (this file) is full snapshot
-* README updates pending for includeArchived usage & paged envelope adoption
+34. Known Gaps / Decisions Needed
+TimerWorker: implement or clarify manual policy.
+Legacy tags param: timeline for removal.
+Join timeout semantics: either finalize or disable feature for MVP.
+Outbox externalization: choose transport (e.g., RabbitMQ / Kafka) or continue logging fallback.
+Simulation / test harness: needed for complex gateways / joins reliability.
 
-31. Testing Gaps / Opportunities
-* No direct test for publish with tags/version notes interplay
-* Missing integration covering instance suspend → resume → completion chain
-* Lack of load tests for high-frequency automatic node scenarios
-* No test validating outbox idempotency under concurrent publish
+35. Immediate Recommendations
+1. Implement TimerWorker to remove manual timer task friction.
+2. Add OutboxDispatcher (idempotent lock, batch process, backoff).
+3. Multi-tenant negative tests to certify isolation.
+4. Deprecate legacy tags param (warning + documentation).
+5. Add minimal metrics hook (avoid scope creep but seed observability).
+6. Confirm definition immutability enforcement with regression test.
 
-32. Performance Considerations
-* Definition queries now paged – indexing advisable: (TenantId, IsArchived, IsPublished, UpdatedAt DESC)
-* Outbox dispatcher linear scan – consider batching or time-slice if volume grows
-* Progress events can be coalesced (client only needs latest for each instance)
+36. Summary Snapshot
+Stable core (definitions, instances, task lifecycle, gateway routing, progress tracking). Significant UX advances (tags system & filtering, metadata surfacing). Operational readiness partially hindered by absent TimerWorker & Outbox dispatch. Testing resilient for core paths but lacking for timed / join/timeouts and externalization scenarios. System is feature-complete for foundational workflow orchestration; next focus: automation maturity (timers/outbox), validation depth, and operational observability.
 
-33. Observability Enhancements (Proposed)
-* Add metrics counters: active instances, task throughput, publish latency
-* Track event emission counts (definition.instance.updated vs progress)
-* Central structured logging for permission denial
+37. Glossary
+ANY Tags: OR filtering (match at least one).
+ALL Tags: AND filtering (must contain all).
+Active Set: CurrentNodeIds list deserialized for engine iteration.
+Visited Nodes: _visited context array marking execution history.
+Parallel Group: Structure under _parallelGroups tracking branches & join state.
+Terminal Progress: 100% event signifying all countable nodes visited or instance completion.
 
-34. Future Roadmap Seeds (From Backlog)
-* Task SLA / aging dashboard (needs activeTasksCount / dueSoon push)
-* Definition diff view for version comparisons
-* Human task form schema rendering (currently only stored)
-* Workflow simulation / dry-run harness
-* Webhook automatic action executor full implementation
+38. Appendices (Potential Future Sections)
+A. Migration Strategy for Definition Versioning
+B. Webhook Automatic Action Execution Design
+C. Role Usage Analytical Queries
+D. Event Timeline UI Specification (future)
 
-35. Summary State Snapshot
-Core engine stable, definitions/instances lifecycle functional, archived filtering and pagination implemented, live updates in place. Remaining items are polish (metadata exposure, event dedupe, worker stabilization) and observability/test depth improvements.
-
-36. Other
-* User / Tenant relationship is many to many. A user can belong to multiple tenants with different roles/permissions in each.
-* You (AI engine) are to act as a senior developer familiar with this codebase. 
-    * You are to provide full code files rather than snippets.
-    * Do not expect me to provide missing context; use best judgment.
-    * You are responsible for ensuring accuracy and relevance of your responses.
-    * All of your responses must take into account the rest of the code base and the overall architecture.
 ---
-If you need a condensed “executive brief” version or a change-log delta from prior snapshot, request: “Provide condensed context” or “Provide delta summary.”
+For a condensed executive summary: request “Provide condensed context”.
+For delta from previous snapshot: request “Provide delta summary”.
