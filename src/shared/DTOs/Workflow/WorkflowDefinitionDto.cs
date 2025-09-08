@@ -59,7 +59,18 @@ public class GetWorkflowDefinitionsRequestDto
 {
     public string? SearchTerm { get; set; }
     public bool? IsPublished { get; set; }
+    /// <summary>
+    /// Legacy single string tag filter (treated as ANY semantics). Prefer AnyTags / AllTags.
+    /// </summary>
     public string? Tags { get; set; }
+    /// <summary>
+    /// Comma-delimited list: record must contain ALL of these tags (AND semantics).
+    /// </summary>
+    public string? AllTags { get; set; }
+    /// <summary>
+    /// Comma-delimited list: record must contain ANY of these tags (OR semantics).
+    /// </summary>
+    public string? AnyTags { get; set; }
     public int Page { get; set; } = 1;
     public int PageSize { get; set; } = 20;
     public string SortBy { get; set; } = "CreatedAt";

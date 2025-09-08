@@ -106,7 +106,10 @@ public class DefinitionService : IDefinitionService
             IsPublished = false,
             Version = 1,
             CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            UpdatedAt = DateTime.UtcNow,
+            Tags = string.IsNullOrWhiteSpace(request.Tags)
+                ? null
+                : TagNormalization.Normalize(request.Tags).canonical
         };
 
         _context.WorkflowDefinitions.Add(def);
@@ -179,7 +182,11 @@ public class DefinitionService : IDefinitionService
 
             if (!string.IsNullOrEmpty(request.Name)) definition.Name = request.Name;
             if (request.Description != null) definition.Description = request.Description;
-            if (request.Tags != null) definition.Tags = request.Tags;
+            if (request.Tags != null)
+            {
+                var norm = TagNormalization.Normalize(request.Tags).canonical;
+                definition.Tags = string.IsNullOrWhiteSpace(norm) ? null : norm;
+            }
 
             definition.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
@@ -532,8 +539,70 @@ public class DefinitionService : IDefinitionService
             if (request.IsPublished.HasValue)
                 query = query.Where(d => d.IsPublished == request.IsPublished.Value);
 
-            if (!string.IsNullOrWhiteSpace(request.Tags))
-                query = query.Where(d => d.Tags != null && d.Tags.Contains(request.Tags));
+            // Tag filtering (AllTags = AND, AnyTags = OR, legacy Tags = OR if AnyTags not supplied)
+            // Normalize once per category.
+            List<string> allTagsList = new();
+            List<string> anyTagsList = new();
+            if (!string.IsNullOrWhiteSpace(request.AllTags))
+            {
+                allTagsList = TagNormalization.Normalize(request.AllTags).list;
+            }
+            if (!string.IsNullOrWhiteSpace(request.AnyTags))
+            {
+                anyTagsList = TagNormalization.Normalize(request.AnyTags).list;
+            }
+            else if (string.IsNullOrWhiteSpace(request.AnyTags) && !string.IsNullOrWhiteSpace(request.Tags))
+            {
+                // Backward compatibility: Tags acts as ANY group.
+                anyTagsList = TagNormalization.Normalize(request.Tags).list;
+            }
+
+            // AND semantics (allTags)
+            if (allTagsList.Count > 0)
+            {
+                foreach (var tag in allTagsList)
+                {
+                    var t = tag;
+                    query = query.Where(d =>
+                        d.Tags != null &&
+                        (("," + d.Tags + ",").Contains("," + t + ",")));
+                }
+            }
+
+            // OR semantics (anyTags)
+            if (anyTagsList.Count > 0)
+            {
+                // Build OR expression dynamically
+                var param = System.Linq.Expressions.Expression.Parameter(typeof(WorkflowDefinition), "d");
+                var tagsProp = System.Linq.Expressions.Expression.Property(param, nameof(WorkflowDefinition.Tags));
+                var notNull = System.Linq.Expressions.Expression.NotEqual(tagsProp, System.Linq.Expressions.Expression.Constant(null, typeof(string)));
+
+                System.Linq.Expressions.Expression? orExpr = null;
+                foreach (var tag in anyTagsList)
+                {
+                    var boundary = "," + tag + ",";
+                    // ("," + d.Tags + ",").Contains("," + tag + ",")
+                    var concatLeft = System.Linq.Expressions.Expression.Call(
+                        typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) })!,
+                        System.Linq.Expressions.Expression.Constant(","),
+                        tagsProp);
+                    var concatWrapped = System.Linq.Expressions.Expression.Call(
+                        typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) })!,
+                        concatLeft,
+                        System.Linq.Expressions.Expression.Constant(","));
+                    var contains = System.Linq.Expressions.Expression.Call(
+                        concatWrapped,
+                        typeof(string).GetMethod("Contains", new[] { typeof(string) })!,
+                        System.Linq.Expressions.Expression.Constant(boundary));
+                    var cond = System.Linq.Expressions.Expression.AndAlso(notNull, contains);
+                    orExpr = orExpr == null ? cond : System.Linq.Expressions.Expression.OrElse(orExpr, cond);
+                }
+                if (orExpr != null)
+                {
+                    var lambda = System.Linq.Expressions.Expression.Lambda<Func<WorkflowDefinition, bool>>(orExpr, param);
+                    query = query.Where(lambda);
+                }
+            }
 
             var sortKey = string.IsNullOrWhiteSpace(request.SortBy)
                 ? "createdat"
@@ -720,7 +789,9 @@ public class DefinitionService : IDefinitionService
                 JSONDefinition = request.JSONDefinition.EnrichEdgesForGateway(),
                 Version = existing.Version + 1,
                 IsPublished = false,
-                Tags = request.Tags ?? existing.Tags,
+                Tags = request.Tags != null
+                    ? (TagNormalization.Normalize(request.Tags).canonical)
+                    : existing.Tags,
                 VersionNotes = request.VersionNotes,
                 ParentDefinitionId = existing.Id,
                 CreatedAt = DateTime.UtcNow,

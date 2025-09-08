@@ -121,7 +121,9 @@ function mapTasks(list: WorkflowTaskDto[]) {
 export interface WorkflowDefinitionsFilters {
   search?: string;
   published?: boolean;
-  tags?: string;
+  tags?: string; // legacy (OR)
+  anyTags?: string; // OR semantics
+  allTags?: string; // AND semantics
   includeArchived?: boolean;
   page?: number;
   pageSize?: number;
@@ -216,6 +218,14 @@ export class WorkflowService {
       const norm = normalizeTags(filters.tags);
       if (norm.canonicalQuery) params.append('tags', norm.canonicalQuery);
     }
+    if (filters?.anyTags) {
+      const norm = normalizeTags(filters.anyTags);
+      if (norm.canonicalQuery) params.append('anyTags', norm.canonicalQuery);
+    }
+    if (filters?.allTags) {
+      const norm = normalizeTags(filters.allTags);
+      if (norm.canonicalQuery) params.append('allTags', norm.canonicalQuery);
+    }
     if (filters?.includeArchived !== undefined) params.append('includeArchived', String(filters.includeArchived));
     if (filters?.page) params.append('page', String(filters.page));
     if (filters?.pageSize) params.append('pageSize', String(filters.pageSize));
@@ -260,20 +270,10 @@ export class WorkflowService {
         warnings: payload.warnings ?? []
       };
     } catch (err: any) {
-      const d = err?.response?.data;
-      let errors: string[] = [];
-      let warnings: string[] = [];
-      if (Array.isArray(d?.errors)) {
-        errors = (d.errors as any[]).map(e => (typeof e === 'string' ? e : e.message ?? JSON.stringify(e)));
-      } else if (Array.isArray(d?.data?.errors)) {
-        errors = d.data.errors;
-      } else if (d?.message) {
-        errors = [d.message];
-      } else {
-        errors = ['Validation failed (unknown server response).'];
-      }
-      if (Array.isArray(d?.warnings)) warnings = d.warnings;
-      return { success: false, errors, warnings };
+      const data = err?.response?.data;
+      const { all } = this.extractApiErrors(data, 'Validation failed');
+      const warnings: string[] = Array.isArray(data?.warnings) ? data.warnings : [];
+      return { success: false, errors: all, warnings };
     }
   }
 
@@ -287,12 +287,10 @@ export class WorkflowService {
         warnings: d.warnings ?? []
       };
     } catch (err: any) {
-      const d = err?.response?.data;
-      return {
-        success: false,
-        errors: d?.errors ?? [d?.message ?? 'Validation request failed'],
-        warnings: d?.warnings ?? []
-      };
+      const data = err?.response?.data;
+      const { all } = this.extractApiErrors(data, 'Validation request failed');
+      const warnings: string[] = Array.isArray(data?.warnings) ? data.warnings : [];
+      return { success: false, errors: all, warnings };
     }
   }
 

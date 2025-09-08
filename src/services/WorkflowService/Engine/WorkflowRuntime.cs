@@ -118,6 +118,22 @@ public class WorkflowRuntime : IWorkflowRuntime
         {
             await ComputeAndMaybeEmitProgressAsync(instance, workflowDef, force: true, cancellationToken);
         }
+        else
+        {
+            // Guard: Some auto workflows complete fully inside ContinueWorkflowAsync without emitting a 100% progress
+            // event (edge cases observed in tests where last emitted % remained at 50 while instance is Completed).
+            // If cache does not show 100, force a final emission now.
+            try
+            {
+                // Re-parse definition (def may have been mutated or not in scope if refactored)
+                var finalDef = workflowDef;
+                await ComputeAndMaybeEmitProgressAsync(instance, finalDef, force: true, cancellationToken);
+            }
+            catch
+            {
+                // Suppress – non-critical for engine completion semantics
+            }
+        }
 
         await SafeNotifyInstanceAndListAsync(instance);
         return instance;

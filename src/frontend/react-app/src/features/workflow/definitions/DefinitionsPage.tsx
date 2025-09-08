@@ -4,6 +4,7 @@ import {
   Typography,
   Button,
   Chip,
+  Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -41,8 +42,11 @@ import { workflowService } from '@/services/workflow.service';
 import type { WorkflowDefinitionDto } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
+import { normalizeTags } from '@/utils/tags';
 
 const LS_KEY_SHOW_ARCHIVED = 'wf.definitions.showArchived';
+const LS_KEY_ANY_TAGS = 'wf.definitions.anyTags';
+const LS_KEY_ALL_TAGS = 'wf.definitions.allTags';
 
 function readStoredShowArchived(defaultValue: boolean): boolean {
   if (typeof window === 'undefined') return defaultValue;
@@ -79,6 +83,39 @@ export function DefinitionsPage() {
   const [terminateDialogOpen, setTerminateDialogOpen] = useState(false);
   const [targetDefinition, setTargetDefinition] = useState<WorkflowDefinitionDto | null>(null);
   const [showArchived, setShowArchived] = useState<boolean>(() => readStoredShowArchived(false));
+  const [anyTags, setAnyTags] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem(LS_KEY_ANY_TAGS) || '';
+  });
+  const [allTags, setAllTags] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem(LS_KEY_ALL_TAGS) || '';
+  });
+  const [filtersDirty, setFiltersDirty] = useState(false);
+  // Tag editing dialog
+  const [tagsDialogOpen, setTagsDialogOpen] = useState(false);
+  const [tagsTargetDefinition, setTagsTargetDefinition] = useState<WorkflowDefinitionDto | null>(null);
+  const [tagsInput, setTagsInput] = useState('');
+  const [savingTags, setSavingTags] = useState(false);
+  // Tag validation state
+  const [tagsError, setTagsError] = useState<string | null>(null);
+
+  // Validation policy
+  const MAX_TAGS = 12;
+  const MAX_TAG_LENGTH = 40;
+
+  function validateTagsDraft(raw: string): { error: string | null; normalized: string[] } {
+    if (!raw.trim()) return { error: null, normalized: [] };
+    const norm = normalizeTags(raw).normalized;
+    if (norm.length > MAX_TAGS) {
+      return { error: `Too many tags (max ${MAX_TAGS})`, normalized: norm };
+    }
+    const tooLong = norm.find(t => t.length > MAX_TAG_LENGTH);
+    if (tooLong) {
+      return { error: `Tag "${tooLong}" exceeds ${MAX_TAG_LENGTH} characters`, normalized: norm };
+    }
+    return { error: null, normalized: norm };
+  }
 
   const navigate = useNavigate();
   const { currentTenant } = useTenant();
@@ -101,13 +138,15 @@ export function DefinitionsPage() {
     try {
       setLoading(true);
       console.log('🔄 DefinitionsPage: Loading workflow definitions');
-      // Fetch with explicit paging & newest-first sort so recent definitions (e.g., Ref-01) appear.
+      // Explicit paging & newest-first; honor archived toggle.
       const response = await workflowService.getDefinitions({
         page: 1,
         pageSize: 100,
         sortBy: 'createdAt',
         desc: true,
-        includeArchived: false
+        includeArchived: showArchived,
+        anyTags: anyTags.trim() || undefined,
+        allTags: allTags.trim() || undefined
       });
       if (!Array.isArray(response)) {
         setDefinitions([]);
@@ -245,6 +284,35 @@ export function DefinitionsPage() {
 
   const columns: GridColDef[] = [
     {
+      field: 'tags',
+      headerName: 'Tags',
+      minWidth: 160,
+      flex: 1,
+      sortable: true,
+      valueGetter: (params) => (params.row?.tags || ''),
+      sortComparator: (v1, v2) => {
+        // Basic alphabetical by first tag
+        const a = (v1 as string || '').split(',')[0]?.toLowerCase() || '';
+        const b = (v2 as string || '').split(',')[0]?.toLowerCase() || '';
+        if (a < b) return -1;
+        if (a > b) return 1;
+        return 0;
+      },
+      renderCell: (params) => {
+        const raw = params.row?.tags as string | undefined;
+        if (!raw) return <Typography variant="caption" color="text.disabled">—</Typography>;
+        const tags = raw.split(',').filter(t => t);
+        const shown = tags.slice(0, 3);
+        const extra = tags.length - shown.length;
+        return (
+          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'nowrap', alignItems: 'center', overflow: 'hidden' }}>
+            {shown.map(t => <Chip key={t} label={t} size="small" sx={{ maxWidth: 90 }} />)}
+            {extra > 0 && <Chip label={`+${extra}`} size="small" variant="outlined" />}
+          </Box>
+        );
+      }
+    },
+    {
       field: 'name',
       headerName: 'Name',
       flex: 1,
@@ -369,6 +437,17 @@ export function DefinitionsPage() {
               label="Publish"
               onClick={() => handlePublish(definition)}
               showInMenu
+            />,
+            <GridActionsCellItem
+              key="editTagsDraft"
+              icon={<EditIcon />}
+              label="Edit Tags"
+              onClick={() => {
+                setTagsTargetDefinition(definition);
+                setTagsInput(definition.tags || '');
+                setTagsDialogOpen(true);
+              }}
+              showInMenu
             />
           );
         }
@@ -380,6 +459,17 @@ export function DefinitionsPage() {
               icon={<StartIcon />}
               label="Start Instance"
               onClick={() => handleStartInstance(definition)}
+              showInMenu
+            />,
+            <GridActionsCellItem
+              key="editTags"
+              icon={<EditIcon />}
+              label="Edit Tags"
+              onClick={() => {
+                setTagsTargetDefinition(definition);
+                setTagsInput(definition.tags || '');
+                setTagsDialogOpen(true);
+              }}
               showInMenu
             />,
             <GridActionsCellItem
@@ -424,45 +514,61 @@ export function DefinitionsPage() {
   ];
 
   // Detail panel for rich metadata
-  const getDetailPanelContent = useCallback(
-    (params: GridRowParams) => {
-      const def = params.row as WorkflowDefinitionDto;
-      const tags = splitTags(def.tags);
-      return (
-        <Box
-          sx={{
-            p: 2,
-            bgcolor: 'background.default',
-            borderTop: theme => `1px solid ${theme.palette.divider}`,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2
-          }}
-        >
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            Metadata for: {def.name} (v{def.version})
-          </Typography>
-          <Stack direction="row" spacing={4} flexWrap="wrap" useFlexGap>
-            <Box sx={{ minWidth: 240 }}>
-              <Typography variant="caption" color="text.secondary">Publish Notes</Typography>
-              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                {def.publishNotes?.trim() || '—'}
-              </Typography>
-            </Box>
-            <Box sx={{ minWidth: 240 }}>
-              <Typography variant="caption" color="text.secondary">Version Notes</Typography>
-              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                {def.versionNotes?.trim() || '—'}
-              </Typography>
-            </Box>
+  const getDetailPanelContent = useCallback<(p: GridRowParams) => React.ReactNode>((params) => {
+    const def = params.row as WorkflowDefinitionDto;
+    const tags = splitTags(def.tags);
+    return (
+      <Box
+        sx={{
+          p: 2,
+          bgcolor: 'background.default',
+          borderTop: (theme) => `1px solid ${theme.palette.divider}`,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2
+        }}
+      >
+        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+          Metadata for: {def.name} (v{def.version})
+        </Typography>
+        <Stack direction="row" spacing={4} flexWrap="wrap" useFlexGap>
+          <Box sx={{ minWidth: 240 }}>
+            <Typography variant="caption" color="text.secondary">Publish Notes</Typography>
+            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+              {def.publishNotes?.trim() || '—'}
+            </Typography>
+          </Box>
+          <Box sx={{ minWidth: 240 }}>
+            <Typography variant="caption" color="text.secondary">Version Notes</Typography>
+            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+              {def.versionNotes?.trim() || '—'}
+            </Typography>
+          </Box>
             <Box sx={{ minWidth: 160 }}>
               <Typography variant="caption" color="text.secondary">Active Instances</Typography>
               <Typography variant="body2">
                 {def.activeInstanceCount ?? 0}
               </Typography>
             </Box>
-            <Box sx={{ minWidth: 200 }}>
-              <Typography variant="caption" color="text.secondary">Tags</Typography>
+            <Box sx={{ minWidth: 220 }}>
+              <Typography variant="caption" color="text.secondary">
+                Tags <Tooltip
+                  title={
+                    <Box sx={{ p: 0.5 }}>
+                      <Typography variant="caption">
+                        Filtering:
+                        <br />All Tags (AND): show definitions containing every tag entered.
+                        <br />Any Tags (OR): show definitions containing at least one.
+                        <br />Backend: legacy 'tags' param = OR (deprecated).
+                      </Typography>
+                    </Box>
+                  }
+                  placement="top"
+                  arrow
+                >
+                  <InfoIcon fontSize="inherit" sx={{ ml: 0.5, verticalAlign: 'middle', opacity: 0.7 }} />
+                </Tooltip>
+              </Typography>
               <Box sx={{ mt: 0.5, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                 {tags.length === 0 && <Typography variant="body2">—</Typography>}
                 {tags.map(t => (
@@ -488,16 +594,14 @@ export function DefinitionsPage() {
                 </Typography>
               )}
             </Box>
-          </Stack>
-          <Divider />
-          <Typography variant="caption" color="text.secondary">
-            Definition Id: {def.id} • Parent Definition Id: {def.parentDefinitionId ?? '—'}
-          </Typography>
-        </Box>
-      );
-    },
-    []
-  );
+        </Stack>
+        <Divider />
+        <Typography variant="caption" color="text.secondary">
+          Definition Id: {def.id} • Parent Definition Id: {def.parentDefinitionId ?? '—'}
+        </Typography>
+      </Box>
+    );
+  }, []);
 
   const getDetailPanelHeight = useCallback(() => 210, []);
 
@@ -545,6 +649,117 @@ export function DefinitionsPage() {
       </Box>
 
       <Box sx={{ flex: 1, minHeight: 0 }}>
+        {/* Advanced Filters */}
+        <Box
+          sx={{
+            mb: 2,
+            p: 2,
+            backgroundColor: 'background.paper',
+            border: theme => `1px solid ${theme.palette.divider}`,
+            borderRadius: 1,
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 2,
+            alignItems: 'flex-end'
+          }}
+        >
+          <TextField
+            label="All Tags (AND)"
+            size="small"
+            value={allTags}
+            onChange={(e) => {
+              setAllTags(e.target.value);
+              setFiltersDirty(true);
+            }}
+            placeholder="e.g. billing,core"
+            sx={{ minWidth: 220 }}
+          />
+          <TextField
+            label="Any Tags (OR)"
+            size="small"
+            value={anyTags}
+            onChange={(e) => {
+              setAnyTags(e.target.value);
+              setFiltersDirty(true);
+            }}
+            placeholder="e.g. finance,audit"
+            sx={{ minWidth: 220 }}
+          />
+          <Button
+            variant="contained"
+            disabled={loading}
+            onClick={() => {
+              loadDefinitions();
+              setFiltersDirty(false);
+              // Persist last-used applied filters
+              if (anyTags.trim()) localStorage.setItem(LS_KEY_ANY_TAGS, normalizeTags(anyTags).canonicalQuery);
+              else localStorage.removeItem(LS_KEY_ANY_TAGS);
+              if (allTags.trim()) localStorage.setItem(LS_KEY_ALL_TAGS, normalizeTags(allTags).canonicalQuery);
+              else localStorage.removeItem(LS_KEY_ALL_TAGS);
+            }}
+          >
+            Apply Filters
+          </Button>
+          <Button
+            variant="text"
+            disabled={loading || (!anyTags && !allTags && !filtersDirty)}
+            onClick={() => {
+              setAnyTags('');
+              setAllTags('');
+              setFiltersDirty(false);
+              loadDefinitions();
+              localStorage.removeItem(LS_KEY_ANY_TAGS);
+              localStorage.removeItem(LS_KEY_ALL_TAGS);
+            }}
+          >
+            Reset
+          </Button>
+          {filtersDirty && (
+            <Typography variant="caption" color="warning.main">
+              Unsaved filter changes
+            </Typography>
+          )}
+
+          {/* Chips display for resolved tags */}
+          {(allTags.trim() || anyTags.trim()) && (
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, width: '100%', mt: 1 }}>
+              {normalizeTags(allTags).normalized.map(tag => (
+                <Chip
+                  key={`all-${tag}`}
+                  size="small"
+                  color="primary"
+                  label={`ALL: ${tag}`}
+                  onDelete={() => {
+                    const remaining = normalizeTags(allTags).normalized.filter(t => t !== tag);
+                    setAllTags(remaining.join(','));
+                    setFiltersDirty(true);
+                  }}
+                  variant="outlined"
+                />
+              ))}
+              {normalizeTags(anyTags).normalized.map(tag => (
+                <Chip
+                  key={`any-${tag}`}
+                  size="small"
+                  color="secondary"
+                  label={`ANY: ${tag}`}
+                  onDelete={() => {
+                    const remaining = normalizeTags(anyTags).normalized.filter(t => t !== tag);
+                    setAnyTags(remaining.join(','));
+                    setFiltersDirty(true);
+                  }}
+                  variant="outlined"
+                />
+              ))}
+              {(!normalizeTags(allTags).normalized.length && !normalizeTags(anyTags).normalized.length) && (
+                <Typography variant="caption" color="text.secondary">
+                  No active tag filters
+                </Typography>
+              )}
+            </Box>
+          )}
+        </Box>
+
         <DataGridPremium
           rows={definitions}
           columns={columns}
@@ -555,6 +770,8 @@ export function DefinitionsPage() {
           initialState={{
             pagination: { paginationModel: { pageSize: 100 } },
           }}
+          // NOTE: Grid page size changes are client-only until we wire server paging controls.
+          // With pageSize=100 and low counts, a single fetch suffices.
           getDetailPanelContent={getDetailPanelContent}
           getDetailPanelHeight={getDetailPanelHeight}
           slots={{
@@ -655,8 +872,102 @@ export function DefinitionsPage() {
           <Button onClick={handleTerminateInstancesConfirm} variant="contained" color="error">Terminate All</Button>
         </DialogActions>
       </Dialog>
-    </Box>
-  );
-}
 
-export default DefinitionsPage;
+      {/* Edit Tags Dialog */}
+      <Dialog
+        open={tagsDialogOpen}
+        onClose={() => (!savingTags && setTagsDialogOpen(false))}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Edit Tags{tagsTargetDefinition ? ` – ${tagsTargetDefinition.name}` : ''}</DialogTitle>
+        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            Enter comma-separated tags. Multi-word tags allowed. They will be normalized on save.
+          </Typography>
+          <TextField
+            label="Tags"
+            value={tagsInput}
+            onChange={(e) => {
+              setTagsInput(e.target.value);
+-              // validation deferred until save
++              const v = validateTagsDraft(e.target.value);
++              setTagsError(v.error);
+             }}
+             placeholder="e.g. billing,core,financial reporting"
+             disabled={savingTags}
+             fullWidth
+             multiline
+             minRows={2}
++            error={!!tagsError}
++            helperText={tagsError || ' '}
+           />
+           {/* Preview chips */}
+           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 0.5 }}>
+             {normalizeTags(tagsInput).normalized.length === 0 && (
+               <Typography variant="caption" color="text.secondary">
+                 No tags
+               </Typography>
+             )}
+             {normalizeTags(tagsInput).normalized.map(t => (
+               <Chip
+                 key={t}
+                 label={t}
+                 size="small"
+                 onDelete={() => {
+                   const remaining = normalizeTags(tagsInput).normalized.filter(x => x !== t);
+                   setTagsInput(remaining.join(','));
++                  const v = validateTagsDraft(remaining.join(','));
++                  setTagsError(v.error);
+                 }}
+               />
+             ))}
+           </Box>
+           <Typography variant="caption" color="text.secondary">
+-            Max recommended tags: descriptive & concise.
++            Limits: up to {MAX_TAGS} tags; each ≤ {MAX_TAG_LENGTH} chars.
+           </Typography>
+         </DialogContent>
+         <DialogActions>
+           <Button
+             onClick={() => setTagsDialogOpen(false)}
+             disabled={savingTags}
+           >
+             Cancel
+           </Button>
+             <Button
+               variant="contained"
+-              disabled={savingTags}
++              disabled={savingTags || !!tagsError}
+               onClick={async () => {
+                 if (!tagsTargetDefinition) return;
++                const validation = validateTagsDraft(tagsInput);
++                if (validation.error) {
++                  setTagsError(validation.error);
++                  return;
++                }
+                 setSavingTags(true);
+                 try {
+                   const norm = normalizeTags(tagsInput);
+                   await workflowService.updateDefinition(tagsTargetDefinition.id, {
+                     tags: norm.canonicalQuery || undefined
+                   });
+                   toast.success('Tags updated');
+                   await loadDefinitions();
+                   setTagsDialogOpen(false);
+                 } catch {
+                   toast.error('Failed to update tags');
+                 } finally {
+                   setSavingTags(false);
+                 }
+               }}
+             >
+               {savingTags ? 'Saving...' : 'Save'}
+             </Button>
+         </DialogActions>
+       </Dialog>
+     </Box>
+   );
+ }
+ 
+ export default DefinitionsPage;
