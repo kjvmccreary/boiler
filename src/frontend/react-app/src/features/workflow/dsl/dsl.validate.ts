@@ -1,6 +1,7 @@
 import type { DslDefinition, DslNode, ValidationResult } from './dsl.types';
 import type { HumanTaskNode } from './dsl.types';
 import { validateHumanTaskAssignment } from './assignmentRules';
+import { validateAutomaticAction } from './automaticActionRules';
 
 /* ================= Added Diagnostics Types (C1/C2/C4) ================= */
 export interface ParallelGatewayDiagnostics {
@@ -188,6 +189,10 @@ export function validateDefinition(definition: DslDefinition): ExtendedValidatio
           warnings.push(`HumanTask "${node.label || node.id}" should have assignee roles`);
         }
       }
+    } else if (node.type === 'automatic') {
+      const av = validateAutomaticAction(node as any);
+      av.errors.forEach(e => errors.push(`Automatic "${node.label || node.id}" action: ${e}`));
+      av.warnings.forEach(w => warnings.push(`Automatic "${node.label || node.id}" action: ${w}`));
     }
   }
 
@@ -429,6 +434,12 @@ export function validateNode(node: DslNode): ValidationResult {
       } else if (!ht.assigneeRoles || ht.assigneeRoles.length === 0) {
         warnings.push('HumanTask should have assignee roles');
       }
+      break;
+    }
+    case 'automatic': {
+      const av = validateAutomaticAction(node as any);
+      av.errors.forEach(e => errors.push(e));
+      av.warnings.forEach(w => warnings.push(w));
       break;
     }
   }

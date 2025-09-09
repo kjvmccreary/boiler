@@ -3,40 +3,70 @@ PS C:\Users\mccre\dev\boiler\src\frontend\react-app> npm run build
 > microservices-frontend@0.0.0 build
 > tsc -b && vite build
 
-src/services/user.service.ts:163:64 - error TS2304: Cannot find name 'UserSearchResult'.
+src/features/workflow/builder/NodePalette.tsx:19:5 - error TS2353: Object literal may only specify known properties, and 'defaultData' does not exist in type 'NodePaletteItem'.
 
-163   async search(term: string, page = 1, pageSize = 20): Promise<UserSearchResult[]> {
-                                                                   ~~~~~~~~~~~~~~~~
+19     defaultData: { id: '', type: 'start', label: 'Start', x: 0, y: 0 }
+       ~~~~~~~~~~~
 
-src/services/user.service.ts:166:14 - error TS2304: Cannot find name 'RawPaged'.
+src/features/workflow/builder/NodePalette.tsx:26:5 - error TS2353: Object literal may only specify known properties, and 'defaultData' does not exist in type 'NodePaletteItem'.
 
-166     let raw: RawPaged<UserSearchResult> | UserSearchResult[] | undefined;
-                 ~~~~~~~~
+26     defaultData: { id: '', type: 'end', label: 'End', x: 0, y: 0 }
+       ~~~~~~~~~~~
 
-src/services/user.service.ts:166:23 - error TS2304: Cannot find name 'UserSearchResult'.
+src/features/workflow/builder/NodePalette.tsx:33:5 - error TS2353: Object literal may only specify known properties, and 'defaultData' does not exist in type 'NodePaletteItem'.
 
-166     let raw: RawPaged<UserSearchResult> | UserSearchResult[] | undefined;
-                          ~~~~~~~~~~~~~~~~
+33     defaultData: {
+       ~~~~~~~~~~~
 
-src/services/user.service.ts:166:43 - error TS2304: Cannot find name 'UserSearchResult'.
+src/features/workflow/builder/NodePalette.tsx:47:5 - error TS2353: Object literal may only specify known properties, and 'defaultData' does not exist in type 'NodePaletteItem'.
 
-166     let raw: RawPaged<UserSearchResult> | UserSearchResult[] | undefined;
-                                              ~~~~~~~~~~~~~~~~
+47     defaultData: {
+       ~~~~~~~~~~~
 
-src/services/user.service.ts:184:21 - error TS2304: Cannot find name 'UserSearchResult'.
+src/features/workflow/builder/NodePalette.tsx:61:5 - error TS2353: Object literal may only specify known properties, and 'defaultData' does not exist in type 'NodePaletteItem'.
 
-184       return raw as UserSearchResult[];
-                        ~~~~~~~~~~~~~~~~
+61     defaultData: {
+       ~~~~~~~~~~~
 
-src/services/user.service.ts:189:36 - error TS2304: Cannot find name 'UserSearchResult'.
+src/features/workflow/builder/NodePalette.tsx:75:5 - error TS2353: Object literal may only specify known properties, and 'defaultData' does not exist in type 'NodePaletteItem'.
 
-189       return (raw as any).items as UserSearchResult[];
-                                       ~~~~~~~~~~~~~~~~
+75     defaultData: {
+       ~~~~~~~~~~~
 
-src/services/user.service.ts:194:41 - error TS2304: Cannot find name 'UserSearchResult'.
+src/features/workflow/builder/NodePalette.tsx:89:5 - error TS2353: Object literal may only specify known properties, and 'defaultData' does not exist in type 'NodePaletteItem'.
 
-194       return (raw as any).data.items as UserSearchResult[];
-                                            ~~~~~~~~~~~~~~~~
+89     defaultData: {
+       ~~~~~~~~~~~
+
+src/features/workflow/dsl/dsl.serialize.ts:63:82 - error TS2339: Property 'fromHandle' does not exist on type 'DslEdge'.
+
+63     id: e.id, from: e.from, to: e.to, label: e.label, fromHandle: (e as DslEdge).fromHandle
+                                                                                    ~~~~~~~~~~
+
+src/features/workflow/dsl/dsl.serialize.ts:99:11 - error TS2339: Property 'fromHandle' does not exist on type 'DslEdge'.
+
+99       : e.fromHandle === 'true' || e.fromHandle === 'false'
+             ~~~~~~~~~~
+
+src/features/workflow/dsl/dsl.serialize.ts:99:38 - error TS2339: Property 'fromHandle' does not exist on type 'DslEdge'.
+
+99       : e.fromHandle === 'true' || e.fromHandle === 'false'
+                                        ~~~~~~~~~~
+
+src/features/workflow/dsl/dsl.serialize.ts:100:14 - error TS2339: Property 'fromHandle' does not exist on type 'DslEdge'.
+
+100         ? (e.fromHandle as 'true' | 'false')
+                 ~~~~~~~~~~
+
+src/test/utils/test-utils.tsx:556:5 - error TS2353: Object literal may only specify known properties, and 'fromHandle' does not exist in type 'DslEdge'.
+
+556     fromHandle: partial.fromHandle
+        ~~~~~~~~~~
+
+src/test/utils/test-utils.tsx:556:25 - error TS2339: Property 'fromHandle' does not exist on type 'Partial<DslEdge> & { id: string; from: string; to: string; }'.
+
+556     fromHandle: partial.fromHandle
+                            ~~~~~~~~~~
 
 
-Found 7 errors.
+Found 13 errors.

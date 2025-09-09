@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Drawer,
   Box,
@@ -28,6 +28,8 @@ import JoinConfigurationPanel from './components/JoinConfigurationPanel';
 import { validateDefinition, type ExtendedValidationResult } from '../dsl/dsl.validate';
 import type { DslDefinition } from '../dsl/dsl.types';
 import AssignmentSection from './components/AssignmentSection';
+import FormSchemaSection from './components/FormSchemaSection';
+import ActionSection from './components/ActionSection';
 
 interface PropertyPanelProps {
   open: boolean;
@@ -232,6 +234,8 @@ function HumanTaskProperties({ node, onChange }: { node: HumanTaskNode; onChange
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [rolesError, setRolesError] = useState<string | null>(null);
   const { currentTenant } = useTenant();
+  // Track previous assignment snapshot for history
+  const assignmentRef = useRef(node.assignment);
 
   useEffect(() => {
     const loadRoles = async () => {
@@ -256,6 +260,21 @@ function HumanTaskProperties({ node, onChange }: { node: HumanTaskNode; onChange
     };
     loadRoles();
   }, [currentTenant]);
+
+  useEffect(() => {
+    if (node.assignment && node.assignment !== assignmentRef.current) {
+      const historyEntry = {
+        ts: new Date().toISOString(),
+        mode: node.assignment.mode,
+        roles: node.assignment.roles,
+        users: node.assignment.users,
+        slaTarget: node.assignment.sla?.targetMinutes
+      };
+      const existing = node.assignmentHistory || [];
+      onChange('assignmentHistory', [...existing.slice(-19), historyEntry]); // cap history at 20
+      assignmentRef.current = node.assignment;
+    }
+  }, [node.assignment, node.assignmentHistory, onChange]);
 
   const addRole = () => {
     if (newRole.trim() && !node.assigneeRoles?.includes(newRole.trim())) {
@@ -337,8 +356,47 @@ function HumanTaskProperties({ node, onChange }: { node: HumanTaskNode; onChange
           />
         </Box>
       )}
+
+      <Box mt={3}>
+        <FormSchemaSection
+          value={node.formSchema ?? node.formSchemaSource}
+          onChange={(parsed, src) => {
+            onChange('formSchema', parsed);
+            onChange('formSchemaSource', src);
+          }}
+        />
+      </Box>
+
+      {node.assignmentHistory && node.assignmentHistory.length > 0 && (
+        <Box mt={3}>
+          <Typography variant="subtitle2" gutterBottom>
+            Assignment History (session)
+          </Typography>
+            <Box
+              sx={{
+                maxHeight: 140,
+                overflowY: 'auto',
+                border: theme => `1px solid ${theme.palette.divider}`,
+                borderRadius: 1,
+                p: 1,
+                fontFamily: 'monospace',
+                fontSize: '0.7rem',
+                backgroundColor: 'background.paper'
+              }}
+            >
+              {node.assignmentHistory.slice().reverse().map((h, i) => (
+                <Box key={i} sx={{ mb: 0.5 }}>
+                  [{new Date(h.ts).toLocaleTimeString()}] mode={h.mode}
+                  {h.roles?.length ? ` roles=${h.roles.join(',')}` : ''}
+                  {h.users?.length ? ` users=${h.users.join(',')}` : ''}
+                  {h.slaTarget != null ? ` sla=${h.slaTarget}m` : ''}
+                </Box>
+              ))}
+            </Box>
+        </Box>
+      )}
     </Box>
-  );
+   );
 }
 
 /* ---------------- Automatic ---------------- */
@@ -352,9 +410,12 @@ function AutomaticProperties({ node, onChange }: { node: any; onChange: (f: stri
         onChange={(e) => onChange('label', e.target.value)}
         sx={{ mb: 2 }}
       />
-      <Typography variant="caption" color="text.secondary">
-        Additional automatic action configuration coming in later story.
-      </Typography>
+      <ActionSection
+        node={node}
+        onPatch={(patch) => {
+          Object.entries(patch).forEach(([k, v]) => onChange(k, v));
+        }}
+      />
     </Box>
   );
 }

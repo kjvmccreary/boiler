@@ -1,48 +1,80 @@
 // Finished H7: dynamic variable context fetch + manual refresh
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import ExpressionEditor from '../components/ExpressionEditor';
-import { MonacoExpressionEditor } from './MonacoExpressionEditor';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Box, CircularProgress, IconButton, Stack, TextField, Tooltip, Typography } from '@mui/material';
+import { Refresh as RefreshIcon } from '@mui/icons-material';
 import { workflowService } from '@/services/workflow.service';
-import { useExpressionSettings } from '../context/ExpressionSettingsContext';
 import { setJsonLogicVariables } from '../monaco/jsonlogicOperators';
+import { useExpressionSettings } from '../context/ExpressionSettingsContext';
+import { MonacoExpressionEditor } from './MonacoExpressionEditor';
+import ExpressionEditor from './ExpressionEditor';
 
-interface HybridExpressionEditorProps {
-  kind: 'gateway' | 'join';
+export interface HybridExpressionEditorProps {
+  // Core
   value: string;
   onChange: (val: string) => void;
+  kind?: 'gateway' | 'join' | 'task-assignment';
+  placeholder?: string;
+  height?: number;
+
+  // Monaco / Mode
   useMonaco?: boolean;
+  language?: string;
+
+  // Semantic validation
   semantic?: boolean;
-  variableContext?: string[];   // explicit override wins
-  variableDeps?: any[];         // external deps that should trigger variable reload (e.g. selected nodes)
-  disableDynamicVars?: boolean; // force skip dynamic fetch
+  disableSemanticOnError?: boolean;
+  onSemanticValidation?: (res: { success: boolean; errors: string[]; durationMs: number }) => void;
+
+  // Dynamic variables
+  variableContext?: string[];
+  variableDeps?: any[];
+  disableDynamicVars?: boolean;
 }
 
-export const HybridExpressionEditor: React.FC<HybridExpressionEditorProps> = ({
-  kind,
+type SemanticState = 'idle' | 'validating' | 'ok' | 'err';
+
+const DEFAULT_HEIGHT = 160;
+
+const HybridExpressionEditor: React.FC<HybridExpressionEditorProps> = ({
   value,
   onChange,
-  useMonaco = false,
+  kind = 'gateway',
+  placeholder,
+  height = DEFAULT_HEIGHT,
+  useMonaco = true,
   semantic = true,
+  disableSemanticOnError = true,
+  onSemanticValidation,
   variableContext,
   variableDeps = [],
-  disableDynamicVars = false
+  disableDynamicVars = false,
 }) => {
+
+  // Expression settings (semantic master toggle)
   const { semanticEnabled, recordSemanticValidation } = useExpressionSettings();
   const effectiveSemantic = semantic && semanticEnabled;
 
+  // Local parse error (for basic JSON)
+  const [parseError, setParseError] = useState<string | null>(null);
+
+  // Semantic state
   const [semanticErrors, setSemanticErrors] = useState<string[]>([]);
   const [semanticWarnings, setSemanticWarnings] = useState<string[]>([]);
+  const [semanticState, setSemanticState] = useState<SemanticState>('idle');
   const [loadingSemantic, setLoadingSemantic] = useState(false);
   const [semanticVersion, setSemanticVersion] = useState(0);
-  const [varsVersion, setVarsVersion] = useState(0);
-  const [loadingVars, setLoadingVars] = useState(false);
 
-  const debounceHandleRef = useRef<number | undefined>(undefined);
+  // Variable loading
+  const [loadingVars, setLoadingVars] = useState(false);
+  const [varsVersion, setVarsVersion] = useState(0);
+
+  // Debounce / request guards
+  const debounceRef = useRef<number | undefined>(undefined);
   const activeRequestVersionRef = useRef<number>(0);
 
-  // ---- Variable Context Handling (Dynamic) ----
+  /* ---------------- Variable Handling ---------------- */
   const loadVariables = useCallback(async () => {
-    if (variableContext && variableContext.length) {
+    if (variableContext?.length) {
       setJsonLogicVariables(variableContext);
       setVarsVersion(v => v + 1);
       return;
@@ -50,118 +82,279 @@ export const HybridExpressionEditor: React.FC<HybridExpressionEditorProps> = ({
     if (disableDynamicVars) return;
     setLoadingVars(true);
     try {
-      const vars = await workflowService.getExpressionVariables(kind);
+      const vars = await workflowService.getExpressionVariables(
+        kind === 'task-assignment' ? 'gateway' : kind
+      );
       setJsonLogicVariables(vars);
       setVarsVersion(v => v + 1);
     } finally {
       setLoadingVars(false);
     }
-  }, [kind, variableContext, disableDynamicVars]);
+  }, [variableContext, disableDynamicVars, kind]);
 
   useEffect(() => {
     loadVariables();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind, ...variableDeps]);
 
-  const manualRefreshVariables = () => {
-    loadVariables();
-  };
+  const manualRefreshVariables = () => loadVariables();
 
-  // ---- Semantic Validation ----
-  const clearDebounce = () => {
-    if (debounceHandleRef.current) {
-      clearTimeout(debounceHandleRef.current);
-      debounceHandleRef.current = undefined;
+  /* ---------------- Local Parse Validation ---------------- */
+  const validateLocal = (text: string) => {
+    if (!text.trim()) {
+      setParseError(null);
+      return;
+    }
+    try {
+      JSON.parse(text);
+      setParseError(null);
+    } catch (e: any) {
+      setParseError(e?.message || 'Invalid JSON');
     }
   };
 
-  const resetSemanticState = () => {
+  /* ---------------- Semantic Validation (debounced) ---------------- */
+  const clearDebounce = () => {
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = undefined;
+    }
+  };
+
+  const resetSemantic = () => {
     setSemanticErrors([]);
     setSemanticWarnings([]);
+    setSemanticState('idle');
     setLoadingSemantic(false);
   };
 
   const scheduleSemantic = (expr: string) => {
     if (!effectiveSemantic) {
       clearDebounce();
-      resetSemanticState();
+      resetSemantic();
       return;
     }
     clearDebounce();
-    debounceHandleRef.current = window.setTimeout(async () => {
-      try { JSON.parse(expr); } catch { return; }
-      const requestVersion = activeRequestVersionRef.current + 1;
-      activeRequestVersionRef.current = requestVersion;
-      const started = performance.now();
-      setLoadingSemantic(true);
-      try {
-        const res = await workflowService.validateExpression(kind, expr);
-        if (requestVersion !== activeRequestVersionRef.current) return;
-        setSemanticErrors(res.errors ?? []);
-        setSemanticWarnings(res.warnings ?? []);
-        setSemanticVersion(requestVersion);
-        recordSemanticValidation(
-          Math.round(performance.now() - started),
-          res.success,
-          res.errors?.length ?? 0,
-          res.warnings?.length ?? 0
-        );
-      } finally {
-        if (requestVersion === activeRequestVersionRef.current) {
-          setLoadingSemantic(false);
-        }
-      }
-    }, 500);
+    debounceRef.current = window.setTimeout(() => runSemantic(expr), 600);
   };
 
+  const runSemantic = async (expr: string) => {
+    if (!effectiveSemantic) return;
+    if (!expr.trim()) {
+      setSemanticState('idle');
+      onSemanticValidation?.({ success: true, errors: [], durationMs: 0 });
+      return;
+    }
+    // Skip if local parse invalid
+    if (disableSemanticOnError && parseError) {
+      setSemanticState('err');
+      onSemanticValidation?.({ success: false, errors: [parseError], durationMs: 0 });
+      return;
+    }
+
+    const requestVersion = activeRequestVersionRef.current + 1;
+    activeRequestVersionRef.current = requestVersion;
+
+    setSemanticState('validating');
+    setLoadingSemantic(true);
+
+    const started = performance.now();
+    try {
+      const res = await workflowService.validateExpression(
+        kind === 'task-assignment' ? 'gateway' : kind,
+        expr
+      );
+      const duration = performance.now() - started;
+
+      // Race guard
+      if (requestVersion !== activeRequestVersionRef.current) return;
+
+      setSemanticErrors(res.errors ?? []);
+      setSemanticWarnings(res.warnings ?? []);
+      setSemanticVersion(requestVersion);
+
+      if (res.success && (res.errors?.length ?? 0) === 0) {
+        setSemanticState('ok');
+        onSemanticValidation?.({ success: true, errors: [], durationMs: duration });
+      } else {
+        setSemanticState('err');
+        onSemanticValidation?.({ success: false, errors: res.errors ?? [], durationMs: duration });
+      }
+
+      recordSemanticValidation(
+        Math.round(duration),
+        res.success,
+        res.errors?.length ?? 0,
+        res.warnings?.length ?? 0
+      );
+    } catch (e: any) {
+      if (requestVersion !== activeRequestVersionRef.current) return;
+      setSemanticState('err');
+      onSemanticValidation?.({
+        success: false,
+        errors: [e?.message || 'Semantic validation failed'],
+        durationMs: 0
+      });
+    } finally {
+      if (requestVersion === activeRequestVersionRef.current) {
+        setLoadingSemantic(false);
+      }
+    }
+  };
+
+  // Re-run semantic when toggled on
   useEffect(() => {
-    if (!effectiveSemantic) {
-      clearDebounce();
-      resetSemanticState();
-    } else {
+    if (effectiveSemantic) {
       scheduleSemantic(value);
+    } else {
+      resetSemantic();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveSemantic]);
 
-  useEffect(() => () => clearDebounce(), []);
-
-  // Pass-through: we piggyback variable refresh (varsVersion) into editor by forcing semantic re-run when set
+  // Re-run when vars refreshed
   useEffect(() => {
-    if (effectiveSemantic) {
-      scheduleSemantic(value);
-    }
+    if (effectiveSemantic) scheduleSemantic(value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [varsVersion]);
 
+  useEffect(() => () => clearDebounce(), []);
+
+  /* ---------------- Render Helpers ---------------- */
+  const showSemanticChip = effectiveSemantic && (semanticState !== 'idle' || parseError);
+
+  const SemanticChip = () => {
+    if (!showSemanticChip) return null;
+    let label = 'Idle';
+    let color: 'default' | 'error' | 'success' | 'warning' = 'default';
+    if (parseError) {
+      label = 'Parse Err';
+      color = 'error';
+    } else {
+      switch (semanticState) {
+        case 'validating':
+          label = 'Validating…'; color = 'warning'; break;
+        case 'ok':
+          label = 'Valid'; color = 'success'; break;
+        case 'err':
+          label = 'Invalid'; color = 'error'; break;
+      }
+    }
+    return (
+      <Box
+        sx={{
+          px: 1,
+          py: 0.25,
+          borderRadius: 1,
+          fontSize: '0.65rem',
+          bgcolor: (t) =>
+            color === 'success' ? t.palette.success.light :
+              color === 'error' ? t.palette.error.light :
+                color === 'warning' ? t.palette.warning.light :
+                  t.palette.action.hover,
+          color: (t) =>
+            color === 'success' ? t.palette.success.contrastText :
+              color === 'error' ? t.palette.error.contrastText :
+                color === 'warning' ? t.palette.warning.contrastText :
+                  t.palette.text.secondary
+        }}
+      >
+        {label}
+      </Box>
+    );
+  };
+
+  /* ---------------- Editor Selection ---------------- */
   if (useMonaco) {
     return (
-      <MonacoExpressionEditor
-        kind={kind}
-        value={value}
-        onChange={val => {
-          onChange(val);
-          scheduleSemantic(val);
-        }}
-        onSemanticValidate={scheduleSemantic}
-        semanticErrors={semanticErrors}
-        semanticWarnings={semanticWarnings}
-        loadingSemantic={loadingSemantic || loadingVars}
-        semantic={effectiveSemantic}
-        semanticVersion={semanticVersion}
-      />
+      <Box>
+        <Stack direction="row" spacing={1} justifyContent="flex-end" mb={0.5} alignItems="center">
+          <Tooltip title="Refresh variables">
+            <span>
+              <IconButton
+                size="small"
+                onClick={manualRefreshVariables}
+                disabled={loadingVars}
+              >
+                <RefreshIcon fontSize="inherit" />
+              </IconButton>
+            </span>
+          </Tooltip>
+          {loadingVars && <CircularProgress size={14} />}
+          <SemanticChip />
+        </Stack>
+        <MonacoExpressionEditor
+          kind={kind === 'task-assignment' ? 'gateway' : (kind as 'gateway' | 'join')}
+          value={value}
+          onChange={(txt) => {
+            onChange(txt);
+            validateLocal(txt);
+            scheduleSemantic(txt);
+          }}
+          semanticErrors={semanticErrors}
+          semanticWarnings={semanticWarnings}
+          loadingSemantic={loadingSemantic || loadingVars}
+          semantic={effectiveSemantic}
+          semanticVersion={semanticVersion}
+          height={height}
+        />
+        {placeholder && !value.trim() && (
+          <Typography variant="caption" color="text.secondary">
+            {placeholder}
+          </Typography>
+        )}
+        {parseError && (
+          <Typography variant="caption" color="error" sx={{ display: 'block', mt: 0.5 }}>
+            {parseError}
+          </Typography>
+        )}
+      </Box>
     );
   }
 
+  // Plain fallback (textarea / legacy editor)
   return (
-    <ExpressionEditor
-      kind={kind}
-      value={value}
-      onChange={val => {
-        onChange(val);
-        scheduleSemantic(val);
-      }}
-      onValidityChange={() => void 0}
-    />
+    <Box>
+      <Stack direction="row" spacing={1} justifyContent="flex-end" mb={0.5} alignItems="center">
+        <Tooltip title="Refresh variables">
+          <span>
+            <IconButton
+              size="small"
+              onClick={manualRefreshVariables}
+              disabled={loadingVars}
+            >
+              <RefreshIcon fontSize="inherit" />
+            </IconButton>
+          </span>
+        </Tooltip>
+        {loadingVars && <CircularProgress size={14} />}
+        <SemanticChip />
+      </Stack>
+      <Box sx={{ position: 'relative', border: theme => `1px solid ${theme.palette.divider}`, borderRadius: 1, p: 1, minHeight: height }}>
+        <ExpressionEditor
+          kind={kind === 'task-assignment' ? 'gateway' : (kind as 'gateway' | 'join')}
+          value={value}
+          onChange={(txt) => {
+            onChange(txt);
+            validateLocal(txt);
+            scheduleSemantic(txt);
+          }}
+          onValidityChange={() => void 0}
+        />
+      </Box>
+      {placeholder && !value.trim() && (
+        <Typography variant="caption" color="text.secondary">
+          {placeholder}
+        </Typography>
+      )}
+      {parseError && (
+        <Typography variant="caption" color="error" sx={{ display: 'block', mt: 0.5 }}>
+          {parseError}
+        </Typography>
+      )}
+    </Box>
   );
 };
+
+export default HybridExpressionEditor;
+export { HybridExpressionEditor };

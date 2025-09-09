@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   Typography,
@@ -38,6 +38,7 @@ import { validateHumanTaskAssignment } from '../../dsl/assignmentRules';
 import { useRolesCache } from '../../hooks/useRolesCache';
 import { useUserSearch } from '../../hooks/useUserSearch';
 import { workflowService } from '@/services/workflow.service';
+import { trackWorkflow } from '../../telemetry/workflowTelemetry';
 // Monaco hybrid editor (already present in codebase per H5 story)
 // Falls back internally if Monaco not yet loaded.
 // If file path differs adjust import accordingly.
@@ -227,6 +228,10 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({ node, onPa
         updateAssignment({ mode: m });
         break;
     }
+    trackWorkflow('assignment.mode.changed', {
+      nodeId: node.id,
+      mode: m
+    });
   };
 
   const requestModeChange = (m: HumanTaskAssignmentMode) => {
@@ -408,21 +413,21 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({ node, onPa
               language="json"
               height={160}
               kind="task-assignment"
-              semantic // allow semantic pass (same validator endpoint reused)
-              disableSemanticOnError // optional: skip semantic if local parse fails
-              onSemanticValidation={(res: { success: boolean; errors: string[] }) => {
+              semantic
+              disableSemanticOnError
+              onSemanticValidation={(res: { success: boolean; errors: string[]; durationMs: number }) => {
                 if (res.success && res.errors.length === 0) {
                   setExprState('valid');
                   setExprError(null);
+                  trackWorkflow('assignment.expression.validated', {
+                    nodeId: node.id,
+                    mode: assignment?.mode,
+                    durationMs: Math.round(res.durationMs)
+                  });
                 } else if (res.errors.length) {
                   setExprState('error');
                   setExprError(res.errors[0]);
                 }
-              }}
-              options={{
-                minimap: { enabled: false },
-                wordWrap: 'on',
-                fontSize: 12
               }}
               placeholder='{"users":["user123"],"roles":["Operators"]}'
             />

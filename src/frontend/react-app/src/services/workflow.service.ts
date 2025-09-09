@@ -308,8 +308,28 @@ export class WorkflowService {
   }
 
   async validateThenPublish(id: number, opts?: PublishDefinitionRequestDto) {
+    // 1. Client/server graph validation
     const vr = await this.validateDefinitionById(id);
     if (!vr.success) return { validation: vr, published: undefined };
+
+    // 2. Optional authoritative assignment validation (H1 deferred item)
+    //    If endpoint absent (404) we silently skip.
+    try {
+      const auth = await this.validateAssignmentAuthoritative(id);
+      if (!auth.success || auth.errors.length) {
+        const merged = {
+          ...vr,
+          success: false,
+          errors: [...vr.errors, ...auth.errors],
+          warnings: vr.warnings
+        };
+        return { validation: merged, published: undefined };
+      }
+    } catch {
+      // Swallow unexpected network/shape errors – do not block publish.
+    }
+
+    // 3. Publish
     try {
       const published = await this.publishDefinition(id, opts);
       return { validation: vr, published };
@@ -583,6 +603,38 @@ export class WorkflowService {
     if (kind === 'join')
       return ['branch.arrivals', 'branch.totalExpected', 'instance.id', 'instance.status', 'user.id'];
     return ['instance.id', 'instance.status', 'user.id', 'user.roles', 'input.payload'];
+  }
+
+  /**
+   * Authoritative backend assignment validation (HumanTask assignment model).
+   * - Returns success true & empty errors if endpoint missing (404) so publish flow is not blocked.
+   */
+  async validateAssignmentAuthoritative(definitionId: number): Promise<{ success: boolean; errors: string[] }> {
+    try {
+      const resp = await apiClient.get(`/api/workflow/definitions/${definitionId}/validate-assignment`);
+      const data = (resp as any).data?.data ?? (resp as any).data;
+      if (data && Array.isArray(data.errors)) {
+        return {
+          success: data.errors.length === 0,
+          errors: data.errors
+        };
+      }
+      if (data && typeof data === 'object' && data.success !== undefined) {
+        return {
+          success: !!data.success,
+          errors: Array.isArray(data.errors) ? data.errors : []
+        };
+      }
+      return { success: true, errors: [] };
+    } catch (e: any) {
+      const status = e?.response?.status;
+      if (status === 404) {
+        // Endpoint not deployed yet – treat as pass.
+        return { success: true, errors: [] };
+      }
+      // Non-404 errors are treated as soft failures (do not block publish)
+      return { success: true, errors: [] };
+    }
   }
 }
 

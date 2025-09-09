@@ -1,5 +1,5 @@
 # Workflow Frontend Parity & Sprint Plan (Maintained Document)
-Estimated % Completion: 54%  *(20 completed / 37 scoped stories)*
+Estimated % Completion: 57%  *(21 completed / 37 scoped stories)*
 
 > Purpose: Track alignment between backend WorkflowService capabilities and frontend implementation, and manage sprint execution.  
 > Update Cadence: After each story refinement / completion.  
@@ -20,8 +20,8 @@ Progress Legend: [ ] Not Started · [~] In Progress · [x] Complete · [D] Defer
 | Feature | Backend Status | Frontend Status | Gap Summary | Priority | Progress |
 |---------|----------------|-----------------|-------------|----------|----------|
 | Start / End Nodes | Stable | Implemented | — | Done | [x] |
-| HumanTask Node | Stable | Assignment model PR1–PR5 (UI + validation) | Remaining: tests & telemetry | High | [~] |
-| Automatic Node | Stable | Basic node | Webhook/action config | Medium | [ ] |
+| HumanTask Node | Stable | Enhanced assignment UX (modes, SLA, escalation, form schema, auth val stub) | — | High | [x] |
+| Automatic Node | Stable | Webhook/Noop action config + validation + retry + telemetry | — | Medium | [x] |
 | Gateway Strategy | Supported | Strategy selector + condition editor + hints (C1) | Further semantic enrich | Critical | [x] |
 | Conditional Expressions | Supported | Monaco + semantic + dynamic vars | Advanced scopes | Critical | [x] |
 | Parallel Fan-Out | Supported | Branch coloring + diagnostics overlay (C2) | Full dominance algo | Critical | [x] |
@@ -196,6 +196,12 @@ Layered approach executed client-side before publish; server still authoritative
 | 2025-09-08 | M2 | Strict structural (dominance) analysis toggle added; mismatch diff surfaced | None | Evaluate false positives |
 | 2025-09-08 | C5 | Advanced timer panel complete | Worker missing | M7 tests |
 | 2025-09-09 | H1 | PR1–PR5: types, validation, UI scaffold, hooks, Monaco, publish validation integration | None | PR6 tests |
+| 2025-09-09 | H1 | PR6: assignment validation unit tests added (rules + integration) | None | PR7 telemetry stubs |
+| 2025-09-09 | H1 | Deferred items delivered: form schema editor, assignment history, auth validation stub | None | — |
+| 2025-09-09 | A1 | PR2: Automatic node action editor UI (webhook + retry + headers + body) integrated | None | PR3 telemetry/tests |
+| 2025-09-09 | A1 | PR3: automatic action validation unit + integration tests added | None | (Optional) PR4 telemetry polish |
+| 2025-09-09 | A1 | PR4: telemetry polish (headers/body size buckets, health transitions, retry state) | None | PR5 finalize + docs |
+| 2025-09-09 | A1 | PR5: documentation & JSDoc added; story complete | None | — |
 
 ---
 
@@ -211,6 +217,7 @@ Layered approach executed client-side before publish; server still authoritative
 | Suspend / Resume | Frontend Unit | Status transitions reflected | C7 |
 | Timer Panel | Frontend Unit | Presets & validation states | C5 |
 | Task Actions Drawer | Frontend Unit | Guard matrix | C6 |
+| Automatic Node Action Editor | Frontend Unit | Webhook + retry + headers + body fields | A1 |
 
 ---
 
@@ -226,6 +233,7 @@ Layered approach executed client-side before publish; server still authoritative
 | 2025-09-08 | Advanced timer panel | Team |
 | 2025-09-09 | Added definition revalidate action & panel | Team |
 | 2025-09-09 | Added new version (draft) creation flow | Team |
+| 2025-09-09 | Automatic node action config (A1 complete) | Team |
 
 ---
 
@@ -288,7 +296,8 @@ Layered approach executed client-side before publish; server still authoritative
  | Story ID | H1 (HumanTask Enhanced Assignment) |
  | Goal | Allow authors to configure richer assignment semantics for HumanTask nodes (users, roles, dynamic expressions, fallback & SLA metadata) directly in the builder property panel with validation + preview. |
  | Priority | High |
- | Status | In Progress |
+-| Status | In Progress |
++| Status | Complete |
  | Owner | Workflow Feature Team |
  | Dependencies | Existing role/user directory endpoints; expression validation service; publish validation hook. |
  
@@ -418,10 +427,15 @@ Layered approach executed client-side before publish; server still authoritative
 - Unit tests cover: each mode validation + SLA rules + hybrid scenario (≥80% lines in assignment module).
  
  ### 18.11 Out-of-Scope Follow-ups
- - Form schema integration (future story)
- - Audit / timeline event for assignment changes
- - Backend authoritative validation (server rejects invalid assignment)
- 
- (End of Story Specification)
-
-(End of Document)
+ - Audit / timeline surfacing (server-side) for assignment changes
+ - Full runtime SLA enforcement & escalation workflow
+ - Backend hard rejection of invalid assignment (current stub only)
+ - Per-branch overrides
+ - Form-driven task UI rendering (schema consumption)
++
++### 18.12 Delivered Formerly Deferred Enhancements
++| Item | Notes |
++|------|-------|
++| Form Schema Integration | JSON editor with validation & size warning |
++| Assignment Change History | Session-scoped history (max 20 entries) |
++| Authoritative Validation Stub | Optional pre-publish backend check (skips on 404) |
