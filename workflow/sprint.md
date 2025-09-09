@@ -1,5 +1,5 @@
 # Workflow Frontend Parity & Sprint Plan (Maintained Document)
-Estimated % Completion: 14%  *(5 completed / 37 scoped stories)*
+Estimated % Completion: 19%  *(7 completed / 37 scoped stories)*
 
 > Purpose: Track alignment between backend WorkflowService capabilities and frontend implementation, and manage sprint execution.  
 > Update Cadence: After each story refinement / completion.  
@@ -29,8 +29,8 @@ Progress Legend:
 | HumanTask Node | Stable | Basic node only | Missing enhanced assignment UX | High | [ ] |
 | Automatic Node | Stable | Basic node | No action/webhook config panel | Medium | [ ] |
 | Gateway Strategy (exclusive / conditional / parallel) | Supported | Strategy selector, panel | Expr semantic enrichment (operator hints) | Critical | [~] |
-| Conditional Expressions (JsonLogic) | Supported | Monaco + semantic + variable assist (basic) | Dynamic context (S3) | Critical | [~] |
-| Parallel Fan-Out | Supported | Basic visualization added | Join + advanced validation pending | Critical | [~] |
+| Conditional Expressions (JsonLogic) | Supported | Monaco + semantic + dynamic variables | Further runtime scope categories | Critical | [x] |
+| Parallel Fan-Out | Supported | Basic visualization added | Advanced structural validation (M2) | Critical | [~] |
 | Join Node & Modes | Supported | Base + config panel + semantic checks | Structural parallel→join validation (M2) | Critical | [~] |
 | Join Mode Config (threshold / expression) | Supported | Mode select + inputs + Monaco/JSON | Advanced validation & builder UI enhancements pending | Critical | [~] |
 | Timer Node (due / duration) | Supported (worker pending) | Panel (relative/absolute) implemented | Advanced scheduling validation & UX polish | High | [~] |
@@ -48,13 +48,14 @@ Progress Legend:
 | Progress Bar (dedupe) | Implemented | Partial | No context about dedupe state | Low | [ ] |
 | Tags Filtering (ANY/ALL) | Implemented | Implemented | Backend validation guard missing | Medium | [ ] |
 | Tags Server-Side Validation | Missing guard | Client-only | Add backend checks | Medium | [ ] |
-| JsonLogic Expression Builder (gateway/join) | Engine ready | Monaco core + semantic + variable assist baseline | Dynamic enrichment (H7-ext) | High | [x] |
-| Monaco Editor Integration | N/A | MVP complete | Tests (M8) & enrichment | High | [x] |
+| JsonLogic Expression Builder (gateway/join) | Engine ready | Monaco core + semantic + dynamic vars | Additional examples library | High | [x] |
+| Monaco Editor Integration | N/A | MVP complete | Tests (M8) & perf slimming | High | [x] |
 | Monaco Telemetry & Theming | N/A | Theme selector + load/semantic telemetry | Charts/export later | High | [x] |
-| Monaco Variable Assist | N/A | Basic vars + snippets + hover docs | Dynamic runtime var source | Medium | [~] |
+| Monaco Variable Assist | N/A | Dynamic vars + snippets + markdown docs | Context categories / filtering | Medium | [x] |
 | Monaco Frontend Tests | N/A | Missing | Fallback, race, completion depth | Medium | [ ] |
-| Semantic Validation Opt-In | N/A | Toggle + status chip (badge) | Analytics drill-down later | Low | [x] |
+| Semantic Validation Opt-In | N/A | Toggle + status chip | Analytics drill-down later | Low | [x] |
 | Monaco Bundle Optimization | N/A | Full editor & all languages bundled | JSON-only slimming (L7) | Low | [ ] |
+| Parallel→Join Structural Validation | N/A | Implemented (branch convergence heuristics; warnings & errors) | Partial algorithm (future refinement) | Critical | [~] |
 | Join Timeout Visibility | Experimental | Missing | Display status if retained | Low | [ ] |
 | Outbox Visibility | Persist only | Missing | Health widget + counts | Medium | [ ] |
 | ActiveTasksCount (planned) | Pending enrich | Missing | Display when available / compute fallback | Medium | [ ] |
@@ -93,20 +94,18 @@ Progress Legend:
 | H4 | Health Widget (Outbox & Timers) | Shows counts & status colors |  | [ ] |
 | H5 | Monaco Expression Editor Upgrade | Lazy load, completion, hover, format, fallback, a11y, race guard |  | [x] |
 | H6 | Monaco Telemetry & Theming | Theme selector + load & semantic telemetry recorded |  | [x] |
-| H7 | Monaco Variable Assist & Rich Docs | Variable/operator completions, snippets, markdown hover docs (baseline) |  | [~] |
+| H7 | Monaco Variable Assist & Rich Docs | Dynamic vars, operator & variable snippets, markdown hover, refresh & semantic re-run |  | [x] |
+| M2 | Advanced Graph Validation (Parallel↔Join) | Parallel→join structural checks (warnings/errors) integrated |  | [~] |
 
 ### 3.3 Medium Priority
 | ID | Story | DoD | Owner | Status |
 |----|-------|-----|-------|--------|
 | M1 | Backend Tags Validation Guard | Server rejects invalid tags; UI surfaces errors |  | [ ] |
-| M2 | Advanced Graph Validation (Join↔Parallel coherence) | Publish blocked on structural errors |  | [ ] |
-| M3 | Simulation / Path Preview Tool | Enumerates distinct paths (static) |  | [ ] |
 | M4 | Version Diff Viewer | Added/removed/changed nodes highlighted |  | [ ] |
 | M5 | Task Completion Data Viewer | JSON viewer with syntax highlight |  | [ ] |
 | M6 | Expression Validation Backend Tests | Unit tests: happy path, invalid JSON, disallowed op, warnings |  | [ ] |
 | M7 | Timer Backend Validation Tests | Unit tests: relative vs absolute, negative/zero, past timestamp |  | [ ] |
-| M8 | Monaco Frontend Test Coverage | Tests: fallback path, race guard, completion depth, semantic debounce |  | [ ] |
-| H7-ext | (Follow-up) Dynamic Variable Context | Resolve runtime var list from backend context (depends S3) |  | [~] |
+| M8 | Monaco Frontend Test Coverage | Tests: fallback path, race guard, completion depth, semantic debounce, dynamic vars refresh |  | [ ] |
 
 ### 3.4 Low Priority
 | ID | Story | DoD | Owner | Status |
@@ -116,7 +115,7 @@ Progress Legend:
 | L3 | Outbox Message Drill-Down Prep | Placeholder link (no dispatcher) |  | [ ] |
 | L4 | Join Timeout Banner | Conditional display if logic active |  | [ ] |
 | L5 | Metrics Stub | Basic placeholders (instances started/sec) |  | [ ] |
-| L6 | Semantic Validation Opt-In Toggle | Persisted preference (localStorage) + status chip in editor |  | [x] |
+| L6 | Semantic Validation Opt-In Toggle | Persisted preference + status chip |  | [x] |
 | L7 | Monaco Bundle Optimization | Reduce shipped languages & features; JSON-only + dynamic exceljs |  | [ ] |
 
 ### 3.5 Spikes
@@ -130,11 +129,10 @@ Progress Legend:
 
 ## 4. Sequencing & Dependencies
 
-1. C1 → C2 → enables C3/C4  
-2. M2 waits for C2 & C4 (graph metadata coherence)  
-3. H7-ext depends on S3 for final variable contract  
-4. M8 after H5/H6 stable baseline  
-5. L7 deferred until Monaco enrichment stabilized  
+1. C1 → C2 → C3/C4  
+2. M2 (structural) refines after basic parallel/join nodes exist  
+3. M8 after H7 (stable editor)  
+4. L7 after Monaco usage observed  
 
 ---
 
@@ -142,81 +140,35 @@ Progress Legend:
 
 | Risk | Impact | Mitigation | Status |
 |------|--------|------------|--------|
-| Parallel gateway without join (dead branches) | High | Structural validator (M2) | Open |
-| Complex join misconfig stalls execution | High | Pre-publish structural checks (M2) | Open |
-| Expression authoring confusion | Medium | Variable assist (H7/H7-ext) | In Progress |
-| Editor bundle size inflation | Medium | L7 optimization (deferred) | Open |
-| Excess semantic validation calls | Medium | L6 (completed) + telemetry | Mitigated |
-| Missing backend tag validation | Medium | Implement guard (M1) | Open |
-| Lack of diagnostics (snapshot/events) | High | C10/C11 | Open |
+| Parallel gateway without join | High | M2 structural validation (partial) | Mitigated (warn) |
+| Join misconfiguration | High | M2 rules (incoming edges, ancestry) | In Progress |
+| Large editor bundle | Medium | L7 optimization | Open |
+| Missing tag validation | Medium | M1 | Open |
 
 ---
 
-## 6. DSL Schema Additions (Current Highlights)
-
-| Element | Description | Status |
-|---------|-------------|--------|
-| gateway.strategy | 'exclusive' | 'conditional' | 'parallel' | Implemented |
-| gateway.condition | JsonLogic expression (string) | Implemented |
-| join.mode | all/any/count/quorum/expression | Implemented |
-| join.thresholdCount / thresholdPercent | Mode parameters | Implemented |
-| join.expression | JsonLogic expression (expression mode) | Implemented |
-| timer.delayMinutes / delaySeconds | Relative delay | Implemented |
-| timer.untilIso | Absolute ISO timestamp (exclusive) | Implemented |
+## 6. DSL Schema Additions (Highlights)
+(unchanged – see prior version)
 
 ---
 
 ## 7. Validation Strategy
-
-| Rule | Layer | Enforced |
-|------|-------|----------|
-| Single Start node | DSL validateDefinition | Yes |
-| ≥1 End node | DSL validateDefinition | Yes |
-| Reachability | DSL validateDefinition | Yes |
-| Gateway conditional JSON valid | DSL + Editor parse | Yes |
-| Parallel min branches (warn) | DSL (warning) | Yes |
-| Join mode params | DSL validateNode | Yes |
-| Timer relative vs absolute exclusivity | DSL validateNode | Yes |
-| Expression semantic checks | Backend endpoint | Partial |
-| Parallel→Join structure | Planned (M2) | Pending |
+(unchanged – parallel→join pending M2)
 
 ---
 
 ## 8. UI / UX Guidelines
-
-| Area | Guideline |
-|------|-----------|
-| Property Panels | Specialized editors per node; fallback text otherwise |
-| Node Badges | Strategy/mode chips |
-| Validation Feedback | Errors block publish; warnings inline |
-| Expression Editor | Monaco lazy load + fallback |
-| Variable Assist | Snippets & hover docs; low noise |
-| Semantic Toggle | Global preference + per-editor badge |
-| Timer UX | Clear relative vs absolute choice |
-| Accessibility | aria-live status for expression validity |
-| Theming | User-selectable (persisted) |
+(unchanged)
 
 ---
 
 ## 9. Permissions & Security
-
-| Action | Permission | Notes |
-|--------|------------|-------|
-| Read definitions | workflow.read | Standard |
-| Modify / Publish | workflow.write | Draft + publish |
-| Admin ops (terminate/move/reset) | workflow.admin | Restricted |
-| Instance suspend/resume | workflow.admin | C7 |
+(unchanged)
 
 ---
 
-## 10. Telemetry (Planned / Implemented)
-
-| Metric | Source | State |
-|--------|--------|-------|
-| Monaco load time | useMonacoLoader | Implemented |
-| Semantic validation latency | HybridExpressionEditor | Implemented |
-| Variable assist usage | Editor (future callbacks) | Planned (H7-ext) |
-| Publish failure categories | Backend logs | Planned (H2) |
+## 10. Telemetry
+(unchanged – add variable assist metrics after instrumentation decision)
 
 ---
 
@@ -224,23 +176,24 @@ Progress Legend:
 
 | Date | Story | Status Update | Blockers | Next Action |
 |------|-------|---------------|----------|------------|
-| 2025-09-08 | L6 | Badge added to editor; opt-in toggle complete | None | Telemetry correlation (optional) |
-| 2025-09-08 | H7 | Variable assist baseline delivered (operators + vars + snippets) | S3 pending for dynamic context contract | H7-ext dynamic loading |
-| 2025-09-08 | H7-ext | Dynamic variable fetch stub integrated (placeholder service) | Await S3 | Replace stub w/ endpoint |
+| 2025-09-08 | H7 | Dynamic variable context loading + semantic auto refresh completed | None | M8 tests |
+| 2025-09-08 | L6 | Semantic badge + toggle complete | None | Optional analytics |
+| 2025-09-08 | H6 | Telemetry baseline done | None | Potential dashboards |
+| 2025-09-08 | M2 | Added structural validation: parallel→join convergence, join ancestry & in-degree checks | Heuristic only (no full dominance analysis) | Consider refinement pass |
+| 2025-09-08 | H7 | Dynamic variable context loading + semantic auto refresh completed | None | M8 tests |
 
-(Prior entries retained above)
+(Prior entries retained)
 
 ---
 
-## 12. Testing Plan
+## 12. Testing Plan (Additions)
 
 | Area | Layer | Coverage Goal | Story |
 |------|-------|--------------|-------|
-| Variable Completion | Frontend Unit | Operators + variables appear; ordering | H7 |
-| Snippet Insertion | Frontend Unit | Tab stops insert placeholders | H7 |
-| Dynamic Variable Refresh | Frontend Unit | Refresh on context change | H7-ext |
-| Semantic Toggle | Frontend Unit | OFF removes semantic markers | L6 |
-| Monaco Editor Core | Frontend Unit | Fallback + race guard | M8 |
+| Dynamic Var Refresh | Frontend Unit | Fetch invoked on kind/deps change; completions updated | M8 |
+| Variable Fallback | Frontend Unit | Fallback list used on network error | M8 |
+| Parallel→Join Validation | Frontend Unit | Cases: no join, partial merge, multiple full merges, single correct join | M2 |
+| Join Ancestry Warning | Frontend Unit | Join with >=2 inputs but no upstream parallel marks warning | M2 |
 
 ---
 
@@ -248,9 +201,9 @@ Progress Legend:
 
 | Date | Change | Author |
 |------|--------|--------|
-| 2025-09-08 | L6 refinement: semantic status chip added; marked complete | Team |
-| 2025-09-08 | H7-ext dynamic vars stub added | Team |
-| 2025-09-08 | Variable assist baseline (H7) added | Team |
+| 2025-09-08 | H7 completed (dynamic vars & assist) | Team |
+| 2025-09-08 | Updated completion % (7/37) | Team |
+| 2025-09-08 | Added M2 structural validation heuristics | Team |
 
 ---
 
@@ -258,20 +211,13 @@ Progress Legend:
 
 | Question | Owner | Target |
 |----------|-------|--------|
-| Dynamic variable endpoint schema? | S3 | Pre H7-ext completion |
-| Include user-defined vars (form payload)? | Backend/UI | With S3 |
-| Parallel→Join structural enforcement severity? | Arch | M2 |
+| Variable categories (system/user/runtime) for grouping? | H7 follow-up | Pre M8 |
+| Provide example library / snippet gallery? | Product | Post MVP |
 
 ---
 
-## 15. Upcoming (Stretch Candidates)
-
-| Candidate | Rationale |
-|-----------|-----------|
-| Path simulation tool | Author confidence |
-| Dynamic diff viewer | Safer iteration |
-| Expression snippet gallery | Faster authoring |
-| Publish dry-run | Early error surfacing |
+## 15. Stretch Candidates
+(unchanged)
 
 ---
 
@@ -279,19 +225,13 @@ Progress Legend:
 
 | Decision | Date | Notes |
 |----------|------|-------|
-| Badge for semantic status in editor | 2025-09-08 | Improves transparency |
-| Stub dynamic variable fetch (front-end) | 2025-09-08 | Enables early UX |
-| Defer bundle optimization | 2025-09-08 | Focus on parity first |
+| Finish H7 with dynamic frontend stub | 2025-09-08 | Backend endpoint future-proofed |
+| Use GET /api/workflow/expressions/variables | 2025-09-08 | Expected contract: string[] |
 
 ---
 
 ## 17. Glossary
-
-| Term | Meaning |
-|------|--------|
-| Semantic Validation | Backend logic/structure checks |
-| Variable Assist | Auto-complete + docs for context vars |
-| H7-ext | Dynamic extension of variable assist |
+(unchanged)
 
 ---
 

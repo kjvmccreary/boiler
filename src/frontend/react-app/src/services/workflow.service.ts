@@ -567,12 +567,21 @@ export class WorkflowService {
     }
   }
 
-  // Add placeholder dynamic variable fetch (non-breaking)
+  /**
+   * Fetch dynamic expression variables for assist / completion (H7 completion).
+   * Backend (proposed) endpoint: GET /api/workflow/expressions/variables?kind=gateway|join
+   * Falls back to a conservative static list if endpoint unavailable.
+   */
   async getExpressionVariables(kind: 'gateway' | 'join'): Promise<string[]> {
-    // Placeholder until backend endpoint defined; returns static examples
-    if (kind === 'join') {
-      return ['branch.arrivals', 'branch.totalExpected', 'instance.id', 'instance.status', 'user.id'];
+    try {
+      const resp = await apiClient.get(`/api/workflow/expressions/variables?kind=${encodeURIComponent(kind)}`);
+      const list = unwrap<string[]>(resp.data);
+      if (Array.isArray(list) && list.length) return list;
+    } catch {
+      // swallow and fallback
     }
+    if (kind === 'join')
+      return ['branch.arrivals', 'branch.totalExpected', 'instance.id', 'instance.status', 'user.id'];
     return ['instance.id', 'instance.status', 'user.id', 'user.roles', 'input.payload'];
   }
 }

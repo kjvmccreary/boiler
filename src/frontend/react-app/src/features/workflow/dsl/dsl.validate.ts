@@ -120,6 +120,9 @@ export function validateDefinition(definition: DslDefinition): ValidationResult 
     }
   }
 
+  // Rule 9 (M2): Parallel ↔ Join structural coherence
+  applyParallelJoinStructuralValidation(definition, errors, warnings);
+
   return {
     isValid: errors.length === 0,
     errors,
@@ -146,7 +149,172 @@ function findReachableNodes(definition: DslDefinition, startNodeId: string): Set
 }
 
 /**
- * Validates a single node (strategy / join aware).
+ * Advanced structural validation (M2):
+ * - Parallel gateway should eventually converge at a join (warn if not).
+ * - Each join should have >= 2 incoming edges (error).
+ * - Join should merge at least two distinct branches diverged from some earlier parallel gateway (warn if not detected).
+ * - If a parallel gateway's branches converge at multiple joins or partial merges (some branches skip), issue warnings.
+ */
+function applyParallelJoinStructuralValidation(def: DslDefinition, errors: string[], warnings: string[]) {
+  const nodeMap: Record<string, DslNode> = {};
+  for (const n of def.nodes) nodeMap[n.id] = n;
+
+  const edgesFrom: Record<string, string[]> = {};
+  const edgesTo: Record<string, string[]> = {};
+  for (const e of def.edges) {
+    (edgesFrom[e.from] ||= []).push(e.to);
+    (edgesTo[e.to] ||= []).push(e.from);
+  }
+
+  // --- Join basic in-degree rule
+  for (const j of def.nodes.filter(n => n.type === 'join')) {
+    const incoming = edgesTo[j.id] || [];
+    if (incoming.length < 2) {
+      errors.push(`Join "${j.label || j.id}" must have at least 2 incoming edges`);
+    }
+  }
+
+  // Helper: BFS forward until first join(s) encountered; return the first join(s) for that branch
+  const FIRST_JOIN_LIMIT = 200; // safety
+  function findFirstJoinDownstream(start: string): string[] {
+    const visited = new Set<string>();
+    const queue: { id: string; depth: number }[] = [{ id: start, depth: 0 }];
+    const found: string[] = [];
+    let foundDepth: number | undefined;
+
+    while (queue.length > 0) {
+      const { id, depth } = queue.shift()!;
+      if (visited.has(id)) continue;
+      visited.add(id);
+      if (depth > FIRST_JOIN_LIMIT) break;
+
+      const n = nodeMap[id];
+      if (n && n.type === 'join') {
+        if (foundDepth === undefined) foundDepth = depth;
+        if (depth === foundDepth) {
+          found.push(id);
+          continue; // still allow picking up other joins at same depth
+        } else if (depth > foundDepth) {
+          // deeper than first join depth – stop exploring further
+          continue;
+        }
+      }
+
+      // Only keep exploring if we haven't locked to join depth
+      if (foundDepth === undefined) {
+        const outs = edgesFrom[id] || [];
+        for (const to of outs) queue.push({ id: to, depth: depth + 1 });
+      }
+    }
+
+    return found;
+  }
+
+  // Track branch -> join hits per parallel gateway
+  for (const gw of def.nodes.filter(n => n.type === 'gateway')) {
+    const gwAny: any = gw;
+    const strategy = gwAny.strategy || (gwAny.condition ? 'conditional' : 'exclusive');
+    if (strategy !== 'parallel') continue;
+
+    const outgoing = edgesFrom[gw.id] || [];
+    if (outgoing.length < 2) {
+      // Already warned earlier; skip deeper analysis
+      continue;
+    }
+
+    // For each outgoing branch start node, find first downstream join(s)
+    const branchJoins: Record<string, Set<string>> = {};
+    for (const target of outgoing) {
+      const firstJoins = findFirstJoinDownstream(target);
+      branchJoins[target] = new Set(firstJoins);
+    }
+
+    const allJoinIds = new Set<string>();
+    Object.values(branchJoins).forEach(s => s.forEach(j => allJoinIds.add(j)));
+
+    if (allJoinIds.size === 0) {
+      warnings.push(`Parallel gateway "${gw.label || gw.id}" has no downstream join (branches never reconverge)`);
+      continue;
+    }
+
+    // Determine coverage: how many branches reach each join
+    const joinCoverage: Record<string, number> = {};
+    for (const j of allJoinIds) joinCoverage[j] = 0;
+    for (const br in branchJoins) {
+      for (const j of branchJoins[br]) {
+        joinCoverage[j] += 1;
+      }
+    }
+
+    const totalBranches = outgoing.length;
+    const fullMergeJoins = Object.entries(joinCoverage)
+      .filter(([, c]) => c === totalBranches)
+      .map(([j]) => j);
+
+    // Warn if no single join covers all branches (partial merges)
+    if (fullMergeJoins.length === 0) {
+      warnings.push(`Parallel gateway "${gw.label || gw.id}" branches do not all merge at a single join (partial convergence detected)`);
+    } else if (fullMergeJoins.length > 1) {
+      warnings.push(`Parallel gateway "${gw.label || gw.id}" branches fully merge at multiple joins (${fullMergeJoins.join(', ')})`);
+    }
+
+    // Branches that fail to reach any join
+    for (const br of outgoing) {
+      if (branchJoins[br].size === 0) {
+        warnings.push(`Parallel gateway "${gw.label || gw.id}" branch starting at "${br}" does not reach a join`);
+      }
+    }
+  }
+
+  // For each join, attempt to detect if it merges branches from a parallel gateway
+  for (const j of def.nodes.filter(n => n.type === 'join')) {
+    const incoming = edgesTo[j.id] || [];
+    if (incoming.length < 2) continue; // already errored if <2
+
+    // Simple heuristic: if any ancestor path (depth-limited) includes a parallel gateway with >=2 outgoing edges
+    const ancestorHasParallel = ancestorSearchForParallel(def, j.id, nodeMap, edgesTo);
+    if (!ancestorHasParallel) {
+      warnings.push(`Join "${j.label || j.id}" does not appear to merge branches from a parallel gateway`);
+    }
+  }
+}
+
+/**
+ * Reverse search up to detect a parallel gateway ancestor (depth limited).
+ */
+function ancestorSearchForParallel(
+  def: DslDefinition,
+  startId: string,
+  nodeMap: Record<string, DslNode>,
+  edgesTo: Record<string, string[]>,
+  depthLimit = 200
+): boolean {
+  const visited = new Set<string>();
+  const stack: { id: string; depth: number }[] = [{ id: startId, depth: 0 }];
+  while (stack.length) {
+    const { id, depth } = stack.pop()!;
+    if (visited.has(id)) continue;
+    visited.add(id);
+    if (depth > depthLimit) break;
+    const parents = edgesTo[id] || [];
+    for (const p of parents) {
+      const pn = nodeMap[p];
+      if (pn && pn.type === 'gateway') {
+        const anyPn: any = pn;
+        const strat = anyPn.strategy || (anyPn.condition ? 'conditional' : 'exclusive');
+        if (strat === 'parallel') {
+          const outs = (def.edges.filter(e => e.from === pn.id) || []).length;
+            if (outs >= 2) return true;
+        }
+      }
+      stack.push({ id: p, depth: depth + 1 });
+    }
+  }
+  return false;
+}
+
+/**
+ * Validates a single node (strategy / join / timer aware).
  */
 export function validateNode(node: DslNode): ValidationResult {
   const errors: string[] = [];
@@ -182,7 +350,13 @@ export function validateNode(node: DslNode): ValidationResult {
           catch { errors.push('Join (expression) invalid JSON'); }
         }
       }
-      // (retain existing count/quorum checks)
+      if (mode === 'count' && (j.thresholdCount == null || j.thresholdCount <= 0)) {
+        errors.push('Join (count) requires positive thresholdCount');
+      }
+      if (mode === 'quorum' &&
+        (j.thresholdPercent == null || j.thresholdPercent <= 0 || j.thresholdPercent > 100)) {
+        errors.push('Join (quorum) requires thresholdPercent between 1 and 100');
+      }
       break;
     }
     case 'timer': {

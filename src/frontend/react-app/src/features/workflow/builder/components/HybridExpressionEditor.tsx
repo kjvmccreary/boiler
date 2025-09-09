@@ -1,5 +1,5 @@
-// Dynamic variable context fetch (H7-ext) + semantic badge already in Monaco component
-import React, { useEffect, useRef, useState } from 'react';
+// Finished H7: dynamic variable context fetch + manual refresh
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import ExpressionEditor from '../components/ExpressionEditor';
 import { MonacoExpressionEditor } from './MonacoExpressionEditor';
 import { workflowService } from '@/services/workflow.service';
@@ -12,8 +12,9 @@ interface HybridExpressionEditorProps {
   onChange: (val: string) => void;
   useMonaco?: boolean;
   semantic?: boolean;
-  variableContext?: string[]; // explicit override
-  dynamic?: boolean; // NEW: if true attempt dynamic fetch of variables (H7-ext)
+  variableContext?: string[];   // explicit override wins
+  variableDeps?: any[];         // external deps that should trigger variable reload (e.g. selected nodes)
+  disableDynamicVars?: boolean; // force skip dynamic fetch
 }
 
 export const HybridExpressionEditor: React.FC<HybridExpressionEditorProps> = ({
@@ -23,49 +24,50 @@ export const HybridExpressionEditor: React.FC<HybridExpressionEditorProps> = ({
   useMonaco = false,
   semantic = true,
   variableContext,
-  dynamic = true
+  variableDeps = [],
+  disableDynamicVars = false
 }) => {
   const { semanticEnabled, recordSemanticValidation } = useExpressionSettings();
   const effectiveSemantic = semantic && semanticEnabled;
-
-  // Dynamic variable fetch (placeholder – will rely on real endpoint when ready)
-  useEffect(() => {
-    let cancelled = false;
-    async function loadVars() {
-      if (variableContext && variableContext.length) {
-        setJsonLogicVariables(variableContext);
-        return;
-      }
-      if (!dynamic) return;
-      try {
-        // Placeholder: try service method (if implemented), else fallback list
-        const vars =
-          (await (workflowService as any).getExpressionVariables?.(kind)) ||
-          (kind === 'join'
-            ? ['branch.arrivals', 'branch.totalExpected', 'instance.id', 'instance.status']
-            : ['instance.id', 'instance.status', 'user.id', 'user.roles', 'input.payload']);
-        if (!cancelled) setJsonLogicVariables(vars);
-      } catch {
-        if (!cancelled) {
-          setJsonLogicVariables(
-            kind === 'join'
-              ? ['branch.arrivals', 'branch.totalExpected']
-              : ['instance.id', 'user.id']
-          );
-        }
-      }
-    }
-    loadVars();
-    return () => { cancelled = true; };
-  }, [kind, variableContext, dynamic]);
 
   const [semanticErrors, setSemanticErrors] = useState<string[]>([]);
   const [semanticWarnings, setSemanticWarnings] = useState<string[]>([]);
   const [loadingSemantic, setLoadingSemantic] = useState(false);
   const [semanticVersion, setSemanticVersion] = useState(0);
+  const [varsVersion, setVarsVersion] = useState(0);
+  const [loadingVars, setLoadingVars] = useState(false);
+
   const debounceHandleRef = useRef<number | undefined>(undefined);
   const activeRequestVersionRef = useRef<number>(0);
 
+  // ---- Variable Context Handling (Dynamic) ----
+  const loadVariables = useCallback(async () => {
+    if (variableContext && variableContext.length) {
+      setJsonLogicVariables(variableContext);
+      setVarsVersion(v => v + 1);
+      return;
+    }
+    if (disableDynamicVars) return;
+    setLoadingVars(true);
+    try {
+      const vars = await workflowService.getExpressionVariables(kind);
+      setJsonLogicVariables(vars);
+      setVarsVersion(v => v + 1);
+    } finally {
+      setLoadingVars(false);
+    }
+  }, [kind, variableContext, disableDynamicVars]);
+
+  useEffect(() => {
+    loadVariables();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kind, ...variableDeps]);
+
+  const manualRefreshVariables = () => {
+    loadVariables();
+  };
+
+  // ---- Semantic Validation ----
   const clearDebounce = () => {
     if (debounceHandleRef.current) {
       clearTimeout(debounceHandleRef.current);
@@ -87,20 +89,14 @@ export const HybridExpressionEditor: React.FC<HybridExpressionEditorProps> = ({
     }
     clearDebounce();
     debounceHandleRef.current = window.setTimeout(async () => {
-      // Local JSON validity quick check
       try { JSON.parse(expr); } catch { return; }
-
-      // Version increment
       const requestVersion = activeRequestVersionRef.current + 1;
       activeRequestVersionRef.current = requestVersion;
       const started = performance.now();
-
       setLoadingSemantic(true);
       try {
         const res = await workflowService.validateExpression(kind, expr);
-        // Guard: ignore stale responses
         if (requestVersion !== activeRequestVersionRef.current) return;
-
         setSemanticErrors(res.errors ?? []);
         setSemanticWarnings(res.warnings ?? []);
         setSemanticVersion(requestVersion);
@@ -118,19 +114,25 @@ export const HybridExpressionEditor: React.FC<HybridExpressionEditorProps> = ({
     }, 500);
   };
 
-  // If preference flips OFF, immediately clear state
   useEffect(() => {
     if (!effectiveSemantic) {
       clearDebounce();
       resetSemanticState();
     } else {
-      // When turning back on, trigger validation for current value
       scheduleSemantic(value);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveSemantic]);
 
   useEffect(() => () => clearDebounce(), []);
+
+  // Pass-through: we piggyback variable refresh (varsVersion) into editor by forcing semantic re-run when set
+  useEffect(() => {
+    if (effectiveSemantic) {
+      scheduleSemantic(value);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [varsVersion]);
 
   if (useMonaco) {
     return (
@@ -144,7 +146,7 @@ export const HybridExpressionEditor: React.FC<HybridExpressionEditorProps> = ({
         onSemanticValidate={scheduleSemantic}
         semanticErrors={semanticErrors}
         semanticWarnings={semanticWarnings}
-        loadingSemantic={loadingSemantic}
+        loadingSemantic={loadingSemantic || loadingVars}
         semantic={effectiveSemantic}
         semanticVersion={semanticVersion}
       />
