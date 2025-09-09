@@ -15,17 +15,23 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Stack
+  Stack,
+  TextField,
+  Collapse
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   Refresh as RefreshIcon,
   WarningAmber as WarningIcon,
-  PowerSettingsNew as TerminateIcon
+  PowerSettingsNew as TerminateIcon,
+  FactCheck as RevalidateIcon,
+  LibraryAdd as NewVersionIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon
 } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { workflowService } from '@/services/workflow.service';
-import type { WorkflowDefinitionDto } from '@/types/workflow';
+import type { WorkflowDefinitionDto, ValidationResultDto, CreateNewVersionRequestDto } from '@/types/workflow';
 import { InstanceStatus } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
@@ -67,6 +73,16 @@ export function DefinitionDetailsPage() {
   const [terminating, setTerminating] = useState(false);
   const [terminateResult, setTerminateResult] = useState<number | null>(null);
 
+  // Revalidate state
+  const [revalidating, setRevalidating] = useState(false);
+  const [validation, setValidation] = useState<ValidationResultDto | null>(null);
+  const [showValidation, setShowValidation] = useState(false);
+
+  // New Version state
+  const [newVersionDialogOpen, setNewVersionDialogOpen] = useState(false);
+  const [newVersionNotes, setNewVersionNotes] = useState('');
+  const [creatingVersion, setCreatingVersion] = useState(false);
+
   const loadDefinition = useCallback(async () => {
     if (isNaN(defId)) return;
     try {
@@ -84,7 +100,6 @@ export function DefinitionDetailsPage() {
     if (isNaN(defId)) return;
     try {
       setCountLoading(true);
-      // Use enum members (string enum literals) instead of raw string literals
       const statuses: InstanceStatus[] = [InstanceStatus.Running, InstanceStatus.Suspended];
       let total = 0;
       for (const status of statuses) {
@@ -103,7 +118,7 @@ export function DefinitionDetailsPage() {
             page: 1,
             pageSize: 500
           } as any);
-            total += pageAll.items.length;
+          total += pageAll.items.length;
         }
       }
       setRunningCount(total);
@@ -139,6 +154,46 @@ export function DefinitionDetailsPage() {
       toast.error(e?.message || 'Terminate running failed');
     } finally {
       setTerminating(false);
+    }
+  };
+
+  const handleRevalidate = async () => {
+    if (!definition) return;
+    setRevalidating(true);
+    try {
+      const result = await workflowService.revalidateDefinition(definition.id);
+      setValidation(result as any);
+      setShowValidation(true);
+      if (result.errors?.length) {
+        toast.error('Definition has validation errors');
+      } else if (result.warnings?.length) {
+        toast.success('Revalidated with warnings');
+      } else {
+        toast.success('Revalidation passed');
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Revalidation failed');
+    } finally {
+      setRevalidating(false);
+    }
+  };
+
+  const handleCreateNewVersion = async () => {
+    if (!definition) return;
+    setCreatingVersion(true);
+    try {
+      const payload: CreateNewVersionRequestDto = {
+        notes: newVersionNotes || undefined
+      } as any;
+      const draft = await workflowService.createNewVersion(definition.id, payload);
+      toast.success(`Draft v${draft.version} created`);
+      setNewVersionDialogOpen(false);
+      setNewVersionNotes('');
+      navigate(`/app/workflow/builder/${draft.id}`);
+    } catch (e: any) {
+      toast.error(e?.message || 'Create draft version failed');
+    } finally {
+      setCreatingVersion(false);
     }
   };
 
@@ -194,6 +249,15 @@ export function DefinitionDetailsPage() {
     definition.isPublished &&
     (runningCount ?? 0) > 0;
 
+  const validationSeverity =
+    validation?.errors?.length
+      ? 'error'
+      : validation?.warnings?.length
+        ? 'warning'
+        : validation
+          ? 'success'
+          : undefined;
+
   return (
     <Box p={3} maxWidth={1300}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
@@ -210,13 +274,44 @@ export function DefinitionDetailsPage() {
             </Typography>
           </Box>
         </Box>
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
           {statusChip}
           <Tooltip title="Refresh metadata">
             <IconButton onClick={() => { loadDefinition(); loadRunningCount(); }}>
               <RefreshIcon />
             </IconButton>
           </Tooltip>
+
+          <Tooltip title="Revalidate current definition state">
+            <span>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={revalidating ? <CircularProgress size={14} /> : <RevalidateIcon />}
+                onClick={handleRevalidate}
+                disabled={revalidating}
+              >
+                Revalidate
+              </Button>
+            </span>
+          </Tooltip>
+
+          {definition.isPublished && (
+            <Tooltip title="Create a new draft version from this published definition">
+              <span>
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="primary"
+                  startIcon={<NewVersionIcon />}
+                  onClick={() => setNewVersionDialogOpen(true)}
+                >
+                  New Version
+                </Button>
+              </span>
+            </Tooltip>
+          )}
+
           {showTerminateAction && (
             <Tooltip title="Terminate all running / suspended instances of this definition">
               <span>
@@ -244,8 +339,53 @@ export function DefinitionDetailsPage() {
               }
             />
           )}
+
+          {validationSeverity && (
+            <Chip
+              size="small"
+              color={validationSeverity as any}
+              variant="outlined"
+              label={
+                validation?.errors?.length
+                  ? `Errors: ${validation.errors.length}`
+                  : validation?.warnings?.length
+                    ? `Warnings: ${validation.warnings.length}`
+                    : 'Valid'
+              }
+              onClick={() => setShowValidation(v => !v)}
+              icon={showValidation ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            />
+          )}
         </Stack>
       </Box>
+
+      <Collapse in={showValidation && !!validation} unmountOnExit>
+        {validation && (
+          <Box mb={2}>
+            {validation.errors?.length > 0 && (
+              <Alert severity="error" sx={{ mb: 1 }}>
+                <strong>Errors</strong>
+                <ul style={{ margin: '4px 0 0 16px' }}>
+                  {validation.errors.map((e, i) => <li key={i}>{e}</li>)}
+                </ul>
+              </Alert>
+            )}
+            {validation.warnings?.length > 0 && (
+              <Alert severity="warning" sx={{ mb: 1 }}>
+                <strong>Warnings</strong>
+                <ul style={{ margin: '4px 0 0 16px' }}>
+                  {validation.warnings.map((w, i) => <li key={i}>{w}</li>)}
+                </ul>
+              </Alert>
+            )}
+            {!validation.errors?.length && !validation.warnings?.length && (
+              <Alert severity="success">
+                No validation issues detected.
+              </Alert>
+            )}
+          </Box>
+        )}
+      </Collapse>
 
       <Box mb={2} display="flex" flexWrap="wrap" gap={4}>
         {definition.description && (
@@ -266,7 +406,7 @@ export function DefinitionDetailsPage() {
           <Typography variant="subtitle2" color="text.secondary">
             Created
           </Typography>
-          <Typography>{new Date(definition.createdAt).toLocaleString()}</Typography>
+            <Typography>{new Date(definition.createdAt).toLocaleString()}</Typography>
         </Box>
         <Box>
           <Typography variant="subtitle2" color="text.secondary">
@@ -337,6 +477,7 @@ export function DefinitionDetailsPage() {
         </Box>
       )}
 
+      {/* Terminate Running Dialog */}
       <Dialog
         open={terminateDialogOpen}
         onClose={() => (!terminating ? setTerminateDialogOpen(false) : undefined)}
@@ -387,6 +528,45 @@ export function DefinitionDetailsPage() {
               : terminating
                 ? 'Terminating...'
                 : 'Confirm Terminate'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* New Version Dialog */}
+      <Dialog
+        open={newVersionDialogOpen}
+        onClose={() => (!creatingVersion ? setNewVersionDialogOpen(false) : undefined)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Create New Draft Version</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={2}>
+            <Alert severity="info">
+              A new draft version will be created from the published definition (v{definition.version}). You can edit and publish it independently.
+            </Alert>
+            <TextField
+              fullWidth
+              multiline
+              minRows={2}
+              label="Version Notes (Optional)"
+              value={newVersionNotes}
+              onChange={e => setNewVersionNotes(e.target.value)}
+              placeholder="Describe changes you plan to make..."
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setNewVersionDialogOpen(false)} disabled={creatingVersion}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleCreateNewVersion}
+            disabled={creatingVersion}
+            startIcon={creatingVersion ? <CircularProgress size={16} /> : <NewVersionIcon />}
+          >
+            {creatingVersion ? 'Creating…' : 'Create Draft'}
           </Button>
         </DialogActions>
       </Dialog>

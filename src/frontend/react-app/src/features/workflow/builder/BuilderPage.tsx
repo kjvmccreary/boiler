@@ -34,6 +34,7 @@ import { NodePalette } from './NodePalette';
 import { PropertyPanel } from './PropertyPanel';
 import { workflowService } from '@/services/workflow.service';
 import { validateDefinition } from '../dsl/dsl.validate';
+import { runStrictStructuralAnalysis, type StrictStructuralReport } from '../dsl/dsl.strict';
 import { serializeToDsl, deserializeFromDsl } from '../dsl/dsl.serialize';
 import type { DslDefinition, DslNode } from '../dsl/dsl.types';
 import type { WorkflowDefinitionDto } from '@/types/workflow';
@@ -41,6 +42,7 @@ import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import { useWorkflowValidation } from '../hooks/useWorkflowValidation';
 import { normalizeTags } from '@/utils/tags';
+import StrictModeToggle from './components/StrictModeToggle';
 
 // --- Helpers to enforce gateway branch metadata ---
 function extractBranch(edge: Edge): 'true' | 'false' | undefined {
@@ -108,7 +110,7 @@ export function BuilderPage() {
   const [workflowTags, setWorkflowTags] = useState('');
   const [tagsError, setTagsError] = useState<string | null>(null);
 
-  // Tag policy limits (aligned with DefinitionsPage)
+  // Tag policy limits
   const MAX_TAGS = 12;
   const MAX_TAG_LENGTH = 40;
 
@@ -133,12 +135,25 @@ export function BuilderPage() {
   const [dirty, setDirty] = useState(false);
   const lastSavedJsonRef = useRef<string | null>(null);
 
+  // STRICT structural analysis state
+  const [strictMode, setStrictMode] = useState(false);
+  const [structuralErrors, setStructuralErrors] = useState<string[]>([]);
+  const [structuralWarnings, setStructuralWarnings] = useState<string[]>([]);
+  const [strictReport, setStrictReport] = useState<StrictStructuralReport | null>(null);
+
   useEffect(() => {
     if (!isNewWorkflow && id) {
       loadDefinition();
     } else {
       setWorkflowName('New Workflow');
       setWorkflowDescription('');
+    }
+    // Persisted strict mode preference (load once)
+    if (typeof window !== 'undefined') {
+      const stored = window.localStorage.getItem('wf.strictMode');
+      if (stored === '1') {
+        setStrictMode(true);
+      }
     }
   }, [id, isNewWorkflow]);
 
@@ -220,11 +235,37 @@ export function BuilderPage() {
     markDirty();
   }, [setEdges]);
 
+  // Strict structural recomputation
+  const recomputeStructural = useCallback(() => {
+    const dsl = serializeToDsl(
+      nodes,
+      edges,
+      workflowName.toLowerCase().replace(/\s+/g, '-'),
+      definition?.version
+    );
+    const hydrated = applyGatewayBranchMetadata(dsl, edges);
+    const local = validateDefinition(hydrated);
+    setStructuralErrors(local.errors);
+    setStructuralWarnings(local.warnings);
+    if (strictMode) {
+      const rep = runStrictStructuralAnalysis(hydrated, local.diagnostics);
+      setStrictReport(rep);
+    } else {
+      setStrictReport(null);
+    }
+  }, [nodes, edges, workflowName, definition?.version, strictMode]);
+
+  // Auto recompute when strict mode toggled on or graph changes while enabled
+  useEffect(() => {
+    if (strictMode) {
+      recomputeStructural();
+    }
+  }, [recomputeStructural, strictMode]);
+
   // Save draft
   const handleSave = async () => {
     try {
       setSaving(true);
-      // Validate tags early
       const ve = validateTags(workflowTags);
       setTagsError(ve);
       if (ve) {
@@ -232,6 +273,7 @@ export function BuilderPage() {
         setSaving(false);
         return;
       }
+      // NOTE: fixed mismatched parenthesis: the .replace() was not closed before passing version
       let dslDefinition: DslDefinition = serializeToDsl(
         nodes,
         edges,
@@ -287,7 +329,6 @@ export function BuilderPage() {
       ? normalizeTags(workflowTags).canonicalQuery
       : undefined;
 
-    // Validate tags before auto-save
     const ve = validateTags(workflowTags);
     setTagsError(ve);
     if (ve) {
@@ -324,6 +365,8 @@ export function BuilderPage() {
     const jsonString = JSON.stringify(dsl);
     const vr = await validateJson(jsonString);
     setShowValidation(true);
+    // Refresh structural (even if strict off - gives user latest structural errors)
+    recomputeStructural();
     if (!vr.success) {
       toast.error(vr.errors[0] ?? 'Validation failed');
     } else if (vr.warnings.length) {
@@ -358,7 +401,7 @@ export function BuilderPage() {
       toast.error(`Cannot publish: ${local.errors.join(', ')}`);
       return;
     }
-
+    if (strictMode) recomputeStructural();
     setPublishDialogOpen(true);
   };
 
@@ -480,6 +523,35 @@ export function BuilderPage() {
             {validating ? 'Validating…' : 'Validate'}
           </Button>
 
+          <StrictModeToggle
+            enabled={strictMode}
+            onChange={(v) => {
+              setStrictMode(v);
+              if (typeof window !== 'undefined') {
+                window.localStorage.setItem('wf.strictMode', v ? '1' : '0');
+              }
+              if (v) {
+                // immediate structural view when turning on
+                recomputeStructural();
+              }
+            }}
+            mismatchCount={
+              strictReport
+                ? strictReport.gatewayResults.filter(g =>
+                  g.missingFromHeuristic.length || g.heuristicOnly.length
+                ).length
+                : 0
+            }
+            durationMs={
+              strictReport
+                ? Math.max(
+                  0,
+                  ...strictReport.gatewayResults.map(r => r.analysisTimeMs)
+                )
+                : undefined
+            }
+          />
+
           {definition && !definition.isPublished && (
             <Badge
               color={validation?.errors.length ? 'error' : (validation?.warnings.length ? 'warning' : 'success')}
@@ -529,6 +601,65 @@ export function BuilderPage() {
             setNodes={setNodes}
             setEdges={setEdges}
           />
+
+          {strictMode && (structuralErrors.length || structuralWarnings.length || strictReport) && (
+            <Box
+              sx={{
+                position: 'absolute',
+                right: 8,
+                bottom: 8,
+                width: 360,
+                maxHeight: 260,
+                overflow: 'auto',
+                bgcolor: 'background.paper',
+                border: theme => `1px solid ${theme.palette.divider}`,
+                boxShadow: 2,
+                p: 1,
+                borderRadius: 1
+              }}
+            >
+              <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                Structural (Strict)
+              </Typography>
+              {structuralErrors.length > 0 && (
+                <Alert severity="error" variant="outlined" sx={{ mb: 0.5, p: 0.5 }}>
+                  <Typography variant="caption">
+                    Errors: {structuralErrors.slice(0, 4).join('; ')}
+                    {structuralErrors.length > 4 && ' …'}
+                  </Typography>
+                </Alert>
+              )}
+              {structuralWarnings.length > 0 && (
+                <Alert severity="warning" variant="outlined" sx={{ mb: 0.5, p: 0.5 }}>
+                  <Typography variant="caption">
+                    Warnings: {structuralWarnings.slice(0, 4).join('; ')}
+                    {structuralWarnings.length > 4 && ' …'}
+                  </Typography>
+                </Alert>
+              )}
+              {strictReport && strictReport.gatewayResults.map(g => (
+                <Box key={g.gatewayId} sx={{ mb: 0.5 }}>
+                  <Typography variant="caption" sx={{ fontFamily: 'monospace', display: 'block' }}>
+                    GW {g.gatewayId} br={g.branchCount} strict=[{g.strictCommon.join(',') || '-'}] heur=[{g.heuristicCommon.join(',') || '-'}]
+                  </Typography>
+                  {(g.missingFromHeuristic.length || g.heuristicOnly.length) && (
+                    <Typography
+                      variant="caption"
+                      color="warning.main"
+                      sx={{ fontFamily: 'monospace' }}
+                    >
+                      diff +:{g.missingFromHeuristic.join(',') || '-'} -:{g.heuristicOnly.join(',') || '-'}
+                    </Typography>
+                  )}
+                </Box>
+              ))}
+              {strictReport && strictReport.warnings.length === 0 && !structuralErrors.length && !structuralWarnings.length && (
+                <Alert severity="success" variant="outlined" sx={{ p: 0.5 }}>
+                  <Typography variant="caption">No structural issues</Typography>
+                </Alert>
+              )}
+            </Box>
+          )}
         </Box>
         <PropertyPanel
           open={propertyPanelOpen}
@@ -539,7 +670,6 @@ export function BuilderPage() {
           workflowDescription={workflowDescription}
           onWorkflowNameChange={(v) => { setWorkflowName(v); markDirty(); }}
           onWorkflowDescriptionChange={(v) => { setWorkflowDescription(v); markDirty(); }}
-          // (Tags intentionally handled in header; could be wired in if PropertyPanel evolves)
         />
       </Box>
 
@@ -582,21 +712,49 @@ export function BuilderPage() {
               {!validation.success && (
                 <Alert severity="error" sx={{ mb: 2 }}>Fix errors before publishing.</Alert>
               )}
-              {validation.errors.length > 0 && (
-                <div>
-                  <strong>Errors:</strong>
-                  <ul>{validation.errors.map((e, i) => <li key={i}>{e}</li>)}</ul>
-                </div>
-              )}
-              {validation.warnings.length > 0 && (
-                <div style={{ marginTop: 8 }}>
-                  <strong>Warnings:</strong>
-                  <ul>{validation.warnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
-                </div>
-              )}
-              {validation.success && validation.errors.length === 0 && (
-                <Alert severity="success" sx={{ mt: 2 }}>Validation passed.</Alert>
-              )}
+              {/* Unified Errors / Warnings (remote + structural) */}
+              {(() => {
+                const structuralErrs = strictMode
+                  ? structuralErrors.map(e => `[Structural] ${e}`)
+                  : [];
+                const structuralWarns = strictMode
+                  ? structuralWarnings.map(w => `[Structural] ${w}`)
+                  : [];
+                // Deduplicate by text
+                const uniq = (arr: string[]) => {
+                  const seen = new Set<string>();
+                  return arr.filter(t => (seen.has(t) ? false : (seen.add(t), true)));
+                };
+                const allErrors = uniq([...validation.errors, ...structuralErrs]);
+                const allWarnings = uniq([...validation.warnings, ...structuralWarns]);
+                return (
+                  <>
+                    {allErrors.length > 0 && (
+                      <div>
+                        <strong>Errors:</strong>
+                        <ul>{allErrors.map((e, i) => <li key={i}>{e}</li>)}</ul>
+                      </div>
+                    )}
+                    {allWarnings.length > 0 && (
+                      <div style={{ marginTop: 8 }}>
+                        <strong>Warnings:</strong>
+                        <ul>{allWarnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
+                      </div>
+                    )}
+                    {validation.success && allErrors.length === 0 && (
+                      <Alert severity="success" sx={{ mt: 2 }}>Validation passed.</Alert>
+                    )}
+                    {strictMode && strictReport && strictReport.gatewayResults.length > 0 && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="caption" color="text.secondary">
+                          Gateways inspected: {strictReport.gatewayResults.map(g => g.gatewayId).join(', ')}
+                          {strictReport.gatewayResults.some(g => g.missingFromHeuristic.length || g.heuristicOnly.length) && ' (diffs present)'}
+                        </Typography>
+                      </Box>
+                    )}
+                  </>
+                );
+              })()}
             </>
           )}
         </DialogContent>

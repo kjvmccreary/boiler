@@ -1,5 +1,5 @@
 # Workflow Frontend Parity & Sprint Plan (Maintained Document)
-Estimated % Completion: 46%  *(17 completed / 37 scoped stories)*
+Estimated % Completion: 54%  *(20 completed / 37 scoped stories)*
 
 > Purpose: Track alignment between backend WorkflowService capabilities and frontend implementation, and manage sprint execution.  
 > Update Cadence: After each story refinement / completion.  
@@ -35,8 +35,8 @@ Progress Legend: [ ] Not Started · [~] In Progress · [x] Complete · [D] Defer
 | Instance Suspend / Resume | Implemented | Row actions (C7) | Enhanced status detail | High | [x] |
 | Bulk Cancel Instances | Implemented | Multi-select + reason dialog (C9) | Result breakdown UI | Critical | [x] |
 | Definition Terminate-Running | Implemented | Modal + count + result (C8) | Deeper audit surfacing | Critical | [x] |
-| Definition Revalidate | Implemented | Missing | Manual trigger UI | Medium | [ ] |
-| New Version (draft) | Implemented | Missing button | Explicit action flow | Medium | [ ] |
+| Definition Revalidate | Implemented | Button + result panel | Audit surfacing later | Medium | [x] |
+| New Version (draft) | Implemented | Action button (create draft) | Diff viewer later | Medium | [x] |
 | Runtime Snapshot | Implemented | Snapshot panel (C10) | Additional graph insights | Critical | [x] |
 | Event Timeline | Implemented | Timeline panel (C11) | Advanced stream coalescing | Critical | [x] |
 | Progress Bar (dedupe) | Implemented | Partial | Dedupe context missing | Low | [ ] |
@@ -49,7 +49,7 @@ Progress Legend: [ ] Not Started · [~] In Progress · [x] Complete · [D] Defer
 | Monaco Frontend Tests | N/A | Missing | Coverage scenarios | Medium | [ ] |
 | Semantic Validation Opt-In | N/A | Toggle + badge | Analytics detail | Low | [x] |
 | Monaco Bundle Optimization | N/A | Full bundle | Slim JSON-only | Low | [ ] |
-| Parallel→Join Structural Validation | N/A | Heuristic + refinement | Full dominance algo | Critical | [~] |
+| Parallel→Join Structural Validation | N/A | Heuristic + refinement + strict toggle (M2) | Dominance completeness metrics | Critical | [x] |
 | Join Timeout Visibility | Experimental | Missing | Conditional banner | Low | [ ] |
 | Outbox Visibility | Persist only | Missing | Health widget | Medium | [ ] |
 | ActiveTasksCount | Pending enrich | Missing | Column/badge fallback | Medium | [ ] |
@@ -188,10 +188,12 @@ Layered approach executed client-side before publish; server still authoritative
 | 2025-09-09 | C11 | Event timeline (filters, pagination, grouping, badges) complete | None | Optional infinite streaming |
 | 2025-09-09 | C10 | Runtime Snapshot panel (metrics, auto refresh) complete | None | C11 timeline |
 | 2025-09-09 | C8 | Terminate-running modal delivered (counts + summary) | None | Optional audit surfacing |
+| 2025-09-09 | Revalidate | Frontend button + validation result collapse added | None | Consider audit timeline surfacing |
+| 2025-09-09 | New Version Draft | Create new draft version dialog & navigation to builder | None | Later: diff viewer |
 | 2025-09-08 | C9 | Bulk cancel (multi-select + reason) complete | None | Optional result breakdown |
 | 2025-09-08 | C7 | Suspend / Resume UI complete | None | C8 terminate-running |
 | 2025-09-08 | C6 | Task drawer & actions available | None | UX polish |
-| 2025-09-08 | M2 | Heuristic & subset convergence checks | Full dominance optional | Decide depth |
+| 2025-09-08 | M2 | Strict structural (dominance) analysis toggle added; mismatch diff surfaced | None | Evaluate false positives |
 | 2025-09-08 | C5 | Advanced timer panel complete | Worker missing | M7 tests |
 
 ---
@@ -221,6 +223,8 @@ Layered approach executed client-side before publish; server still authoritative
 | 2025-09-08 | Added suspend/resume & bulk cancel (C7, C9) | Team |
 | 2025-09-08 | Structural validation refinement | Team |
 | 2025-09-08 | Advanced timer panel | Team |
+| 2025-09-09 | Added definition revalidate action & panel | Team |
+| 2025-09-09 | Added new version (draft) creation flow | Team |
 
 ---
 
@@ -275,5 +279,151 @@ Layered approach executed client-side before publish; server still authoritative
 | JsonLogic | Declarative JSON-based logic DSL used for conditions |
 
 ---
+
+@@
+ | HumanTask Node | Stable | Basic node only | Enhanced assignment UX | High | [ ] |
+@@
+ ## 18. Story Specification – HumanTask Node Enhanced Assignment UX (New)
+ 
+ | Field | Detail |
+ |-------|--------|
+ | Story ID | H1 (HumanTask Enhanced Assignment) |
+ | Goal | Allow authors to configure richer assignment semantics for HumanTask nodes (users, roles, dynamic expressions, fallback & SLA metadata) directly in the builder property panel with validation + preview. |
+ | Priority | High |
+ | Status | Not Started |
+ | Owner | Workflow Feature Team |
+ | Dependencies | Existing role/user directory endpoints; expression validation service; publish validation hook. |
+ 
+ ### 18.1 Scope (In-Scope vs Out-of-Scope)
+ - In-Scope:
+   - Property Panel section for HumanTask node (replaces basic fields).
+   - Assignment modes: 
+     1. Direct User(s) (multi-select) 
+     2. Role(s) (multi-select) 
+     3. Dynamic Expression (JsonLogic returning userIds/role codes) 
+     4. Hybrid (roles + expression fallback)
+   - Optional fallback: escalateToRole (single role) on SLA breach (stub).
+   - SLA config: targetMinutes (integer) + optional softWarningMinutes (< target).
+   - Validation rules (see section 18.4).
+   - Display of computed “effective assignment summary” (static evaluation where possible).
+   - Expression validation via existing validate expression endpoint (kind='gateway' reuse or extend to 'task' if backend allows).
+   - Telemetry stubs (no charts yet).
+   - Draft JSON DSL mutation (persist structured object).
+ - Out-of-Scope (defer):
+   - Full SLA runtime enforcement UI.
+   - Escalation workflow builder.
+   - Per-branch overrides.
+   - Form schema integration.
+ 
+ ### 18.2 DSL Additions
+ Augment HumanTask node object with (proposed):
+ ```json
+ { "type": "humanTask", "assignment": 
+    { "mode": "users|roles|expression|hybrid", "users": ["userId1","userId2"], "roles": ["RoleA","RoleB"], 
+    "expression": "{ /* JsonLogic returning { users?:[], roles?:[] } */ }", "escalation": { "escalateToRole": "Supervisors", "afterMinutes": 120 }, "sla": 
+    { "targetMinutes": 240, "softWarningMinutes": 180 } 
+  } 
+ }
+
+ ```
+ - Omit arrays/objects when empty.
+- Validate that hybrid requires at least one static roles entry plus expression.
+
+### 18.3 UI / UX Details
+- Property Panel Section Title: “Assignment”
+- Mode selector (radio group).
+- Multi-select autocompletes:
+  - Users: search (debounced) by displayName/email.
+  - Roles: search local cached list (fetched once per builder session).
+- Expression editor: Monaco JsonLogic pre-configured (reuse existing variables assist).
+- SLA inputs grouped with helper text:
+  - targetMinutes required for any SLA.
+  - softWarningMinutes optional; must be < targetMinutes.
+- Escalation (collapsed/accordion) – disabled until SLA provided.
+- Summary chip row (live): “Users(3), Roles(2), Expr ✓ validated, SLA: 4h”.
+- Error surfacing inline per field; publish blocked if structural + assignment errors exist.
+
+### 18.4 Validation Rules
+| Rule | Severity | Message |
+|------|----------|---------|
+| mode selected | Error | “Assignment mode is required.” |
+| users mode & empty users[] | Error | “At least one user must be selected.” |
+| roles mode & empty roles[] | Error | “At least one role must be selected.” |
+| expression mode & missing expression | Error | “Expression is required for expression mode.” |
+| expression invalid (syntax) | Error | “Assignment expression invalid: <detail>.” |
+| hybrid mode & missing roles | Error | “Hybrid mode requires at least one role.” |
+| hybrid mode & missing expression | Error | “Hybrid mode requires an expression.” |
+| duplicate user ids | Warning | “Duplicate users removed.” (auto-dedupe) |
+| duplicate roles | Warning | “Duplicate roles removed.” |
+| SLA targetMinutes < 5 | Warning | “Very low SLA target may be unrealistic.” |
+| softWarningMinutes >= targetMinutes | Error | “Soft warning must be less than target.” |
+| escalation.afterMinutes <= targetMinutes (if both) | Warning | “Escalation occurs before or at SLA target.” |
+
+### 18.5 Backend / API Touchpoints
+- Endpoint (assumed existing / to confirm):
+  - GET /api/users?search= (paged)
+  - GET /api/roles
+  - POST /api/workflow/expressions/validate (reuse with kind='task' if backend extended; fallback kind='gateway')
+- No publish endpoint change required (fields pass-through).
+- Add server validation (future) to reject empty assignment per mode.
+
+### 18.6 Frontend Tasks
+| Task | Type | Est |
+|------|------|-----|
+| Add DSL Type augmentation (TypeScript) | Dev | 0.5d |
+| PropertyPanel: detect humanTask node & render AssignmentSection | Dev | 1d |
+| Users autocomplete (debounced search, 300ms) | Dev | 0.5d |
+| Roles fetch & cache (context or hook) | Dev | 0.25d |
+| Mode radio group + dynamic field rendering | Dev | 0.5d |
+| Expression Monaco integration (reuse existing config) | Dev | 0.5d |
+| SLA + Escalation subform | Dev | 0.5d |
+| Local validation hook (assignmentRules.ts) | Dev | 0.5d |
+| Integrate into existing validateDefinition (adds assignment errors) | Dev | 0.5d |
+| Summary chips component | Dev | 0.25d |
+| Telemetry stubs (console or no-op) | Dev | 0.25d |
+| Unit tests (parsing, validation cases) | QA/Dev | 1d |
+| Documentation (sprint.md + inline JSDoc) | Dev | 0.25d |
+
+### 18.7 Telemetry (Stubs)
+| Event | Trigger | Payload |
+|-------|---------|---------|
+| assignment.mode.changed | Mode change | { mode } |
+| assignment.expression.validated | Successful validation | { durationMs } |
+| assignment.sla.configured | target set | { targetMinutes, softWarningMinutes? } |
+
+### 18.8 Risks & Mitigations
+| Risk | Impact | Mitigation |
+|------|--------|-----------|
+| User search latency | UX lag | Debounce + loading indicator |
+| Expression complexity | Author confusion | Provide inline examples shortcut |
+| Over-validation noise | Author friction | Only block on error severity |
+| Hybrid misconfiguration | Incorrect routing | Explicit paired validation & inline hints |
+
+### 18.9 Test Plan (Additions)
+| Case | Expected |
+|------|----------|
+| Users mode no users | Error displayed; publish blocked |
+| Roles mode duplicates | Deduped silently; warning present |
+| Hybrid missing expression | Error |
+| Expression invalid JSON | Syntax error surfaced |
+| SLA soft >= target | Error |
+| Escalation without SLA | Escalation section disabled |
+| Successful publish with hybrid | No assignment errors in final validation |
+
+### 18.10 Acceptance Criteria (Definition of Done)
+- All validation rules enforced client-side; publish blocked only on “Error” rules.
+- DSL JSON persists assignment object correctly and round-trips into editor.
+- Switching modes clears irrelevant fields (with confirm if data loss).
+- Expression validate button (or auto) gives success/failure within <750ms typical.
+- SLA summary chip appears only when SLA configured.
+- No console errors; TypeScript types updated.
+- Unit tests cover: each mode validation + SLA rules + hybrid scenario (≥80% lines in assignment module).
+ 
+ ### 18.11 Out-of-Scope Follow-ups
+ - Form schema integration (future story)
+ - Audit / timeline event for assignment changes
+ - Backend authoritative validation (server rejects invalid assignment)
+ 
+ (End of Story Specification)
 
 (End of Document)
