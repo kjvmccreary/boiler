@@ -1,22 +1,33 @@
-PS C:\Users\mccre\dev\boiler\src\frontend\react-app> npm run build
+  C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(12,17): error CS0122: 'TagFilterValidator' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(13,11): error CS0122: 'TagFilterValidator.TagFilterValidationResult.IsValid' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(14,11): error CS0122: 'TagFilterValidator.TagFilterValidationResult.Errors' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(15,11): error CS0122: 'TagFilterValidator.TagFilterValidationResult.NormalizedAny' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(16,11): error CS0122: 'TagFilterValidator.TagFilterValidationResult.NormalizedAll' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Isolation\TaskIsolationIntegrationTests.cs(74,23): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Isolation\TaskIsolationIntegrationTests.cs(77,23): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(23,17): error CS0122: 'TagFilterValidator' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(24,11): error CS0122: 'TagFilterValidator.TagFilterValidationResult.IsValid' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(25,11): error CS0122: 'TagFilterValidator.TagFilterValidationResult.Errors' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Isolation\TaskIsolationIntegrationTests.cs(80,23): warning CS1998: This async method lacks 'await' operators and will run synchronously. Consider using the 'await' operator to await non-blocking API calls, or 'await Task.Run(...)' to do CPU-bound work on a background thread.
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(32,17): error CS0122: 'TagFilterValidator' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(33,11): error CS0122: 'TagFilterValidator.TagFilterValidationResult.IsValid' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(34,11): error CS0122: 'TagFilterValidator.TagFilterValidationResult.Errors' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(40,17): error CS0122: 'TagFilterValidator' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(41,11): error CS0122: 'TagFilterValidator.TagFilterValidationResult.IsValid' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(42,11): error CS0122: 'TagFilterValidator.TagFilterValidationResult.Errors' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(43,11): error CS0122: 'TagFilterValidator.TagFilterValidationResult.Errors' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Infrastructure\TestAuthHandler.cs(18,9): warning CS0618: 'AuthenticationHandler<AuthenticationSchemeOptions>.AuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions>, ILoggerFactory, UrlEncoder, ISystemClock)' is obsolete: 'ISystemClock is obsolete, use TimeProvider on AuthenticationSchemeOptions instead.'
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(51,17): error CS0122: 'TagFilterValidator' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(52,11): error CS0122: 'TagFilterValidator.TagFilterValidationResult.IsValid' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(53,11): error CS0122: 'TagFilterValidator.TagFilterValidationResult.Errors' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(54,11): error CS0122: 'TagFilterValidator.TagFilterValidationResult.Errors' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Validation\TagFilterValidatorTests.cs(55,11): error CS0122: 'TagFilterValidator.TagFilterValidationResult.Errors' is inaccessible due to its protection level
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Controllers\DefinitionsControllerTagFilterTests.cs(23,48): error CS0246: The type or namespace name 'GetWorkflowDefinitionsRequestDto' could not be found (are you missing a using directive or an assembly reference?)
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Controllers\DefinitionsControllerTagFilterTests.cs(24,42): error CS0246: The type or namespace name 'PagedResultDto<>' could not be found (are you missing a using directive or an assembly reference?)
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Controllers\DefinitionsControllerTagFilterTests.cs(24,57): error CS0246: The type or namespace name 'WorkflowDefinitionDto' could not be found (are you missing a using directive or an assembly reference?)
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Controllers\DefinitionsControllerTagFilterTests.cs(24,27): error CS0103: The name 'ApiResponseDto' does not exist in the current context
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Controllers\DefinitionsControllerTagFilterTests.cs(25,21): error CS0246: The type or namespace name 'PagedResultDto<>' could not be found (are you missing a using directive or an assembly reference?)
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Controllers\DefinitionsControllerTagFilterTests.cs(25,36): error CS0246: The type or namespace name 'WorkflowDefinitionDto' could not be found (are you missing a using directive or an assembly reference?)
+    C:\Users\mccre\dev\boiler\tests\unit\WorkflowService.Tests\Controllers\DefinitionsControllerTagFilterTests.cs(34,19): error CS0103: The name 'DbContextFactory' does not exist in the current context
 
-> microservices-frontend@0.0.0 build
-> tsc -b && vite build
-
-src/features/workflow/instances/__tests__/progressDedupe.test.ts:2:60 - error TS2307: Cannot find module '../utils/progress' or its corresponding type declarations.
-
-2 import { computeDedupedProgress, shouldEmitVariance } from '../utils/progress';
-                                                             ~~~~~~~~~~~~~~~~~~~
-
-src/features/workflow/instances/components/InstanceRuntimeSnapshotPanel.tsx:21:36 - error TS2307: Cannot find module '../utils/progress' or its corresponding type declarations.
-
-21 import { shouldEmitVariance } from '../utils/progress';
-                                      ~~~~~~~~~~~~~~~~~~~
-
-src/features/workflow/instances/InstanceDetailsPage.tsx:40:40 - error TS2307: Cannot find module './utils/progress' or its corresponding type declarations.
-
-40 import { computeDedupedProgress } from './utils/progress';
-                                          ~~~~~~~~~~~~~~~~~~
-
-
-Found 3 errors.
+Build failed with 27 error(s) and 11 warning(s) in 3.3s

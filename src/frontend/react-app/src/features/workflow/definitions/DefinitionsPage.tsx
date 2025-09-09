@@ -43,6 +43,9 @@ import type { WorkflowDefinitionDto } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import { normalizeTags } from '@/utils/tags';
+import { diffWorkflowDefinitions } from './utils/diffWorkflowDefinitions';
+import VersionDiffDrawer from './components/VersionDiffDrawer';
+import { trackWorkflow } from '@/features/workflow/telemetry/workflowTelemetry';
 
 const LS_KEY_SHOW_ARCHIVED = 'wf.definitions.showArchived';
 const LS_KEY_ANY_TAGS = 'wf.definitions.anyTags';
@@ -93,6 +96,7 @@ export function DefinitionsPage() {
     return localStorage.getItem(LS_KEY_ALL_TAGS) || '';
   });
   const [filtersDirty, setFiltersDirty] = useState(false);
+  const [tagFilterErrors, setTagFilterErrors] = useState<string[] | null>(null);
 
   // Tag editing dialog
   const [tagsDialogOpen, setTagsDialogOpen] = useState(false);
@@ -100,6 +104,57 @@ export function DefinitionsPage() {
   const [tagsInput, setTagsInput] = useState('');
   const [savingTags, setSavingTags] = useState(false);
   const [tagsError, setTagsError] = useState<string | null>(null);
+
+  // Version Diff (VDV PR1)
+  const [diffOpen, setDiffOpen] = useState(false);
+  const [diffLoading, setDiffLoading] = useState(false);
+  const [diffResult, setDiffResult] = useState<ReturnType<typeof diffWorkflowDefinitions> | null>(null);
+  const [diffCurrent, setDiffCurrent] = useState<WorkflowDefinitionDto | null>(null);
+  const [diffPreviousVersion, setDiffPreviousVersion] = useState<number | null>(null);
+
+  // Open version diff drawer for a definition (compare to previous version)
+  async function openDiffForDefinition(definition: WorkflowDefinitionDto) {
+    if (definition.version <= 1) return;
+    setDiffOpen(true);
+    setDiffLoading(true);
+    setDiffCurrent(definition);
+    setDiffResult(null);
+    setDiffPreviousVersion(definition.version - 1);
+    try {
+      // Try find previous version locally first
+      let prevJson = definitions.find(d =>
+        d.name === definition.name &&
+        d.version === definition.version - 1
+      )?.jsonDefinition;
+
+      if (!prevJson) {
+        try {
+          const latest = await workflowService.getDefinitions({
+            page: 1,
+            pageSize: 200,
+            sortBy: 'createdAt',
+            desc: true
+          });
+          prevJson = latest.find(d => d.name === definition.name && d.version === definition.version - 1)?.jsonDefinition;
+        } catch {
+          // ignore fetch failure; diff will show parse error
+        }
+      }
+
+      const diff = diffWorkflowDefinitions(definition.jsonDefinition, prevJson);
+      setDiffResult(diff);
+      trackWorkflow('diff.viewer.opened', {
+        definitionId: definition.id,
+        currentVersion: definition.version,
+        previousVersion: definition.version - 1,
+        addedNodes: diff.summary.addedNodes,
+        removedNodes: diff.summary.removedNodes,
+        modifiedNodes: diff.summary.modifiedNodes
+      });
+    } finally {
+      setDiffLoading(false);
+    }
+  }
 
   // Validation policy for tag editing dialog
   const MAX_TAGS = 12;
@@ -146,10 +201,16 @@ export function DefinitionsPage() {
         return;
       }
       setDefinitions(response);
-    } catch (error) {
-      console.error('Failed to load definitions:', error);
-      toast.error('Failed to load workflow definitions');
-      setDefinitions([]);
+      setTagFilterErrors(null); // clear previous filter validation errors on success
+    } catch (error: any) {
+      if (error?.name === 'TagFilterValidationError') {
+        setTagFilterErrors(error.errors || [error.message || 'Invalid tag filters']);
+        // Do not wipe existing grid data; keep previous valid result set
+      } else {
+        console.error('Failed to load definitions:', error);
+        toast.error('Failed to load workflow definitions');
+        setDefinitions([]);
+      }
     } finally {
       setLoading(false);
     }
@@ -449,6 +510,14 @@ export function DefinitionsPage() {
                 showInMenu
               />,
               <GridActionsCellItem
+                key="compare"
+                icon={<ViewIcon />}
+                label="Compare Prev"
+                disabled={definition.version <= 1}
+                onClick={() => openDiffForDefinition(definition)}
+                showInMenu
+              />,
+              <GridActionsCellItem
                 key="editTags"
                 icon={<EditIcon />}
                 label="Edit Tags"
@@ -651,6 +720,17 @@ export function DefinitionsPage() {
             alignItems: 'flex-end'
           }}
         >
+          {tagFilterErrors && tagFilterErrors.length > 0 && (
+            <Box sx={{ width: '100%' }}>
+              <Typography
+                variant="caption"
+                color="error"
+                sx={{ display: 'block', mb: 1, whiteSpace: 'pre-line' }}
+              >
+                {tagFilterErrors.map((e, i) => `• ${e}`).join('\n')}
+              </Typography>
+            </Box>
+          )}
           <TextField
             label="All Tags (AND)"
             size="small"
@@ -658,9 +738,11 @@ export function DefinitionsPage() {
             onChange={(e) => {
               setAllTags(e.target.value);
               setFiltersDirty(true);
+              setTagFilterErrors(null);
             }}
             placeholder="e.g. billing,core"
             sx={{ minWidth: 220 }}
+            helperText="Comma-separated; each tag ≤ 40 chars (multi-word allowed)"
           />
           <TextField
             label="Any Tags (OR)"
@@ -669,9 +751,11 @@ export function DefinitionsPage() {
             onChange={(e) => {
               setAnyTags(e.target.value);
               setFiltersDirty(true);
+              setTagFilterErrors(null);
             }}
             placeholder="e.g. finance,audit"
             sx={{ minWidth: 220 }}
+            helperText="Comma-separated; evaluated with OR semantics"
           />
           <Button
             variant="contained"
@@ -694,6 +778,7 @@ export function DefinitionsPage() {
               setAnyTags('');
               setAllTags('');
               setFiltersDirty(false);
+              setTagFilterErrors(null);
               loadDefinitions();
               localStorage.removeItem(LS_KEY_ANY_TAGS);
               localStorage.removeItem(LS_KEY_ALL_TAGS);
@@ -947,6 +1032,22 @@ export function DefinitionsPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Version Diff Drawer (VDV PR1) */}
+      <VersionDiffDrawer
+        open={diffOpen}
+        onClose={() => {
+          setDiffOpen(false);
+          setDiffResult(null);
+          setDiffCurrent(null);
+          setDiffPreviousVersion(null);
+        }}
+        currentVersion={diffCurrent?.version ?? 0}
+        previousVersion={diffPreviousVersion ?? 0}
+        diff={diffResult}
+        loading={diffLoading}
+        name={diffCurrent?.name || ''}
+      />
     </Box>
   );
 }

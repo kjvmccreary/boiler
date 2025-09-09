@@ -46,6 +46,8 @@ import { useTaskHub } from './hooks/useTaskHub';
 import { useInstanceHub } from './hooks/useInstanceHub';
 import type { InstanceUpdatedEvent } from '@/services/workflowNotifications';
 import InstanceEventTimeline from './components/InstanceEventTimeline';
+import { getProgressVarianceSummary, clearProgressVariance } from './utils/progressVarianceStore';
+import { trackWorkflow } from '@/features/workflow/telemetry/workflowTelemetry';
 
 export function InstanceDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -306,8 +308,22 @@ export function InstanceDetailsPage() {
   useEffect(() => {
     if (instance && ['Completed', 'Failed', 'Cancelled', 'Suspended'].includes(String(instance.status))) {
       setAutoRefresh(false);
+      // Emit variance summary telemetry once when terminal (Running -> terminal transition)
+      const summary = getProgressVarianceSummary(instance.id);
+      if (summary) {
+        trackWorkflow('instance.progress.dedupe.summary', {
+          instanceId: summary.instanceId,
+          samples: summary.samples,
+          avgDelta: Number(summary.avgDelta.toFixed(3)),
+          maxDelta: Number(summary.maxDelta.toFixed(3)),
+          firstDelta: Number(summary.firstDelta.toFixed(3)),
+          lastDelta: Number(summary.lastDelta.toFixed(3))
+        });
+        // Optionally clear to avoid double emission if page re-renders with same instance
+        clearProgressVariance(instance.id);
+      }
     }
-  }, [instance?.status]);
+  }, [instance?.status, instance?.id]);
 
   // Lazy import panel component (could also static import if preferred)
   // eslint-disable-next-line @typescript-eslint/no-var-requires

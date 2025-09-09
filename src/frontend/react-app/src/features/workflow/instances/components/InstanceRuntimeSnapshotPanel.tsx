@@ -19,6 +19,10 @@ import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import type { WorkflowInstanceDto } from '@/types/workflow';
 import { trackWorkflow } from '@/features/workflow/telemetry/workflowTelemetry';
 import { shouldEmitVariance } from '../utils/progress';
+import {
+  recordProgressVariance,
+  getProgressVarianceSummary
+} from '../utils/progressVarianceStore';
 
 export interface InstanceRuntimeSnapshotPanelProps {
   instance: WorkflowInstanceDto;
@@ -66,6 +70,7 @@ export const InstanceRuntimeSnapshotPanel: React.FC<InstanceRuntimeSnapshotPanel
     if (rawProgressPercent == null) return;
     if (shouldEmitVariance(rawProgressPercent, progressPercent)) {
       const delta = Math.abs(rawProgressPercent - progressPercent);
+      recordProgressVariance(instance.id, rawProgressPercent, progressPercent);
       trackWorkflow('instance.progress.variance', {
         instanceId: instance.id,
         raw: Number(rawProgressPercent.toFixed(2)),
@@ -74,6 +79,9 @@ export const InstanceRuntimeSnapshotPanel: React.FC<InstanceRuntimeSnapshotPanel
       });
     }
   }, [rawProgressPercent, progressPercent, instance.id]);
+
+  // Derive variance summary for UI (on each render; cheap)
+  const varianceSummary = getProgressVarianceSummary(instance.id);
 
   return (
     <Card sx={{ mb: 3 }}>
@@ -148,17 +156,30 @@ export const InstanceRuntimeSnapshotPanel: React.FC<InstanceRuntimeSnapshotPanel
               ? `/${executableNodeTotal} exec`
               : `/${totalNodes}`} nodes)
           </Typography>
-           <LinearProgress
-             variant="determinate"
-             value={progressPercent}
-             sx={{ height: 8, borderRadius: 1, mt: 0.5 }}
-             color={completed ? 'success' : failed ? 'error' : 'primary'}
-           />
+          <LinearProgress
+            variant="determinate"
+            value={progressPercent}
+            sx={{ height: 8, borderRadius: 1, mt: 0.5 }}
+            color={completed ? 'success' : failed ? 'error' : 'primary'}
+          />
           <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             <span>{progressPercent.toFixed(1)}% deduped</span>
             {rawProgressPercent != null && Math.abs(rawProgressPercent - progressPercent) >= 0.1 && (
               <Tooltip title={`Raw (legacy) progress: ${rawProgressPercent.toFixed(1)}% based on total nodes=${totalNodes}`}>
                 <span style={{ opacity: 0.75 }}>raw {rawProgressPercent.toFixed(1)}%</span>
+              </Tooltip>
+            )}
+            {varianceSummary && varianceSummary.samples >= 3 && (
+              <Tooltip
+                title={
+                  `Variance samples: ${varianceSummary.samples}\n` +
+                  `Avg Δ: ${varianceSummary.avgDelta.toFixed(2)} pts\n` +
+                  `Max Δ: ${varianceSummary.maxDelta.toFixed(2)} (raw ${varianceSummary.rawAtMax.toFixed(1)}% vs dedup ${varianceSummary.dedupedAtMax.toFixed(1)}%)`
+                }
+              >
+                <span style={{ opacity: 0.85 }}>
+                  Δ(avg {varianceSummary.avgDelta.toFixed(2)})
+                </span>
               </Tooltip>
             )}
           </Typography>

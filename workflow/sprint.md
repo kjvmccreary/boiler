@@ -39,8 +39,8 @@ Progress Legend: [ ] Not Started · [~] In Progress · [x] Complete · [D] Defer
 | New Version (draft) | Implemented | Action button (create draft) | Diff viewer later | Medium | [x] |
 | Runtime Snapshot | Implemented | Snapshot panel (C10) | Additional graph insights | Critical | [x] |
 | Event Timeline | Implemented | Timeline panel (C11) | Advanced stream coalescing | Critical | [x] |
-| Progress Bar (dedupe) | Implemented | UI + hook dedupe & util tests (PR1–PR2) | Variance telemetry aggregation (optional PR3) | Low | [~] |
-| Tags Filtering (ANY/ALL) | Implemented | Implemented | Backend validation guard | Medium | [ ] |
+| Progress Bar (dedupe) | Implemented | Variance aggregation + summary telemetry (PR3) | (Optional) mini chart | Low | [x] |
+| Tags Filtering (ANY/ALL) | Implemented | Guard + telemetry + tests (PR1–PR2) | Optional: analytics dashboard | Medium | [x] |
 | Tags Server-Side Validation | Missing guard | Publish pre-check + live UI validation + tests (PR3) | — | Medium | [x] |
 | JsonLogic Expression Builder | Engine ready | Monaco + semantic + vars | Examples library | High | [x] |
 | Monaco Editor Integration | N/A | MVP done | Tests + optimization | High | [x] |
@@ -54,7 +54,7 @@ Progress Legend: [ ] Not Started · [~] In Progress · [x] Complete · [D] Defer
 | Outbox Visibility | Persist only | Missing | Health widget | Medium | [ ] |
 | ActiveTasksCount | Pending enrich | Missing | Column/badge fallback | Medium | [ ] |
 | Simulation / Dry-Run | Not implemented | Missing | Path enumeration | Medium | [ ] |
-| Version Diff Viewer | Data available | Missing | Node diff UI | Medium | [ ] |
+| Version Diff Viewer | Data available | Field-level modified diff (PR2) | Visual overlay & arbitrary compare | Medium | [~] |
 | Event Stream Coalescing | Not needed now | Missing | Debounce layer | Low | [ ] |
 | Metrics (lag, SLA) | Planned | Missing | Metrics stub | Low | [ ] |
 | Expression Validation Tests (backend) | Not present | Missing | Add tests (M6) | Medium | [ ] |
@@ -205,9 +205,14 @@ Layered approach executed client-side before publish; server still authoritative
 | 2025-09-09 | T1 (Tags Validation) | PR2: Live tag validation field (debounced), error surfacing in Workflow Settings | None | PR3 tests |
 | 2025-09-09 | T1 (Tags Validation) | PR3: Unit & integration tests (preview + publish gating) added | None | — |
 | 2025-09-09 | PB (Progress Dedupe) | PR2: Added useInstanceProgress deduped metrics (hook-level) | None | PR2b add hook tests |
+| 2025-09-09 | PB (Progress Dedupe) | PR3: Variance aggregation + summary telemetry + UI badge | None | (Optional) sparkline |
 | 2025-09-09 | MFT (Monaco Tests) | PR1: Added component tests (strategy, join, assignment, action) with editor mock | None | PR2 expand scenarios |
 | 2025-09-09 | MFT (Monaco Tests) | PR2: Added extended validation tests (SLA, quorum, expression invalid JSON, headers/body/retry/discard) | None | PR3 telemetry assertions |
 | 2025-09-09 | MFT (Monaco Tests) | PR3: Telemetry event assertion coverage (gateway.strategy, join.mode, assignment.mode/expression, action.* set) | None | — |
+| 2025-09-09 | TF (Tags Filtering Guard) | PR1: Backend 422 validation + frontend error surfacing added | None | PR2 tests & telemetry |
+| 2025-09-09 | TF (Tags Filtering Guard) | PR2: Added backend/unit tests + frontend UI tests + telemetry events | None | — |
+| 2025-09-09 | VDV (Version Diff Viewer) | PR1: Baseline drawer with node/edge add/remove/modify diff implemented | None | PR2 field-level key detail refinements |
+| 2025-09-09 | VDV (Version Diff Viewer) | PR2: Field-level modified node diff + tests + expansion telemetry | None | PR3 visual overlay |
 
 ---
 
@@ -440,9 +445,90 @@ Layered approach executed client-side before publish; server still authoritative
  - Per-branch overrides
  - Form-driven task UI rendering (schema consumption)
 +
-+### 18.12 Delivered Formerly Deferred Enhancements
-+| Item | Notes |
-+|------|-------|
-+| Form Schema Integration | JSON editor with validation & size warning |
-+| Assignment Change History | Session-scoped history (max 20 entries) |
-+| Authoritative Validation Stub | Optional pre-publish backend check (skips on 404) |
++## 19. Story Specification – Version Diff Viewer (New)
++| Field | Detail |
++|-------|--------|
++| Story ID | VDV (Version Diff Viewer) |
++| Goal | Allow authors to quickly see what changed between two sequential workflow definition versions (added/removed/modified nodes & edges) before publishing or when reviewing history. |
++| Priority | Medium |
++| Status | In Progress (PR1) |
++| Owner | Workflow Feature Team |
++| Dependencies | Existing definitions endpoint (historical versions), JSON DSL parser already used in builder. |
++
++### 19.1 Scope (PR1 Baseline)
++Deliver a non-visual diff panel:
++ - Select “Compare to Previous Version” from DefinitionsPage row action (enabled when version > 1).
++ - Fetch prior version JSON + current version JSON.
++ - Compute structured diff:
++   - addedNodes[], removedNodes[]
++   - modifiedNodes[] (id stable; label/type/critical props changed)
++   - addedEdges[], removedEdges[]
++   - metadata summary counts (adds/removals/modifications)
++ - Present in side drawer (or dialog) with chips & grouped lists.
++ - No canvas overlay yet (future PR).
++
++### 19.2 Future PRs
++| PR | Focus |
++|----|-------|
++| PR2 | Node property field-level diff (show changed keys) |
++| PR3 | Visual overlay (ghost previous vs current) |
++| PR4 | Telemetry + unit tests (diff correctness, edge cases) |
++
++### 19.3 Diff Rules (Baseline)
++ - Node identity = id (case-sensitive).
++ - Modified node: exists in both versions & (type OR label OR key properties set { roles, assignment.mode, strategy, mode (join), timer parameters } changed).
++ - Edge identity = id (fallback to from+to if id absent).
++ - Ignore ordering differences.
++ - Whitespace-insensitive comparison for label / textual fields.
++
++### 19.4 UI / UX
++ - Drawer title: “Diff v{current} ↔ v{previous}”
++ - Summary chips: +N nodes, −M nodes, ΔK modified, +E edges, −F edges.
++ - Lists collapsible; each modified node row shows changed keys as small chips (e.g., label, strategy).
++ - Close button returns focus to definitions grid row.
++
++### 19.5 Telemetry (Planned PR4)
++| Event | Payload |
++|-------|---------|
++| diff.viewer.opened | { currentVersion, previousVersion, addNodes, removeNodes, modifiedNodes } |
++| diff.viewer.modified.field | { nodeId, field } (emitted when user expands modified node details) |
++
++### 19.6 Test Plan (PR4)
++| Case | Expected |
++|------|----------|
++| Added node only | appears in addedNodes; counts accurate |
++| Removed node only | appears in removedNodes |
++| Type change | treated as modified (original vs new type captured) |
++| Property label change only | modifiedNodes includes label in changedKeys |
++| Edge added/removed | listed in respective edge sections |
++| No changes | “No differences detected” message |
++
++### 19.7 Acceptance Criteria (PR1)
++ - Action visible for versions > 1.
++ - Diff computation completes < 200ms for typical (≤200 nodes).
++ - Accurate counts for adds/removes/modifications.
++ - No runtime errors on edge cases (empty previous, malformed prior JSON gracefully handled with error banner).
++
++### 19.8 Out-of-Scope (Deferred)
++ - Visual side-by-side graph overlay.
++ - Inline JSON patch presentation.
++ - Multi-version (v1 vs vN) arbitrary compare selector.
++ - Per-field diff for nested complex structures (e.g., deep assignment object).
++
++### 19.9 Risks & Mitigation
++| Risk | Mitigation |
++|------|------------|
++| Large definitions impact diff time | O(n) maps & set ops only; lazy expansion for modified detail |
++| Inconsistent IDs between versions | Fallback: treat as removal + addition |
++| Future DSL field additions break diff | Centralize “key properties” list; add tests |
++
++### 19.10 Implementation Steps (PR1)
++1. Add row action “Compare” in DefinitionsPage (guard version > 1).
++2. Service method getDefinitionVersion(definitionId, version?) if not existing (or reuse existing fetch with id & version param).
++3. diffWorkflowDefinitions util (pure function) + unit tests (optional PR1 or PR4).
++4. DiffDrawer component (MUI Drawer) with summary + lists.
++5. Telemetry stub (log only) placeholder.
++
++### 19.11 Metrics (Later)
++ - Average opened diffs per publish.
++ - Most frequently changed node types between versions.

@@ -115,6 +115,25 @@ public class DefinitionsController : ControllerBase
         [FromQuery] bool includeArchived = false,
         CancellationToken ct = default)
     {
+        // --- Tag Filter Guard (ANY/ALL) ---
+        // Validate anyTags / allTags against constraints (count, length, parseability).
+        if (!string.IsNullOrWhiteSpace(anyTags) || !string.IsNullOrWhiteSpace(allTags))
+        {
+            var tagFilterResult = Services.Validation.TagFilterValidator.Validate(anyTags, allTags);
+            if (!tagFilterResult.IsValid)
+            {
+                return StatusCode(StatusCodes.Status422UnprocessableEntity,
+                    ApiResponseDto<PagedResultDto<WorkflowDefinitionDto>>
+                        .ErrorResult("Invalid tag filters",
+                            tagFilterResult.Errors
+                                .Select((e, i) => new ErrorDto { Code = $"TagFilter{i + 1}", Message = e })
+                                .ToList()));
+            }
+            // Use normalized canonical forms if valid (helps cache hits & prevents variant duplication)
+            anyTags = tagFilterResult.NormalizedAny;
+            allTags = tagFilterResult.NormalizedAll;
+        }
+
         var request = new GetWorkflowDefinitionsRequestDto
         {
             SearchTerm = search,

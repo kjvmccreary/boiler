@@ -229,8 +229,23 @@ export class WorkflowService {
     if (filters?.pageSize) params.append('pageSize', String(filters.pageSize));
     if (filters?.sortBy) params.append('sortBy', filters.sortBy);
     if (filters?.desc !== undefined) params.append('desc', String(filters.desc));
-    const resp = await apiClient.get(`/api/workflow/definitions${params.size ? `?${params}` : ''}`);
-    return unwrap<PagedResultDto<WorkflowDefinitionDto>>(resp.data);
+    try {
+      const resp = await apiClient.get(`/api/workflow/definitions${params.size ? `?${params}` : ''}`);
+      return unwrap<PagedResultDto<WorkflowDefinitionDto>>(resp.data);
+    } catch (e: any) {
+      const status = e?.response?.status;
+      if (status === 422) {
+        const data = e?.response?.data;
+        const errors: string[] = Array.isArray(data?.errors)
+          ? data.errors.map((x: any) => typeof x === 'string' ? x : (x.message ?? JSON.stringify(x)))
+          : (data?.message ? [data.message] : ['Invalid tag filters']);
+        const err = new Error(errors[0]);
+        (err as any).name = 'TagFilterValidationError';
+        (err as any).errors = errors;
+        throw err;
+      }
+      throw e;
+    }
   }
 
   async getDefinition(id: number) {
