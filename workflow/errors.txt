@@ -3,55 +3,104 @@ PS C:\Users\mccre\dev\boiler\src\frontend\react-app> npm run build
 > microservices-frontend@0.0.0 build
 > tsc -b && vite build
 
-src/features/workflow/builder/BuilderCanvas.tsx:75:75 - error TS2304: Cannot find name 'NodeType'.
+src/features/workflow/dsl/dsl.validate.ts:211:57 - error TS2769: No overload matches this call.
+  Overload 1 of 2, '(predicate: (value: string, index: number, array: string[]) => value is string, thisArg?: any): string[]', gave the following error.
+    Argument of type '(j: never) => boolean' is not assignable to parameter of type '(value: string, index: number, array: string[]) => value is string'.
+      Types of parameters 'j' and 'value' are incompatible.
+        Type 'string' is not assignable to type 'never'.
+  Overload 2 of 2, '(predicate: (value: string, index: number, array: string[]) => unknown, thisArg?: any): string[]', gave the following error.
+    Argument of type '(j: never) => boolean' is not assignable to parameter of type '(value: string, index: number, array: string[]) => unknown'.
+      Types of parameters 'j' and 'value' are incompatible.
+        Type 'string' is not assignable to type 'never'.
 
-75       const type = event.dataTransfer.getData('application/reactflow') as NodeType;
-                                                                             ~~~~~~~~
-
-src/features/workflow/builder/BuilderCanvas.tsx:81:38 - error TS2304: Cannot find name 'NodeType'.
-
-81       const getNodeData = (nodeType: NodeType): DslNode => {
-                                        ~~~~~~~~
-
-src/features/workflow/builder/BuilderCanvas.tsx:81:49 - error TS2304: Cannot find name 'DslNode'.
-
-81       const getNodeData = (nodeType: NodeType): DslNode => {
-                                                   ~~~~~~~
-
-src/features/workflow/builder/BuilderCanvas.tsx:84:82 - error TS2304: Cannot find name 'StartNode'.
-
-84           case 'start': return { ...baseNode, type: 'start', label: 'Start' } as StartNode;
-                                                                                    ~~~~~~~~~
-
-src/features/workflow/builder/BuilderCanvas.tsx:85:76 - error TS2304: Cannot find name 'EndNode'.
-
-85           case 'end': return { ...baseNode, type: 'end', label: 'End' } as EndNode;
-                                                                              ~~~~~~~
-
-src/features/workflow/builder/BuilderCanvas.tsx:86:114 - error TS2304: Cannot find name 'HumanTaskNode'.
-
-86           case 'humanTask': return { ...baseNode, type: 'humanTask', label: 'Human Task', assigneeRoles: [] } as HumanTaskNode;
-                                                                                                                    ~~~~~~~~~~~~~
-
-src/features/workflow/builder/BuilderCanvas.tsx:87:125 - error TS2304: Cannot find name 'AutomaticNode'.
-
-87           case 'automatic': return { ...baseNode, type: 'automatic', label: 'Automatic Task', action: { kind: 'noop' } } as AutomaticNode;
-                                                                                                                               ~~~~~~~~~~~~~
-
-src/features/workflow/builder/BuilderCanvas.tsx:94:18 - error TS2304: Cannot find name 'GatewayNode'.
-
-94             } as GatewayNode;
-                    ~~~~~~~~~~~
-
-src/features/workflow/builder/BuilderCanvas.tsx:95:99 - error TS2304: Cannot find name 'TimerNode'.
-
-95           case 'timer': return { ...baseNode, type: 'timer', label: 'Timer', delayMinutes: 5 } as TimerNode;
-                                                                                                     ~~~~~~~~~
-
-src/features/workflow/builder/BuilderCanvas.tsx:104:79 - error TS2304: Cannot find name 'StartNode'.
-
-104           default: return { ...baseNode, type: 'start', label: 'Unknown' } as StartNode;
-                                                                                  ~~~~~~~~~
+211         intersection = new Set([...intersection].filter(j => branchJoinSets[b].has(j)));
+                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-Found 10 errors.
+src/features/workflow/tasks/hooks/useTaskActions.ts:34:86 - error TS2345: Argument of type 'string | number' is not assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 'string'.
+
+34     () => perms.has('workflow.write') && ['Created', 'Assigned', 'Claimed'].includes(task.status),
+                                                                                        ~~~~~~~~~~~
+
+src/features/workflow/tasks/hooks/useTaskActions.ts:38:81 - error TS2345: Argument of type 'string | number' is not assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 'string'.
+
+38     () => perms.has('workflow.claim_tasks') && ['Created', 'Assigned'].includes(task.status),
+                                                                                   ~~~~~~~~~~~
+
+src/features/workflow/tasks/hooks/useTaskActions.ts:42:86 - error TS2345: Argument of type 'string | number' is not assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 'string'.
+
+42     () => perms.has('workflow.complete_tasks') && ['Claimed', 'InProgress'].includes(task.status),
+                                                                                        ~~~~~~~~~~~
+
+src/features/workflow/tasks/hooks/useTaskActions.ts:46:100 - error TS2345: Argument of type 'string | number' is not assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 'string'.
+
+46     () => perms.has('workflow.write') && ['Created', 'Assigned', 'Claimed', 'InProgress'].includes(task.status),
+                                                                                                      ~~~~~~~~~~~
+
+src/features/workflow/tasks/hooks/useTaskActions.ts:50:88 - error TS2345: Argument of type 'string | number' is not assignable to parameter of type 'string'.
+  Type 'number' is not assignable to type 'string'.
+
+50     () => perms.has('workflow.admin') && ['Completed', 'Cancelled', 'Failed'].includes(task.status),
+                                                                                          ~~~~~~~~~~~
+
+src/features/workflow/tasks/hooks/useTaskActions.ts:77:72 - error TS2353: Object literal may only specify known properties, and 'note' does not exist in type 'ClaimTaskRequestDto'.
+
+77         ? doAction('claim', () => workflowService.claimTask(task.id, { note: userNote }))
+                                                                          ~~~~
+
+src/features/workflow/tasks/hooks/useTaskActions.ts:81:78 - error TS2353: Object literal may only specify known properties, and 'outcome' does not exist in type 'CompleteTaskRequestDto'.
+
+81         ? doAction('complete', () => workflowService.completeTask(task.id, { outcome }))
+                                                                                ~~~~~~~
+
+src/features/workflow/tasks/TaskDetailDrawer.tsx:72:19 - error TS2551: Property 'assignedUserId' does not exist on type 'WorkflowTaskDto'. Did you mean 'assignedToUserId'?
+
+72             {live.assignedUserId && <Chip label={`User ${live.assignedUserId}`} size="small" variant="outlined" />}
+                     ~~~~~~~~~~~~~~
+
+  src/types/workflow.ts:104:3
+    104   assignedToUserId?: number;
+          ~~~~~~~~~~~~~~~~
+    'assignedToUserId' is declared here.
+
+src/features/workflow/tasks/TaskDetailDrawer.tsx:72:63 - error TS2551: Property 'assignedUserId' does not exist on type 'WorkflowTaskDto'. Did you mean 'assignedToUserId'?
+
+72             {live.assignedUserId && <Chip label={`User ${live.assignedUserId}`} size="small" variant="outlined" />}
+                                                                 ~~~~~~~~~~~~~~
+
+  src/types/workflow.ts:104:3
+    104   assignedToUserId?: number;
+          ~~~~~~~~~~~~~~~~
+    'assignedToUserId' is declared here.
+
+src/features/workflow/tasks/TaskDetailDrawer.tsx:73:19 - error TS2551: Property 'assignedRole' does not exist on type 'WorkflowTaskDto'. Did you mean 'assignedToRole'?
+
+73             {live.assignedRole && <Chip label={`Role ${live.assignedRole}`} size="small" variant="outlined" />}
+                     ~~~~~~~~~~~~
+
+  src/types/workflow.ts:105:3
+    105   assignedToRole?: string;
+          ~~~~~~~~~~~~~~
+    'assignedToRole' is declared here.
+
+src/features/workflow/tasks/TaskDetailDrawer.tsx:73:61 - error TS2551: Property 'assignedRole' does not exist on type 'WorkflowTaskDto'. Did you mean 'assignedToRole'?
+
+73             {live.assignedRole && <Chip label={`Role ${live.assignedRole}`} size="small" variant="outlined" />}
+                                                               ~~~~~~~~~~~~
+
+  src/types/workflow.ts:105:3
+    105   assignedToRole?: string;
+          ~~~~~~~~~~~~~~
+    'assignedToRole' is declared here.
+
+src/features/workflow/tasks/TaskDetailDrawer.tsx:146:51 - error TS2339: Property 'instanceId' does not exist on type 'WorkflowTaskDto'.
+
+146             Node: {live.nodeId} • Instance: {live.instanceId}
+                                                      ~~~~~~~~~~
+
+
+Found 13 errors.

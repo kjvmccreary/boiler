@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -64,6 +64,10 @@ export function InstanceDetailsPage() {
   const [claimingTaskId, setClaimingTaskId] = useState<number | null>(null);
   const [completingTaskId, setCompletingTaskId] = useState<number | null>(null);
 
+  // Snapshot derived / panel state (C10)
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
   const navigate = useNavigate();
   const { currentTenant } = useTenant();
 
@@ -79,6 +83,7 @@ export function InstanceDetailsPage() {
       setTraversedEdgeIds(snapshot.traversedEdgeIds ?? []);
       setVisitedNodeIds(snapshot.visitedNodeIds || []);
       setCurrentNodeIds(snapshot.currentNodeIds || []);
+      setLastUpdated(new Date());
     } catch {
       if (!silent) toast.error('Failed to load runtime snapshot');
     } finally {
@@ -294,6 +299,42 @@ export function InstanceDetailsPage() {
     }
   });
 
+  // Auto refresh effect (C10)
+  useEffect(() => {
+    if (!autoRefresh) return;
+    if (!instance) return;
+    if (!(instance.status === 'Running')) return;
+    const id = window.setTimeout(() => {
+      void loadSnapshot(true);
+    }, 5000);
+    return () => window.clearTimeout(id);
+  }, [autoRefresh, instance, loadSnapshot, tasks.length, currentNodeIds.join(',')]);
+
+  // Derived metrics for snapshot panel
+  let totalNodes = 0;
+  try {
+    if (definitionJson) {
+      const parsed = JSON.parse(definitionJson);
+      if (Array.isArray(parsed?.nodes)) {
+        totalNodes = parsed.nodes.length;
+      }
+    }
+  } catch {
+    // ignore parse errors
+  }
+  const progressPercent = totalNodes > 0 ? (visitedNodeIds.length / totalNodes) * 100 : 0;
+
+  // Disable auto when terminal
+  useEffect(() => {
+    if (instance && ['Completed', 'Failed', 'Cancelled', 'Suspended'].includes(String(instance.status))) {
+      setAutoRefresh(false);
+    }
+  }, [instance?.status]);
+
+  // Lazy import panel component (could also static import if preferred)
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const InstanceRuntimeSnapshotPanel = require('./components/InstanceRuntimeSnapshotPanel').InstanceRuntimeSnapshotPanel;
+
   if (!currentTenant) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 200 }}>
@@ -365,6 +406,22 @@ export function InstanceDetailsPage() {
           )}
         </Box>
       </Box>
+
+      {/* Runtime Snapshot Panel (C10) */}
+      <InstanceRuntimeSnapshotPanel
+        instance={instance}
+        visitedNodeIds={visitedNodeIds}
+        currentNodeIds={currentNodeIds}
+        traversedEdgeIds={traversedEdgeIds}
+        totalNodes={totalNodes}
+        progressPercent={progressPercent}
+        tasksCount={tasks.length}
+        eventsCount={events.length}
+        onRefresh={handleRefresh}
+        autoRefresh={autoRefresh}
+        setAutoRefresh={setAutoRefresh}
+        lastUpdated={lastUpdated}
+      />
 
       {/* Overview */}
       <Card sx={{ mb: 3 }}>

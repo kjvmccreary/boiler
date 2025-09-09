@@ -3,153 +3,136 @@ import {
   Box,
   Typography,
   Button,
+  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Chip,
-  Switch,
-  FormControlLabel,
-  Tooltip
+  TextField,
+  Tooltip,
+  Stack,
+  CircularProgress
 } from '@mui/material';
-import {
-  DataGridPremium,
-  GridColDef,
-  GridRowParams,
-  GridActionsCellItem,
-  GridRowId,
-  GridToolbar,
-} from '@mui/x-data-grid-premium';
 import {
   Visibility as ViewIcon,
   PlayArrow as StartIcon,
   Stop as StopIcon,
   Pause as PauseIcon,
   Refresh as RefreshIcon,
+  Cancel as CancelIcon,
+  PlaylistRemove as BulkCancelIcon
 } from '@mui/icons-material';
+import {
+  DataGridPremium,
+  GridColDef,
+  GridRowParams,
+  GridActionsCellItem,
+  GridRowId,
+  GridToolbar
+} from '@mui/x-data-grid-premium';
 import { useNavigate } from 'react-router-dom';
-import { workflowService } from '@/services/workflow.service';
-import type { WorkflowInstanceDto } from '@/types/workflow';
-import { InstanceStatus } from '@/types/workflow';
 import toast from 'react-hot-toast';
+import { workflowService } from '@/services/workflow.service';
+import type { WorkflowInstanceDto, InstanceStatus } from '@/types/workflow';
 import { useTenant } from '@/contexts/TenantContext';
-import { InstanceStatusBadge } from './components/InstanceStatusBadge';
-import { useTaskHub } from './hooks/useTaskHub';
-import { useInstanceHub } from './hooks/useInstanceHub';
-import type { InstanceUpdatedEvent } from '@/services/workflowNotifications';
 
-const TERMINAL: InstanceStatus[] = [
-  InstanceStatus.Completed,
-  InstanceStatus.Cancelled,
-  InstanceStatus.Failed
-];
-
-const LS_KEY_HIDE_COMPLETED = 'wf.instances.hideCompleted';
-
-function readStoredHideCompleted(defaultValue: boolean): boolean {
-  if (typeof window === 'undefined') return defaultValue;
-  const raw = window.localStorage.getItem(LS_KEY_HIDE_COMPLETED);
-  if (raw === null) return defaultValue;
-  return raw === 'true';
-}
-
-function staticStatusChip(status: InstanceStatus) {
-  switch (status) {
-    case InstanceStatus.Running: return <Chip label="Running" color="primary" size="small" />;
-    case InstanceStatus.Completed: return <Chip label="Completed" color="success" size="small" />;
-    case InstanceStatus.Failed: return <Chip label="Failed" color="error" size="small" />;
-    case InstanceStatus.Cancelled: return <Chip label="Cancelled" size="small" />;
-    case InstanceStatus.Suspended: return <Chip label="Suspended" color="warning" size="small" />;
-    default: return <Chip label={String(status)} size="small" />;
-  }
+function useOptionalPermissions() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const mod = require('@/context/PermissionContext');
+    if (mod?.usePermissions) {
+      const p = mod.usePermissions();
+      return { has: (perm: string) => p.has(perm) };
+    }
+  } catch { /* ignore */ }
+  return { has: () => true };
 }
 
 export function InstancesListPage() {
   const [instances, setInstances] = useState<WorkflowInstanceDto[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Terminate single
   const [terminateDialogOpen, setTerminateDialogOpen] = useState(false);
   const [instanceToTerminate, setInstanceToTerminate] = useState<WorkflowInstanceDto | null>(null);
-  const [hideCompleted, setHideCompleted] = useState<boolean>(() => readStoredHideCompleted(true));
+
+  // Single cancel
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [instanceToCancel, setInstanceToCancel] = useState<WorkflowInstanceDto | null>(null);
+
+  // Bulk cancel
+  const [bulkCancelDialogOpen, setBulkCancelDialogOpen] = useState(false);
+  const [bulkCancelReason, setBulkCancelReason] = useState('');
+  const [bulkOpLoading, setBulkOpLoading] = useState(false);
+  const [selectionIds, setSelectionIds] = useState<GridRowId[]>([]); // uncontrolled grid, we just track latest selection
 
   const navigate = useNavigate();
   const { currentTenant } = useTenant();
+  const perms = useOptionalPermissions();
 
-  // Persist hideCompleted
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(LS_KEY_HIDE_COMPLETED, String(hideCompleted));
-    }
-  }, [hideCompleted]);
+    if (currentTenant) loadInstances();
+  }, [currentTenant]);
 
-  const loadInstances = useCallback(async (silent = false) => {
+  const loadInstances = useCallback(async () => {
     try {
-      if (!silent) setLoading(true);
+      setLoading(true);
       const items = await workflowService.getInstances();
       setInstances(items);
     } catch {
-      if (!silent) toast.error('Failed to load workflow instances');
+      toast.error('Failed to load workflow instances');
     } finally {
-      if (!silent) setLoading(false);
+      setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    if (currentTenant) {
-      void loadInstances();
-    }
-  }, [currentTenant, loadInstances]);
-
-  useTaskHub(() => {
-    if (instances.some(i => i.status === 'Running' || i.status === 'Suspended')) {
-      void loadInstances(true);
-    }
-  }, 1000);
-
-  const mergeInstancePush = (evt: InstanceUpdatedEvent) => {
-    setInstances(prev => {
-      const idx = prev.findIndex(p => p.id === evt.instanceId);
-      if (idx === -1) return prev;
-      const next = [...prev];
-      const row = { ...next[idx] };
-      row.status = evt.status as any;
-      row.completedAt = evt.completedAt || row.completedAt;
-      row.errorMessage = evt.errorMessage ?? row.errorMessage;
-      if (evt.currentNodeIds) row.currentNodeIds = evt.currentNodeIds;
-      next[idx] = row;
-      return next;
-    });
-  };
-
-  useInstanceHub({
-    onInstanceUpdated: mergeInstancePush,
-    onInstancesChanged: () => {
-      if (instances.some(i => i.status === 'Running' || i.status === 'Suspended')) {
-        void loadInstances(true);
-      }
-    }
-  });
-
-  const handleView = (id: GridRowId) => {
-    navigate(`/app/workflow/instances/${id}`);
-  };
+  const handleView = (id: GridRowId) => navigate(`/app/workflow/instances/${id}`);
 
   const handleSuspend = async (instance: WorkflowInstanceDto) => {
     try {
       await workflowService.suspendInstance(instance.id);
-      toast.success('Workflow instance suspended');
-      void loadInstances(true);
+      toast.success(`Instance ${instance.id} suspended`);
+      loadInstances();
     } catch {
-      toast.error('Failed to suspend workflow instance');
+      toast.error('Suspend failed');
     }
   };
 
   const handleResume = async (instance: WorkflowInstanceDto) => {
     try {
       await workflowService.resumeInstance(instance.id);
-      toast.success('Workflow instance resumed');
-      void loadInstances(true);
+      toast.success(`Instance ${instance.id} resumed`);
+      loadInstances();
     } catch {
-      toast.error('Failed to resume workflow instance');
+      toast.error('Resume failed');
+    }
+  };
+
+  const isCancellable = (i: WorkflowInstanceDto) =>
+    i.status === 'Running' || i.status === 'Suspended';
+
+  const handleCancel = (instance: WorkflowInstanceDto) => {
+    setInstanceToCancel(instance);
+    setCancelDialogOpen(true);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!instanceToCancel) return;
+    try {
+      const res = await workflowService.bulkCancelInstances({
+        instanceIds: [instanceToCancel.id],
+        reason: 'User cancelled'
+      } as any);
+      const cancelledCount =
+        (res as any)?.successCount ??
+        (Array.isArray((res as any)?.succeededIds) ? (res as any).succeededIds.length : 1);
+      toast.success(`Cancelled ${cancelledCount} instance`);
+      loadInstances();
+    } catch {
+      toast.error('Cancel failed');
+    } finally {
+      setCancelDialogOpen(false);
+      setInstanceToCancel(null);
     }
   };
 
@@ -162,34 +145,87 @@ export function InstancesListPage() {
     if (!instanceToTerminate) return;
     try {
       await workflowService.terminateInstance(instanceToTerminate.id);
-      toast.success('Workflow instance terminated');
-      void loadInstances(true);
+      toast.success(`Instance ${instanceToTerminate.id} terminated`);
+      loadInstances();
     } catch {
-      toast.error('Failed to terminate workflow instance');
+      toast.error('Terminate failed');
     } finally {
       setTerminateDialogOpen(false);
       setInstanceToTerminate(null);
     }
   };
 
-  const formatDateTime = (dateString: string) => new Date(dateString).toLocaleString();
+  // Bulk cancel operations
+  const selectedInstances = useMemo(
+    () => instances.filter(i => selectionIds.includes(i.id)),
+    [instances, selectionIds]
+  );
+
+  const cancellableSelected = useMemo(
+    () => selectedInstances.filter(isCancellable),
+    [selectedInstances]
+  );
+
+  const anySelected = selectionIds.length > 0;
+
+  const openBulkCancel = () => {
+    if (cancellableSelected.length === 0) {
+      toast.error('No cancellable selected instances');
+      return;
+    }
+    setBulkCancelReason('');
+    setBulkCancelDialogOpen(true);
+  };
+
+  const executeBulkCancel = async () => {
+    try {
+      setBulkOpLoading(true);
+      const ids = cancellableSelected.map(i => i.id);
+      const res = await workflowService.bulkCancelInstances({
+        instanceIds: ids,
+        reason: bulkCancelReason || undefined
+      } as any);
+      const ok =
+        (res as any)?.successCount ??
+        (Array.isArray((res as any)?.succeededIds) ? (res as any).succeededIds.length : ids.length);
+      toast.success(`Bulk cancelled ${ok}/${ids.length}`);
+      setBulkCancelDialogOpen(false);
+      setSelectionIds([]);
+      loadInstances();
+    } catch {
+      toast.error('Bulk cancel failed');
+    } finally {
+      setBulkOpLoading(false);
+    }
+  };
+
+  const getStatusChip = (status: InstanceStatus) => {
+    switch (status) {
+      case 'Running':
+        return <Chip label="Running" color="primary" size="small" icon={<StartIcon />} />;
+      case 'Completed':
+        return <Chip label="Completed" color="success" size="small" />;
+      case 'Failed':
+        return <Chip label="Failed" color="error" size="small" />;
+      case 'Cancelled':
+        return <Chip label="Cancelled" color="default" size="small" />;
+      case 'Suspended':
+        return <Chip label="Suspended" color="warning" size="small" icon={<PauseIcon />} />;
+      default:
+        return <Chip label={status} size="small" />;
+    }
+  };
+
+  const formatDateTime = (dt: string) => new Date(dt).toLocaleString();
 
   const calculateDuration = (startedAt: string, completedAt?: string) => {
     const start = new Date(startedAt);
     const end = completedAt ? new Date(completedAt) : new Date();
     const diffMs = end.getTime() - start.getTime();
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    return `${minutes}m`;
+    const hrs = Math.floor(diffMs / 3600000);
+    const mins = Math.floor((diffMs % 3600000) / 60000);
+    return hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
   };
-
-  const displayedInstances = useMemo(
-    () => hideCompleted
-      ? instances.filter(i => !TERMINAL.includes(i.status as InstanceStatus))
-      : instances,
-    [instances, hideCompleted]
-  );
 
   const columns: GridColDef[] = [
     { field: 'id', headerName: 'Instance ID', width: 120 },
@@ -199,122 +235,116 @@ export function InstancesListPage() {
       flex: 1,
       minWidth: 200,
       renderCell: (params) => {
-        const instance = params.row as WorkflowInstanceDto;
+        const i = params.row as WorkflowInstanceDto;
         return (
-            <Box>
-              <Typography variant="subtitle2" fontWeight="medium">
-                {params.value}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                v{instance.definitionVersion}
-              </Typography>
-            </Box>
+          <Box>
+            <Typography variant="subtitle2" fontWeight="medium">{params.value}</Typography>
+            <Typography variant="caption" color="text.secondary">v{i.definitionVersion}</Typography>
+          </Box>
         );
-      },
+      }
     },
     {
       field: 'status',
       headerName: 'Status',
-      width: 150,
-      renderCell: (params) => {
-        const inst = params.row as WorkflowInstanceDto;
-        if (TERMINAL.includes(inst.status as InstanceStatus)) {
-          return staticStatusChip(inst.status as InstanceStatus);
-        }
-        return (
-          <InstanceStatusBadge
-            instanceId={inst.id}
-            compact
-            existingStatus={inst.status as InstanceStatus}
-            showProgress
-          />
-        );
-      },
-      sortable: true
+      width: 130,
+      renderCell: (p) => getStatusChip(p.value as InstanceStatus)
     },
     {
       field: 'currentNodeIds',
       headerName: 'Current Node(s)',
-      width: 150,
-      renderCell: (params) => (
-        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
-          {params.value || 'None'}
+      width: 170,
+      renderCell: (p) => (
+        <Typography
+          variant="body2"
+          sx={{ fontFamily: 'monospace', fontSize: '0.7rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+          title={Array.isArray(p.value) ? (p.value as any[]).join(',') : p.value}
+        >
+          {Array.isArray(p.value) ? (p.value as any[]).join(',') : (p.value || 'None')}
         </Typography>
-      ),
+      )
     },
     {
       field: 'startedAt',
       headerName: 'Started',
-      width: 160,
+      width: 170,
       type: 'dateTime',
-      valueGetter: (value) => new Date(value),
-      renderCell: (params) => formatDateTime(params.value),
+      valueGetter: v => new Date(v as string),
+      renderCell: (p) => formatDateTime(p.row.startedAt)
     },
     {
       field: 'duration',
       headerName: 'Duration',
-      width: 100,
-      renderCell: (params) => {
-        const instance = params.row as WorkflowInstanceDto;
-        return calculateDuration(instance.startedAt, instance.completedAt);
-      },
+      width: 110,
+      valueGetter: (_, row) => calculateDuration(row.startedAt, row.completedAt),
+      renderCell: (p) => <Typography variant="body2">{p.value}</Typography>
     },
     {
       field: 'startedByUserId',
       headerName: 'Started By',
       width: 120,
-      renderCell: (params) => params.value || 'System',
+      renderCell: (p) => p.value || 'System'
     },
     {
       field: 'actions',
       type: 'actions',
       headerName: 'Actions',
-      width: 120,
+      width: 160,
       getActions: (params: GridRowParams) => {
         const instance = params.row as WorkflowInstanceDto;
-        const actions = [
+        const actions: any[] = [
           <GridActionsCellItem
             key="view"
             icon={<ViewIcon />}
             label="View Details"
             onClick={() => handleView(params.id)}
-          />,
+          />
         ];
-
-        if (instance.status === InstanceStatus.Running) {
-          actions.push(
-            <GridActionsCellItem
-              key="suspend"
-              icon={<PauseIcon />}
-              label="Suspend"
-              onClick={() => handleSuspend(instance)}
-              showInMenu
-            />,
-            <GridActionsCellItem
-              key="terminate"
-              icon={<StopIcon />}
-              label="Terminate"
-              onClick={() => handleTerminate(instance)}
-              showInMenu
-            />
-          );
+        if (perms.has('workflow.admin')) {
+          if (instance.status === 'Running') {
+            actions.push(
+              <GridActionsCellItem
+                key="suspend"
+                icon={<PauseIcon />}
+                label="Suspend"
+                onClick={() => handleSuspend(instance)}
+                showInMenu
+              />,
+              <GridActionsCellItem
+                key="terminate"
+                icon={<StopIcon />}
+                label="Terminate"
+                onClick={() => handleTerminate(instance)}
+                showInMenu
+              />
+            );
+          }
+          if (instance.status === 'Suspended') {
+            actions.push(
+              <GridActionsCellItem
+                key="resume"
+                icon={<StartIcon />}
+                label="Resume"
+                onClick={() => handleResume(instance)}
+                showInMenu
+              />
+            );
+          }
+          if (isCancellable(instance)) {
+            actions.push(
+              <GridActionsCellItem
+                key="cancel"
+                icon={<CancelIcon />}
+                label="Cancel"
+                onClick={() => handleCancel(instance)}
+                showInMenu
+              />
+            );
+          }
         }
-
-        if (instance.status === InstanceStatus.Suspended) {
-          actions.push(
-            <GridActionsCellItem
-              key="resume"
-              icon={<StartIcon />}
-              label="Resume"
-              onClick={() => handleResume(instance)}
-              showInMenu
-            />
-          );
-        }
-
         return actions;
-      },
-    },
+      }
+    }
   ];
 
   if (!currentTenant) {
@@ -325,74 +355,104 @@ export function InstancesListPage() {
     );
   }
 
-  const hiddenCount = instances.length - displayedInstances.length;
+  const cancellableSelectedCount = cancellableSelected.length;
+  const selectedSummary = cancellableSelectedCount > 0
+    ? `${cancellableSelectedCount}/${selectionIds.length} cancellable`
+    : `${selectionIds.length} selected`;
+
+  const handleRowSelectionChange = (model: any) => {
+    // New data-grid may pass either array or object; normalize:
+    const ids = Array.isArray(model)
+      ? model
+      : Array.isArray(model?.ids)
+        ? model.ids
+        : [];
+    setSelectionIds(ids as GridRowId[]);
+  };
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          mb: 3,
+          gap: 2,
+          flexWrap: 'wrap'
+        }}
+      >
         <Box>
-          <Typography variant="h4" component="h1">
-            Workflow Instances
-          </Typography>
+          <Typography variant="h4" component="h1">Workflow Instances</Typography>
           <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 0.5 }}>
             {currentTenant.name}
           </Typography>
         </Box>
-
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={hideCompleted}
-                onChange={(e) => setHideCompleted(e.target.checked)}
-                color="primary"
-              />
-            }
-            label="Hide Completed"
-          />
-          {hideCompleted && hiddenCount > 0 && (
-            <Tooltip title={`${hiddenCount} terminal (Completed/Failed/Cancelled) hidden`}>
-              <Chip size="small" label={`Hidden: ${hiddenCount}`} />
+        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
+          <Tooltip title="Refresh">
+            <span>
+              <Button
+                variant="outlined"
+                startIcon={<RefreshIcon />}
+                onClick={loadInstances}
+                disabled={loading}
+              >
+                Refresh
+              </Button>
+            </span>
+          </Tooltip>
+          {perms.has('workflow.admin') && (
+            <Tooltip title={cancellableSelectedCount === 0 ? 'Select running or suspended instances' : 'Bulk cancel selected'}>
+              <span>
+                <Button
+                  variant="contained"
+                  color="warning"
+                  startIcon={<BulkCancelIcon />}
+                  disabled={cancellableSelectedCount === 0 || bulkOpLoading}
+                  onClick={openBulkCancel}
+                >
+                  Bulk Cancel
+                </Button>
+              </span>
             </Tooltip>
           )}
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={() => void loadInstances()}
-            disabled={loading}
-          >
-            Refresh
-          </Button>
-        </Box>
+          {anySelected && (
+            <Chip
+              size="small"
+              color={cancellableSelectedCount > 0 ? 'primary' : 'default'}
+              label={selectedSummary}
+              variant="outlined"
+            />
+          )}
+          {loading && <CircularProgress size={20} />}
+        </Stack>
       </Box>
 
       <Box sx={{ flex: 1, minHeight: 0 }}>
         <DataGridPremium
-          rows={displayedInstances}
+          rows={instances}
           columns={columns}
+          checkboxSelection
+          disableRowSelectionOnClick
           loading={loading}
           pagination
           pageSizeOptions={[10, 25, 50, 100]}
           initialState={{
             pagination: { paginationModel: { pageSize: 25 } },
-            sorting: { sortModel: [{ field: 'startedAt', sort: 'desc' }] },
+            sorting: { sortModel: [{ field: 'startedAt', sort: 'desc' }] }
           }}
           slots={{ toolbar: GridToolbar }}
           slotProps={{
-            toolbar: {
-              showQuickFilter: true,
-              quickFilterProps: { debounceMs: 500 },
-            },
+            toolbar: { showQuickFilter: true, quickFilterProps: { debounceMs: 500 } }
           }}
-          disableRowSelectionOnClick
+          onRowSelectionModelChange={handleRowSelectionChange}
           sx={{
-            '& .MuiDataGrid-row:hover': {
-              backgroundColor: 'action.hover',
-            },
+            '& .MuiDataGrid-row:hover': { backgroundColor: 'action.hover' }
           }}
         />
       </Box>
 
+      {/* Terminate Confirmation */}
       <Dialog open={terminateDialogOpen} onClose={() => setTerminateDialogOpen(false)}>
         <DialogTitle>Confirm Terminate</DialogTitle>
         <DialogContent>
@@ -404,6 +464,58 @@ export function InstancesListPage() {
           <Button onClick={() => setTerminateDialogOpen(false)}>Cancel</Button>
           <Button onClick={handleTerminateConfirm} color="error" variant="contained">
             Terminate
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Single Cancel Confirmation */}
+      <Dialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)}>
+        <DialogTitle>Confirm Cancel</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Cancel workflow instance "{instanceToCancel?.id}"? Active tasks will be marked cancelled.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCancelDialogOpen(false)}>Dismiss</Button>
+          <Button onClick={handleCancelConfirm} color="warning" variant="contained">
+            Cancel Instance
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Bulk Cancel Dialog */}
+      <Dialog open={bulkCancelDialogOpen} onClose={() => setBulkCancelDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Bulk Cancel Instances</DialogTitle>
+        <DialogContent dividers>
+          <Typography sx={{ mb: 2 }}>
+            Cancelling {cancellableSelectedCount} instance{cancellableSelectedCount === 1 ? '' : 's'} (Running or Suspended).
+          </Typography>
+          <TextField
+            fullWidth
+            multiline
+            minRows={2}
+            label="Reason (optional)"
+            value={bulkCancelReason}
+            onChange={e => setBulkCancelReason(e.target.value)}
+            placeholder="Reason for cancellation..."
+          />
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="caption" color="text.secondary">
+              Non-cancellable (Completed / Cancelled / Failed) selections are ignored automatically.
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBulkCancelDialogOpen(false)} disabled={bulkOpLoading}>Close</Button>
+          <Button
+            onClick={executeBulkCancel}
+            color="warning"
+            variant="contained"
+            disabled={bulkOpLoading || cancellableSelectedCount === 0}
+            startIcon={bulkOpLoading ? <CircularProgress size={16} /> : <BulkCancelIcon />}
+          >
+            {bulkOpLoading ? 'Cancelling...' : 'Confirm Bulk Cancel'}
           </Button>
         </DialogActions>
       </Dialog>

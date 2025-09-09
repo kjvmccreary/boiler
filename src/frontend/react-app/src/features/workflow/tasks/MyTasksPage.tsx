@@ -1,3 +1,4 @@
+// Integrated TaskDetailDrawer + fetch full task details for extended actions
 import { useState, useEffect, useMemo } from 'react';
 import {
   Box,
@@ -16,7 +17,9 @@ import {
   MenuItem,
   Tooltip,
   Switch,
-  FormControlLabel
+  FormControlLabel,
+  IconButton,
+  CircularProgress
 } from '@mui/material';
 import {
   Assignment as ClaimIcon,
@@ -25,7 +28,8 @@ import {
   Schedule as TimerIcon,
   Person as AssignedIcon,
   Refresh as RefreshIcon,
-  AccountTree as WorkflowIcon
+  AccountTree as WorkflowIcon,
+  Tune as DetailIcon
 } from '@mui/icons-material';
 import {
   DataGridPremium,
@@ -37,10 +41,11 @@ import {
 } from '@mui/x-data-grid-premium';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { workflowService } from '@/services/workflow.service';
-import type { TaskSummaryDto, TaskStatus } from '@/types/workflow';
+import type { TaskSummaryDto, TaskStatus, WorkflowTaskDto } from '@/types/workflow';
 import { TASK_STATUSES } from '@/types/workflow';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
+import TaskDetailDrawer from './TaskDetailDrawer';
 
 const LS_KEY_HIDE_COMPLETED_TASKS = 'wf.tasks.hideCompleted';
 
@@ -61,6 +66,11 @@ export function MyTasksPage() {
   const [taskToComplete, setTaskToComplete] = useState<TaskSummaryDto | null>(null);
   const [completionData, setCompletionData] = useState('{"approved": true}');
   const [completionNotes, setCompletionNotes] = useState('');
+
+  // Extended drawer state
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedFullTask, setSelectedFullTask] = useState<WorkflowTaskDto | undefined>();
+  const [fetchingFull, setFetchingFull] = useState(false);
 
   const navigate = useNavigate();
   const { currentTenant } = useTenant();
@@ -153,21 +163,39 @@ export function MyTasksPage() {
     }
   };
 
+  const openDrawerForTask = async (taskId: number) => {
+    setFetchingFull(true);
+    try {
+      const full = await workflowService.getTask(taskId);
+      setSelectedFullTask(full);
+      setDrawerOpen(true);
+    } catch {
+      toast.error('Failed to load task details');
+    } finally {
+      setFetchingFull(false);
+    }
+  };
+
+  const handleDrawerTaskUpdate = (updated: WorkflowTaskDto) => {
+    // update list if status or assignment changed
+    setTasks(prev => prev.map(t => t.id === updated.id
+      ? { ...t, status: updated.status as any, assignedToUserId: updated.assignedToUserId, assignedToRole: updated.assignedToRole }
+      : t));
+    setSelectedFullTask(updated);
+  };
+
   const getStatusChip = (status: TaskStatus) => {
     switch (status) {
       case 'Created': return <Chip label="Available" size="small" />;
       case 'Assigned': return <Chip label="Assigned" color="info" size="small" icon={<AssignedIcon />} />;
       case 'Claimed': return <Chip label="Claimed" color="primary" size="small" />;
       case 'InProgress': return <Chip label="In Progress" color="warning" size="small" />;
-      case 'Completed': return <Chip label="Completed" color="success" size="small" icon={<AssignmentTurnedInIcon />} />;
+      case 'Completed': return <Chip label="Completed" color="success" size="small" icon={<CompleteIcon />} />;
       case 'Cancelled': return <Chip label="Cancelled" color="error" size="small" />;
       case 'Failed': return <Chip label="Failed" color="error" size="small" />;
       default: return <Chip label={status} size="small" />;
     }
   };
-
-  // Fallback since AssignmentTurnedInIcon not imported in original - reusing CompleteIcon
-  const AssignmentTurnedInIcon = CompleteIcon;
 
   const isOverdue = (dueDate?: string) => !!dueDate && new Date(dueDate) < new Date();
 
@@ -199,7 +227,14 @@ export function MyTasksPage() {
         const overdue = isOverdue(task.dueDate);
         return (
           <Box>
-            <Typography variant="subtitle2" fontWeight="medium">{params.value}</Typography>
+            <Typography
+              variant="subtitle2"
+              fontWeight="medium"
+              sx={{ cursor: 'pointer' }}
+              onClick={() => openDrawerForTask(task.id)}
+            >
+              {params.value}
+            </Typography>
             <Typography variant="caption" color="text.secondary">ID: {task.id}</Typography>
             {task.nodeType && task.nodeType !== 'human' && (
               <Chip size="small" label={task.nodeType} color="secondary" variant="outlined"
@@ -264,13 +299,14 @@ export function MyTasksPage() {
       field: 'actions',
       type: 'actions',
       headerName: 'Actions',
-      width: 120,
+      width: 140,
       getActions: (params: GridRowParams) => {
         const task = params.row as TaskSummaryDto & { nodeType?: string };
         const isHuman = !task.nodeType || task.nodeType === 'human';
         const acts: any[] = [
-          <GridActionsCellItem icon={<ViewIcon />} label="View Task" onClick={() => handleViewTask(params.id)} />,
-          <GridActionsCellItem icon={<WorkflowIcon />} label="View Instance" onClick={() => handleViewInstance(task)} showInMenu />
+          <GridActionsCellItem icon={<ViewIcon />} label="View Route" onClick={() => handleViewTask(params.id)} />,
+          <GridActionsCellItem icon={<WorkflowIcon />} label="View Instance" onClick={() => handleViewInstance(task)} showInMenu />,
+          <GridActionsCellItem icon={<DetailIcon />} label="Details" onClick={() => openDrawerForTask(task.id)} showInMenu />
         ];
         if (isHuman && (task.status === 'Created' || task.status === 'Assigned')) {
           acts.push(
@@ -360,6 +396,7 @@ export function MyTasksPage() {
           >
             Refresh
           </Button>
+          {fetchingFull && <IconButton disabled><CircularProgress size={18} /></IconButton>}
         </Box>
       </Box>
       {overdueTasks.length > 0 && !overdueOnly && (
@@ -434,6 +471,13 @@ export function MyTasksPage() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <TaskDetailDrawer
+        open={drawerOpen}
+        task={selectedFullTask}
+        onClose={() => setDrawerOpen(false)}
+        onTaskUpdate={handleDrawerTaskUpdate}
+      />
     </Box>
   );
 }
