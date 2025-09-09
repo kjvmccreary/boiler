@@ -70,6 +70,9 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
   const editorRef = useRef<import('monaco-editor').editor.IStandaloneCodeEditor | null>(null);
   const [jsonValid, setJsonValid] = useState<boolean>(true);
   const [lastLocalError, setLastLocalError] = useState<string | undefined>();
+  const [pendingValue, setPendingValue] = useState<string>(value || '');
+  const parseDebounceRef = useRef<number | undefined>(undefined);
+  const lastParsedValueRef = useRef<string>('');
   const lastAppliedSemanticVersionRef = useRef<number | undefined>(undefined);
   const loadRecordedRef = useRef(false);
 
@@ -86,45 +89,73 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
     applyThemeIfChanged(monaco, themeName);
   }, [monacoState.monaco, effectiveResolvedTheme]);
 
-  const applyLocalValidation = useCallback(
-    (current: string) => {
-      if (!monacoState.monaco || !editorRef.current) return;
-      const model = editorRef.current.getModel();
-      if (!model) return;
-      const markers: import('monaco-editor').editor.IMarkerData[] = [];
-      if (!current.trim()) {
-        setJsonValid(false);
-        setLastLocalError('Expression required');
-        markers.push({
-          severity: monacoState.monaco.MarkerSeverity.Error,
-            message: 'Expression required',
-          startLineNumber: 1,
-          startColumn: 1,
-          endLineNumber: 1,
-          endColumn: 1
-        });
-      } else {
-        try {
-          JSON.parse(current);
-          setJsonValid(true);
-          setLastLocalError(undefined);
-        } catch (e: any) {
-          setJsonValid(false);
-          setLastLocalError(e.message);
-          markers.push({
-            severity: monacoState.monaco.MarkerSeverity.Error,
-            message: e.message,
-            startLineNumber: 1,
-            startColumn: 1,
-            endLineNumber: 1,
-            endColumn: 1
-          });
-        }
-      }
+  // Bucket helper for parse telemetry
+  function bucketMs(ms: number): string {
+    if (ms < 1) return '<1';
+    if (ms < 2) return '<2';
+    if (ms < 5) return '<5';
+    if (ms < 10) return '<10';
+    if (ms < 25) return '<25';
+    if (ms < 50) return '<50';
+    return '50+';
+  }
+
+  const runLocalParse = useCallback((current: string) => {
+    if (!monacoState.monaco || !editorRef.current) return;
+    if (current === lastParsedValueRef.current) return; // skip duplicate
+    lastParsedValueRef.current = current;
+    const model = editorRef.current.getModel();
+    if (!model) return;
+    const markers: import('monaco-editor').editor.IMarkerData[] = [];
+    if (!current.trim()) {
+      setJsonValid(false);
+      setLastLocalError('Expression required');
+      markers.push({
+        severity: monacoState.monaco.MarkerSeverity.Error,
+        message: 'Expression required',
+        startLineNumber: 1,
+        startColumn: 1,
+        endLineNumber: 1,
+        endColumn: 1
+      });
       monacoState.monaco.editor.setModelMarkers(model, 'jsonlogic-local', markers);
-    },
-    [monacoState.monaco]
-  );
+      return;
+    }
+
+    const t0 = performance.now();
+    try {
+      JSON.parse(current);
+      const elapsed = performance.now() - t0;
+      trackWorkflow('monaco.local.parse.ms', { ms: Math.round(elapsed), bucket: bucketMs(elapsed) });
+      setJsonValid(true);
+      setLastLocalError(undefined);
+    } catch (e: any) {
+      const elapsed = performance.now() - t0;
+      trackWorkflow('monaco.local.parse.ms', { ms: Math.round(elapsed), bucket: bucketMs(elapsed), error: true });
+      setJsonValid(false);
+      setLastLocalError(e.message);
+      markers.push({
+        severity: monacoState.monaco.MarkerSeverity.Error,
+        message: e.message,
+        startLineNumber: 1,
+        startColumn: 1,
+        endLineNumber: 1,
+        endColumn: 1
+      });
+    }
+    monacoState.monaco.editor.setModelMarkers(model, 'jsonlogic-local', markers);
+  }, [monacoState.monaco]);
+
+  const scheduleLocalParse = useCallback((nextVal: string) => {
+    setPendingValue(nextVal);
+    if (parseDebounceRef.current) {
+      clearTimeout(parseDebounceRef.current);
+    }
+    // Debounce 150ms
+    parseDebounceRef.current = window.setTimeout(() => {
+      runLocalParse(nextVal);
+    }, 150);
+  }, [runLocalParse]);
 
   // Semantic markers
   useEffect(() => {
@@ -229,10 +260,8 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
     const sub = editor.onDidChangeModelContent(() => {
       const current = editor.getValue();
       onChange(current);
-      applyLocalValidation(current);
-      if (semantic && semanticEnabled && onSemanticValidate && jsonValid) {
-        onSemanticValidate(current);
-      }
+      scheduleLocalParse(current);
+      // Semantic validation will run after parse completes (guarded in separate effect)
     });
 
     // Theme
@@ -245,7 +274,7 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
     monaco.editor.setTheme(themeName);
 
     // Initial
-    applyLocalValidation(value || '');
+    scheduleLocalParse(value || '');
     if (!loadRecordedRef.current && monacoState.loadStartTs != null && monacoState.firstLoad) {
       loadRecordedRef.current = true;
       const delta = performance.now() - monacoState.loadStartTs;
@@ -260,7 +289,7 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
     };
   }, [
     monacoState.monaco,
-    applyLocalValidation,
+    scheduleLocalParse,
     value,
     onChange,
     semantic,
@@ -280,17 +309,27 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
   useEffect(() => {
     if (editorRef.current && value !== editorRef.current.getValue()) {
       editorRef.current.setValue(value || '');
-      applyLocalValidation(value || '');
+      scheduleLocalParse(value || '');
     }
-  }, [value, applyLocalValidation]);
+  }, [value, scheduleLocalParse]);
+
+  // Trigger semantic validation after (debounced) local parse success
+  useEffect(() => {
+    if (!semantic || !semanticEnabled) return;
+    if (!jsonValid) return;
+    if (!onSemanticValidate) return;
+    // Only validate when pendingValue matches last parsed (ensures parse ran)
+    if (pendingValue === lastParsedValueRef.current && pendingValue.trim()) {
+      onSemanticValidate(pendingValue);
+    }
+  }, [semantic, semanticEnabled, jsonValid, pendingValue, onSemanticValidate]);
 
   const manualValidate = () => {
-    if (editorRef.current) {
-      const current = editorRef.current.getValue();
-      applyLocalValidation(current);
-      if (semantic && semanticEnabled && jsonValid && onSemanticValidate) {
-        onSemanticValidate(current);
-      }
+    if (!editorRef.current) return;
+    const current = editorRef.current.getValue();
+    runLocalParse(current);
+    if (semantic && semanticEnabled && jsonValid && onSemanticValidate) {
+      onSemanticValidate(current);
     }
   };
 

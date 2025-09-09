@@ -8,7 +8,9 @@ import {
   Divider,
   Collapse,
   Tooltip,
-  Stack
+  Stack,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import type { DiffResult, NodeModification } from '../utils/diffWorkflowDefinitions';
@@ -22,6 +24,8 @@ export interface VersionDiffDrawerProps {
   diff: DiffResult | null;
   loading?: boolean;
   name: string;
+  overlayEnabled: boolean;
+  onOverlayToggle: (enabled: boolean) => void;
 }
 
 const Section: React.FC<{
@@ -56,7 +60,9 @@ export const VersionDiffDrawer: React.FC<VersionDiffDrawerProps> = ({
   currentVersion,
   previousVersion,
   loading,
-  name
+  name,
+  overlayEnabled,
+  onOverlayToggle
 }) => {
   return (
     <Drawer
@@ -89,13 +95,31 @@ export const VersionDiffDrawer: React.FC<VersionDiffDrawerProps> = ({
 
       {!loading && diff && !diff.error && (
         <Box sx={{ flex: 1, overflowY: 'auto' }}>
-          <Stack direction="row" spacing={1} flexWrap="wrap" mb={2}>
-            <Chip label={`+${diff.summary.addedNodes} nodes`} size="small" color={diff.summary.addedNodes ? 'success' : 'default'} variant="outlined" />
-            <Chip label={`-${diff.summary.removedNodes} nodes`} size="small" color={diff.summary.removedNodes ? 'error' : 'default'} variant="outlined" />
-            <Chip label={`Δ${diff.summary.modifiedNodes} nodes`} size="small" color={diff.summary.modifiedNodes ? 'warning' : 'default'} variant="outlined" />
-            <Chip label={`+${diff.summary.addedEdges} edges`} size="small" color={diff.summary.addedEdges ? 'success' : 'default'} variant="outlined" />
-            <Chip label={`-${diff.summary.removedEdges} edges`} size="small" color={diff.summary.removedEdges ? 'error' : 'default'} variant="outlined" />
-          </Stack>
+          <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              <Chip label={`+${diff.summary.addedNodes} nodes`} size="small" color={diff.summary.addedNodes ? 'success' : 'default'} variant="outlined" />
+              <Chip label={`-${diff.summary.removedNodes} nodes`} size="small" color={diff.summary.removedNodes ? 'error' : 'default'} variant="outlined" />
+              <Chip label={`Δ${diff.summary.modifiedNodes} nodes`} size="small" color={diff.summary.modifiedNodes ? 'warning' : 'default'} variant="outlined" />
+              <Chip label={`+${diff.summary.addedEdges} edges`} size="small" color={diff.summary.addedEdges ? 'success' : 'default'} variant="outlined" />
+              <Chip label={`-${diff.summary.removedEdges} edges`} size="small" color={diff.summary.removedEdges ? 'error' : 'default'} variant="outlined" />
+            </Stack>
+            <FormControlLabel
+              sx={{ ml: 1 }}
+              control={
+                <Switch
+                  size="small"
+                  checked={overlayEnabled}
+                  onChange={(e) => onOverlayToggle(e.target.checked)}
+                />
+              }
+              label={
+                <Typography variant="caption">
+                  Visual Overlay
+                </Typography>
+              }
+            />
+          </Box>
+          <Divider sx={{ mb: 1.5 }} />
 
           <Section title="Added Nodes" count={diff.addedNodes.length} defaultOpen={diff.addedNodes.length > 0}>
             <Stack spacing={0.5}>
@@ -164,7 +188,7 @@ export const VersionDiffDrawer: React.FC<VersionDiffDrawerProps> = ({
       )}
 
       <Typography variant="caption" color="text.secondary" sx={{ mt: 1 }}>
-        PR1 baseline – field-level diff; visual overlay planned in PR3.
+        PR3 overlay: Added (green), Modified (amber). Removed nodes listed only (layout unavailable).
       </Typography>
     </Drawer>
   );

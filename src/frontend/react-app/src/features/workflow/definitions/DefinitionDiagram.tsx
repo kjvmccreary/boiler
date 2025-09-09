@@ -28,15 +28,24 @@ interface TaskRuntime {
   dueDate?: string;
 }
 
+export interface DiffOverlayData {
+  added: Set<string>;
+  modified: Set<string>;
+  removed: Set<string>;
+}
+
 interface DefinitionDiagramProps {
-  jsonDefinition?: string | null;
+  jsonDefinition: string | null;
   onNodeSelect?: (node: DslNode | null) => void;
   currentNodeIds?: string[] | string | null;
   tasks?: TaskRuntime[];
   traversedEdgeIds?: string[];
   visitedNodeIds?: string[];
-  dueSoonMinutes?: number;
   instanceStatus?: string;
+  dueSoonMinutes?: number;
+  diffOverlay?: DiffOverlayData | null;
+  // Simulation highlight (single chosen simulated path)
+  simulationHighlightNodeIds?: string[] | null;
 }
 
 const DEFAULT_DUE_SOON_MIN = 15;
@@ -49,7 +58,9 @@ export function DefinitionDiagram({
   traversedEdgeIds,
   visitedNodeIds,
   dueSoonMinutes = DEFAULT_DUE_SOON_MIN,
-  instanceStatus
+  instanceStatus,
+  diffOverlay,
+  simulationHighlightNodeIds
 }: DefinitionDiagramProps) {
   const [baseNodes, setBaseNodes] = useState<Node[]>([]);
   const [baseEdges, setBaseEdges] = useState<Edge[]>([]);
@@ -310,5 +321,13 @@ function RuntimeLegend() {
     </Box>
   );
 }
+
+/* Suggested CSS (add where global styles live):
+.definition-diagram .sim-highlight {
+  outline: 3px solid rgba(33,150,243,0.9);
+  box-shadow: 0 0 6px 2px rgba(33,150,243,0.4);
+  transition: outline 120ms ease;
+}
+*/
 
 export default DefinitionDiagram;

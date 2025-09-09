@@ -10,6 +10,8 @@ import {
   Alert,
   IconButton,
   Tooltip,
+  Switch,
+  FormControlLabel
 } from '@mui/material';
 import {
   DataGridPremium,
@@ -38,16 +40,18 @@ import {
   InstanceRuntimeSnapshotDto
 } from '@/types/workflow';
 import { computeDedupedProgress } from './utils/progress';
-import toast from 'react-hot-toast';
-import { useTenant } from '@/contexts/TenantContext';
+import { getProgressVarianceSummary, clearProgressVariance } from './utils/progressVarianceStore';
+import { trackWorkflow } from '@/features/workflow/telemetry/workflowTelemetry';
+import SimulationDrawer from './components/SimulationDrawer';
+import { diffWorkflowDefinitions } from '@/features/workflow/definitions/utils/diffWorkflowDefinitions';
 import DefinitionDiagram from '@/features/workflow/definitions/DefinitionDiagram';
-import { InstanceStatusBadge } from './components/InstanceStatusBadge';
+import { useTenant } from '@/contexts/TenantContext';
 import { useTaskHub } from './hooks/useTaskHub';
 import { useInstanceHub } from './hooks/useInstanceHub';
 import type { InstanceUpdatedEvent } from '@/services/workflowNotifications';
+import toast from 'react-hot-toast';
+import { InstanceStatusBadge } from './components/InstanceStatusBadge';
 import InstanceEventTimeline from './components/InstanceEventTimeline';
-import { getProgressVarianceSummary, clearProgressVariance } from './utils/progressVarianceStore';
-import { trackWorkflow } from '@/features/workflow/telemetry/workflowTelemetry';
 
 export function InstanceDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -63,6 +67,10 @@ export function InstanceDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [eventsLoading] = useState(false);
   const [tasksLoading] = useState(false);
+  // Diff overlay state
+  const [overlayEnabled, setOverlayEnabled] = useState(false);
+  const [overlayLoading, setOverlayLoading] = useState(false);
+  const [overlayDiff, setOverlayDiff] = useState<ReturnType<typeof diffWorkflowDefinitions> | null>(null);
 
   const [claimingTaskId, setClaimingTaskId] = useState<number | null>(null);
   const [completingTaskId, setCompletingTaskId] = useState<number | null>(null);
@@ -70,6 +78,9 @@ export function InstanceDetailsPage() {
   // Snapshot derived / panel state (C10)
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  // Simulation state
+  const [simulationOpen, setSimulationOpen] = useState(false);
+  const [simulationHighlight, setSimulationHighlight] = useState<string[] | null>(null);
 
   const navigate = useNavigate();
   const { currentTenant } = useTenant();
@@ -87,6 +98,8 @@ export function InstanceDetailsPage() {
       setVisitedNodeIds(snapshot.visitedNodeIds || []);
       setCurrentNodeIds(snapshot.currentNodeIds || []);
       setLastUpdated(new Date());
+      // If definition changes while overlay active, clear (force re-fetch)
+      setOverlayDiff(null);
     } catch {
       if (!silent) toast.error('Failed to load runtime snapshot');
     } finally {
@@ -304,6 +317,82 @@ export function InstanceDetailsPage() {
     dedupedPercent
   } = computeDedupedProgress(definitionJson, visitedNodeIds);
 
+  /* ---------------- Version Diff Overlay (Instance Context) ----------------
+     Highlights added (green) & modified (amber) nodes vs the immediately previous
+     definition version, if available.
+  */
+  const fetchOverlayDiff = useCallback(async () => {
+    if (!instance) return;
+    // Need the definition version and an API path to previous JSON
+    const currentVersion = instance.definitionVersion;
+    // Only makes sense if version > 1
+    if (!currentVersion || currentVersion <= 1) {
+      toast('No previous version to diff', { icon: 'ℹ️' });
+      setOverlayEnabled(false);
+      return;
+    }
+    if (!definitionJson) {
+      toast.error('Definition JSON not loaded yet');
+      setOverlayEnabled(false);
+      return;
+    }
+    setOverlayLoading(true);
+    try {
+      // Attempt to find previous version: use list endpoint (already available via workflowService.getDefinitions)
+      const list = await workflowService.getDefinitions({
+        page: 1,
+        pageSize: 200,
+        sortBy: 'createdAt',
+        desc: true
+      });
+      // We match by name + prior version (assuming stable name across versions)
+      const prev = list.find(
+        d =>
+          d.name === instance.workflowDefinitionName &&
+          d.version === currentVersion - 1
+      );
+      if (!prev?.jsonDefinition) {
+        toast('Previous version JSON not found', { icon: '⚠️' });
+        setOverlayEnabled(false);
+        return;
+      }
+      const diff = diffWorkflowDefinitions(definitionJson, prev.jsonDefinition);
+      setOverlayDiff(diff);
+      trackWorkflow('diff.viewer.overlay.toggle', {
+        enabled: true,
+        context: 'instance',
+        added: diff.summary.addedNodes,
+        modified: diff.summary.modifiedNodes,
+        removed: diff.summary.removedNodes,
+        currentVersion,
+        previousVersion: currentVersion - 1
+      });
+    } catch {
+      toast.error('Failed to compute diff overlay');
+      setOverlayEnabled(false);
+    } finally {
+      setOverlayLoading(false);
+    }
+  }, [instance, definitionJson]);
+
+  // When user toggles overlay on, fetch diff once
+  useEffect(() => {
+    if (overlayEnabled && !overlayDiff) {
+      void fetchOverlayDiff();
+    }
+    if (!overlayEnabled) {
+      setOverlayDiff(null);
+    }
+  }, [overlayEnabled, overlayDiff, fetchOverlayDiff]);
+
+  const diffOverlayData = overlayEnabled && overlayDiff
+    ? {
+        added: new Set(overlayDiff.addedNodes.map(n => n.id)),
+        modified: new Set(overlayDiff.modifiedNodes.map(m => m.id)),
+        removed: new Set(overlayDiff.removedNodes.map(n => n.id))
+      }
+    : undefined;
+
   // Disable auto when terminal
   useEffect(() => {
     if (instance && ['Completed', 'Failed', 'Cancelled', 'Suspended'].includes(String(instance.status))) {
@@ -382,6 +471,20 @@ export function InstanceDetailsPage() {
             <IconButton onClick={handleRefresh}>
               <RefreshIcon />
             </IconButton>
+          </Tooltip>
+          <Tooltip title="Simulate paths (dry-run)">
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => {
+                setSimulationOpen(true);
+                trackWorkflow('simulation.drawer.open', {
+                  definitionVersion: instance.definitionVersion
+                });
+              }}
+            >
+              Simulate
+            </Button>
           </Tooltip>
           {instance.status === 'Running' && (
             <>
@@ -513,6 +616,39 @@ export function InstanceDetailsPage() {
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
             Visual overlay of active, completed, overdue and traversed path.
           </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  size="small"
+                  disabled={overlayLoading}
+                  checked={overlayEnabled}
+                  onChange={(e) => {
+                    const en = e.target.checked;
+                    setOverlayEnabled(en);
+                    if (!en) {
+                      trackWorkflow('diff.viewer.overlay.toggle', {
+                        enabled: false,
+                        context: 'instance'
+                      });
+                    }
+                  }}
+                />
+              }
+              label={
+                <Typography variant="caption">
+                  Diff Overlay {overlayLoading && '(loading...)'}
+                </Typography>
+              }
+            />
+            {overlayEnabled && overlayDiff && (
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Chip size="small" color="success" label={`+${overlayDiff.summary.addedNodes}`} />
+                <Chip size="small" color="warning" label={`Δ${overlayDiff.summary.modifiedNodes}`} />
+                <Chip size="small" variant="outlined" color="error" label={`-${overlayDiff.summary.removedNodes}`} />
+              </Box>
+            )}
+          </Box>
           <DefinitionDiagram
             jsonDefinition={definitionJson}
             currentNodeIds={currentNodeIds}
@@ -527,29 +663,9 @@ export function InstanceDetailsPage() {
             visitedNodeIds={visitedNodeIds}
             instanceStatus={String(instance.status)}
             dueSoonMinutes={15}
+            diffOverlay={diffOverlayData}
+            simulationHighlightNodeIds={simulationHighlight}
           />
-        </CardContent>
-      </Card>
-
-      {/* Tasks */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            <TaskIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-            Tasks ({tasks.length})
-          </Typography>
-          <Box sx={{ height: 300 }}>
-            <DataGridPremium
-              rows={tasks}
-              columns={taskColumns}
-              loading={tasksLoading}
-              pagination
-              pageSizeOptions={[5, 10, 25]}
-              initialState={{ pagination: { paginationModel: { pageSize: 5 } } }}
-              disableRowSelectionOnClick
-              sx={{ '& .MuiDataGrid-row:hover': { backgroundColor: 'action.hover' } }}
-            />
-          </Box>
         </CardContent>
       </Card>
 
@@ -557,6 +673,17 @@ export function InstanceDetailsPage() {
       <InstanceEventTimeline
         instanceId={instance.id}
         initialEvents={events}
+      />
+
+      <SimulationDrawer
+        open={simulationOpen}
+        onClose={() => {
+          setSimulationOpen(false);
+          setSimulationHighlight(null);
+          trackWorkflow('simulation.drawer.close', {});
+        }}
+        definitionJson={definitionJson}
+        onHighlightPath={(nodes) => setSimulationHighlight(nodes)}
       />
     </Box>
   );

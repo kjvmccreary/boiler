@@ -48,13 +48,13 @@ Progress Legend: [ ] Not Started · [~] In Progress · [x] Complete · [D] Defer
 | Monaco Variable Assist | N/A | Dynamic vars + docs | Categorized grouping | Medium | [x] |
 | Monaco Frontend Tests | N/A | Telemetry assertions added (PR3) | Optional: coverage on timer & parallel diagnostics | Medium | [x] |
 | Semantic Validation Opt-In | N/A | Toggle + badge | Analytics detail | Low | [x] |
-| Monaco Bundle Optimization | N/A | PR1: dynamic loader + telemetry (json-only load path) | Further language on-demand & theme perf | Low | [~] |
+| Monaco Bundle Optimization | N/A | PR3: slim core + json/editor workers + parse debounce + telemetry | Optional: on-demand JS lang, exceljs dynamic import, lite JSON mode | Low | [~] |
 | Parallel→Join Structural Validation | N/A | Heuristic + refinement + strict toggle (M2) | Dominance completeness metrics | Critical | [x] |
 | Join Timeout Visibility | Experimental | Missing | Conditional banner | Low | [ ] |
 | Outbox Visibility | Persist only | Missing | Health widget | Medium | [ ] |
 | ActiveTasksCount | Pending enrich | Missing | Column/badge fallback | Medium | [ ] |
-| Simulation / Dry-Run | Not implemented | Missing | Path enumeration | Medium | [ ] |
-| Version Diff Viewer | Data available | Field-level modified diff (PR2) | Visual overlay & arbitrary compare | Medium | [~] |
+| Simulation / Dry-Run | Not implemented | PR2: path enumeration + parallel cartesian (capped) + UI highlight | Join-mode semantics, probabilities, per-edge conditions | Medium | [~] |
+| Version Diff Viewer | Data available | Field-level diff + visual overlay (PR3 in progress) | Arbitrary compare selector | Medium | [~] |
 | Event Stream Coalescing | Not needed now | Missing | Debounce layer | Low | [ ] |
 | Metrics (lag, SLA) | Planned | Missing | Metrics stub | Low | [ ] |
 | Expression Validation Tests (backend) | Not present | Missing | Add tests (M6) | Medium | [ ] |
@@ -81,6 +81,43 @@ Progress Legend: [ ] Not Started · [~] In Progress · [x] Complete · [D] Defer
 
 ### 3.2 High / Medium / Low Priority
 Remaining matrix items (Medium/Low) to pick up after dominance refinement & revalidate actions.
+
+#### 3.2.1 Medium / Low Stories Matrix (Restored – Non‑Critical Backlog)
+| Key | Story / Capability | Current Frontend Status | Gap / Next Increment | Priority | Notes / Dependencies |
+|-----|--------------------|-------------------------|----------------------|----------|----------------------|
+| M-A1 | JsonLogic Examples Library | Editor present | Curated snippet / examples palette | Medium | After Expression stability |
+| M-A2 | HumanTask: Form Schema Rendering | Stub (spec only) | Dynamic form preview & validation | Medium | Depends future form engine |
+| M-A3 | Automatic Node Webhook Telemetry Deep-Dive | Basic telemetry | Size buckets → charts/export | Low | After metrics infra |
+| M-T1 | Tags Analytics Dashboard | Not started | Aggregation & charts | Medium | Depends metrics plumbing |
+| M-T2 | Tags Legacy Param Deprecation | Pending | Warning banner + docs link | Medium | Coordinate with API deprecation |
+| M-V1 | Version Diff Viewer PR3b | Visual overlay ghost removed nodes | Ghost nodes & edge diff styling | Medium | Needs prior layout caching |
+| M-V2 | Version Diff Arbitrary Compare | Sequential only | Pick any previous version | Medium | Requires versions list API (if not cached) |
+| M-V3 | Diff Telemetry Expansion | Basic toggle/open | Field-level expansion events | Low | After overlay stabilizes |
+| M-SIM3 | Simulation Join-Mode Semantics | PR2 (no join mode logic) | Evaluate count/quorum/expression properly | Medium | Requires join mode rules mapping |
+| M-SIM4 | Simulation Probability Layer | Not started | Path likelihood (historical weighting) | Low | Needs historical stats aggregation |
+| M-SIM5 | Simulation Export / Persist Scenarios | Not started | Save context + options & reload | Low | Optional UX enhancer |
+| M-SIM6 | Simulation Edge Condition Support | Node-level only | Per-edge JsonLogic evaluation | Medium | Requires DSL edge condition schema |
+| M-J1 | Join Timeout Visibility | Missing | Conditional banner & countdown | Low | Requires timeout metadata surfaced |
+| M-O1 | Outbox Visibility Widget | Missing | Health widget (lag, retry) | Medium | Needs outbox metrics endpoint |
+| M-ATC | ActiveTasksCount Fallback | Missing | Column/badge until backend enrich | Medium | Depends instance snapshot ext |
+| L-ESC | Event Stream Coalescing | Missing | Debounce / grouping layer | Low | After telemetry baseline |
+| L-MET1 | Metrics (lag, SLA) Stub | Missing | Basic runtime metrics panel | Low | Needs backend counters |
+| B-EVT | Expression Validation Tests (Backend) | Not present | Implement M6 test plan | Medium | Improves confidence |
+| B-TIM | Timer Backend Validation Tests | Not present | Implement M7 test plan | Medium | Prior to TimerWorker rollout |
+| M-MON4 | Monaco On-Demand Languages | Slim core only | Lazy load JS/YAML as needed | Low | Post slim baseline |
+| M-MON5 | Monaco exceljs Dynamic Import | Static import now | Code split heavy lib | Low | Size reduction target |
+| M-MON6 | Monaco Lite JSON Mode Flag | Always JSON service | Toggle off schema worker | Low | Perf on constrained devices |
+| L-UX1 | Mini Progress Sparkline | Not started | Compact trend next to badge | Low | Optional visual enhancement |
+| L-UX2 | Role Usage Impact Preview | Missing | Change impact simulation | Low | Needs role usage aggregation |
+| L-AUD | Audit Surfacing (Terminate/Cancel Reasons) | Missing UI | Show reasons in timeline/events | Medium | Events already capture reason |
+| L-ACC | Overlay Accessibility | Color only now | Pattern / aria summaries | Low | After visual diff stabilization |
+| L-OPS | Outbox Dispatcher & Lag Metric Surfacing | Backend pending | FE widget consumption | Medium | Wait for dispatcher implementation |
+| L-IMP | Definition Immutability Guard (UI Notice) | Implicit | Banner / disabled editing cues | Low | Clarify edit vs new version |
+| L-ERR | Structured Error Classification UI | Generic toast | Consistent 401/403/409/422 surfaces | Medium | Map backend codes |
+| DOC-1 | Developer Guide: Simulation Internals | Not started | MDX / wiki page | Low | After SIM PR3 |
+| DOC-2 | Bundle Optimization Playbook | Not started | Document approach & thresholds | Low | Post Monaco PR4 |
+
+Clarification: This matrix restores non‑critical items previously implied but not explicitly enumerated in section 3.2. No critical scope changed. Future additions should append rows rather than replacing this table.
 
 ---
 
@@ -176,6 +213,10 @@ Layered approach executed client-side before publish; server still authoritative
 | validation.publish.attempt | Publish flow | Planned |
 | bulk.cancel.count | Instances bulk action | Planned |
 | suspend.resume.usage | Instance list actions | Planned |
+| simulation.run.start / complete / truncated | SimulationDrawer | Implemented |
+| simulation.path.select | SimulationDrawer | Implemented |
+| diff.viewer.overlay.toggle | Diff Drawer & Instance Diagram | Implemented |
+| monaco.local.parse.ms | Editor (JsonLogic) | Implemented |
 
 ---
 
@@ -213,8 +254,13 @@ Layered approach executed client-side before publish; server still authoritative
 | 2025-09-09 | TF (Tags Filtering Guard) | PR2: Added backend/unit tests + frontend UI tests + telemetry events | None | — |
 | 2025-09-09 | VDV (Version Diff Viewer) | PR1: Baseline drawer with node/edge add/remove/modify diff implemented | None | PR2 field-level key detail refinements |
 | 2025-09-09 | VDV (Version Diff Viewer) | PR2: Field-level modified node diff + tests + expansion telemetry | None | PR3 visual overlay |
+| 2025-09-09 | VDV (Version Diff Viewer) | PR3: Initial visual overlay highlighting added/modified nodes (legend + toggle) | None | PR3b removed ghost layout |
 | 2025-09-09 | MBO (Monaco Bundle Optimization) | PR1: Added optimized dynamic loader, telemetry, idle prefetch | None | PR2 on-demand languages |
-
+| 2025-09-09 | MBO (Monaco Bundle Optimization) | PR2: Defer-on-focus load, retry fallback, theme skip, model cleanup, heuristic prefetch, concurrency & size guard script | None | PR3 language on-demand |
+| 2025-09-09 | MBO (Monaco Bundle Optimization) | PR3: Switched to editor.api, removed bulk languages, custom json/editor workers, telemetry (slim) | None | Validate size drop / optional JS language |
+| 2025-09-09 | MBO (Monaco Bundle Optimization) | PR3b: Added 150ms debounced parse, parse time telemetry (bucketed), semantic trigger post-parse | None | PR4 dynamic exceljs / on-demand JS lang |
+| 2025-09-09 | Simulation (Dry-Run) | PR1: Added SimulationDrawer, basic DFS path enumeration, conditional gateway eval, diagram path highlight | None | PR2 parallel expansion |
+| 2025-09-09 | Simulation (Dry-Run) | PR2: Parallel cartesian expansion (capped), join merge detection, truncation reasons & controls (depth/paths/cartesian), telemetry | None | PR3 join-mode semantics |
 ---
 
 ## 12. Testing Plan
@@ -247,6 +293,8 @@ Layered approach executed client-side before publish; server still authoritative
 | 2025-09-09 | Added new version (draft) creation flow | Team |
 | 2025-09-09 | Automatic node action config (A1 complete) | Team |
 | 2025-09-09 | PR1: Added server-side tags validation hook in publish flow (silent 404 pass) | Team |
+| 2025-09-09 | Added simulation path enumeration (PR1–PR2) | Team |
+| 2025-09-09 | Added diff visual overlay (definitions / instances) | Team |
 
 ---
 
@@ -258,6 +306,8 @@ Layered approach executed client-side before publish; server still authoritative
 | Expose cancel/terminate reasons in timeline? | Product | C11 design |
 | When to introduce strict structural toggle UI? | FE/Arch | After M2 spike |
 | ActiveTasksCount backend enrichment ETA? | Backend | Align w/ instance list refresh |
+| Simulation join-mode semantics approach (respect quorum/count/expression)? | Arch/FE | Before Simulation PR3 |
+| Probability / weighting source for simulation (historical vs static)? | Product/Arch | Post PR3 |
 
 ---
 
@@ -272,6 +322,9 @@ Layered approach executed client-side before publish; server still authoritative
 | Outbox Visibility Widget | Operational health indicator |
 | Debounced Live Timeline | Lower render churn |
 | Role Usage Impact Preview | Safer role refactors |
+| Simulation Join-Mode Semantics (PR3) | Higher fidelity modeling |
+| Simulation Probability Layer | Risk / path likelihood insights |
+| Diff Overlay Ghost Removed Nodes | Full visual diff clarity |
 
 ---
 
@@ -283,6 +336,9 @@ Layered approach executed client-side before publish; server still authoritative
 | Bulk cancel unified endpoint usage | 2025-09-08 | Consistent auditing |
 | Explicit persistence of gateway strategy | 2025-09-09 | Avoid inference drift |
 | Provide diagnostics object in validation | 2025-09-09 | Single source for overlays |
+| Defer Monaco load until focus (editor) | 2025-09-09 | Reduced initial bundle/TTI |
+| Slim Monaco to json/editor only | 2025-09-09 | Bundle reduction baseline |
+| Add simulation path enumeration before join semantics | 2025-09-09 | Incremental delivery |
 
 ---
 
@@ -446,7 +502,8 @@ Layered approach executed client-side before publish; server still authoritative
  - Per-branch overrides
  - Form-driven task UI rendering (schema consumption)
 +
-+## 19. Story Specification – Version Diff Viewer (New)
+
+## 19. Story Specification – Version Diff Viewer (New)
 +| Field | Detail |
 +|-------|--------|
 +| Story ID | VDV (Version Diff Viewer) |

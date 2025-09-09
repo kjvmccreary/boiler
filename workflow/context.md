@@ -435,6 +435,55 @@ B. Webhook Automatic Action Execution Design
 C. Role Usage Analytical Queries
 D. Event Timeline UI Specification (future)
 
+39. Monaco & Editor Optimization (Recent Delta)
+ - Loader Refactor: ensureMonaco() service (single-flight) + idle prefetch (reason: 'idle' | 'heuristic').
+ - Deferred Load: Optional focus-triggered initialization reducing initial bundle execution cost.
+ - Slim Build: Switched to 'monaco-editor/esm/vs/editor/editor.api' with only json & editor workers; removed bulk language contributions.
+ - JSON Language Service: Dynamically imported; potential future “lite mode” to drop schema validation worker for further size savings.
+ - Telemetry Added: monaco.load.start / complete / failed (cold + slim flag), monaco.prefetch.trigger, monaco.reload.attempt / success / failed, monaco.concurrent, monaco.models.cleaned, monaco.local.parse.ms (bucketed performance), monaco.slim.enabled.
+ - Local Parse Optimization: 150ms debounce + duplicate suppression for JSON.parse; semantic validation triggered only after successful parse.
+ - Memory Hygiene: Model cleanup after threshold; beforeunload cleanup invocation for long sessions.
+ - Theme Optimization: applyThemeIfChanged prevents redundant theme reapplication.
+ - Bundle Guard: Script-based (check-bundle-size.cjs) baseline enforcement for main/entry chunk growth regression.
+
+40. Simulation Capability (Dry-Run PR1–PR2)
+ - Purpose: Enumerate terminal execution paths to assist authors/operators in understanding branch explosion and join behavior before runtime.
+ - Implementation: Depth-first traversal with caps (maxPaths, maxDepth, maxVisitsPerNode). Conditional gateways evaluate JsonLogic; parallel gateways either linearized or exploded.
+ - PR2 Enhancements: Parallel branch fragment exploration with naive join merge detection and capped cartesian product (maxBranchCartesian). Partial convergence flagged (partialParallelMerge).
+ - Telemetry: simulation.run.start / simulation.run.complete (pathCount, truncated, maxLength, cartesianCapped), simulation.truncated (reasons[]), simulation.path.select, simulation.drawer.open/close.
+ - UI: SimulationDrawer (context JSON input, config controls, path list with metadata, highlight selected path on DefinitionDiagram / Instance diagram).
+ - Truncation Reasons: 'maxDepth', 'visitCap', 'maxPaths', 'cartesianCap' (deduplicated).
+ - Limitations (Next PR Targets): Join mode semantics (all/any/count/quorum/expression), edge-level condition evaluation, probability weighting, performance caching per context, ghost path comparison vs historical runs.
+
+41. Version Diff Visual Overlay
+ - Overlay Highlights: Added nodes (green glow), modified nodes (amber border). Removed nodes surfaced via legend counts (ghost rendering deferred).
+ - Contexts: Definitions diff drawer & InstanceDetails runtime diagram (diff vs previous version).
+ - Toggle: diff.viewer.overlay.toggle event with payload { enabled, context, added, modified, removed }.
+ - Future: Ghost removed nodes (semi-transparent red), edge diff styling (added/removed/changed), arbitrary version compare (vN ↔ vM), overlay accessibility (aria-live change summaries).
+
+42. Extended Telemetry Inventory (Additions)
+ - Diff: diff.viewer.overlay.toggle, (planned: diff.viewer.modified.field).
+ - Simulation: simulation.run.start, simulation.run.complete, simulation.truncated, simulation.path.select, simulation.drawer.open/close.
+ - Editor: monaco.local.parse.ms (bucket, ms, error flag), monaco.defer.used, monaco.reload.*, monaco.prefetch.trigger (reason), monaco.slim.enabled.
+
+43. Upcoming Focus Items (Planned PRs)
+ 1. Simulation PR3: Join-mode semantics (respect count/quorum/expression thresholds) + branch pruning after satisfied join; integrate join path annotations.
+ 2. Diff Overlay PR3b/PR4: Ghost removed nodes + edge change visualization; arbitrary version picker.
+ 3. Monaco Optimization PR4: Optional JS/YAML language on-demand + dynamic exceljs import + lite JSON mode flag.
+ 4. ActiveTasksCount Fallback: UI badge with lazy backend enrichment; potential hub event extension.
+ 5. Outbox & Timer Operationalization: Worker enablement + observability (lag metrics, retries).
+
+44. Risk / Mitigation Updates (Additive)
+ - Simulation Fidelity Gap: Without join semantics, some enumerated paths may over-approximate; mitigation: PR3 planned with mode-aware branching and pruning.
+ - Bundle Drift Risk: Future feature additions may erode slim gains; mitigation: enforced bundle-size baseline + telemetry on load durations.
+ - Visual Diff Accessibility: Overlay reliant on color; mitigation: planned aria summaries + pattern/dashed outlines.
+
+45. Developer Quick Reference (New Capabilities)
+ - Run Simulation: Open instance details → Simulate → Adjust caps → Select path to highlight.
+ - Enable Diff Overlay: Open definition diff drawer or toggle on instance runtime diagram when previous version exists.
+ - Measure Editor Parse Performance: Inspect telemetry stream for monaco.local.parse.ms buckets (<1,<2,<5,<10,<25,<50,50+).
+ - Enforce Bundle Guard: npm run build:ci (fails if entry chunk growth > baseline + delta).
+
 ---
 For a condensed executive summary: request “Provide condensed context”.
 For delta from previous snapshot: request “Provide delta summary”.

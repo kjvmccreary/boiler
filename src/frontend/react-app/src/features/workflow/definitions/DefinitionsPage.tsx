@@ -111,6 +111,8 @@ export function DefinitionsPage() {
   const [diffResult, setDiffResult] = useState<ReturnType<typeof diffWorkflowDefinitions> | null>(null);
   const [diffCurrent, setDiffCurrent] = useState<WorkflowDefinitionDto | null>(null);
   const [diffPreviousVersion, setDiffPreviousVersion] = useState<number | null>(null);
+  const [diffOverlayEnabled, setDiffOverlayEnabled] = useState(false);
+  const [diffForOverlay, setDiffForOverlay] = useState<ReturnType<typeof diffWorkflowDefinitions> | null>(null);
 
   // Open version diff drawer for a definition (compare to previous version)
   async function openDiffForDefinition(definition: WorkflowDefinitionDto) {
@@ -143,6 +145,7 @@ export function DefinitionsPage() {
 
       const diff = diffWorkflowDefinitions(definition.jsonDefinition, prevJson);
       setDiffResult(diff);
+      setDiffForOverlay(diff);
       trackWorkflow('diff.viewer.opened', {
         definitionId: definition.id,
         currentVersion: definition.version,
@@ -1041,13 +1044,51 @@ export function DefinitionsPage() {
           setDiffResult(null);
           setDiffCurrent(null);
           setDiffPreviousVersion(null);
+          setDiffOverlayEnabled(false);
         }}
         currentVersion={diffCurrent?.version ?? 0}
         previousVersion={diffPreviousVersion ?? 0}
         diff={diffResult}
         loading={diffLoading}
         name={diffCurrent?.name || ''}
+        overlayEnabled={diffOverlayEnabled}
+        onOverlayToggle={(enabled) => {
+          setDiffOverlayEnabled(enabled);
+          if (diffResult) {
+            trackWorkflow('diff.viewer.overlay.toggle', {
+              enabled,
+              added: diffResult.summary.addedNodes,
+              modified: diffResult.summary.modifiedNodes,
+              removed: diffResult.summary.removedNodes
+            });
+          }
+        }}
       />
+
+      {/* Optional: if overlay enabled, display a compact legend outside drawer (top-right) */}
+      {diffOverlayEnabled && diffForOverlay && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            zIndex: 10,
+            background: (t) => t.palette.background.paper,
+            border: (t) => `1px solid ${t.palette.divider}`,
+            p: 1,
+            borderRadius: 1,
+            boxShadow: 1,
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 1,
+            alignItems: 'center'
+          }}
+        >
+          <Chip size="small" label={`+${diffForOverlay.summary.addedNodes}`} color="success" />
+          <Chip size="small" label={`Δ${diffForOverlay.summary.modifiedNodes}`} color="warning" />
+          <Chip size="small" label={`-${diffForOverlay.summary.removedNodes}`} color="error" variant="outlined" />
+        </Box>
+      )}
     </Box>
   );
 }
