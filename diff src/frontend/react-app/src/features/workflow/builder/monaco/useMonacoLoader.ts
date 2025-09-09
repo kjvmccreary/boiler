@@ -1,0 +1,6 @@
+-// (Removed in Monaco Bundle Optimization PR1)
+-// Legacy hook superseded by monacoLoader.ts (ensureMonaco / prefetchMonacoOnIdle).
+-// File intentionally deleted – all imports should use:
+-//   import { ensureMonaco } from '../monaco/monacoLoader';
+-
+-/* Previous contents removed */

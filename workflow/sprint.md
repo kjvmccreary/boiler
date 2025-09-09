@@ -48,7 +48,7 @@ Progress Legend: [ ] Not Started · [~] In Progress · [x] Complete · [D] Defer
 | Monaco Variable Assist | N/A | Dynamic vars + docs | Categorized grouping | Medium | [x] |
 | Monaco Frontend Tests | N/A | Telemetry assertions added (PR3) | Optional: coverage on timer & parallel diagnostics | Medium | [x] |
 | Semantic Validation Opt-In | N/A | Toggle + badge | Analytics detail | Low | [x] |
-| Monaco Bundle Optimization | N/A | Full bundle | Slim JSON-only | Low | [ ] |
+| Monaco Bundle Optimization | N/A | PR1: dynamic loader + telemetry (json-only load path) | Further language on-demand & theme perf | Low | [~] |
 | Parallel→Join Structural Validation | N/A | Heuristic + refinement + strict toggle (M2) | Dominance completeness metrics | Critical | [x] |
 | Join Timeout Visibility | Experimental | Missing | Conditional banner | Low | [ ] |
 | Outbox Visibility | Persist only | Missing | Health widget | Medium | [ ] |
@@ -213,6 +213,7 @@ Layered approach executed client-side before publish; server still authoritative
 | 2025-09-09 | TF (Tags Filtering Guard) | PR2: Added backend/unit tests + frontend UI tests + telemetry events | None | — |
 | 2025-09-09 | VDV (Version Diff Viewer) | PR1: Baseline drawer with node/edge add/remove/modify diff implemented | None | PR2 field-level key detail refinements |
 | 2025-09-09 | VDV (Version Diff Viewer) | PR2: Field-level modified node diff + tests + expansion telemetry | None | PR3 visual overlay |
+| 2025-09-09 | MBO (Monaco Bundle Optimization) | PR1: Added optimized dynamic loader, telemetry, idle prefetch | None | PR2 on-demand languages |
 
 ---
 

@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:analyze": "tsc -b && vite build --mode analyze",
+    "build:ci": "npm run build && npm run check:bundle",
     "build:staging": "tsc -b && vite build --mode staging",
     "build:production": "tsc -b && vite build --mode production",
     "preview": "vite preview",
@@ -24,6 +25,7 @@
     "test:workflow:coverage:fast": "vitest run --coverage --config vitest.config.js src/features/workflow/tests/dsl src/features/workflow/tests/service src/features/workflow/tests/integration-lite src/features/workflow/tests/builder",
     "test:changed": "vitest --changed --config vitest.config.js",
     "test:ci": "vitest run --reporter=default --coverage --config vitest.config.js",
+    "check:bundle": "node scripts/check-bundle-size.cjs dist/assets",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "bundle-analyzer": "npx vite-bundle-analyzer dist"

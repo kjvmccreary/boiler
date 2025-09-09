@@ -10,10 +10,18 @@ import {
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import FormatAlignLeftIcon from '@mui/icons-material/FormatAlignLeft';
-import { useMonacoLoader } from '../monaco/useMonacoLoader';
+// Replaced useMonacoLoader with optimized loader (PR1)
+import {
+  ensureMonaco,
+  prefetchMonacoOnIdle,
+  registerEditorInstance,
+  unregisterEditorInstance,
+  applyThemeIfChanged
+} from '../monaco/monacoLoader';
 import { registerJsonLogicEnhancements } from '../monaco/registerJsonLogicLanguage';
 import ExpressionEditor from './ExpressionEditor';
 import { useExpressionSettings } from '../context/ExpressionSettingsContext';
+import { trackWorkflow } from '@/features/workflow/telemetry/workflowTelemetry';
 
 export interface MonacoExpressionEditorProps {
   value: string;
@@ -46,7 +54,17 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
   ariaLabel,
   semanticVersion
 }) => {
-  const { monaco, loading, error, loadStartTs } = useMonacoLoader();
+  // Stable editor instance id
+  const editorIdRef = useRef<string>(`ed_${Math.random().toString(36).slice(2)}`);
+  const [monacoState, setMonacoState] = useState<{
+    monaco: typeof import('monaco-editor') | null;
+    loading: boolean;
+    error: any;
+    loadStartTs: number | null;
+    firstLoad: boolean;
+    deferred: boolean;
+    loadAttempted: boolean;
+  }>({ monaco: null, loading: false, error: null, loadStartTs: null, firstLoad: false, deferred: true, loadAttempted: false });
   const { effectiveResolvedTheme, recordMonacoLoad, semanticEnabled } = useExpressionSettings();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const editorRef = useRef<import('monaco-editor').editor.IStandaloneCodeEditor | null>(null);
@@ -57,6 +75,7 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
 
   // Theme
   useEffect(() => {
+    const monaco = monacoState.monaco;
     if (!monaco || !editorRef.current) return;
     const themeName =
       effectiveResolvedTheme === 'dark'
@@ -64,12 +83,12 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
         : effectiveResolvedTheme === 'hc'
           ? 'hc-black'
           : 'vs';
-    monaco.editor.setTheme(themeName);
-  }, [monaco, effectiveResolvedTheme]);
+    applyThemeIfChanged(monaco, themeName);
+  }, [monacoState.monaco, effectiveResolvedTheme]);
 
   const applyLocalValidation = useCallback(
     (current: string) => {
-      if (!monaco || !editorRef.current) return;
+      if (!monacoState.monaco || !editorRef.current) return;
       const model = editorRef.current.getModel();
       if (!model) return;
       const markers: import('monaco-editor').editor.IMarkerData[] = [];
@@ -77,7 +96,7 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
         setJsonValid(false);
         setLastLocalError('Expression required');
         markers.push({
-          severity: monaco.MarkerSeverity.Error,
+          severity: monacoState.monaco.MarkerSeverity.Error,
             message: 'Expression required',
           startLineNumber: 1,
           startColumn: 1,
@@ -93,7 +112,7 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
           setJsonValid(false);
           setLastLocalError(e.message);
           markers.push({
-            severity: monaco.MarkerSeverity.Error,
+            severity: monacoState.monaco.MarkerSeverity.Error,
             message: e.message,
             startLineNumber: 1,
             startColumn: 1,
@@ -102,14 +121,14 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
           });
         }
       }
-      monaco.editor.setModelMarkers(model, 'jsonlogic-local', markers);
+      monacoState.monaco.editor.setModelMarkers(model, 'jsonlogic-local', markers);
     },
-    [monaco]
+    [monacoState.monaco]
   );
 
   // Semantic markers
   useEffect(() => {
-    if (!monaco || !editorRef.current) return;
+    if (!monacoState.monaco || !editorRef.current) return;
     if (semanticVersion == null) return;
     if (
       lastAppliedSemanticVersionRef.current != null &&
@@ -123,7 +142,7 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
 
     for (const err of semanticErrors) {
       markers.push({
-        severity: monaco.MarkerSeverity.Error,
+        severity: monacoState.monaco.MarkerSeverity.Error,
         message: err,
         startLineNumber: 1,
         startColumn: 1,
@@ -133,7 +152,7 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
     }
     for (const warn of semanticWarnings) {
       markers.push({
-        severity: monaco.MarkerSeverity.Warning,
+        severity: monacoState.monaco.MarkerSeverity.Warning,
         message: warn,
         startLineNumber: 1,
         startColumn: 1,
@@ -141,13 +160,59 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
         endColumn: 1
       });
     }
-    monaco.editor.setModelMarkers(model, 'jsonlogic-semantic', markers);
-  }, [semanticErrors, semanticWarnings, monaco, semanticVersion]);
+    monacoState.monaco.editor.setModelMarkers(model, 'jsonlogic-semantic', markers);
+  }, [semanticErrors, semanticWarnings, monacoState.monaco, semanticVersion]);
+
+  // Heuristic prefetch if user does not focus after 5s
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (!monacoState.monaco && monacoState.deferred && !monacoState.loading) {
+        prefetchMonacoOnIdle(0, 'heuristic');
+      }
+    }, 5000);
+    return () => clearTimeout(t);
+  }, [monacoState.monaco, monacoState.deferred, monacoState.loading]);
+
+  const beginLoad = useCallback((trigger: 'focus' | 'button' | 'retry') => {
+    if (monacoState.loading || monacoState.monaco) return;
+    setMonacoState(s => ({ ...s, loading: true, loadStartTs: performance.now(), loadAttempted: true }));
+    if (trigger === 'focus') {
+      trackWorkflow('monaco.defer.used', { trigger });
+    } else if (trigger === 'retry') {
+      trackWorkflow('monaco.reload.attempt', {});
+    }
+    ensureMonaco()
+      .then(r => {
+        setMonacoState(s => ({
+          ...s,
+          monaco: r.monaco,
+          loading: false,
+          error: null,
+          firstLoad: r.firstLoad,
+          deferred: false
+        }));
+        prefetchMonacoOnIdle(); // idle warm (noop if loaded)
+        if (trigger === 'retry') {
+          trackWorkflow('monaco.reload.success', { durationMs: r.durationMs });
+        }
+      })
+      .catch(e => {
+        setMonacoState(s => ({ ...s, loading: false, error: e }));
+        if (trigger === 'retry') {
+          trackWorkflow('monaco.reload.failed', { message: String(e?.message || e) });
+        }
+      });
+  }, [monacoState.loading, monacoState.monaco]);
 
   // Init
   useEffect(() => {
+    const monaco = monacoState.monaco;
     if (!monaco || !containerRef.current || editorRef.current) return;
-    registerJsonLogicEnhancements(monaco);
+    try {
+      registerJsonLogicEnhancements(monaco);
+    } catch {
+      // Non-fatal; enhancements optional
+    }
     const editor = monaco.editor.create(containerRef.current, {
       value: value || '',
       language: 'json',
@@ -159,6 +224,7 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
       ariaLabel: ariaLabel ?? `${kind} jsonlogic expression editor`
     });
     editorRef.current = editor;
+    registerEditorInstance(editorIdRef.current);
 
     const sub = editor.onDidChangeModelContent(() => {
       const current = editor.getValue();
@@ -180,19 +246,20 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
 
     // Initial
     applyLocalValidation(value || '');
-    if (!loadRecordedRef.current && loadStartTs != null) {
+    if (!loadRecordedRef.current && monacoState.loadStartTs != null && monacoState.firstLoad) {
       loadRecordedRef.current = true;
-      const delta = performance.now() - loadStartTs;
+      const delta = performance.now() - monacoState.loadStartTs;
       recordMonacoLoad(Math.round(delta));
     }
 
     return () => {
       sub.dispose();
-      editor.dispose();
+      try { editor.dispose(); } catch { /* ignore */ }
+      unregisterEditorInstance(editorIdRef.current);
       editorRef.current = null;
     };
   }, [
-    monaco,
+    monacoState.monaco,
     applyLocalValidation,
     value,
     onChange,
@@ -204,8 +271,9 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
     kind,
     ariaLabel,
     effectiveResolvedTheme,
-    loadStartTs,
-    recordMonacoLoad
+    monacoState.loadStartTs,
+    recordMonacoLoad,
+    monacoState.firstLoad
   ]);
 
   // External value change
@@ -256,7 +324,42 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
     </Tooltip>
   );
 
-  if (loading) {
+  // Deferred shell (before load triggered)
+  if (monacoState.deferred && !monacoState.monaco && !monacoState.loading && !monacoState.error) {
+    return (
+      <Box
+        sx={{
+          border: '1px dashed',
+          borderColor: 'divider',
+          borderRadius: 1,
+          p: 1,
+          height,
+          position: 'relative',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+        onFocus={() => beginLoad('focus')}
+        onClick={() => beginLoad('focus')}
+        tabIndex={0}
+      >
+        <Typography variant="caption" color="text.secondary" sx={{ mb: 1 }}>
+          Advanced editor deferred. Click or focus to load Monaco.
+        </Typography>
+        <ExpressionEditor
+          value={value}
+          kind={kind}
+          onChange={(txt) => {
+            onChange(txt);
+            // If user starts typing, attempt load
+            if (!monacoState.loading && !monacoState.monaco) beginLoad('focus');
+          }}
+          onValidityChange={() => void 0}
+        />
+      </Box>
+    );
+  }
+
+  if (monacoState.loading) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
         <Typography variant="body2" fontWeight={600}>{label}</Typography>
@@ -282,11 +385,20 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
     );
   }
 
-  if (error) {
+  if (monacoState.error) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
         <Typography variant="body2" fontWeight={600}>{label}</Typography>
         <Chip size="small" label="Fallback" color="warning" sx={{ maxWidth: 'fit-content' }} />
+        <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+          <Chip
+            size="small"
+            label="Retry load editor"
+            color="primary"
+            onClick={() => beginLoad('retry')}
+            variant="outlined"
+          />
+        </Box>
         <ExpressionEditor
           value={value}
           onChange={onChange}
