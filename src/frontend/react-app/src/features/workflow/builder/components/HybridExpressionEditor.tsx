@@ -1,3 +1,4 @@
+// Dynamic variable context fetch (H7-ext) + semantic badge already in Monaco component
 import React, { useEffect, useRef, useState } from 'react';
 import ExpressionEditor from '../components/ExpressionEditor';
 import { MonacoExpressionEditor } from './MonacoExpressionEditor';
@@ -11,7 +12,8 @@ interface HybridExpressionEditorProps {
   onChange: (val: string) => void;
   useMonaco?: boolean;
   semantic?: boolean;
-  variableContext?: string[]; // NEW: list of variable names available
+  variableContext?: string[]; // explicit override
+  dynamic?: boolean; // NEW: if true attempt dynamic fetch of variables (H7-ext)
 }
 
 export const HybridExpressionEditor: React.FC<HybridExpressionEditorProps> = ({
@@ -20,17 +22,42 @@ export const HybridExpressionEditor: React.FC<HybridExpressionEditorProps> = ({
   onChange,
   useMonaco = false,
   semantic = true,
-  variableContext
+  variableContext,
+  dynamic = true
 }) => {
   const { semanticEnabled, recordSemanticValidation } = useExpressionSettings();
   const effectiveSemantic = semantic && semanticEnabled;
 
-  // Update Monaco variable context (global provider) when list changes
+  // Dynamic variable fetch (placeholder – will rely on real endpoint when ready)
   useEffect(() => {
-    if (variableContext && variableContext.length) {
-      setJsonLogicVariables(variableContext);
+    let cancelled = false;
+    async function loadVars() {
+      if (variableContext && variableContext.length) {
+        setJsonLogicVariables(variableContext);
+        return;
+      }
+      if (!dynamic) return;
+      try {
+        // Placeholder: try service method (if implemented), else fallback list
+        const vars =
+          (await (workflowService as any).getExpressionVariables?.(kind)) ||
+          (kind === 'join'
+            ? ['branch.arrivals', 'branch.totalExpected', 'instance.id', 'instance.status']
+            : ['instance.id', 'instance.status', 'user.id', 'user.roles', 'input.payload']);
+        if (!cancelled) setJsonLogicVariables(vars);
+      } catch {
+        if (!cancelled) {
+          setJsonLogicVariables(
+            kind === 'join'
+              ? ['branch.arrivals', 'branch.totalExpected']
+              : ['instance.id', 'user.id']
+          );
+        }
+      }
     }
-  }, [variableContext]);
+    loadVars();
+    return () => { cancelled = true; };
+  }, [kind, variableContext, dynamic]);
 
   const [semanticErrors, setSemanticErrors] = useState<string[]>([]);
   const [semanticWarnings, setSemanticWarnings] = useState<string[]>([]);

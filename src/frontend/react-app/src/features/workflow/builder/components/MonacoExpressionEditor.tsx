@@ -47,7 +47,7 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
   semanticVersion
 }) => {
   const { monaco, loading, error, loadStartTs } = useMonacoLoader();
-  const { effectiveResolvedTheme, recordMonacoLoad } = useExpressionSettings();
+  const { effectiveResolvedTheme, recordMonacoLoad, semanticEnabled } = useExpressionSettings();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const editorRef = useRef<import('monaco-editor').editor.IStandaloneCodeEditor | null>(null);
   const [jsonValid, setJsonValid] = useState<boolean>(true);
@@ -55,7 +55,7 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
   const lastAppliedSemanticVersionRef = useRef<number | undefined>(undefined);
   const loadRecordedRef = useRef(false);
 
-  // Theme application
+  // Theme
   useEffect(() => {
     if (!monaco || !editorRef.current) return;
     const themeName =
@@ -67,20 +67,18 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
     monaco.editor.setTheme(themeName);
   }, [monaco, effectiveResolvedTheme]);
 
-  // Local parse + markers
   const applyLocalValidation = useCallback(
     (current: string) => {
       if (!monaco || !editorRef.current) return;
       const model = editorRef.current.getModel();
       if (!model) return;
-
       const markers: import('monaco-editor').editor.IMarkerData[] = [];
       if (!current.trim()) {
         setJsonValid(false);
         setLastLocalError('Expression required');
         markers.push({
           severity: monaco.MarkerSeverity.Error,
-          message: 'Expression required',
+            message: 'Expression required',
           startLineNumber: 1,
           startColumn: 1,
           endLineNumber: 1,
@@ -116,13 +114,13 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
     if (
       lastAppliedSemanticVersionRef.current != null &&
       semanticVersion < lastAppliedSemanticVersionRef.current
-    ) {
-      return;
-    }
+    ) return;
+
     lastAppliedSemanticVersionRef.current = semanticVersion;
     const model = editorRef.current.getModel();
     if (!model) return;
     const markers: import('monaco-editor').editor.IMarkerData[] = [];
+
     for (const err of semanticErrors) {
       markers.push({
         severity: monaco.MarkerSeverity.Error,
@@ -146,7 +144,7 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
     monaco.editor.setModelMarkers(model, 'jsonlogic-semantic', markers);
   }, [semanticErrors, semanticWarnings, monaco, semanticVersion]);
 
-  // Initialize editor
+  // Init
   useEffect(() => {
     if (!monaco || !containerRef.current || editorRef.current) return;
     registerJsonLogicEnhancements(monaco);
@@ -166,12 +164,12 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
       const current = editor.getValue();
       onChange(current);
       applyLocalValidation(current);
-      if (semantic && onSemanticValidate && jsonValid) {
+      if (semantic && semanticEnabled && onSemanticValidate && jsonValid) {
         onSemanticValidate(current);
       }
     });
 
-    // Theme after create
+    // Theme
     const themeName =
       effectiveResolvedTheme === 'dark'
         ? 'vs-dark'
@@ -180,10 +178,8 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
           : 'vs';
     monaco.editor.setTheme(themeName);
 
-    // Initial markers
+    // Initial
     applyLocalValidation(value || '');
-
-    // Load time telemetry
     if (!loadRecordedRef.current && loadStartTs != null) {
       loadRecordedRef.current = true;
       const delta = performance.now() - loadStartTs;
@@ -201,6 +197,7 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
     value,
     onChange,
     semantic,
+    semanticEnabled,
     onSemanticValidate,
     jsonValid,
     readOnly,
@@ -211,7 +208,7 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
     recordMonacoLoad
   ]);
 
-  // External value sync
+  // External value change
   useEffect(() => {
     if (editorRef.current && value !== editorRef.current.getValue()) {
       editorRef.current.setValue(value || '');
@@ -223,14 +220,14 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
     if (editorRef.current) {
       const current = editorRef.current.getValue();
       applyLocalValidation(current);
-      if (semantic && jsonValid && onSemanticValidate) onSemanticValidate(current);
+      if (semantic && semanticEnabled && jsonValid && onSemanticValidate) {
+        onSemanticValidate(current);
+      }
     }
   };
 
   const formatDocument = () => {
-    if (editorRef.current && monaco) {
-      editorRef.current.getAction('editor.action.formatDocument')?.run();
-    }
+    editorRef.current?.getAction('editor.action.formatDocument')?.run();
   };
 
   const statusChip = useMemo(() => {
@@ -246,6 +243,18 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
     if (semanticWarnings.length) return `Semantic warning: ${semanticWarnings[0]}`;
     return 'Expression valid';
   }, [jsonValid, lastLocalError, semanticErrors, semanticWarnings]);
+
+  const semanticChip = (
+    <Tooltip title={semanticEnabled ? 'Semantic validation enabled' : 'Semantic validation disabled'}>
+      <Chip
+        size="small"
+        variant="outlined"
+        color={semanticEnabled ? 'primary' : 'default'}
+        label={semanticEnabled ? 'Sem ON' : 'Sem OFF'}
+        sx={{ ml: 0.5 }}
+      />
+    </Tooltip>
+  );
 
   if (loading) {
     return (
@@ -303,7 +312,7 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
       >
         {a11yMessage}
       </Box>
-      <Stack direction="row" spacing={1} alignItems="center">
+      <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
         <Typography variant="body2" fontWeight={600}>{label}</Typography>
         <Chip
           size="small"
@@ -311,6 +320,7 @@ export const MonacoExpressionEditor: React.FC<MonacoExpressionEditorProps> = ({
           color={statusChip.color}
           label={statusChip.label}
         />
+        {semanticChip}
         <Tooltip title="Re-validate">
           <IconButton size="small" onClick={manualValidate}>
             <RefreshIcon fontSize="inherit" />

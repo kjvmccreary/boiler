@@ -566,6 +566,15 @@ export class WorkflowService {
       };
     }
   }
+
+  // Add placeholder dynamic variable fetch (non-breaking)
+  async getExpressionVariables(kind: 'gateway' | 'join'): Promise<string[]> {
+    // Placeholder until backend endpoint defined; returns static examples
+    if (kind === 'join') {
+      return ['branch.arrivals', 'branch.totalExpected', 'instance.id', 'instance.status', 'user.id'];
+    }
+    return ['instance.id', 'instance.status', 'user.id', 'user.roles', 'input.payload'];
+  }
 }
 
 export const workflowService = new WorkflowService();
