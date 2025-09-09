@@ -18,7 +18,7 @@ import {
   Add as AddIcon,
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
-import type { DslNode, GatewayNode, JoinNode } from '../dsl/dsl.types';
+import type { DslNode, GatewayNode, JoinNode, HumanTaskNode } from '../dsl/dsl.types';
 import { ConditionBuilder } from './components/ConditionBuilder';
 import { roleService } from '@/services/role.service';
 import { useTenant } from '@/contexts/TenantContext';
@@ -27,6 +27,7 @@ import GatewayStrategyEditor from './components/GatewayStrategyEditor';
 import JoinConfigurationPanel from './components/JoinConfigurationPanel';
 import { validateDefinition, type ExtendedValidationResult } from '../dsl/dsl.validate';
 import type { DslDefinition } from '../dsl/dsl.types';
+import AssignmentSection from './components/AssignmentSection';
 
 interface PropertyPanelProps {
   open: boolean;
@@ -99,7 +100,12 @@ export function PropertyPanel({
           </Box>
         );
       case 'humanTask':
-        return <HumanTaskProperties node={localNode as any} onChange={handleNodeChange} />;
+        return (
+          <HumanTaskProperties
+            node={localNode as HumanTaskNode}
+            onChange={handleNodeChange}
+          />
+        );
       case 'automatic':
         return <AutomaticProperties node={localNode as any} onChange={handleNodeChange} />;
       case 'gateway':
@@ -220,7 +226,7 @@ export function PropertyPanel({
 }
 
 /* ---------------- Human Task ---------------- */
-function HumanTaskProperties({ node, onChange }: { node: any; onChange: (field: string, value: any) => void }) {
+function HumanTaskProperties({ node, onChange }: { node: HumanTaskNode; onChange: (field: string, value: any) => void }) {
   const [newRole, setNewRole] = useState('');
   const [tenantRoles, setTenantRoles] = useState<RoleDto[]>([]);
   const [loadingRoles, setLoadingRoles] = useState(false);
@@ -264,6 +270,9 @@ function HumanTaskProperties({ node, onChange }: { node: any; onChange: (field: 
   const removeRole = (r: string) =>
     onChange('assigneeRoles', (node.assigneeRoles || []).filter((x: string) => x !== r));
 
+  // Legacy UI retained as a "Legacy Roles" section if assignment model not yet used.
+  const usingNewModel = !!node.assignment;
+
   return (
     <Box>
       <TextField
@@ -273,49 +282,61 @@ function HumanTaskProperties({ node, onChange }: { node: any; onChange: (field: 
         onChange={(e) => onChange('label', e.target.value)}
         sx={{ mb: 2 }}
       />
-      <Typography variant="subtitle2" gutterBottom>Assignable Roles</Typography>
-      {loadingRoles && <Typography variant="caption">Loading roles…</Typography>}
-      {rolesError && <Alert severity="warning" sx={{ mb: 1 }}>{rolesError}</Alert>}
-      {!loadingRoles && !rolesError && tenantRoles.length > 0 && (
-        <Box sx={{ mb: 1 }}>
-          {tenantRoles.map(r => (
-            <Chip
-              key={r.id}
-              label={r.name}
+
+      <AssignmentSection
+        node={node}
+        onPatch={(patch) => {
+          Object.entries(patch).forEach(([k, v]) => onChange(k, v));
+        }}
+      />
+
+      {!usingNewModel && (
+        <Box mt={3}>
+          <Typography variant="subtitle2" gutterBottom>Legacy Roles (will migrate to Assignment)</Typography>
+          {loadingRoles && <Typography variant="caption">Loading roles…</Typography>}
+          {rolesError && <Alert severity="warning" sx={{ mb: 1 }}>{rolesError}</Alert>}
+          {!loadingRoles && !rolesError && tenantRoles.length > 0 && (
+            <Box sx={{ mb: 1 }}>
+              {tenantRoles.map(r => (
+                <Chip
+                  key={r.id}
+                  label={r.name}
+                  size="small"
+                  onClick={() => toggleTenantRole(r.name)}
+                  sx={{ mr: .5, mb: .5, cursor: 'pointer' }}
+                  color={node.assigneeRoles?.includes(r.name) ? 'primary' : 'default'}
+                />
+              ))}
+            </Box>
+          )}
+          <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+            <TextField
               size="small"
-              onClick={() => toggleTenantRole(r.name)}
-              sx={{ mr: .5, mb: .5, cursor: 'pointer' }}
-              color={node.assigneeRoles?.includes(r.name) ? 'primary' : 'default'}
+              placeholder="Add role"
+              value={newRole}
+              onChange={(e) => setNewRole(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addRole()}
             />
-          ))}
+            <Button variant="outlined" size="small" onClick={addRole} disabled={!newRole.trim()}>
+              <AddIcon fontSize="small" />
+            </Button>
+          </Box>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: .5 }}>
+            {(node.assigneeRoles || []).map((role: string) => (
+              <Chip key={role} label={role} size="small" onDelete={() => removeRole(role)} color="primary" />
+            ))}
+          </Box>
+          <TextField
+            fullWidth
+            label="Due in Minutes"
+            type="number"
+            value={node.dueInMinutes ?? ''}
+            onChange={(e) => onChange('dueInMinutes', e.target.value ? parseInt(e.target.value) : undefined)}
+            helperText="Optional deadline"
+            sx={{ mt: 2 }}
+          />
         </Box>
       )}
-      <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
-        <TextField
-          size="small"
-          placeholder="Add role"
-          value={newRole}
-          onChange={(e) => setNewRole(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && addRole()}
-        />
-        <Button variant="outlined" size="small" onClick={addRole} disabled={!newRole.trim()}>
-          <AddIcon fontSize="small" />
-        </Button>
-      </Box>
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: .5 }}>
-        {(node.assigneeRoles || []).map((role: string) => (
-          <Chip key={role} label={role} size="small" onDelete={() => removeRole(role)} color="primary" />
-        ))}
-      </Box>
-      <TextField
-        fullWidth
-        label="Due in Minutes"
-        type="number"
-        value={node.dueInMinutes ?? ''}
-        onChange={(e) => onChange('dueInMinutes', e.target.value ? parseInt(e.target.value) : undefined)}
-        helperText="Optional deadline"
-        sx={{ mt: 2 }}
-      />
     </Box>
   );
 }

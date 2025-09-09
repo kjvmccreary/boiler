@@ -3,56 +3,40 @@ PS C:\Users\mccre\dev\boiler\src\frontend\react-app> npm run build
 > microservices-frontend@0.0.0 build
 > tsc -b && vite build
 
-src/features/workflow/instances/components/InstanceEventTimeline.tsx:62:48 - error TS2339: Property 'type' does not exist on type 'WorkflowEventDto'.
+src/services/user.service.ts:163:64 - error TS2304: Cannot find name 'UserSearchResult'.
 
-62     () => Array.from(new Set(events.map(e => e.type))).sort(),
-                                                  ~~~~
+163   async search(term: string, page = 1, pageSize = 20): Promise<UserSearchResult[]> {
+                                                                   ~~~~~~~~~~~~~~~~
 
-src/features/workflow/instances/components/InstanceEventTimeline.tsx:307:38 - error TS2339: Property 'type' does not exist on type 'WorkflowEventDto'.
+src/services/user.service.ts:166:14 - error TS2304: Cannot find name 'RawPaged'.
 
-307   const typeColor = mapTypeColor(evt.type);
-                                         ~~~~
+166     let raw: RawPaged<UserSearchResult> | UserSearchResult[] | undefined;
+                 ~~~~~~~~
 
-src/features/workflow/instances/components/InstanceEventTimeline.tsx:309:23 - error TS18046: 'evt.data.length' is of type 'unknown'.
+src/services/user.service.ts:166:23 - error TS2304: Cannot find name 'UserSearchResult'.
 
-309   const dataPreview = evt.data?.length > 200 ? `${evt.data.substring(0, 200)}…` : evt.data;
+166     let raw: RawPaged<UserSearchResult> | UserSearchResult[] | undefined;
                           ~~~~~~~~~~~~~~~~
 
-src/features/workflow/instances/components/InstanceEventTimeline.tsx:309:51 - error TS18048: 'evt.data' is possibly 'undefined'.
+src/services/user.service.ts:166:43 - error TS2304: Cannot find name 'UserSearchResult'.
 
-309   const dataPreview = evt.data?.length > 200 ? `${evt.data.substring(0, 200)}…` : evt.data;
-                                                      ~~~~~~~~
+166     let raw: RawPaged<UserSearchResult> | UserSearchResult[] | undefined;
+                                              ~~~~~~~~~~~~~~~~
 
-src/features/workflow/instances/components/InstanceEventTimeline.tsx:309:51 - error TS18046: 'evt.data.substring' is of type 'unknown'.
+src/services/user.service.ts:184:21 - error TS2304: Cannot find name 'UserSearchResult'.
 
-309   const dataPreview = evt.data?.length > 200 ? `${evt.data.substring(0, 200)}…` : evt.data;
-                                                      ~~~~~~~~~~~~~~~~~~
+184       return raw as UserSearchResult[];
+                        ~~~~~~~~~~~~~~~~
 
-src/features/workflow/instances/components/InstanceEventTimeline.tsx:339:22 - error TS2339: Property 'type' does not exist on type 'WorkflowEventDto'.
+src/services/user.service.ts:189:36 - error TS2304: Cannot find name 'UserSearchResult'.
 
-339           label={evt.type}
-                         ~~~~
+189       return (raw as any).items as UserSearchResult[];
+                                       ~~~~~~~~~~~~~~~~
 
-src/features/workflow/instances/components/InstanceEventTimeline.tsx:358:24 - error TS2345: Argument of type 'string | Record<string, unknown>' is not assignable to parameter of type 'string'.
-  Type 'Record<string, unknown>' is not assignable to type 'string'.
+src/services/user.service.ts:194:41 - error TS2304: Cannot find name 'UserSearchResult'.
 
-358             {highlight(dataPreview)}
-                           ~~~~~~~~~~~
-
-src/features/workflow/instances/components/InstanceEventTimeline.tsx:393:33 - error TS2339: Property 'type' does not exist on type 'WorkflowEventDto'.
-
-393     if (filters.typeFilter && e.type !== filters.typeFilter) return false;
-                                    ~~~~
-
-src/features/workflow/instances/components/InstanceEventTimeline.tsx:396:50 - error TS18046: 'e.data.toLowerCase' is of type 'unknown'.
-
-396       if (!(e.name?.toLowerCase().includes(s) || e.data?.toLowerCase().includes(s))) return false;
-                                                     ~~~~~~~~~~~~~~~~~~~
-
-src/features/workflow/instances/InstanceDetailsPage.tsx:541:8 - error TS2304: Cannot find name 'InstanceEventTimeline'.
-
-541       <InstanceEventTimeline
-           ~~~~~~~~~~~~~~~~~~~~~
+194       return (raw as any).data.items as UserSearchResult[];
+                                            ~~~~~~~~~~~~~~~~
 
 
-Found 10 errors.
+Found 7 errors.

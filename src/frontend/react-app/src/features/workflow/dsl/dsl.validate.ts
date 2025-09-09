@@ -1,4 +1,6 @@
 import type { DslDefinition, DslNode, ValidationResult } from './dsl.types';
+import type { HumanTaskNode } from './dsl.types';
+import { validateHumanTaskAssignment } from './assignmentRules';
 
 /* ================= Added Diagnostics Types (C1/C2/C4) ================= */
 export interface ParallelGatewayDiagnostics {
@@ -170,9 +172,21 @@ export function validateDefinition(definition: DslDefinition): ExtendedValidatio
   // Rule 8: HumanTask advisory
   for (const node of definition.nodes) {
     if (node.type === 'humanTask') {
-      const ht: any = node;
-      if (!ht.assigneeRoles || ht.assigneeRoles.length === 0) {
-        warnings.push(`HumanTask "${node.label || node.id}" should have assignee roles`);
+      const ht = node as HumanTaskNode & { [k: string]: any };
+      // New assignment model present?
+      if (ht.assignment) {
+        const ar = validateHumanTaskAssignment(ht);
+        if (ar.errors.length) {
+          ar.errors.forEach(e => errors.push(`HumanTask "${node.label || node.id}" assignment: ${e}`));
+        }
+        if (ar.warnings.length) {
+          ar.warnings.forEach(w => warnings.push(`HumanTask "${node.label || node.id}" assignment: ${w}`));
+        }
+      } else {
+        // Legacy fallback advisory (only if no new assignment object)
+        if (!ht.assigneeRoles || ht.assigneeRoles.length === 0) {
+          warnings.push(`HumanTask "${node.label || node.id}" should have assignee roles`);
+        }
       }
     }
   }
@@ -407,8 +421,12 @@ export function validateNode(node: DslNode): ValidationResult {
       break;
     }
     case 'humanTask': {
-      const ht: any = node;
-      if (!ht.assigneeRoles || ht.assigneeRoles.length === 0) {
+      const ht = node as HumanTaskNode & { [k: string]: any };
+      if (ht.assignment) {
+        const ar = validateHumanTaskAssignment(ht);
+        if (ar.errors.length) ar.errors.forEach(e => errors.push(`Assignment: ${e}`));
+        if (ar.warnings.length) ar.warnings.forEach(w => warnings.push(`Assignment: ${w}`));
+      } else if (!ht.assigneeRoles || ht.assigneeRoles.length === 0) {
         warnings.push('HumanTask should have assignee roles');
       }
       break;

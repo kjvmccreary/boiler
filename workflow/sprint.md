@@ -20,7 +20,7 @@ Progress Legend: [ ] Not Started · [~] In Progress · [x] Complete · [D] Defer
 | Feature | Backend Status | Frontend Status | Gap Summary | Priority | Progress |
 |---------|----------------|-----------------|-------------|----------|----------|
 | Start / End Nodes | Stable | Implemented | — | Done | [x] |
-| HumanTask Node | Stable | Basic node only | Enhanced assignment UX | High | [ ] |
+| HumanTask Node | Stable | Assignment model PR1–PR5 (UI + validation) | Remaining: tests & telemetry | High | [~] |
 | Automatic Node | Stable | Basic node | Webhook/action config | Medium | [ ] |
 | Gateway Strategy | Supported | Strategy selector + condition editor + hints (C1) | Further semantic enrich | Critical | [x] |
 | Conditional Expressions | Supported | Monaco + semantic + dynamic vars | Advanced scopes | Critical | [x] |
@@ -195,6 +195,7 @@ Layered approach executed client-side before publish; server still authoritative
 | 2025-09-08 | C6 | Task drawer & actions available | None | UX polish |
 | 2025-09-08 | M2 | Strict structural (dominance) analysis toggle added; mismatch diff surfaced | None | Evaluate false positives |
 | 2025-09-08 | C5 | Advanced timer panel complete | Worker missing | M7 tests |
+| 2025-09-09 | H1 | PR1–PR5: types, validation, UI scaffold, hooks, Monaco, publish validation integration | None | PR6 tests |
 
 ---
 
@@ -280,17 +281,14 @@ Layered approach executed client-side before publish; server still authoritative
 
 ---
 
-@@
- | HumanTask Node | Stable | Basic node only | Enhanced assignment UX | High | [ ] |
-@@
- ## 18. Story Specification – HumanTask Node Enhanced Assignment UX (New)
+## 18. Story Specification – HumanTask Node Enhanced Assignment UX (New)
  
  | Field | Detail |
  |-------|--------|
  | Story ID | H1 (HumanTask Enhanced Assignment) |
  | Goal | Allow authors to configure richer assignment semantics for HumanTask nodes (users, roles, dynamic expressions, fallback & SLA metadata) directly in the builder property panel with validation + preview. |
  | Priority | High |
- | Status | Not Started |
+ | Status | In Progress |
  | Owner | Workflow Feature Team |
  | Dependencies | Existing role/user directory endpoints; expression validation service; publish validation hook. |
  

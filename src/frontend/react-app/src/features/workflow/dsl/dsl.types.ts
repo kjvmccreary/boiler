@@ -6,10 +6,41 @@ export type EdgeId = string;
 // Gateway strategy union
 export type GatewayStrategy = 'exclusive' | 'conditional' | 'parallel';
 
-// Join mode union (will be expanded in C4 configuration story)
+// Join mode union
 export type JoinMode = 'all' | 'any' | 'count' | 'quorum' | 'expression';
 
-// Base node interface
+/* ================= HumanTask Assignment (H1) =================
+   New richer assignment model (additive – legacy fields retained):
+   - assignment.mode: users | roles | expression | hybrid
+   - users / roles: explicit lists
+   - expression: JsonLogic string returning { users?:[], roles?:[] }
+   - sla: optional SLA timings
+   - escalation: optional escalation target afterMinutes (stub for future)
+   Backward compatibility:
+   - Legacy assigneeRoles & dueInMinutes remain (deprecated).
+   - Migration layer (future) may map legacy roles -> assignment { mode:'roles', roles:[...] }.
+*/
+export type HumanTaskAssignmentMode = 'users' | 'roles' | 'expression' | 'hybrid';
+
+export interface HumanTaskAssignmentSla {
+  targetMinutes: number;
+  softWarningMinutes?: number;
+}
+
+export interface HumanTaskAssignmentEscalation {
+  escalateToRole: string;
+  afterMinutes: number;
+}
+
+export interface HumanTaskAssignment {
+  mode: HumanTaskAssignmentMode;
+  users?: string[];
+  roles?: string[];
+  expression?: string; // JsonLogic source
+  sla?: HumanTaskAssignmentSla;
+  escalation?: HumanTaskAssignmentEscalation;
+}
+
 export interface DslNodeBase {
   id: NodeId;
   type: NodeType;
@@ -24,9 +55,12 @@ export interface EndNode extends DslNodeBase { type: 'end'; }
 
 export interface HumanTaskNode extends DslNodeBase {
   type: 'humanTask';
+  /* Legacy (pre-H1) */
   assigneeRoles?: string[];
   dueInMinutes?: number;
   formSchema?: unknown;
+  /* New (H1) */
+  assignment?: HumanTaskAssignment;
 }
 
 export interface AutomaticNode extends DslNodeBase {
@@ -52,11 +86,7 @@ export interface TimerNode extends DslNodeBase {
 }
 
 /**
- * Join node (base form – detailed configuration arrives in C4)
- * Defaults:
- *  - mode 'all' (wait for all incoming branches)
- *  - thresholdCount / thresholdPercent used for count/quorum modes (C4)
- *  - cancelRemaining indicates pruning of unfinished branches once satisfied
+ * Join node
  */
 export interface JoinNode extends DslNodeBase {
   type: 'join';
