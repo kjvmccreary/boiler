@@ -7,29 +7,26 @@ import {
   Button,
   Divider,
   IconButton,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Chip,
-  Switch,
-  FormControlLabel,
   Alert,
   Accordion,
   AccordionSummary,
-  AccordionDetails,
-  CircularProgress,
+  AccordionDetails
 } from '@mui/material';
 import {
   Close as CloseIcon,
   Add as AddIcon,
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
-import type { DslNode } from '../dsl/dsl.types';
+import type { DslNode, GatewayNode, JoinNode } from '../dsl/dsl.types';
 import { ConditionBuilder } from './components/ConditionBuilder';
 import { roleService } from '@/services/role.service';
 import { useTenant } from '@/contexts/TenantContext';
 import type { RoleDto } from '@/types';
+import GatewayStrategyEditor from './components/GatewayStrategyEditor';
+import JoinConfigurationPanel from './components/JoinConfigurationPanel';
+import { validateDefinition, type ExtendedValidationResult } from '../dsl/dsl.validate';
+import type { DslDefinition } from '../dsl/dsl.types';
 
 interface PropertyPanelProps {
   open: boolean;
@@ -40,6 +37,8 @@ interface PropertyPanelProps {
   workflowDescription: string;
   onWorkflowNameChange: (name: string) => void;
   onWorkflowDescriptionChange: (description: string) => void;
+  currentDefinition?: DslDefinition;           // NEW: for diagnostics lookup
+  latestValidation?: ExtendedValidationResult; // NEW: pass existing validation (avoid re-run)
 }
 
 export function PropertyPanel({
@@ -51,10 +50,22 @@ export function PropertyPanel({
   workflowDescription,
   onWorkflowNameChange,
   onWorkflowDescriptionChange,
+  currentDefinition,
+  latestValidation
 }: PropertyPanelProps) {
   const [localNode, setLocalNode] = useState<DslNode | null>(null);
+  const [localValidation, setLocalValidation] = useState<ExtendedValidationResult | null>(null);
 
   useEffect(() => { setLocalNode(selectedNode); }, [selectedNode]);
+
+  // Run validation only if not supplied (fallback)
+  useEffect(() => {
+    if (latestValidation) {
+      setLocalValidation(latestValidation);
+    } else if (currentDefinition) {
+      setLocalValidation(validateDefinition(currentDefinition));
+    }
+  }, [latestValidation, currentDefinition]);
 
   const handleNodeChange = (field: string, value: any) => {
     if (!localNode) return;
@@ -62,6 +73,14 @@ export function PropertyPanel({
     setLocalNode(updatedNode);
     onNodeUpdate(updatedNode);
   };
+
+  const gatewayDiagnostics = (localNode?.type === 'gateway' && localValidation)
+    ? localValidation.diagnostics.parallelGateways[localNode.id]
+    : undefined;
+
+  const joinDiagnostics = (localNode?.type === 'join' && localValidation)
+    ? localValidation.diagnostics.joins[localNode.id]
+    : undefined;
 
   const renderNodeProperties = () => {
     if (!localNode) return null;
@@ -84,7 +103,55 @@ export function PropertyPanel({
       case 'automatic':
         return <AutomaticProperties node={localNode as any} onChange={handleNodeChange} />;
       case 'gateway':
-        return <GatewayProperties node={localNode as any} onChange={handleNodeChange} />;
+        return (
+          <Box>
+            <TextField
+              fullWidth
+              label="Label"
+              value={localNode.label || ''}
+              onChange={(e) => handleNodeChange('label', e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <GatewayStrategyEditor
+              node={localNode as GatewayNode}
+              onChange={(patch) => {
+                Object.entries(patch).forEach(([k, v]) => handleNodeChange(k, v));
+              }}
+            />
+            {gatewayDiagnostics && (
+              <Alert
+                severity={gatewayDiagnostics.hasError ? 'error' : (gatewayDiagnostics.multipleCommon || gatewayDiagnostics.subsetJoins.length || gatewayDiagnostics.orphanBranches.length) ? 'warning' : 'info'}
+                sx={{ mt: 2, p: 1 }}
+              >
+                <Typography variant="caption" component="div" sx={{ whiteSpace: 'pre-line' }}>
+                  {gatewayDiagnostics.hasError && 'Structural error: no downstream join.'}
+                  {gatewayDiagnostics.multipleCommon && `Multiple convergence joins: ${gatewayDiagnostics.commonJoins.join(', ')}\n`}
+                  {gatewayDiagnostics.subsetJoins.length > 0 && `Subset joins: ${gatewayDiagnostics.subsetJoins.join(', ')}\n`}
+                  {gatewayDiagnostics.orphanBranches.length > 0 && `Orphan branches: ${gatewayDiagnostics.orphanBranches.join(', ')}\n`}
+                </Typography>
+              </Alert>
+            )}
+          </Box>
+        );
+      case 'join':
+        return (
+          <Box>
+            <TextField
+              fullWidth
+              label="Label"
+              value={localNode.label || ''}
+              onChange={(e) => handleNodeChange('label', e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <JoinConfigurationPanel
+              node={localNode as JoinNode}
+              diagnostics={joinDiagnostics}
+              onChange={(patch) => {
+                Object.entries(patch).forEach(([k, v]) => handleNodeChange(k, v));
+              }}
+            />
+          </Box>
+        );
       case 'timer':
         return <TimerProperties node={localNode as any} onChange={handleNodeChange} />;
       default:
@@ -99,7 +166,7 @@ export function PropertyPanel({
       onClose={onClose}
       sx={{
         '& .MuiDrawer-paper': {
-          width: 350,
+          width: 360,
           p: 2,
         },
       }}
@@ -152,7 +219,7 @@ export function PropertyPanel({
   );
 }
 
-/* ---------------- Human Task (unchanged except context) ---------------- */
+/* ---------------- Human Task ---------------- */
 function HumanTaskProperties({ node, onChange }: { node: any; onChange: (field: string, value: any) => void }) {
   const [newRole, setNewRole] = useState('');
   const [tenantRoles, setTenantRoles] = useState<RoleDto[]>([]);
@@ -226,10 +293,10 @@ function HumanTaskProperties({ node, onChange }: { node: any; onChange: (field: 
       <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
         <TextField
           size="small"
-            placeholder="Add role"
-            value={newRole}
-            onChange={(e) => setNewRole(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addRole()}
+          placeholder="Add role"
+          value={newRole}
+          onChange={(e) => setNewRole(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && addRole()}
         />
         <Button variant="outlined" size="small" onClick={addRole} disabled={!newRole.trim()}>
           <AddIcon fontSize="small" />
@@ -264,57 +331,15 @@ function AutomaticProperties({ node, onChange }: { node: any; onChange: (f: stri
         onChange={(e) => onChange('label', e.target.value)}
         sx={{ mb: 2 }}
       />
-      <FormControl fullWidth sx={{ mb: 2 }}>
-        <InputLabel>Action</InputLabel>
-        <Select
-          value={node.action?.kind || 'noop'}
-          label="Action"
-          onChange={(e) => onChange('action', { ...(node.action || {}), kind: e.target.value })}
-        >
-          <MenuItem value="noop">No Operation</MenuItem>
-          <MenuItem value="webhook">Webhook</MenuItem>
-        </Select>
-      </FormControl>
-      {node.action?.kind === 'webhook' && (
-        <TextField
-          fullWidth
-          label="Webhook URL"
-          value={node.action?.config?.url || ''}
-          onChange={(e) =>
-            onChange('action', {
-              ...(node.action || {}),
-              config: { ...(node.action?.config || {}), url: e.target.value }
-            })
-          }
-        />
-      )}
+      <Typography variant="caption" color="text.secondary">
+        Additional automatic action configuration coming in later story.
+      </Typography>
     </Box>
   );
 }
 
-/* ---------------- Gateway ---------------- */
-function GatewayProperties({ node, onChange }: { node: any; onChange: (f: string, v: any) => void }) {
-  return (
-    <Box>
-      <TextField
-        fullWidth
-        label="Label"
-        value={node.label || ''}
-        onChange={(e) => onChange('label', e.target.value)}
-        sx={{ mb: 2 }}
-      />
-      <Typography variant="subtitle2" gutterBottom>JsonLogic Condition</Typography>
-      <ConditionBuilder
-        value={node.condition || '{"==":[{"var":"approved"},true]}'}
-        onChange={(v) => onChange('condition', v)}
-      />
-    </Box>
-  );
-}
-
-/* ---------------- Timer (UPDATED) ---------------- */
+/* ---------------- Timer (unchanged from latest enhanced version) ---------------- */
 function TimerProperties({ node, onChange }: { node: any; onChange: (f: string, v: any) => void }) {
-  // Determine initial mode
   const initialMode: 'seconds' | 'minutes' =
     node.delaySeconds != null ? 'seconds' : 'minutes';
   const [mode, setMode] = useState<'seconds' | 'minutes'>(initialMode);
@@ -361,19 +386,13 @@ function TimerProperties({ node, onChange }: { node: any; onChange: (f: string, 
 
   const updateSeconds = (val: string) => {
     const n = Number(val);
-    if (isNaN(n) || n < 0) {
-      onChange('delaySeconds', undefined);
-      return;
-    }
+    if (isNaN(n) || n < 0) { onChange('delaySeconds', undefined); return; }
     onChange('delaySeconds', n);
   };
 
   const updateMinutes = (val: string) => {
     const n = Number(val);
-    if (isNaN(n) || n < 0) {
-      onChange('delayMinutes', undefined);
-      return;
-    }
+    if (isNaN(n) || n < 0) { onChange('delayMinutes', undefined); return; }
     onChange('delayMinutes', n);
   };
 
@@ -386,76 +405,53 @@ function TimerProperties({ node, onChange }: { node: any; onChange: (f: string, 
         onChange={(e) => onChange('label', e.target.value)}
         sx={{ mb: 2 }}
       />
-
-      <FormControl fullWidth sx={{ mb: 2 }}>
-        <InputLabel>Timer Type</InputLabel>
-        <Select
-          value={timerType}
-          label="Timer Type"
-          onChange={(e) => switchTimerType(e.target.value as any)}
-        >
-          <MenuItem value="delay">Relative Delay</MenuItem>
-          <MenuItem value="until">Absolute (untilIso)</MenuItem>
-        </Select>
-      </FormControl>
+      <TextField
+        fullWidth
+        type="datetime-local"
+        label="Until (local)"
+        value={timerType === 'until' && node.untilIso ? toLocalInput(node.untilIso) : ''}
+        onChange={(e) => {
+          if (!e.target.value) {
+            onChange('untilIso', undefined);
+            if (timerType === 'until') switchTimerType('delay');
+            return;
+          }
+          switchTimerType('until');
+          const iso = new Date(e.target.value).toISOString();
+          onChange('untilIso', iso);
+        }}
+        helperText="Set an absolute fire time or clear to use relative delay."
+        sx={{ mb: 2 }}
+      />
 
       {timerType === 'delay' && (
         <>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Delay Mode</InputLabel>
-            <Select
-              value={mode}
-              label="Delay Mode"
-              onChange={(e) => switchMode(e.target.value as any)}
+          <TextField
+            fullWidth
+            label={`Delay (${mode === 'seconds' ? 'Seconds' : 'Minutes'})`}
+            type="number"
+            inputProps={{ step: mode === 'seconds' ? 0.1 : 0.01, min: 0 }}
+            value={mode === 'seconds' ? (node.delaySeconds ?? '') : (node.delayMinutes ?? '')}
+            onChange={(e) => mode === 'seconds' ? updateSeconds(e.target.value) : updateMinutes(e.target.value)}
+            sx={{ mb: 2 }}
+          />
+          <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
+            <Button
+              size="small"
+              variant={mode === 'seconds' ? 'contained' : 'outlined'}
+              onClick={() => switchMode('seconds')}
             >
-              <MenuItem value="seconds">Seconds</MenuItem>
-              <MenuItem value="minutes">Minutes</MenuItem>
-            </Select>
-          </FormControl>
-
-          {mode === 'seconds' && (
-            <TextField
-              fullWidth
-              label="Delay Seconds (>=0, float)"
-              type="number"
-              inputProps={{ step: 0.1, min: 0 }}
-              value={node.delaySeconds ?? ''}
-              onChange={(e) => updateSeconds(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-          )}
-
-            {mode === 'minutes' && (
-            <TextField
-              fullWidth
-              label="Delay Minutes (>=0, float)"
-              type="number"
-              inputProps={{ step: 0.01, min: 0 }}
-              value={node.delayMinutes ?? ''}
-              onChange={(e) => updateMinutes(e.target.value)}
-              sx={{ mb: 2 }}
-            />
-          )}
+              Seconds
+            </Button>
+            <Button
+              size="small"
+              variant={mode === 'minutes' ? 'contained' : 'outlined'}
+              onClick={() => switchMode('minutes')}
+            >
+              Minutes
+            </Button>
+          </Box>
         </>
-      )}
-
-      {timerType === 'until' && (
-        <TextField
-          fullWidth
-          type="datetime-local"
-          label="Until (local)"
-          value={node.untilIso ? toLocalInput(node.untilIso) : ''}
-          onChange={(e) => {
-            if (!e.target.value) {
-              onChange('untilIso', undefined);
-              return;
-            }
-            const iso = new Date(e.target.value).toISOString();
-            onChange('untilIso', iso);
-          }}
-          helperText="Stored as UTC ISO"
-          sx={{ mb: 2 }}
-        />
       )}
 
       <Alert severity="info" sx={{ mt: 1 }}>

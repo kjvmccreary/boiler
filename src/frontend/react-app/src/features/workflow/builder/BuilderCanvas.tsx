@@ -18,11 +18,6 @@ import {
 } from 'reactflow';
 import { Box } from '@mui/material';
 import { WorkflowNode } from './nodes/WorkflowNode';
-import { PropertyPanel } from './panels/PropertyPanel';
-import { ExpressionSettingsProvider } from './context/ExpressionSettingsContext';
-import { SemanticValidationToggle } from './components/SemanticValidationToggle';
-import { ThemeSelector } from './components/ThemeSelector';
-
 import type {
   DslNode,
   NodeType,
@@ -34,6 +29,8 @@ import type {
   TimerNode,
   JoinNode
 } from '../dsl/dsl.types';
+import type { StructuralDiagnostics } from '../dsl/dsl.validate';
+import '../builder/styles/parallelDiagnostics.css';
 
 const nodeTypes = {
   start: WorkflowNode,
@@ -54,6 +51,8 @@ export interface BuilderCanvasProps {
   setNodes: React.Dispatch<React.SetStateAction<Node[]>>;
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   onConnect?: OnConnect;
+  diagnostics?: StructuralDiagnostics;
+  selectedNodeId?: string | null;
 }
 
 function BuilderCanvasInner({
@@ -64,17 +63,19 @@ function BuilderCanvasInner({
   onNodeClick,
   setNodes,
   setEdges,
-  onConnect
+  onConnect,
+  diagnostics,
+  selectedNodeId
 }: BuilderCanvasProps) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null);
-  const [activeNode, setActiveNode] = useState<Node | undefined>();
 
   const handleInit = useCallback((inst: ReactFlowInstance) => {
     setRfInstance(inst);
     (window as any).__RF = inst;
-    console.log('[RF][Init] instance exposed as window.__RF'); // eslint-disable-line
+    // eslint-disable-next-line no-console
+    console.log('[RF][Init] instance exposed as window.__RF');
   }, []);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -97,24 +98,11 @@ function BuilderCanvasInner({
           case 'start': return { ...baseNode, type: 'start', label: 'Start' } as StartNode;
           case 'end': return { ...baseNode, type: 'end', label: 'End' } as EndNode;
           case 'humanTask': return { ...baseNode, type: 'humanTask', label: 'Human Task', assigneeRoles: [] } as HumanTaskNode;
-          case 'automatic': return { ...baseNode, type: 'automatic', label: 'Automatic Task', action: { kind: 'noop' } } as AutomaticNode;
-          case 'gateway':
-            return {
-              ...baseNode,
-              type: 'gateway',
-              label: 'Gateway',
-              strategy: 'exclusive'
-            } as GatewayNode;
+          case 'automatic': return { ...baseNode, type: 'automatic', label: 'Automatic', action: { kind: 'noop' } } as AutomaticNode;
+          case 'gateway': return { ...baseNode, type: 'gateway', label: 'Gateway', strategy: 'exclusive', condition: '{"==":[{"var":"approved"},true]}' } as GatewayNode;
           case 'timer': return { ...baseNode, type: 'timer', label: 'Timer', delayMinutes: 5 } as TimerNode;
-          case 'join':
-            return {
-              ...baseNode,
-              type: 'join',
-              label: 'Join',
-              mode: 'all',
-              cancelRemaining: false
-            } as JoinNode;
-          default: return { ...baseNode, type: 'start', label: 'Unknown' } as StartNode; // fixed baseBaseNode -> baseNode
+          case 'join': return { ...baseNode, type: 'join', label: 'Join', mode: 'all' } as JoinNode;
+          default: return { ...baseNode, type: 'start', label: 'Unknown' } as StartNode;
         }
       };
 
@@ -126,67 +114,62 @@ function BuilderCanvasInner({
       };
 
       setNodes(nds => nds.concat(newNode));
-      setActiveNode(newNode);
     },
     [screenToFlowPosition, setNodes]
   );
 
-  const computeParallelBranchLabel = (sourceId: string): string => {
-    const existing = edges.filter(e => e.source === sourceId);
-    const index = existing.length + 1;
-    return `b${index}`;
-  };
-
   const internalHandleConnect = useCallback(
     (params: Connection) => {
-      const sourceNode = nodes.find(n => n.id === params.source);
-      let branch: string | undefined =
+      const branch =
         params.sourceHandle === 'true' || params.sourceHandle === 'false'
           ? params.sourceHandle
           : undefined;
-
-      let style: Edge['style'] | undefined;
-      let label: string | undefined = branch;
-
-      const isParallel = !!sourceNode && (sourceNode.data as any)?.strategy === 'parallel';
-
-      if (isParallel) {
-        label = computeParallelBranchLabel(sourceNode!.id);
-        style = {
-          strokeDasharray: '4 2',
-          stroke: '#5e35b1',
-          strokeWidth: 2
-        };
-      }
 
       setEdges(prev =>
         addEdge(
           {
             ...params,
-            id: `e-${params.source}-${params.sourceHandle ?? label ?? 'h'}-${params.target}-${Date.now()}`,
-            source: params.source!,
-            target: params.target!,
+            id: `e-${params.source}-${params.sourceHandle ?? 'h'}-${params.target}-${Date.now()}`,
+            source: params.source,
+            target: params.target,
             sourceHandle: params.sourceHandle ?? undefined,
-            label,
-            data: { fromHandle: branch, parallel: isParallel },
-            type: 'default',
-            style
+            label: branch,
+            data: { fromHandle: branch },
+            type: 'default'
           } as Edge,
           prev
         )
       );
     },
-    [setEdges, nodes, edges]
+    [setEdges]
   );
 
   const effectiveConnect = onConnect ?? internalHandleConnect;
 
+  // Apply branch coloring classes for selected parallel gateway
+  const coloredEdges: Edge[] = edges.map(e => {
+    if (!diagnostics || !selectedNodeId) return e;
+    const diag = diagnostics.parallelGateways[selectedNodeId];
+    if (!diag) return e;
+    // If edge starts from one of the gateway's branch start nodes, color it
+    const branchIndex = diag.branches.findIndex(b => b.startNodeId === e.source);
+    if (branchIndex >= 0) {
+      return {
+        ...e,
+        className: `edge branch-color-${branchIndex % 6} ${e.className ?? ''}`
+      };
+    }
+    return e;
+  });
+
+  // Debug gateway edges
   useEffect(() => {
     const gatewayEdgeDebug = edges
       .filter(e =>
         nodes.some(n => n.id === e.source && ((n as any).data?.type === 'gateway' || n.type === 'gateway'))
       );
     if (gatewayEdgeDebug.length) {
+      // eslint-disable-next-line no-console
       console.log('[RF][GatewayEdges]', gatewayEdgeDebug.map(e => ({
         id: e.id,
         source: e.source,
@@ -194,7 +177,7 @@ function BuilderCanvasInner({
         sourceHandle: e.sourceHandle,
         label: e.label,
         data: e.data
-      }))); // eslint-disable-line
+      })));
     }
   }, [edges, nodes]);
 
@@ -208,7 +191,6 @@ function BuilderCanvasInner({
           const ids = selectedNodes.map(n => n.id);
           setNodes(nds => nds.filter(n => !ids.includes(n.id)));
           setEdges(eds => eds.filter(e => !ids.includes(e.source) && !ids.includes(e.target)));
-          if (activeNode && ids.includes(activeNode.id)) setActiveNode(undefined);
         }
         if (selectedEdges.length > 0) {
           const ids = selectedEdges.map(e => e.id);
@@ -216,27 +198,8 @@ function BuilderCanvasInner({
         }
       }
     },
-    [nodes, edges, setNodes, setEdges, activeNode]
+    [nodes, edges, setNodes, setEdges]
   );
-
-  const handleNodeClick = useCallback((evt: React.MouseEvent, node: Node) => {
-    onNodeClick(evt, node);
-    setActiveNode(node);
-  }, [onNodeClick]);
-
-  const updateNode = useCallback((id: string, patch: Record<string, any>) => {
-    setNodes(ns =>
-      ns.map(n => {
-        if (n.id !== id) return n;
-        const orig = n.data || {};
-        const merged = { ...orig, ...patch };
-        return { ...n, data: merged };
-      })
-    );
-    if (activeNode?.id === id) {
-      setActiveNode(prev => prev ? { ...prev, data: { ...prev.data, ...patch } } : prev);
-    }
-  }, [setNodes, activeNode]);
 
   return (
     <Box
@@ -247,11 +210,11 @@ function BuilderCanvasInner({
     >
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={coloredEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={effectiveConnect}
-        onNodeClick={handleNodeClick}
+        onNodeClick={onNodeClick}
         onDrop={onDrop}
         onDragOver={onDragOver}
         nodeTypes={nodeTypes}
@@ -264,11 +227,15 @@ function BuilderCanvasInner({
           nodeStrokeColor={n => {
             if (n.type === 'start') return '#0041d0';
             if (n.type === 'end') return '#ff0072';
+            if (n.type === 'gateway') return '#1976d2';
+            if (n.type === 'join') return '#00695c';
             return '#999';
           }}
           nodeColor={n => {
             if (n.type === 'start') return '#4dabf7';
             if (n.type === 'end') return '#ff6b9d';
+            if (n.type === 'gateway') return '#e3f2fd';
+            if (n.type === 'join') return '#e0f2f1';
             return '#fff';
           }}
           nodeBorderRadius={2}
@@ -277,42 +244,15 @@ function BuilderCanvasInner({
           position="bottom-right"
         />
       </ReactFlow>
-
-      <PropertyPanel
-        open={!!activeNode}
-        node={activeNode}
-        edges={edges}
-        onClose={() => setActiveNode(undefined)}
-        updateNode={updateNode}
-      />
     </Box>
   );
 }
 
 export function BuilderCanvas(props: BuilderCanvasProps) {
   return (
-    <ExpressionSettingsProvider>
-      <ReactFlowProvider>
-        <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
-          <BuilderCanvasInner {...props} />
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 8,
-              right: 8,
-              zIndex: 10,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 1,
-              alignItems: 'flex-end'
-            }}
-          >
-            <ThemeSelector />
-            <SemanticValidationToggle />
-          </Box>
-        </Box>
-      </ReactFlowProvider>
-    </ExpressionSettingsProvider>
+    <ReactFlowProvider>
+      <BuilderCanvasInner {...props} />
+    </ReactFlowProvider>
   );
 }
 

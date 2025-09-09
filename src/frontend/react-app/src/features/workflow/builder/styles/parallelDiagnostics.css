@@ -1,0 +1,28 @@
+/* Branch color strokes – apply to edges via className branch-color-{index} */
+.edge.branch-color-0 path { stroke: #1976d2 !important; }
+.edge.branch-color-1 path { stroke: #9c27b0 !important; }
+.edge.branch-color-2 path { stroke: #2e7d32 !important; }
+.edge.branch-color-3 path { stroke: #ed6c02 !important; }
+.edge.branch-color-4 path { stroke: #6d4c41 !important; }
+.edge.branch-color-5 path { stroke: #00838f !important; }
+
+/* Gateway badges (if you decide to render small absolutely positioned spans) */
+.gateway-warning-badge {
+  background: #ffa000;
+  color: #000;
+  font-size: 0.55rem;
+  padding: 2px 4px;
+  border-radius: 3px;
+  line-height: 1;
+  font-weight: 600;
+}
+
+.gateway-error-badge {
+  background: #d32f2f;
+  color: #fff;
+  font-size: 0.55rem;
+  padding: 2px 4px;
+  border-radius: 3px;
+  line-height: 1;
+  font-weight: 600;
+}

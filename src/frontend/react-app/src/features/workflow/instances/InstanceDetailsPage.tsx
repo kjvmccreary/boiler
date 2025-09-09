@@ -26,13 +26,12 @@ import {
   Refresh as RefreshIcon,
   Visibility as ViewIcon,
   Assignment as TaskIcon,
-  Timeline as TimelineIcon,
   Done as DoneIcon,
   HowToReg as ClaimIcon
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { workflowService } from '@/services/workflow.service';
-import type {
+import {
   WorkflowInstanceDto,
   WorkflowEventDto,
   TaskSummaryDto,
@@ -45,6 +44,7 @@ import { InstanceStatusBadge } from './components/InstanceStatusBadge';
 import { useTaskHub } from './hooks/useTaskHub';
 import { useInstanceHub } from './hooks/useInstanceHub';
 import type { InstanceUpdatedEvent } from '@/services/workflowNotifications';
+import InstanceEventTimeline from './components/InstanceEventTimeline';
 
 export function InstanceDetailsPage() {
   const { id } = useParams<{ id: string }>();
@@ -176,24 +176,6 @@ export function InstanceDetailsPage() {
     const m = Math.floor((diff % 3600000) / 60000);
     return h > 0 ? `${h}h ${m}m` : `${m}m`;
   };
-
-  const eventColumns: GridColDef[] = [
-    { field: 'occurredAt', headerName: 'Time', width: 180, type: 'dateTime', valueGetter: v => new Date(v) },
-    { field: 'type', headerName: 'Type', width: 120 },
-    { field: 'name', headerName: 'Event', flex: 1, minWidth: 200 },
-    {
-      field: 'data',
-      headerName: 'Details',
-      flex: 1,
-      minWidth: 250,
-      renderCell: p => (
-        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>
-          {p.value.length > 100 ? `${p.value.substring(0, 100)}...` : p.value}
-        </Typography>
-      )
-    },
-    { field: 'userId', headerName: 'User', width: 100, renderCell: p => p.value || 'System' }
-  ];
 
   const taskColumns: GridColDef[] = [
     { field: 'taskName', headerName: 'Task', flex: 1, minWidth: 200 },
@@ -556,34 +538,11 @@ export function InstanceDetailsPage() {
         </CardContent>
       </Card>
 
-      {/* Events */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            <TimelineIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-            Event Timeline ({events.length})
-          </Typography>
-          <Box sx={{ height: 400 }}>
-            <DataGridPremium
-              rows={events}
-              columns={eventColumns}
-              loading={eventsLoading}
-              pagination
-              pageSizeOptions={[10, 25, 50]}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 10 } },
-                sorting: { sortModel: [{ field: 'occurredAt', sort: 'desc' }] }
-              }}
-              slots={{ toolbar: GridToolbar }}
-              slotProps={{
-                toolbar: { showQuickFilter: true, quickFilterProps: { debounceMs: 500 } }
-              }}
-              disableRowSelectionOnClick
-              sx={{ '& .MuiDataGrid-row:hover': { backgroundColor: 'action.hover' } }}
-            />
-          </Box>
-        </CardContent>
-      </Card>
+      {/* Event Timeline (C11) */}
+      <InstanceEventTimeline
+        instanceId={instance.id}
+        initialEvents={events}
+      />
     </Box>
   );
 }
