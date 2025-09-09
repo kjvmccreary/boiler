@@ -6,13 +6,14 @@ import {
   MenuItem,
   Select,
   SelectChangeEvent,
-  Chip,
-  Stack,
+  Typography,
   Alert,
-  Typography
+  Chip,
+  Stack
 } from '@mui/material';
 import { GatewayStrategy } from '../../dsl/dsl.types';
-import ExpressionEditor from '../components/ExpressionEditor';
+import { HybridExpressionEditor } from '../components/HybridExpressionEditor';
+import { useExpressionSettings } from '../context/ExpressionSettingsContext';
 
 export interface GatewayPropertiesPanelProps {
   nodeId: string;
@@ -20,17 +21,16 @@ export interface GatewayPropertiesPanelProps {
   strategy?: GatewayStrategy;
   condition?: string;
   onChange: (patch: Record<string, any>) => void;
-
-  // Parallel visualization metadata
   parallelBranchCount?: number;
   hasJoinCandidate?: boolean;
   parallelWarnings?: string[];
+  useMonaco?: boolean;
 }
 
 const strategyOptions: { value: GatewayStrategy; label: string; desc: string }[] = [
   { value: 'exclusive', label: 'Exclusive', desc: 'Choose exactly one branch (default)' },
   { value: 'conditional', label: 'Conditional', desc: 'Evaluate expression to select true/false edges' },
-  { value: 'parallel', label: 'Parallel', desc: 'Fan out to all outgoing branches (executed concurrently)' }
+  { value: 'parallel', label: 'Parallel', desc: 'Fan out to all outgoing branches' }
 ];
 
 export function GatewayPropertiesPanel({
@@ -40,8 +40,10 @@ export function GatewayPropertiesPanel({
   onChange,
   parallelBranchCount,
   hasJoinCandidate,
-  parallelWarnings
+  parallelWarnings,
+  useMonaco = false
 }: GatewayPropertiesPanelProps) {
+  const { semanticEnabled } = useExpressionSettings();
 
   const handleStrategyChange = useCallback((e: SelectChangeEvent<string>) => {
     const next = e.target.value as GatewayStrategy;
@@ -83,17 +85,19 @@ export function GatewayPropertiesPanel({
       </FormControl>
 
       {strategy === 'conditional' && (
-        <ExpressionEditor
+        <HybridExpressionEditor
           kind="gateway"
-          label="Condition (JsonLogic)"
           value={condition ?? ''}
           onChange={val => onChange({ condition: val })}
-          onValidityChange={valid => {
-            // Could store a local flag if needed later
-            if (!valid) {
-              // no-op now; validation enforced in dsl.validate
-            }
-          }}
+          useMonaco={useMonaco}
+          variableContext={[
+            'instance.id',
+            'instance.status',
+            'user.id',
+            'user.roles',
+            'input.payload'
+          ]}
+          semantic={semanticEnabled}
         />
       )}
 
@@ -114,7 +118,7 @@ export function GatewayPropertiesPanel({
             />
           </Stack>
           <Alert severity="info" variant="outlined">
-            Parallel execution: all outgoing edges will be activated. A downstream Join node will synchronize branches (coming in C3/C4).
+            Parallel: all outgoing edges execute. A downstream Join node will synchronize branches.
           </Alert>
           {(parallelWarnings || []).map((w, i) => (
             <Alert key={i} severity="warning" variant="standard">{w}</Alert>

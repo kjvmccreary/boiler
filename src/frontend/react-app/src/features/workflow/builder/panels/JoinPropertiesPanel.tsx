@@ -13,7 +13,8 @@ import {
   Alert
 } from '@mui/material';
 import { JoinMode } from '../../dsl/dsl.types';
-import ExpressionEditor from '../components/ExpressionEditor';
+import { HybridExpressionEditor } from '../components/HybridExpressionEditor';
+import { useExpressionSettings } from '../context/ExpressionSettingsContext';
 
 export interface JoinPropertiesPanelProps {
   nodeId: string;
@@ -23,14 +24,15 @@ export interface JoinPropertiesPanelProps {
   expression?: string;
   cancelRemaining?: boolean;
   onChange: (patch: Record<string, any>) => void;
+  useMonaco?: boolean;
 }
 
 const modeOptions: { value: JoinMode; label: string; desc: string }[] = [
   { value: 'all', label: 'All', desc: 'Wait for all incoming branches' },
-  { value: 'any', label: 'Any', desc: 'Proceed when the first branch arrives' },
-  { value: 'count', label: 'Count', desc: 'Proceed after a fixed number of branches arrive' },
-  { value: 'quorum', label: 'Quorum', desc: 'Proceed when a percentage of branches arrive' },
-  { value: 'expression', label: 'Expression', desc: 'Custom expression evaluation (JsonLogic planned)' }
+  { value: 'any', label: 'Any', desc: 'Proceed when first branch arrives' },
+  { value: 'count', label: 'Count', desc: 'Proceed after a fixed number arrive' },
+  { value: 'quorum', label: 'Quorum', desc: 'Proceed when percentage arrive' },
+  { value: 'expression', label: 'Expression', desc: 'Custom JsonLogic expression' }
 ];
 
 export function JoinPropertiesPanel({
@@ -40,13 +42,14 @@ export function JoinPropertiesPanel({
   thresholdPercent,
   expression,
   cancelRemaining = false,
-  onChange
+  onChange,
+  useMonaco = false
 }: JoinPropertiesPanelProps) {
+  const { semanticEnabled } = useExpressionSettings();
 
   const handleMode = useCallback((e: SelectChangeEvent<string>) => {
     const next = e.target.value as JoinMode;
     const patch: Record<string, any> = { mode: next };
-    // Clean stale fields when mode shifts
     if (next !== 'count') patch.thresholdCount = undefined;
     if (next !== 'quorum') patch.thresholdPercent = undefined;
     if (next !== 'expression') patch.expression = undefined;
@@ -105,18 +108,19 @@ export function JoinPropertiesPanel({
       )}
 
       {showExpression && (
-        <ExpressionEditor
+        <HybridExpressionEditor
           kind="join"
-          label="Join Expression (JsonLogic)"
           value={expression ?? ''}
           onChange={val => onChange({ expression: val })}
-          onValidityChange={valid => {
-            if (!valid) {
-              // Optionally flag future publish block
-            }
-          }}
-          compact
-          placeholder='{"<=":[{"var":"arrivals"},2]}'
+          useMonaco={useMonaco}
+          semantic={semanticEnabled}
+          variableContext={[
+            'branch.arrivals',
+            'branch.totalExpected',
+            'instance.id',
+            'instance.status',
+            'user.id'
+          ]}
         />
       )}
 
@@ -132,7 +136,7 @@ export function JoinPropertiesPanel({
       />
 
       <Alert severity="info" variant="outlined">
-        Full validation & expression evaluation integration will follow in story C4/H1.
+        Expression mode executes a JsonLogic expression referencing branch arrival context (future docs).
       </Alert>
     </Box>
   );

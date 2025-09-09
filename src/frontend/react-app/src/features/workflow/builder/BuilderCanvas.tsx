@@ -18,6 +18,11 @@ import {
 } from 'reactflow';
 import { Box } from '@mui/material';
 import { WorkflowNode } from './nodes/WorkflowNode';
+import { PropertyPanel } from './panels/PropertyPanel';
+import { ExpressionSettingsProvider } from './context/ExpressionSettingsContext';
+import { SemanticValidationToggle } from './components/SemanticValidationToggle';
+import { ThemeSelector } from './components/ThemeSelector';
+
 import type {
   DslNode,
   NodeType,
@@ -26,9 +31,9 @@ import type {
   HumanTaskNode,
   AutomaticNode,
   GatewayNode,
-  TimerNode
+  TimerNode,
+  JoinNode
 } from '../dsl/dsl.types';
-import { PropertyPanel } from './panels/PropertyPanel';
 
 const nodeTypes = {
   start: WorkflowNode,
@@ -36,7 +41,8 @@ const nodeTypes = {
   humanTask: WorkflowNode,
   automatic: WorkflowNode,
   gateway: WorkflowNode,
-  timer: WorkflowNode
+  timer: WorkflowNode,
+  join: WorkflowNode
 };
 
 export interface BuilderCanvasProps {
@@ -107,8 +113,8 @@ function BuilderCanvasInner({
               label: 'Join',
               mode: 'all',
               cancelRemaining: false
-            } as any;
-          default: return { ...baseNode, type: 'start', label: 'Unknown' } as StartNode;
+            } as JoinNode;
+          default: return { ...baseNode, type: 'start', label: 'Unknown' } as StartNode; // fixed baseBaseNode -> baseNode
         }
       };
 
@@ -125,7 +131,6 @@ function BuilderCanvasInner({
     [screenToFlowPosition, setNodes]
   );
 
-  // Helper: compute label for parallel branch
   const computeParallelBranchLabel = (sourceId: string): string => {
     const existing = edges.filter(e => e.source === sourceId);
     const index = existing.length + 1;
@@ -143,9 +148,10 @@ function BuilderCanvasInner({
       let style: Edge['style'] | undefined;
       let label: string | undefined = branch;
 
-      if (sourceNode?.data?.strategy === 'parallel') {
-        // Auto-label parallel branch if unlabeled
-        label = computeParallelBranchLabel(sourceNode.id);
+      const isParallel = !!sourceNode && (sourceNode.data as any)?.strategy === 'parallel';
+
+      if (isParallel) {
+        label = computeParallelBranchLabel(sourceNode!.id);
         style = {
           strokeDasharray: '4 2',
           stroke: '#5e35b1',
@@ -158,11 +164,11 @@ function BuilderCanvasInner({
           {
             ...params,
             id: `e-${params.source}-${params.sourceHandle ?? label ?? 'h'}-${params.target}-${Date.now()}`,
-            source: params.source,
-            target: params.target,
+            source: params.source!,
+            target: params.target!,
             sourceHandle: params.sourceHandle ?? undefined,
             label,
-            data: { fromHandle: branch, parallel: sourceNode?.data?.strategy === 'parallel' },
+            data: { fromHandle: branch, parallel: isParallel },
             type: 'default',
             style
           } as Edge,
@@ -177,16 +183,18 @@ function BuilderCanvasInner({
 
   useEffect(() => {
     const gatewayEdgeDebug = edges
-      .filter(e => nodes.some(n => n.id === e.source && (n as any).data?.type === 'gateway') || nodes.some(n => n.id === e.source && n.type === 'gateway'));
+      .filter(e =>
+        nodes.some(n => n.id === e.source && ((n as any).data?.type === 'gateway' || n.type === 'gateway'))
+      );
     if (gatewayEdgeDebug.length) {
-      console.log('[RF][GatewayEdges]', gatewayEdgeDebug.map(e => ({ // eslint-disable-line
+      console.log('[RF][GatewayEdges]', gatewayEdgeDebug.map(e => ({
         id: e.id,
         source: e.source,
         target: e.target,
         sourceHandle: e.sourceHandle,
         label: e.label,
         data: e.data
-      })));
+      }))); // eslint-disable-line
     }
   }, [edges, nodes]);
 
@@ -198,7 +206,7 @@ function BuilderCanvasInner({
 
         if (selectedNodes.length > 0) {
           const ids = selectedNodes.map(n => n.id);
-            setNodes(nds => nds.filter(n => !ids.includes(n.id)));
+          setNodes(nds => nds.filter(n => !ids.includes(n.id)));
           setEdges(eds => eds.filter(e => !ids.includes(e.source) && !ids.includes(e.target)));
           if (activeNode && ids.includes(activeNode.id)) setActiveNode(undefined);
         }
@@ -283,9 +291,28 @@ function BuilderCanvasInner({
 
 export function BuilderCanvas(props: BuilderCanvasProps) {
   return (
-    <ReactFlowProvider>
-      <BuilderCanvasInner {...props} />
-    </ReactFlowProvider>
+    <ExpressionSettingsProvider>
+      <ReactFlowProvider>
+        <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
+          <BuilderCanvasInner {...props} />
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              zIndex: 10,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1,
+              alignItems: 'flex-end'
+            }}
+          >
+            <ThemeSelector />
+            <SemanticValidationToggle />
+          </Box>
+        </Box>
+      </ReactFlowProvider>
+    </ExpressionSettingsProvider>
   );
 }
 
