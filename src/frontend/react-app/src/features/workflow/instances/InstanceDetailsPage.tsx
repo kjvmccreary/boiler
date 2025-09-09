@@ -37,6 +37,7 @@ import {
   TaskSummaryDto,
   InstanceRuntimeSnapshotDto
 } from '@/types/workflow';
+import { computeDedupedProgress } from './utils/progress';
 import toast from 'react-hot-toast';
 import { useTenant } from '@/contexts/TenantContext';
 import DefinitionDiagram from '@/features/workflow/definitions/DefinitionDiagram';
@@ -292,19 +293,14 @@ export function InstanceDetailsPage() {
     return () => window.clearTimeout(id);
   }, [autoRefresh, instance, loadSnapshot, tasks.length, currentNodeIds.join(',')]);
 
-  // Derived metrics for snapshot panel
-  let totalNodes = 0;
-  try {
-    if (definitionJson) {
-      const parsed = JSON.parse(definitionJson);
-      if (Array.isArray(parsed?.nodes)) {
-        totalNodes = parsed.nodes.length;
-      }
-    }
-  } catch {
-    // ignore parse errors
-  }
-  const progressPercent = totalNodes > 0 ? (visitedNodeIds.length / totalNodes) * 100 : 0;
+  // Progress metrics (raw + deduped)
+  const {
+    totalNodes,
+    executableTotal,
+    dedupVisitedExecutable,
+    rawPercent,
+    dedupedPercent
+  } = computeDedupedProgress(definitionJson, visitedNodeIds);
 
   // Disable auto when terminal
   useEffect(() => {
@@ -396,7 +392,10 @@ export function InstanceDetailsPage() {
         currentNodeIds={currentNodeIds}
         traversedEdgeIds={traversedEdgeIds}
         totalNodes={totalNodes}
-        progressPercent={progressPercent}
+        progressPercent={dedupedPercent}
+        rawProgressPercent={rawPercent}
+        executableNodeTotal={executableTotal}
+        dedupVisitedExecutable={dedupVisitedExecutable}
         tasksCount={tasks.length}
         eventsCount={events.length}
         onRefresh={handleRefresh}

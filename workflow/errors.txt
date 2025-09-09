@@ -3,70 +3,20 @@ PS C:\Users\mccre\dev\boiler\src\frontend\react-app> npm run build
 > microservices-frontend@0.0.0 build
 > tsc -b && vite build
 
-src/features/workflow/builder/NodePalette.tsx:19:5 - error TS2353: Object literal may only specify known properties, and 'defaultData' does not exist in type 'NodePaletteItem'.
+src/features/workflow/instances/__tests__/progressDedupe.test.ts:2:60 - error TS2307: Cannot find module '../utils/progress' or its corresponding type declarations.
 
-19     defaultData: { id: '', type: 'start', label: 'Start', x: 0, y: 0 }
-       ~~~~~~~~~~~
+2 import { computeDedupedProgress, shouldEmitVariance } from '../utils/progress';
+                                                             ~~~~~~~~~~~~~~~~~~~
 
-src/features/workflow/builder/NodePalette.tsx:26:5 - error TS2353: Object literal may only specify known properties, and 'defaultData' does not exist in type 'NodePaletteItem'.
+src/features/workflow/instances/components/InstanceRuntimeSnapshotPanel.tsx:21:36 - error TS2307: Cannot find module '../utils/progress' or its corresponding type declarations.
 
-26     defaultData: { id: '', type: 'end', label: 'End', x: 0, y: 0 }
-       ~~~~~~~~~~~
+21 import { shouldEmitVariance } from '../utils/progress';
+                                      ~~~~~~~~~~~~~~~~~~~
 
-src/features/workflow/builder/NodePalette.tsx:33:5 - error TS2353: Object literal may only specify known properties, and 'defaultData' does not exist in type 'NodePaletteItem'.
+src/features/workflow/instances/InstanceDetailsPage.tsx:40:40 - error TS2307: Cannot find module './utils/progress' or its corresponding type declarations.
 
-33     defaultData: {
-       ~~~~~~~~~~~
-
-src/features/workflow/builder/NodePalette.tsx:47:5 - error TS2353: Object literal may only specify known properties, and 'defaultData' does not exist in type 'NodePaletteItem'.
-
-47     defaultData: {
-       ~~~~~~~~~~~
-
-src/features/workflow/builder/NodePalette.tsx:61:5 - error TS2353: Object literal may only specify known properties, and 'defaultData' does not exist in type 'NodePaletteItem'.
-
-61     defaultData: {
-       ~~~~~~~~~~~
-
-src/features/workflow/builder/NodePalette.tsx:75:5 - error TS2353: Object literal may only specify known properties, and 'defaultData' does not exist in type 'NodePaletteItem'.
-
-75     defaultData: {
-       ~~~~~~~~~~~
-
-src/features/workflow/builder/NodePalette.tsx:89:5 - error TS2353: Object literal may only specify known properties, and 'defaultData' does not exist in type 'NodePaletteItem'.
-
-89     defaultData: {
-       ~~~~~~~~~~~
-
-src/features/workflow/dsl/dsl.serialize.ts:63:82 - error TS2339: Property 'fromHandle' does not exist on type 'DslEdge'.
-
-63     id: e.id, from: e.from, to: e.to, label: e.label, fromHandle: (e as DslEdge).fromHandle
-                                                                                    ~~~~~~~~~~
-
-src/features/workflow/dsl/dsl.serialize.ts:99:11 - error TS2339: Property 'fromHandle' does not exist on type 'DslEdge'.
-
-99       : e.fromHandle === 'true' || e.fromHandle === 'false'
-             ~~~~~~~~~~
-
-src/features/workflow/dsl/dsl.serialize.ts:99:38 - error TS2339: Property 'fromHandle' does not exist on type 'DslEdge'.
-
-99       : e.fromHandle === 'true' || e.fromHandle === 'false'
-                                        ~~~~~~~~~~
-
-src/features/workflow/dsl/dsl.serialize.ts:100:14 - error TS2339: Property 'fromHandle' does not exist on type 'DslEdge'.
-
-100         ? (e.fromHandle as 'true' | 'false')
-                 ~~~~~~~~~~
-
-src/test/utils/test-utils.tsx:556:5 - error TS2353: Object literal may only specify known properties, and 'fromHandle' does not exist in type 'DslEdge'.
-
-556     fromHandle: partial.fromHandle
-        ~~~~~~~~~~
-
-src/test/utils/test-utils.tsx:556:25 - error TS2339: Property 'fromHandle' does not exist on type 'Partial<DslEdge> & { id: string; from: string; to: string; }'.
-
-556     fromHandle: partial.fromHandle
-                            ~~~~~~~~~~
+40 import { computeDedupedProgress } from './utils/progress';
+                                          ~~~~~~~~~~~~~~~~~~
 
 
-Found 13 errors.
+Found 3 errors.

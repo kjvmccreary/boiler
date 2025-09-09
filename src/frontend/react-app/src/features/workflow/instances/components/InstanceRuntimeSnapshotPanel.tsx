@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -17,6 +17,8 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import PauseCircleIcon from '@mui/icons-material/PauseCircle';
 import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import type { WorkflowInstanceDto } from '@/types/workflow';
+import { trackWorkflow } from '@/features/workflow/telemetry/workflowTelemetry';
+import { shouldEmitVariance } from '../utils/progress';
 
 export interface InstanceRuntimeSnapshotPanelProps {
   instance: WorkflowInstanceDto;
@@ -25,12 +27,15 @@ export interface InstanceRuntimeSnapshotPanelProps {
   traversedEdgeIds: string[];
   totalNodes: number;
   progressPercent: number;
-  tasksCount: number;
-  eventsCount: number;
-  onRefresh: () => void;
-  autoRefresh: boolean;
-  setAutoRefresh: (v: boolean) => void;
-  lastUpdated?: Date | null;
+  rawProgressPercent?: number;              // NEW: raw (legacy) percent (all nodes / visited length)
+  executableNodeTotal?: number;             // NEW: total executable nodes (excludes start)
+  dedupVisitedExecutable?: number;          // NEW: dedup visited executable count
+   tasksCount: number;
+   eventsCount: number;
+   onRefresh: () => void;
+   autoRefresh: boolean;
+   setAutoRefresh: (v: boolean) => void;
+   lastUpdated?: Date | null;
 }
 
 export const InstanceRuntimeSnapshotPanel: React.FC<InstanceRuntimeSnapshotPanelProps> = ({
@@ -40,18 +45,35 @@ export const InstanceRuntimeSnapshotPanel: React.FC<InstanceRuntimeSnapshotPanel
   traversedEdgeIds,
   totalNodes,
   progressPercent,
+  rawProgressPercent,
+  executableNodeTotal,
+  dedupVisitedExecutable,
   tasksCount,
   eventsCount,
   onRefresh,
   autoRefresh,
   setAutoRefresh,
   lastUpdated
-}) => {
+ }) => {
   const running = instance.status === 'Running';
   const suspended = instance.status === 'Suspended';
   const completed = instance.status === 'Completed';
   const failed = instance.status === 'Failed';
   const noActiveWhileRunning = running && currentNodeIds.length === 0;
+
+  // Telemetry: emit variance if meaningful
+  useEffect(() => {
+    if (rawProgressPercent == null) return;
+    if (shouldEmitVariance(rawProgressPercent, progressPercent)) {
+      const delta = Math.abs(rawProgressPercent - progressPercent);
+      trackWorkflow('instance.progress.variance', {
+        instanceId: instance.id,
+        raw: Number(rawProgressPercent.toFixed(2)),
+        deduped: Number(progressPercent.toFixed(2)),
+        delta: Number(delta.toFixed(2))
+      });
+    }
+  }, [rawProgressPercent, progressPercent, instance.id]);
 
   return (
     <Card sx={{ mb: 3 }}>
@@ -120,19 +142,27 @@ export const InstanceRuntimeSnapshotPanel: React.FC<InstanceRuntimeSnapshotPanel
         )}
 
         <Box mb={2}>
-            <Typography variant="caption" color="text.secondary">
-              Progress ({visitedNodeIds.length}/{totalNodes} nodes visited)
-            </Typography>
-          <LinearProgress
-            variant="determinate"
-            value={progressPercent}
-            sx={{ height: 8, borderRadius: 1, mt: 0.5 }}
-            color={completed ? 'success' : failed ? 'error' : 'primary'}
-          />
           <Typography variant="caption" color="text.secondary">
-            {progressPercent.toFixed(1)}%
+            Progress (deduped {dedupVisitedExecutable ?? visitedNodeIds.length}
+            {executableNodeTotal != null && executableNodeTotal > 0
+              ? `/${executableNodeTotal} exec`
+              : `/${totalNodes}`} nodes)
           </Typography>
-        </Box>
+           <LinearProgress
+             variant="determinate"
+             value={progressPercent}
+             sx={{ height: 8, borderRadius: 1, mt: 0.5 }}
+             color={completed ? 'success' : failed ? 'error' : 'primary'}
+           />
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <span>{progressPercent.toFixed(1)}% deduped</span>
+            {rawProgressPercent != null && Math.abs(rawProgressPercent - progressPercent) >= 0.1 && (
+              <Tooltip title={`Raw (legacy) progress: ${rawProgressPercent.toFixed(1)}% based on total nodes=${totalNodes}`}>
+                <span style={{ opacity: 0.75 }}>raw {rawProgressPercent.toFixed(1)}%</span>
+              </Tooltip>
+            )}
+          </Typography>
+         </Box>
 
         <Box
           sx={{
@@ -143,6 +173,13 @@ export const InstanceRuntimeSnapshotPanel: React.FC<InstanceRuntimeSnapshotPanel
         >
           <Metric label="Active Nodes" value={currentNodeIds.length} items={currentNodeIds} color="info" />
           <Metric label="Visited Nodes" value={visitedNodeIds.length} />
+          {dedupVisitedExecutable != null && executableNodeTotal != null && executableNodeTotal > 0 && (
+            <Metric
+              label="Exec Visited (dedup)"
+              value={`${dedupVisitedExecutable}/${executableNodeTotal}`}
+              color="primary"
+            />
+          )}
           <Metric label="Traversed Edges" value={traversedEdgeIds.length} />
           <Metric label="Tasks" value={tasksCount} />
           <Metric label="Events" value={eventsCount} />

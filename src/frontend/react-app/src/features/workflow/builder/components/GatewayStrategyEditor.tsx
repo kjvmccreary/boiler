@@ -16,6 +16,7 @@ import {
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import type { GatewayNode } from '../../dsl/dsl.types';
+import { trackWorkflow } from '../../telemetry/workflowTelemetry';
 
 export interface GatewayStrategyEditorProps {
   node: GatewayNode;
@@ -50,16 +51,20 @@ export const GatewayStrategyEditor: React.FC<GatewayStrategyEditorProps> = ({
   }, [inferred, conditionDraft]);
 
   const handleStrategyChange = (val: string) => {
+    const prev = inferred;
     if (val === 'conditional' && !node.condition) {
       const defaultCond = '{"==":[{"var":"field"}, true]}';
       onChange({ strategy: 'conditional', condition: defaultCond });
       setConditionDraft(defaultCond);
+      trackWorkflow('gateway.strategy.changed', { nodeId: node.id, from: prev, to: 'conditional' });
       return;
     }
     if (val !== 'conditional') {
       onChange({ strategy: val as any, condition: undefined });
+      trackWorkflow('gateway.strategy.changed', { nodeId: node.id, from: prev, to: val });
     } else {
       onChange({ strategy: 'conditional' });
+      trackWorkflow('gateway.strategy.changed', { nodeId: node.id, from: prev, to: 'conditional' });
     }
   };
 

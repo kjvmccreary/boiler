@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import type { JoinNode } from '../../dsl/dsl.types';
 import type { JoinDiagnostics } from '../../dsl/dsl.validate';
+import { trackWorkflow } from '../../telemetry/workflowTelemetry';
 
 export interface JoinConfigurationPanelProps {
   node: JoinNode;
@@ -69,11 +70,15 @@ export const JoinConfigurationPanel: React.FC<JoinConfigurationPanelProps> = ({
           value={mode}
           onChange={(e) => {
             const val = e.target.value as JoinNode['mode'];
+            const prev = mode;
             const patch: Partial<JoinNode> = { mode: val };
             if (val !== 'expression') patch.expression = undefined;
             if (val !== 'count') patch.thresholdCount = undefined;
             if (val !== 'quorum') patch.thresholdPercent = undefined;
             onChange(patch);
+            if (val !== prev) {
+              trackWorkflow('join.mode.changed', { nodeId: node.id, from: prev, to: val });
+            }
           }}
         >
           {MODES.map(m => (

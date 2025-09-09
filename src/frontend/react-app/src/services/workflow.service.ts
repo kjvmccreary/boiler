@@ -329,7 +329,26 @@ export class WorkflowService {
       // Swallow unexpected network/shape errors – do not block publish.
     }
 
-    // 3. Publish
+    // 3. Optional server-side TAGS validation (Tags Validation PR1)
+    //    Endpoint contract (expected):
+    //      GET /api/workflow/definitions/{id}/validate-tags  -> { success:boolean, errors?:string[] }
+    //    Unknown / not deployed (404) is treated as pass.
+    try {
+      const tagResult = await this.validateTagsById(id);
+      if (!tagResult.success || tagResult.errors.length) {
+        const merged = {
+          ...vr,
+          success: false,
+          errors: [...vr.errors, ...tagResult.errors],
+          warnings: vr.warnings
+        };
+        return { validation: merged, published: undefined };
+      }
+    } catch {
+      // Do not block publish on unexpected failure.
+    }
+
+    // 4. Publish
     try {
       const published = await this.publishDefinition(id, opts);
       return { validation: vr, published };
@@ -633,6 +652,62 @@ export class WorkflowService {
         return { success: true, errors: [] };
       }
       // Non-404 errors are treated as soft failures (do not block publish)
+      return { success: true, errors: [] };
+    }
+  }
+
+  /**
+   * validateTagsById
+   * Attempts server-side validation of tags associated with a workflow definition.
+   * Safe: 404 (endpoint not deployed) returns success.
+   * Any non-404 error is swallowed as pass (to avoid blocking publish on transient issues).
+   */
+  async validateTagsById(definitionId: number): Promise<{ success: boolean; errors: string[] }> {
+    try {
+      const resp = await apiClient.get(`/api/workflow/definitions/${definitionId}/validate-tags`);
+      const data = (resp as any).data?.data ?? (resp as any).data;
+      if (data && typeof data === 'object') {
+        const errors: string[] =
+          Array.isArray(data.errors) ? data.errors :
+            typeof data.errors === 'string' ? [data.errors] : [];
+        return {
+          success: (data.success === undefined ? errors.length === 0 : !!data.success) && errors.length === 0,
+          errors
+        };
+      }
+      return { success: true, errors: [] };
+    } catch (e: any) {
+      const status = e?.response?.status;
+      if (status === 404) {
+        // Endpoint not present yet – treat as success
+        return { success: true, errors: [] };
+      }
+      // Non-404 errors are not considered fatal for publish path
+      return { success: true, errors: [] };
+    }
+  }
+
+  /**
+   * previewValidateTags
+   * Live (pre-publish) validation for edited tag string without committing a draft.
+   * Calls the same backend validator with a tags override (query param).
+   * If the backend does not yet support the override param it should ignore and
+   * return the current stored definition tags (still safe).
+   * 404 (no endpoint) -> success
+   */
+  async previewValidateTags(definitionId: number, tagString: string): Promise<{ success: boolean; errors: string[] }> {
+    try {
+      const resp = await apiClient.get(
+        `/api/workflow/definitions/${definitionId}/validate-tags`,
+        { params: { tags: tagString } }
+      );
+      const data = (resp as any).data?.data ?? (resp as any).data;
+      const errors: string[] =
+        Array.isArray(data?.errors) ? data.errors :
+          typeof data?.errors === 'string' ? [data.errors] : [];
+      return { success: (data?.success === undefined ? errors.length === 0 : !!data.success) && errors.length === 0, errors };
+    } catch (e: any) {
+      if (e?.response?.status === 404) return { success: true, errors: [] };
       return { success: true, errors: [] };
     }
   }

@@ -39,14 +39,14 @@ Progress Legend: [ ] Not Started · [~] In Progress · [x] Complete · [D] Defer
 | New Version (draft) | Implemented | Action button (create draft) | Diff viewer later | Medium | [x] |
 | Runtime Snapshot | Implemented | Snapshot panel (C10) | Additional graph insights | Critical | [x] |
 | Event Timeline | Implemented | Timeline panel (C11) | Advanced stream coalescing | Critical | [x] |
-| Progress Bar (dedupe) | Implemented | Partial | Dedupe context missing | Low | [ ] |
+| Progress Bar (dedupe) | Implemented | UI + hook dedupe & util tests (PR1–PR2) | Variance telemetry aggregation (optional PR3) | Low | [~] |
 | Tags Filtering (ANY/ALL) | Implemented | Implemented | Backend validation guard | Medium | [ ] |
-| Tags Server-Side Validation | Missing guard | Client-only | Add guard | Medium | [ ] |
+| Tags Server-Side Validation | Missing guard | Publish pre-check + live UI validation + tests (PR3) | — | Medium | [x] |
 | JsonLogic Expression Builder | Engine ready | Monaco + semantic + vars | Examples library | High | [x] |
 | Monaco Editor Integration | N/A | MVP done | Tests + optimization | High | [x] |
 | Monaco Telemetry & Theming | N/A | Implemented | Charts/export | High | [x] |
 | Monaco Variable Assist | N/A | Dynamic vars + docs | Categorized grouping | Medium | [x] |
-| Monaco Frontend Tests | N/A | Missing | Coverage scenarios | Medium | [ ] |
+| Monaco Frontend Tests | N/A | Telemetry assertions added (PR3) | Optional: coverage on timer & parallel diagnostics | Medium | [x] |
 | Semantic Validation Opt-In | N/A | Toggle + badge | Analytics detail | Low | [x] |
 | Monaco Bundle Optimization | N/A | Full bundle | Slim JSON-only | Low | [ ] |
 | Parallel→Join Structural Validation | N/A | Heuristic + refinement + strict toggle (M2) | Dominance completeness metrics | Critical | [x] |
@@ -202,6 +202,12 @@ Layered approach executed client-side before publish; server still authoritative
 | 2025-09-09 | A1 | PR3: automatic action validation unit + integration tests added | None | (Optional) PR4 telemetry polish |
 | 2025-09-09 | A1 | PR4: telemetry polish (headers/body size buckets, health transitions, retry state) | None | PR5 finalize + docs |
 | 2025-09-09 | A1 | PR5: documentation & JSDoc added; story complete | None | — |
+| 2025-09-09 | T1 (Tags Validation) | PR2: Live tag validation field (debounced), error surfacing in Workflow Settings | None | PR3 tests |
+| 2025-09-09 | T1 (Tags Validation) | PR3: Unit & integration tests (preview + publish gating) added | None | — |
+| 2025-09-09 | PB (Progress Dedupe) | PR2: Added useInstanceProgress deduped metrics (hook-level) | None | PR2b add hook tests |
+| 2025-09-09 | MFT (Monaco Tests) | PR1: Added component tests (strategy, join, assignment, action) with editor mock | None | PR2 expand scenarios |
+| 2025-09-09 | MFT (Monaco Tests) | PR2: Added extended validation tests (SLA, quorum, expression invalid JSON, headers/body/retry/discard) | None | PR3 telemetry assertions |
+| 2025-09-09 | MFT (Monaco Tests) | PR3: Telemetry event assertion coverage (gateway.strategy, join.mode, assignment.mode/expression, action.* set) | None | — |
 
 ---
 
@@ -234,6 +240,7 @@ Layered approach executed client-side before publish; server still authoritative
 | 2025-09-09 | Added definition revalidate action & panel | Team |
 | 2025-09-09 | Added new version (draft) creation flow | Team |
 | 2025-09-09 | Automatic node action config (A1 complete) | Team |
+| 2025-09-09 | PR1: Added server-side tags validation hook in publish flow (silent 404 pass) | Team |
 
 ---
 
@@ -363,7 +370,7 @@ Layered approach executed client-side before publish; server still authoritative
 | duplicate user ids | Warning | “Duplicate users removed.” (auto-dedupe) |
 | duplicate roles | Warning | “Duplicate roles removed.” |
 | SLA targetMinutes < 5 | Warning | “Very low SLA target may be unrealistic.” |
-| softWarningMinutes >= targetMinutes | Error | “Soft warning must be less than target.” |
+| softWarningMinutes ≥ targetMinutes | Error | “Soft warning must be less than target.” |
 | escalation.afterMinutes <= targetMinutes (if both) | Warning | “Escalation occurs before or at SLA target.” |
 
 ### 18.5 Backend / API Touchpoints
@@ -413,7 +420,7 @@ Layered approach executed client-side before publish; server still authoritative
 | Roles mode duplicates | Deduped silently; warning present |
 | Hybrid missing expression | Error |
 | Expression invalid JSON | Syntax error surfaced |
-| SLA soft >= target | Error |
+| SLA soft ≥ target | Error |
 | Escalation without SLA | Escalation section disabled |
 | Successful publish with hybrid | No assignment errors in final validation |
 

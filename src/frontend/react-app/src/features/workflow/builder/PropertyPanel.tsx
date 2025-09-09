@@ -30,6 +30,7 @@ import type { DslDefinition } from '../dsl/dsl.types';
 import AssignmentSection from './components/AssignmentSection';
 import FormSchemaSection from './components/FormSchemaSection';
 import ActionSection from './components/ActionSection';
+import { workflowService } from '@/services/workflow.service';
 
 interface PropertyPanelProps {
   open: boolean;
@@ -42,6 +43,9 @@ interface PropertyPanelProps {
   onWorkflowDescriptionChange: (description: string) => void;
   currentDefinition?: DslDefinition;           // NEW: for diagnostics lookup
   latestValidation?: ExtendedValidationResult; // NEW: pass existing validation (avoid re-run)
+  workflowTags?: string;                       // OPTIONAL: comma / space separated tags string
+  onWorkflowTagsChange?: (tags: string) => void;
+  definitionId?: number;                       // OPTIONAL: needed for live server tag validation
 }
 
 export function PropertyPanel({
@@ -54,10 +58,62 @@ export function PropertyPanel({
   onWorkflowNameChange,
   onWorkflowDescriptionChange,
   currentDefinition,
-  latestValidation
+  latestValidation,
+  workflowTags,
+  onWorkflowTagsChange,
+  definitionId
 }: PropertyPanelProps) {
   const [localNode, setLocalNode] = useState<DslNode | null>(null);
   const [localValidation, setLocalValidation] = useState<ExtendedValidationResult | null>(null);
+  // Tags (local fallback if host does not provide handlers)
+  const [localTags, setLocalTags] = useState<string>(workflowTags || '');
+  const effectiveTags = workflowTags !== undefined ? workflowTags : localTags;
+  const updateTags = (v: string) => {
+    if (onWorkflowTagsChange) onWorkflowTagsChange(v);
+    else setLocalTags(v);
+  };
+
+  // --- Server-side tag validation (debounced, clean implementation) ---
+  const [tagErrors, setTagErrors] = useState<string[]>([]);
+  const [tagValidating, setTagValidating] = useState(false);
+  const tagDebounceRef = useRef<number | null>(null);
+  const lastValidatedRef = useRef<string>('');
+
+  useEffect(() => {
+    if (!definitionId) {
+      // No definition yet (new draft) – skip server validation
+      setTagErrors([]);
+      return;
+    }
+    if (tagDebounceRef.current) window.clearTimeout(tagDebounceRef.current);
+
+    // Empty tags => clear errors
+    if (!effectiveTags || !effectiveTags.trim()) {
+      setTagErrors([]);
+      lastValidatedRef.current = '';
+      return;
+    }
+
+    // Debounce call
+    tagDebounceRef.current = window.setTimeout(async () => {
+      if (effectiveTags === lastValidatedRef.current) return;
+      try {
+        setTagValidating(true);
+        const res = await workflowService.previewValidateTags(definitionId, effectiveTags);
+        lastValidatedRef.current = effectiveTags;
+        setTagErrors(res.errors);
+      } catch {
+        // Ignore network / 404 (service method already 404-safe)
+        setTagErrors([]);
+      } finally {
+        setTagValidating(false);
+      }
+    }, 500);
+
+    return () => {
+      if (tagDebounceRef.current) window.clearTimeout(tagDebounceRef.current);
+    };
+  }, [effectiveTags, definitionId]);
 
   useEffect(() => { setLocalNode(selectedNode); }, [selectedNode]);
 
@@ -205,7 +261,25 @@ export function PropertyPanel({
             rows={3}
             value={workflowDescription}
             onChange={(e) => onWorkflowDescriptionChange(e.target.value)}
+            sx={{ mb: 2 }}
           />
+          <TextField
+            fullWidth
+            label="Tags"
+            placeholder="comma or space separated"
+            value={effectiveTags}
+            onChange={(e) => updateTags(e.target.value)}
+            helperText={tagValidating ? 'Validating…' : 'Server-validated tag set (invalid tags block publish)'}
+            error={tagErrors.length > 0}
+            FormHelperTextProps={{ sx: { color: tagErrors.length ? 'error.main' : 'text.secondary' } }}
+          />
+          {tagErrors.length > 0 && (
+            <Alert severity="error" sx={{ mt: 1, p: 1 }}>
+              <Typography variant="caption" component="div">
+                {tagErrors.map((t, i) => <div key={i}>{t}</div>)}
+              </Typography>
+            </Alert>
+          )}
         </AccordionDetails>
       </Accordion>
 
