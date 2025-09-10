@@ -8,7 +8,6 @@ using DTOs.Workflow.Enums;
 using WorkflowService.Persistence;
 using Microsoft.EntityFrameworkCore;
 using WorkflowService.Services.Interfaces;
-using System.Security.Claims;
 using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
 
 namespace WorkflowService.Controllers;
@@ -186,6 +185,15 @@ public class TasksController : ControllerBase
         var result = await _taskService.ReleaseTaskAsync(id);
         if (!result.Success) return BadRequest(result);
         await _unitOfWork.CommitAsync();
+        return Ok(result);
+    }
+
+    [HttpGet("active-counts")]
+    [RequiresPermission(Permissions.Workflow.ViewTasks)]
+    public async Task<ActionResult<ApiResponseDto<ActiveTasksCountDto>>> GetActiveCounts(CancellationToken ct)
+    {
+        var result = await _taskService.GetActiveTasksCountAsync(ct);
+        if (!result.Success) return BadRequest(result);
         return Ok(result);
     }
 

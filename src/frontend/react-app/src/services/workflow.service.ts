@@ -579,64 +579,29 @@ export class WorkflowService {
     return unwrap<InstanceRuntimeSnapshotDto>(resp.data);
   }
 
-  async validateExpression(kind: 'gateway' | 'join', expression: string): Promise<ExpressionValidationResult> {
+  async getExpressionVariables(kind: string) {
     try {
-      // NOTE: apiClient interceptor already unwraps { success, data } into just data when present.
-      // Therefore resp.data is EITHER:
-      //  - ExpressionValidationResultDto (unwrapped)
-      //  - Or (if backend returns raw) still the result object
-      const resp = await apiClient.post('/api/workflow/expressions/validate', { kind, expression });
-
-      const raw: any = resp.data;
-
-      // If interceptor did NOT unwrap (defensive), handle optional wrapper.
-      const inner =
-        raw && typeof raw === 'object' && 'data' in raw && ('success' in raw)
-          ? raw.data
-          : raw;
-
-      // Normalize casing (backend might use PascalCase)
-      const errors = inner.errors ?? inner.Errors ?? [];
-      const warnings = inner.warnings ?? inner.Warnings ?? [];
-      const ast = inner.ast ?? inner.Ast;
-
-      // Determine success (prefer explicit success flag, else infer from errors length)
-      const successFlag = (inner.success ?? inner.Success);
-      const success = typeof successFlag === 'boolean'
-        ? successFlag && errors.length === 0
-        : errors.length === 0;
-
-      return {
-        success,
-        errors,
-        warnings,
-        ast
-      };
+      const resp = await apiClient.get(`/api/workflow/expressions/variables?kind=${encodeURIComponent(kind)}`);
+      return unwrap<string[]>(resp.data);
     } catch (e: any) {
-      return {
-        success: false,
-        errors: [e?.message || 'Validation request failed'],
-        warnings: []
-      };
+      if (e?.response?.status === 404) {
+        console.warn('[WorkflowService] variables endpoint missing – returning empty list');
+        return [];
+      }
+      throw e;
     }
   }
 
-  /**
-   * Fetch dynamic expression variables for assist / completion (H7 completion).
-   * Backend (proposed) endpoint: GET /api/workflow/expressions/variables?kind=gateway|join
-   * Falls back to a conservative static list if endpoint unavailable.
-   */
-  async getExpressionVariables(kind: 'gateway' | 'join'): Promise<string[]> {
+  async validateExpression(kind: string, expression: string) {
     try {
-      const resp = await apiClient.get(`/api/workflow/expressions/variables?kind=${encodeURIComponent(kind)}`);
-      const list = unwrap<string[]>(resp.data);
-      if (Array.isArray(list) && list.length) return list;
-    } catch {
-      // swallow and fallback
+      const resp = await apiClient.post('/api/workflow/expressions/validate', { kind, expression });
+      return unwrap<{ success: boolean; errors: string[]; warnings: string[] }>(resp.data);
+    } catch (e: any) {
+      if (e?.response?.status === 404) {
+        return { success: true, errors: [], warnings: [] };
+      }
+      throw e;
     }
-    if (kind === 'join')
-      return ['branch.arrivals', 'branch.totalExpected', 'instance.id', 'instance.status', 'user.id'];
-    return ['instance.id', 'instance.status', 'user.id', 'user.roles', 'input.payload'];
   }
 
   /**

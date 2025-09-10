@@ -36,13 +36,9 @@ export class RoleService {
         searchTerm
       } = params;
 
-      const queryParams = new URLSearchParams({
-        page: page.toString(),
-        pageSize: pageSize.toString(),
-        ...(searchTerm && { searchTerm })
-      });
-
-      const url = `/api/roles?${queryParams}`;
+      const effectivePageSize = Math.min(params?.pageSize ?? 100, 100);
+      const query = `?page=${params?.page ?? 1}&pageSize=${effectivePageSize}`;
+      const url = `/api/roles${query}`;
       console.log('🔍 RoleService: Making request to:', url);
 
       // ✅ SIMPLIFIED: ApiClient now handles unwrapping automatically

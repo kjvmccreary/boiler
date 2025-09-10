@@ -12,10 +12,12 @@ namespace WorkflowService.Controllers;
 public class ExpressionsController : ControllerBase
 {
     private readonly IExpressionValidationService _svc;
+    private readonly ILogger<ExpressionsController> _logger;
 
-    public ExpressionsController(IExpressionValidationService svc)
+    public ExpressionsController(IExpressionValidationService svc, ILogger<ExpressionsController> logger)
     {
         _svc = svc;
+        _logger = logger;
     }
 
     [HttpPost("validate")]

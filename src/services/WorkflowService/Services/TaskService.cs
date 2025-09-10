@@ -12,7 +12,8 @@ using WorkflowTaskStatus = DTOs.Workflow.Enums.TaskStatus;
 
 namespace WorkflowService.Services;
 
-public class TaskService : ITaskService
+// Make TaskService partial to host the new file
+public partial class TaskService : ITaskService
 {
     private readonly WorkflowDbContext _context;
     private readonly IMapper _mapper;
@@ -599,13 +600,11 @@ public class TaskService : ITaskService
             Page = 1,
             PageSize = 500
         };
-
         var paged = await GetMyTasksAsync(request, cancellationToken);
         if (!paged.Success || paged.Data == null)
             return ApiResponseDto<List<TaskSummaryDto>>.ErrorResult(paged.Message, paged.Errors);
 
-        var items = paged.Data.Items.AsEnumerable();
-        var list = items.ToList();
+        var list = paged.Data.Items.ToList();
         return ApiResponseDto<List<TaskSummaryDto>>.SuccessResult(list, $"Retrieved {list.Count} tasks");
     }
 

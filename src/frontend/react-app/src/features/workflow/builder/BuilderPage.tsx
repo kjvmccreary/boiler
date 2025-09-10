@@ -43,6 +43,8 @@ import { useTenant } from '@/contexts/TenantContext';
 import { useWorkflowValidation } from '../hooks/useWorkflowValidation';
 import { normalizeTags } from '@/utils/tags';
 import StrictModeToggle from './components/StrictModeToggle';
+// FIX: correct relative path (context folder is under builder/)
+import { ExpressionSettingsProvider } from './context/ExpressionSettingsContext';
 
 // --- Helpers to enforce gateway branch metadata ---
 function extractBranch(edge: Edge): 'true' | 'false' | undefined {
@@ -459,307 +461,311 @@ export function BuilderPage() {
   }
 
   return (
-    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          p: 2,
-          borderBottom: 1,
-          borderColor: 'divider',
-          bgcolor: 'background.paper'
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <IconButton onClick={handleBack}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h5">
-            {isNewWorkflow ? 'Create Workflow' : 'Edit Workflow'}
-          </Typography>
-          {definition && (
-            <Typography variant="body2" color="text.secondary">
-              v{definition.version} • {definition.isPublished ? 'Published' : 'Draft'}
+    <ExpressionSettingsProvider>
+      <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+        {/* Header */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            p: 2,
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper'
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <IconButton onClick={handleBack}>
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography variant="h5">
+              {isNewWorkflow ? 'Create Workflow' : 'Edit Workflow'}
             </Typography>
-          )}
-        </Box>
+            {definition && (
+              <Typography variant="body2" color="text.secondary">
+                v{definition.version} • {definition.isPublished ? 'Published' : 'Draft'}
+              </Typography>
+            )}
+          </Box>
 
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          <TextField
-            size="small"
-            placeholder="Workflow Name"
-            value={workflowName}
-            onChange={e => { setWorkflowName(e.target.value); markDirty(); }}
-            sx={{ width: 200 }}
-          />
-          <TextField
-            size="small"
-            placeholder="tags (comma,separated)"
-            value={workflowTags}
-            onChange={e => {
-              setWorkflowTags(e.target.value);
-              const err = validateTags(e.target.value);
-              setTagsError(err);
-              markDirty();
-            }}
-            error={!!tagsError}
-            helperText={tagsError || ' '}
-            sx={{ width: 240 }}
-          />
-          <Button
-            variant="outlined"
-            startIcon={<SaveIcon />}
-            onClick={handleSave}
-            disabled={saving || !workflowName.trim() || !!tagsError}
-          >
-            {saving ? 'Saving...' : 'Save'}
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={handleValidate}
-            disabled={validating}
-          >
-            {validating ? 'Validating…' : 'Validate'}
-          </Button>
+          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <TextField
+              size="small"
+              placeholder="Workflow Name"
+              value={workflowName}
+              onChange={e => { setWorkflowName(e.target.value); markDirty(); }}
+              sx={{ width: 200 }}
+            />
+            <TextField
+              size="small"
+              placeholder="tags (comma,separated)"
+              value={workflowTags}
+              onChange={e => {
+                setWorkflowTags(e.target.value);
+                const err = validateTags(e.target.value);
+                setTagsError(err);
+                markDirty();
+              }}
+              error={!!tagsError}
+              helperText={tagsError || ' '}
+              sx={{ width: 240 }}
+            />
+            <Button
+              variant="outlined"
+              startIcon={<SaveIcon />}
+              onClick={handleSave}
+              disabled={saving || !workflowName.trim() || !!tagsError}
+            >
+              {saving ? 'Saving...' : 'Save'}
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={handleValidate}
+              disabled={validating}
+            >
+              {validating ? 'Validating…' : 'Validate'}
+            </Button>
 
-          <StrictModeToggle
-            enabled={strictMode}
-            onChange={(v) => {
-              setStrictMode(v);
-              if (typeof window !== 'undefined') {
-                window.localStorage.setItem('wf.strictMode', v ? '1' : '0');
+            <StrictModeToggle
+              enabled={strictMode}
+              onChange={(v) => {
+                setStrictMode(v);
+                if (typeof window !== 'undefined') {
+                  window.localStorage.setItem('wf.strictMode', v ? '1' : '0');
+                }
+                if (v) {
+                  // immediate structural view when turning on
+                  recomputeStructural();
+                }
+              }}
+              mismatchCount={
+                strictReport
+                  ? strictReport.gatewayResults.filter(g =>
+                    g.missingFromHeuristic.length || g.heuristicOnly.length
+                  ).length
+                  : 0
               }
-              if (v) {
-                // immediate structural view when turning on
-                recomputeStructural();
-              }
-            }}
-            mismatchCount={
-              strictReport
-                ? strictReport.gatewayResults.filter(g =>
-                  g.missingFromHeuristic.length || g.heuristicOnly.length
-                ).length
-                : 0
-            }
-            durationMs={
-              strictReport
-                ? Math.max(
-                  0,
-                  ...strictReport.gatewayResults.map(r => r.analysisTimeMs)
-                )
-                : undefined
-            }
-          />
-
-          {definition && !definition.isPublished && (
-            <Badge
-              color={validation?.errors.length ? 'error' : (validation?.warnings.length ? 'warning' : 'success')}
-              badgeContent={
-                validation
-                  ? validation.errors.length
-                    ? validation.errors.length
-                    : validation.warnings.length
-                      ? `W:${validation.warnings.length}`
-                      : '✓'
+              durationMs={
+                strictReport
+                  ? Math.max(
+                    0,
+                    ...strictReport.gatewayResults.map(r => r.analysisTimeMs)
+                  )
                   : undefined
               }
-              overlap="circular"
-              anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-            >
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handlePublish}
-                disabled={validating || !definition?.id}
+            />
+
+            {definition && !definition.isPublished && (
+              <Badge
+                color={validation?.errors.length ? 'error' : (validation?.warnings.length ? 'warning' : 'success')}
+                badgeContent={
+                  validation
+                    ? validation.errors.length
+                      ? validation.errors.length
+                      : validation.warnings.length
+                        ? `W:${validation.warnings.length}`
+                        : '✓'
+                    : undefined
+                }
+                overlap="circular"
+                anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
               >
-                Publish
-              </Button>
-            </Badge>
-          )}
-          <Tooltip title="Properties">
-            <IconButton
-              onClick={() => setPropertyPanelOpen(true)}
-              color={propertyPanelOpen ? 'primary' : 'default'}
-            >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handlePublish}
+                  disabled={validating || !definition?.id}
+                >
+                  Publish
+                </Button>
+              </Badge>
+            )}
+            <Tooltip title="Properties">
+              <IconButton
+                onClick={() => setPropertyPanelOpen(true)}
+                color={propertyPanelOpen ? 'primary' : 'default'}
+              >
+                <SettingsIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
-      </Box>
 
-      <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        <NodePalette />
-        <Box sx={{ flex: 1, position: 'relative' }}>
-          <BuilderCanvas
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChangeWrapped}
-            onEdgesChange={onEdgesChangeWrapped}
-            onConnect={onConnect}
-            onNodeClick={handleNodeClick}
-            setNodes={setNodes}
-            setEdges={setEdges}
-          />
+        {/* Main layout */}
+        <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+          <NodePalette />
+          <Box sx={{ flex: 1, position: 'relative' }}>
+            <BuilderCanvas
+              nodes={nodes}
+              edges={edges}
+              onNodesChange={onNodesChangeWrapped}
+              onEdgesChange={onEdgesChangeWrapped}
+              onConnect={onConnect}
+              onNodeClick={handleNodeClick}
+              setNodes={setNodes}
+              setEdges={setEdges}
+            />
 
-          {strictMode && (structuralErrors.length || structuralWarnings.length || strictReport) && (
-            <Box
-              sx={{
-                position: 'absolute',
-                right: 8,
-                bottom: 8,
-                width: 360,
-                maxHeight: 260,
-                overflow: 'auto',
-                bgcolor: 'background.paper',
-                border: theme => `1px solid ${theme.palette.divider}`,
-                boxShadow: 2,
-                p: 1,
-                borderRadius: 1
-              }}
-            >
-              <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-                Structural (Strict)
-              </Typography>
-              {structuralErrors.length > 0 && (
-                <Alert severity="error" variant="outlined" sx={{ mb: 0.5, p: 0.5 }}>
-                  <Typography variant="caption">
-                    Errors: {structuralErrors.slice(0, 4).join('; ')}
-                    {structuralErrors.length > 4 && ' …'}
-                  </Typography>
-                </Alert>
-              )}
-              {structuralWarnings.length > 0 && (
-                <Alert severity="warning" variant="outlined" sx={{ mb: 0.5, p: 0.5 }}>
-                  <Typography variant="caption">
-                    Warnings: {structuralWarnings.slice(0, 4).join('; ')}
-                    {structuralWarnings.length > 4 && ' …'}
-                  </Typography>
-                </Alert>
-              )}
-              {strictReport && strictReport.gatewayResults.map(g => (
-                <Box key={g.gatewayId} sx={{ mb: 0.5 }}>
-                  <Typography variant="caption" sx={{ fontFamily: 'monospace', display: 'block' }}>
-                    GW {g.gatewayId} br={g.branchCount} strict=[{g.strictCommon.join(',') || '-'}] heur=[{g.heuristicCommon.join(',') || '-'}]
-                  </Typography>
-                  {(g.missingFromHeuristic.length || g.heuristicOnly.length) && (
-                    <Typography
-                      variant="caption"
-                      color="warning.main"
-                      sx={{ fontFamily: 'monospace' }}
-                    >
-                      diff +:{g.missingFromHeuristic.join(',') || '-'} -:{g.heuristicOnly.join(',') || '-'}
+            {strictMode && (structuralErrors.length || structuralWarnings.length || strictReport) && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  right: 8,
+                  bottom: 8,
+                  width: 360,
+                  maxHeight: 260,
+                  overflow: 'auto',
+                  bgcolor: 'background.paper',
+                  border: theme => `1px solid ${theme.palette.divider}`,
+                  boxShadow: 2,
+                  p: 1,
+                  borderRadius: 1
+                }}
+              >
+                <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                  Structural (Strict)
+                </Typography>
+                {structuralErrors.length > 0 && (
+                  <Alert severity="error" variant="outlined" sx={{ mb: 0.5, p: 0.5 }}>
+                    <Typography variant="caption">
+                      Errors: {structuralErrors.slice(0, 4).join('; ')}
+                      {structuralErrors.length > 4 && ' …'}
                     </Typography>
-                  )}
-                </Box>
-              ))}
-              {strictReport && strictReport.warnings.length === 0 && !structuralErrors.length && !structuralWarnings.length && (
-                <Alert severity="success" variant="outlined" sx={{ p: 0.5 }}>
-                  <Typography variant="caption">No structural issues</Typography>
-                </Alert>
-              )}
-            </Box>
-          )}
-        </Box>
-        <PropertyPanel
-          open={propertyPanelOpen}
-          onClose={() => setPropertyPanelOpen(false)}
-          selectedNode={selectedNode}
-          onNodeUpdate={handleNodeUpdate}
-          workflowName={workflowName}
-          workflowDescription={workflowDescription}
-          onWorkflowNameChange={(v) => { setWorkflowName(v); markDirty(); }}
-          onWorkflowDescriptionChange={(v) => { setWorkflowDescription(v); markDirty(); }}
-        />
-      </Box>
-
-      <Dialog
-        open={publishDialogOpen}
-        onClose={() => setPublishDialogOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Publish Workflow</DialogTitle>
-        <DialogContent>
-          <Typography sx={{ mb: 2 }}>
-            Publishing will make this workflow immutable and available for creating
-            instances. Are you sure you want to publish "{workflowName}"?
-          </Typography>
-          <TextField
-            fullWidth
-            label="Publish Notes (Optional)"
-            multiline
-            rows={3}
-            value={publishNotes}
-            onChange={e => setPublishNotes(e.target.value)}
-            placeholder="Add notes about this version..."
+                  </Alert>
+                )}
+                {structuralWarnings.length > 0 && (
+                  <Alert severity="warning" variant="outlined" sx={{ mb: 0.5, p: 0.5 }}>
+                    <Typography variant="caption">
+                      Warnings: {structuralWarnings.slice(0, 4).join('; ')}
+                      {structuralWarnings.length > 4 && ' …'}
+                    </Typography>
+                  </Alert>
+                )}
+                {strictReport && strictReport.gatewayResults.map(g => (
+                  <Box key={g.gatewayId} sx={{ mb: 0.5 }}>
+                    <Typography variant="caption" sx={{ fontFamily: 'monospace', display: 'block' }}>
+                      GW {g.gatewayId} br={g.branchCount} strict=[{g.strictCommon.join(',') || '-'}] heur=[{g.heuristicCommon.join(',') || '-'}]
+                    </Typography>
+                    {(g.missingFromHeuristic.length || g.heuristicOnly.length) && (
+                      <Typography
+                        variant="caption"
+                        color="warning.main"
+                        sx={{ fontFamily: 'monospace' }}
+                      >
+                        diff +:{g.missingFromHeuristic.join(',') || '-'} -:{g.heuristicOnly.join(',') || '-'}
+                      </Typography>
+                    )}
+                  </Box>
+                ))}
+                {strictReport && strictReport.warnings.length === 0 && !structuralErrors.length && !structuralWarnings.length && (
+                  <Alert severity="success" variant="outlined" sx={{ p: 0.5 }}>
+                    <Typography variant="caption">No structural issues</Typography>
+                  </Alert>
+                )}
+              </Box>
+            )}
+          </Box>
+          <PropertyPanel
+            open={propertyPanelOpen}
+            onClose={() => setPropertyPanelOpen(false)}
+            selectedNode={selectedNode}
+            onNodeUpdate={handleNodeUpdate}
+            workflowName={workflowName}
+            workflowDescription={workflowDescription}
+            onWorkflowNameChange={(v) => { setWorkflowName(v); markDirty(); }}
+            onWorkflowDescriptionChange={(v) => { setWorkflowDescription(v); markDirty(); }}
           />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setPublishDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handlePublishConfirm} variant="contained">
-            Publish
-          </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
 
-      <Dialog open={showValidation} onClose={() => { setShowValidation(false); clear(); }} maxWidth="sm" fullWidth>
-        <DialogTitle>Graph Validation</DialogTitle>
-        <DialogContent>
-          {validating && <CircularProgress size={24} />}
-          {validation && (
-            <>
-              {!validation.success && (
-                <Alert severity="error" sx={{ mb: 2 }}>Fix errors before publishing.</Alert>
+        {/* Publish dialog */}
+        <Dialog
+          open={publishDialogOpen}
+          onClose={() => setPublishDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Publish Workflow</DialogTitle>
+          <DialogContent>
+            <Typography sx={{ mb: 2 }}>
+              Publishing will make this workflow immutable and available for creating
+              instances. Are you sure you want to publish "{workflowName}"?
+            </Typography>
+            <TextField
+              fullWidth
+              label="Publish Notes (Optional)"
+              multiline
+              rows={3}
+              value={publishNotes}
+              onChange={e => setPublishNotes(e.target.value)}
+              placeholder="Add notes about this version..."
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setPublishDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handlePublishConfirm} variant="contained">
+              Publish
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Validation dialog */}
+        <Dialog open={showValidation} onClose={() => { setShowValidation(false); clear(); }} maxWidth="sm" fullWidth>
+          <DialogTitle>Graph Validation</DialogTitle>
+            <DialogContent>
+              {validating && <CircularProgress size={24} />}
+              {validation && (
+                <>
+                  {!validation.success && (
+                    <Alert severity="error" sx={{ mb: 2 }}>Fix errors before publishing.</Alert>
+                  )}
+                  {(() => {
+                    const structuralErrs = strictMode
+                      ? structuralErrors.map(e => `[Structural] ${e}`)
+                      : [];
+                    const structuralWarns = strictMode
+                      ? structuralWarnings.map(w => `[Structural] ${w}`)
+                      : [];
+                    const uniq = (arr: string[]) => {
+                      const seen = new Set<string>();
+                      return arr.filter(t => (seen.has(t) ? false : (seen.add(t), true)));
+                    };
+                    const allErrors = uniq([...validation.errors, ...structuralErrs]);
+                    const allWarnings = uniq([...validation.warnings, ...structuralWarns]);
+                    return (
+                      <>
+                        {allErrors.length > 0 && (
+                          <div>
+                            <strong>Errors:</strong>
+                            <ul>{allErrors.map((e, i) => <li key={i}>{e}</li>)}</ul>
+                          </div>
+                        )}
+                        {allWarnings.length > 0 && (
+                          <div style={{ marginTop: 8 }}>
+                            <strong>Warnings:</strong>
+                            <ul>{allWarnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
+                          </div>
+                        )}
+                        {validation.success && allErrors.length === 0 && (
+                          <Alert severity="success" sx={{ mt: 2 }}>Validation passed.</Alert>
+                        )}
+                        {strictMode && strictReport && strictReport.gatewayResults.length > 0 && (
+                          <Box sx={{ mt: 2 }}>
+                            <Typography variant="caption" color="text.secondary">
+                              Gateways inspected: {strictReport.gatewayResults.map(g => g.gatewayId).join(', ')}
+                              {strictReport.gatewayResults.some(g => g.missingFromHeuristic.length || g.heuristicOnly.length) && ' (diffs present)'}
+                            </Typography>
+                          </Box>
+                        )}
+                      </>
+                    );
+                  })()}
+                </>
               )}
-              {/* Unified Errors / Warnings (remote + structural) */}
-              {(() => {
-                const structuralErrs = strictMode
-                  ? structuralErrors.map(e => `[Structural] ${e}`)
-                  : [];
-                const structuralWarns = strictMode
-                  ? structuralWarnings.map(w => `[Structural] ${w}`)
-                  : [];
-                // Deduplicate by text
-                const uniq = (arr: string[]) => {
-                  const seen = new Set<string>();
-                  return arr.filter(t => (seen.has(t) ? false : (seen.add(t), true)));
-                };
-                const allErrors = uniq([...validation.errors, ...structuralErrs]);
-                const allWarnings = uniq([...validation.warnings, ...structuralWarns]);
-                return (
-                  <>
-                    {allErrors.length > 0 && (
-                      <div>
-                        <strong>Errors:</strong>
-                        <ul>{allErrors.map((e, i) => <li key={i}>{e}</li>)}</ul>
-                      </div>
-                    )}
-                    {allWarnings.length > 0 && (
-                      <div style={{ marginTop: 8 }}>
-                        <strong>Warnings:</strong>
-                        <ul>{allWarnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
-                      </div>
-                    )}
-                    {validation.success && allErrors.length === 0 && (
-                      <Alert severity="success" sx={{ mt: 2 }}>Validation passed.</Alert>
-                    )}
-                    {strictMode && strictReport && strictReport.gatewayResults.length > 0 && (
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="caption" color="text.secondary">
-                          Gateways inspected: {strictReport.gatewayResults.map(g => g.gatewayId).join(', ')}
-                          {strictReport.gatewayResults.some(g => g.missingFromHeuristic.length || g.heuristicOnly.length) && ' (diffs present)'}
-                        </Typography>
-                      </Box>
-                    )}
-                  </>
-                );
-              })()}
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-    </Box>
+            </DialogContent>
+        </Dialog>
+      </Box>
+    </ExpressionSettingsProvider>
   );
 }
 

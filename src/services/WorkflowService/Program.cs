@@ -173,11 +173,11 @@ public class Program
             builder.Services.Configure<JoinTimeoutOptions>(builder.Configuration.GetSection("Workflow:JoinTimeouts"));
             builder.Services.AddHostedService<JoinTimeoutWorker>();
         }
-
+        builder.Services.AddScoped<WorkflowService.Services.Interfaces.IExpressionService, WorkflowService.Services.ExpressionService>();
         builder.Services.AddSignalR();
 
         // Notifications
-        builder.Services.AddSingleton<ITaskNotificationDispatcher, TaskNotificationDispatcher>();
+        builder.Services.AddScoped<ITaskNotificationDispatcher, TaskNotificationDispatcher>();
         builder.Services.AddScoped<IWorkflowNotificationDispatcher, WorkflowNotificationDispatcher>();
 
         builder.Services.AddAuthorization(options =>

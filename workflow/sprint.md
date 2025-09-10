@@ -1,10 +1,10 @@
 # Workflow Frontend Parity & Sprint Plan (Maintained Document)
-Estimated % Completion: 57%  *(21 completed / 37 scoped stories)*
+Estimated % Completion: 59%  *(22 completed / 37 scoped stories)*
 
 > Purpose: Track alignment between backend WorkflowService capabilities and frontend implementation, and manage sprint execution.  
 > Update Cadence: After each story refinement / completion.  
 > Owner: Workflow Feature Team  
-> Last Updated: 2025-09-09
+> Last Updated: 2025-09-10
 
 ---
 
@@ -53,11 +53,11 @@ Progress Legend: [ ] Not Started · [~] In Progress · [x] Complete · [D] Defer
 | Join Timeout Visibility | Experimental | Missing | Conditional banner | Low | [ ] |
 | Outbox Visibility | Persist only | Missing | Health widget | Medium | [ ] |
 | ActiveTasksCount | Pending enrich | Missing | Column/badge fallback | Medium | [ ] |
-| Simulation / Dry-Run | Not implemented | PR2: path enumeration + parallel cartesian (capped) + UI highlight | Join-mode semantics, probabilities, per-edge conditions | Medium | [~] |
+| Simulation / Dry-Run | Enhanced | PR3: path enum + parallel cartesian + join-mode semantics | Edge conditions, probabilities, weighting | Medium | [x] |
 | Version Diff Viewer | Data available | Field-level diff + visual overlay (PR3 in progress) | Arbitrary compare selector | Medium | [~] |
 | Event Stream Coalescing | Not needed now | Missing | Debounce layer | Low | [ ] |
 | Metrics (lag, SLA) | Planned | Missing | Metrics stub | Low | [ ] |
-| Expression Validation Tests (backend) | Not present | Missing | Add tests (M6) | Medium | [ ] |
+| Expression Validation Tests (backend) | Partial | Initial tests added | Broader negative set | Medium | [x] |
 | Timer Backend Validation Tests | Not present | Missing | Add tests (M7) | Medium | [ ] |
 
 ---
@@ -93,7 +93,7 @@ Remaining matrix items (Medium/Low) to pick up after dominance refinement & reva
 | M-V1 | Version Diff Viewer PR3b | Visual overlay ghost removed nodes | Ghost nodes & edge diff styling | Medium | Needs prior layout caching |
 | M-V2 | Version Diff Arbitrary Compare | Sequential only | Pick any previous version | Medium | Requires versions list API (if not cached) |
 | M-V3 | Diff Telemetry Expansion | Basic toggle/open | Field-level expansion events | Low | After overlay stabilizes |
-| M-SIM3 | Simulation Join-Mode Semantics | PR2 (no join mode logic) | Evaluate count/quorum/expression properly | Medium | Requires join mode rules mapping |
+| M-SIM3 | Simulation Join-Mode Semantics | Implemented (all/any/count/quorum/expression) | Edge conditions (M-SIM6), probability layer (M-SIM4) | Medium | Δ join modes done |
 | M-SIM4 | Simulation Probability Layer | Not started | Path likelihood (historical weighting) | Low | Needs historical stats aggregation |
 | M-SIM5 | Simulation Export / Persist Scenarios | Not started | Save context + options & reload | Low | Optional UX enhancer |
 | M-SIM6 | Simulation Edge Condition Support | Node-level only | Per-edge JsonLogic evaluation | Medium | Requires DSL edge condition schema |
@@ -261,6 +261,9 @@ Layered approach executed client-side before publish; server still authoritative
 | 2025-09-09 | MBO (Monaco Bundle Optimization) | PR3b: Added 150ms debounced parse, parse time telemetry (bucketed), semantic trigger post-parse | None | PR4 dynamic exceljs / on-demand JS lang |
 | 2025-09-09 | Simulation (Dry-Run) | PR1: Added SimulationDrawer, basic DFS path enumeration, conditional gateway eval, diagram path highlight | None | PR2 parallel expansion |
 | 2025-09-09 | Simulation (Dry-Run) | PR2: Parallel cartesian expansion (capped), join merge detection, truncation reasons & controls (depth/paths/cartesian), telemetry | None | PR3 join-mode semantics |
+| 2025-09-10 | M-SIM3 | Join-mode semantics (all/any/count/quorum/expression) implemented in simulation | None | Edge conditions (M-SIM6) |
+| 2025-09-10 | Backend Tests | Added JoinSemanticsRuntimeTests parity coverage | None | Negative expr cases |
+
 ---
 
 ## 12. Testing Plan
@@ -365,8 +368,7 @@ Layered approach executed client-side before publish; server still authoritative
  | Story ID | H1 (HumanTask Enhanced Assignment) |
  | Goal | Allow authors to configure richer assignment semantics for HumanTask nodes (users, roles, dynamic expressions, fallback & SLA metadata) directly in the builder property panel with validation + preview. |
  | Priority | High |
--| Status | In Progress |
-+| Status | Complete |
+ | Status | Complete |
  | Owner | Workflow Feature Team |
  | Dependencies | Existing role/user directory endpoints; expression validation service; publish validation hook. |
  

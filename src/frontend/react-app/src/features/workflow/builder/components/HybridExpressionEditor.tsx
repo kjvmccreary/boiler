@@ -4,28 +4,21 @@ import { Box, CircularProgress, IconButton, Stack, TextField, Tooltip, Typograph
 import { Refresh as RefreshIcon } from '@mui/icons-material';
 import { workflowService } from '@/services/workflow.service';
 import { setJsonLogicVariables } from '../monaco/jsonlogicOperators';
-import { useExpressionSettings } from '../context/ExpressionSettingsContext';
+import { useExpressionSettingsOptional } from '../context/ExpressionSettingsContext';
 import { MonacoExpressionEditor } from './MonacoExpressionEditor';
 import ExpressionEditor from './ExpressionEditor';
 
 export interface HybridExpressionEditorProps {
-  // Core
   value: string;
   onChange: (val: string) => void;
   kind?: 'gateway' | 'join' | 'task-assignment';
   placeholder?: string;
   height?: number;
-
-  // Monaco / Mode
   useMonaco?: boolean;
   language?: string;
-
-  // Semantic validation
   semantic?: boolean;
   disableSemanticOnError?: boolean;
   onSemanticValidation?: (res: { success: boolean; errors: string[]; durationMs: number }) => void;
-
-  // Dynamic variables
   variableContext?: string[];
   variableDeps?: any[];
   disableDynamicVars?: boolean;
@@ -50,25 +43,20 @@ const HybridExpressionEditor: React.FC<HybridExpressionEditorProps> = ({
   disableDynamicVars = false,
 }) => {
 
-  // Expression settings (semantic master toggle)
-  const { semanticEnabled, recordSemanticValidation } = useExpressionSettings();
+  // SAFE: does not throw if provider missing (prevents blank screen)
+  const { semanticEnabled, recordSemanticValidation } = useExpressionSettingsOptional();
   const effectiveSemantic = semantic && semanticEnabled;
 
-  // Local parse error (for basic JSON)
   const [parseError, setParseError] = useState<string | null>(null);
-
-  // Semantic state
   const [semanticErrors, setSemanticErrors] = useState<string[]>([]);
   const [semanticWarnings, setSemanticWarnings] = useState<string[]>([]);
   const [semanticState, setSemanticState] = useState<SemanticState>('idle');
   const [loadingSemantic, setLoadingSemantic] = useState(false);
   const [semanticVersion, setSemanticVersion] = useState(0);
 
-  // Variable loading
   const [loadingVars, setLoadingVars] = useState(false);
   const [varsVersion, setVarsVersion] = useState(0);
 
-  // Debounce / request guards
   const debounceRef = useRef<number | undefined>(undefined);
   const activeRequestVersionRef = useRef<number>(0);
 

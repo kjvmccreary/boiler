@@ -39,10 +39,6 @@ import { useRolesCache } from '../../hooks/useRolesCache';
 import { useUserSearch } from '../../hooks/useUserSearch';
 import { workflowService } from '@/services/workflow.service';
 import { trackWorkflow } from '../../telemetry/workflowTelemetry';
-// Monaco hybrid editor (already present in codebase per H5 story)
-// Falls back internally if Monaco not yet loaded.
-// If file path differs adjust import accordingly.
-// Use the existing editor colocated in this directory
 import HybridExpressionEditor from './HybridExpressionEditor';
 
 export interface AssignmentSectionProps {
@@ -60,9 +56,52 @@ const MODE_OPTIONS: { value: HumanTaskAssignmentMode; label: string }[] = [
 
 type ExprState = 'idle' | 'validating' | 'valid' | 'error';
 
+/* ---------- Helpers ---------- */
+function shallowEqual(a: any, b: any): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  const ak = Object.keys(a);
+  const bk = Object.keys(b);
+  if (ak.length !== bk.length) return false;
+  for (const k of ak) {
+    if (a[k] !== b[k]) return false;
+  }
+  return true;
+}
+
+function normalizeAssignment(a?: HumanTaskAssignment): HumanTaskAssignment | undefined {
+  if (!a) return undefined;
+  // Remove empty arrays / undefined fields to stabilize object identity
+  const next: any = { ...a };
+  if (next.users && next.users.length === 0) delete next.users;
+  if (next.roles && next.roles.length === 0) delete next.roles;
+  if (next.expression === undefined || next.expression === '') delete next.expression;
+  if (next.sla) {
+    if (next.sla.targetMinutes == null) delete next.sla;
+    else if (next.sla.softWarningMinutes == null) delete next.sla.softWarningMinutes;
+  }
+  if (next.escalation) {
+    if (!next.escalation.escalateToRole || next.escalation.afterMinutes == null) delete next.escalation;
+  }
+  return next;
+}
+
 export const AssignmentSection: React.FC<AssignmentSectionProps> = ({ node, onPatch }) => {
   const [expanded, setExpanded] = useState(true);
-  const [assignment, setAssignment] = useState<HumanTaskAssignment | undefined>(node.assignment);
+
+  // Local editable copy (decoupled to avoid parent → child → parent churn)
+  const [assignment, setAssignment] = useState<HumanTaskAssignment | undefined>(
+    normalizeAssignment(node.assignment)
+  );
+
+  // Keep local state in sync if the node's assignment changes externally (e.g. undo / other panel)
+  useEffect(() => {
+    const incoming = normalizeAssignment(node.assignment);
+    if (!shallowEqual(incoming, assignment)) {
+      setAssignment(incoming);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [node.assignment, node.id]);
 
   // Expression
   const [expression, setExpression] = useState(assignment?.expression || '');
@@ -87,34 +126,46 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({ node, onPa
   const { results: userResults, loading: userLoading, term: userTerm, setTerm: setUserTerm, clear: clearUserTerm } =
     useUserSearch(300, userSearchActive);
 
-  // Migration for legacy roles
+  // Legacy migration
   useEffect(() => {
     if (!assignment && node.assigneeRoles?.length) {
       setAssignment({ mode: 'roles', roles: [...node.assigneeRoles] });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [node.id])
+  }, [node.id]);
 
   const updateAssignment = (patch: Partial<HumanTaskAssignment>) => {
     setAssignment(prev => {
-      const next = { ...(prev || { mode: 'roles' as HumanTaskAssignmentMode }), ...patch };
+      const base = prev || { mode: 'roles' as HumanTaskAssignmentMode };
+      const next = normalizeAssignment({ ...base, ...patch });
+      if (shallowEqual(base, next)) return base; // no change → prevent unnecessary effect → parent patch
       return next;
     });
   };
 
-  // Commit to node
+  // Commit changes upward only when the FULL normalized object actually changes
+  const prevSentRef = useRef<string>('');
   useEffect(() => {
     if (!assignment) return;
-    const full: HumanTaskAssignment = {
+    const full: HumanTaskAssignment = normalizeAssignment({
       ...assignment,
       expression: (assignment.mode === 'expression' || assignment.mode === 'hybrid') ? (expression || '') : undefined,
-      sla: targetMinutes !== '' ? { targetMinutes: Number(targetMinutes), ...(softWarning !== '' ? { softWarningMinutes: Number(softWarning) } : {}) } : undefined,
+      sla: targetMinutes !== '' ? {
+        targetMinutes: Number(targetMinutes),
+        ...(softWarning !== '' ? { softWarningMinutes: Number(softWarning) } : {})
+      } : undefined,
       escalation: (escalationRole && escalationAfter !== '' && targetMinutes !== '')
         ? { escalateToRole: escalationRole, afterMinutes: Number(escalationAfter) }
         : undefined
-    };
-    onPatch({ assignment: full });
-  }, [assignment, expression, targetMinutes, softWarning, escalationRole, escalationAfter, onPatch]);
+    })!;
+
+    const signature = JSON.stringify(full);
+    if (signature !== prevSentRef.current) {
+      prevSentRef.current = signature;
+      onPatch({ assignment: full });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assignment, expression, targetMinutes, softWarning, escalationRole, escalationAfter]);
 
   const { errors, warnings } = useMemo(
     () => assignment ? validateHumanTaskAssignment({
@@ -122,7 +173,10 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({ node, onPa
       assignment: {
         ...assignment,
         expression: (assignment.mode === 'expression' || assignment.mode === 'hybrid') ? expression : undefined,
-        sla: targetMinutes !== '' ? { targetMinutes: Number(targetMinutes), ...(softWarning !== '' ? { softWarningMinutes: Number(softWarning) } : {}) } : undefined,
+        sla: targetMinutes !== '' ? {
+          targetMinutes: Number(targetMinutes),
+          ...(softWarning !== '' ? { softWarningMinutes: Number(softWarning) } : {})
+        } : undefined,
         escalation: (escalationRole && escalationAfter !== '' && targetMinutes !== '')
           ? { escalateToRole: escalationRole, afterMinutes: Number(escalationAfter) }
           : undefined
@@ -131,7 +185,7 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({ node, onPa
     [assignment, node, expression, targetMinutes, softWarning, escalationRole, escalationAfter]
   );
 
-  // Expression validation (debounced by expression version change)
+  // Expression validation (debounced)
   useEffect(() => {
     if (!(assignment?.mode === 'expression' || assignment?.mode === 'hybrid')) return;
     if (!expression.trim()) {
@@ -144,7 +198,7 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({ node, onPa
     const handle = setTimeout(async () => {
       try {
         const start = performance.now();
-        const res = await workflowService.validateExpression('gateway', expression); // reuse existing kind
+        const res = await workflowService.validateExpression('gateway', expression);
         if (res.success && res.errors.length === 0) {
           setExprState('valid');
           setExprError(null);
@@ -161,15 +215,12 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({ node, onPa
     return () => clearTimeout(handle);
   }, [expression, assignment?.mode, exprVersion]);
 
-  const validateNow = async () => {
-    setExprVersion(v => v + 1);
-  };
+  const validateNow = () => setExprVersion(v => v + 1);
 
   // Role ops
   const filteredRoles = tenantRoles.filter(r => !roleFilter.trim() || r.name.toLowerCase().includes(roleFilter.trim().toLowerCase()));
   const addRole = (name: string) => {
-    if (!assignment) return;
-    if (!name.trim()) return;
+    if (!assignment || !name.trim()) return;
     if (assignment.roles?.includes(name)) return;
     updateAssignment({ roles: [...(assignment.roles || []), name] });
   };
@@ -181,6 +232,7 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({ node, onPa
   // User ops
   const addUser = (id: string) => {
     if (!assignment) return;
+    if (assignment.users?.includes(id)) return;
     updateAssignment({ users: [...(assignment.users || []), id] });
     clearUserTerm();
   };
@@ -195,8 +247,7 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({ node, onPa
 
   const computeModeLoss = (next: HumanTaskAssignmentMode): string[] => {
     const lost: string[] = [];
-    if (!assignment) return lost;
-    if (next === assignment.mode) return lost;
+    if (!assignment || next === assignment.mode) return lost;
     if (next === 'users') {
       if (assignment.roles?.length) lost.push('roles');
       if (assignment.expression) lost.push('expression');
@@ -206,9 +257,6 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({ node, onPa
     } else if (next === 'expression') {
       if (assignment.users?.length) lost.push('users');
       if (assignment.roles?.length) lost.push('roles');
-    } else if (next === 'hybrid') {
-      // users optional — we keep users & roles; expression remains / becomes required
-      // no loss unless switching from expression-only (then just keep expression)
     }
     return lost;
   };
@@ -228,10 +276,7 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({ node, onPa
         updateAssignment({ mode: m });
         break;
     }
-    trackWorkflow('assignment.mode.changed', {
-      nodeId: node.id,
-      mode: m
-    });
+    trackWorkflow('assignment.mode.changed', { nodeId: node.id, mode: m });
   };
 
   const requestModeChange = (m: HumanTaskAssignmentMode) => {
@@ -239,6 +284,7 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({ node, onPa
       updateAssignment({ mode: m });
       return;
     }
+    if (m === assignment.mode) return; // no-op guard
     const losses = computeModeLoss(m);
     if (losses.length === 0) {
       applyMode(m);
@@ -248,6 +294,7 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({ node, onPa
     }
   };
 
+  // Summary chips
   const summaryChips: string[] = [];
   if (assignment?.mode) summaryChips.push(assignment.mode);
   if (assignment?.users?.length) summaryChips.push(`Users(${assignment.users.length})`);
@@ -452,7 +499,7 @@ export const AssignmentSection: React.FC<AssignmentSectionProps> = ({ node, onPa
               </IconButton>
             </Tooltip>
           </Stack>
-            <Stack direction="row" spacing={1} mt={0.5}>
+          <Stack direction="row" spacing={1} mt={0.5}>
             <TextField
               size="small"
               type="number"
